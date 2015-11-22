@@ -1,0 +1,22 @@
+{
+  "name": "CardsServer",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "version": "0.0.5",
+  "dependencies": {
+    "body-parser": "",
+    "express": "",
+    "moment": "^2.10.6",
+    "mongoose": "^4.2.0",
+    "mysql": "^2.9.0",
+    "needle": "^0.10.0",
+    "redis": "",
+    "underscore": "^1.8.3",
+    "ws": ""
+  },
+  "engines": {
+    "node": "0.10.x"
+  },
+  "os": "sunos"
+}
