@@ -10,7 +10,7 @@ var _ = require('underscore');
 var bodyParser = require('body-parser');
 
 
-// var databaseURL = "http://162.13.157.7/beta_dashboard/client/";
+var databaseURL = "http://162.13.157.7/beta_dashboard/client/";
 // var databaseURL = "http://162.13.157.7/soccerapp/client/";
 
 var InsertCardPHP = "playCard.php";
