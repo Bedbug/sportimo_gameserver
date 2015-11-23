@@ -10,24 +10,73 @@ var _ = require('underscore');
 var bodyParser = require('body-parser');
 
 // Caterpillar (logging stuff)
-var level   = process.argv.indexOf('-d') === -1 ? 6 : 7;
-var logger  = require('caterpillar').createLogger({level:level});
-var filter  = require('caterpillar-filter').createFilter();
-var human   = require('caterpillar-human').createHuman();
+// var level   = process.argv.indexOf('-d') === -1 ? 6 : 7;
+// var logger  = require('caterpillar').createLogger({level:level});
+// var filter  = require('caterpillar-filter').createFilter();
+// var human   = require('caterpillar-human').createHuman();
     
-// Pipe to filter to human to stdout
-logger.pipe(filter).pipe(human).pipe(process.stdout);
+// // Pipe to filter to human to stdout
+// logger.pipe(filter).pipe(human).pipe(process.stdout);
  
-// Set logging level
-level = 7
+// // Set logging level
+// level = 7
 
-// If we are debugging, then write the original logger data to debug.log
-if ( level === 7 ) {
-    logger.pipe(require('fs').createWriteStream('./debug.log'));
-}
+// // If we are debugging, then write the original logger data to debug.log
+// if ( level === 7 ) {
+//     logger.pipe(require('fs').createWriteStream('./debug.log'));
+// }
 
-var databaseURL = "http://162.13.157.7/beta_dashboard/client/";
+// winston logger
+var winston = require('winston');
+var logger = new (winston.Logger)({
+  levels: {
+    trace: 9,
+    input: 8,
+    verbose: 7,
+    prompt: 6,
+    debug: 5,
+    info: 4,
+    core: 3,
+    help: 2,
+    warn: 1,
+    error: 0
+  },
+  colors: {
+    trace: 'magenta',
+    input: 'grey',
+    verbose: 'cyan',
+    prompt: 'grey',
+    debug: 'blue',
+    info: 'green',
+    core: 'grey',
+    help: 'cyan',
+    warn: 'yellow',
+    error: 'red'
+  }
+});
+
+console.log("log_level: "+process.env.LOG_LEVEL);
+
+logger.add(winston.transports.Console, {level: process.env.LOG_LEVEL || 'core', prettyPrint: true,colorize: 'level'});
+
+logger.add(winston.transports.File, {
+  prettyPrint: true,
+  level: 'core',
+  silent: false,
+  colorize: false,
+  timestamp: true,
+  filename: 'debug.log',
+  maxsize: 40000,
+  maxFiles: 10,
+  json: false
+});
+ // End Winston
+  
+var databaseURL = process.env.DASHBOARD || "http://162.13.157.7/beta_dashboard/client/";
 // var databaseURL = "http://162.13.157.7/soccerapp/client/";
+
+console.log("DASHBOARD: "+ process.env.DASHBOARD);
+
 
 var InsertCardPHP = "playCard.php";
 var UpdatePHP = "updateCardStatus.php";
@@ -37,9 +86,9 @@ var GetOpenCardsPHP = "get_active_cards.php";
 var GetlastEventsPHP = "get_last_events.php";
 var RemoveEventPHP = "remove_event.php";
 
-function log(text) {
-    // console.log("[Wildcards Module] " + text);
-    logger.log("[Wildcards Module] " + text);
+function log(text,level) {
+    var loglevel = level || 'core';
+    logger.log(loglevel, "[Wildcards Module] " + text);
 }
 
 // define( "DATABASE_SERVER", "10.181.75.133" );
@@ -52,7 +101,7 @@ function log(text) {
 
 var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, questionid) {
 
-    log("[Card Registered] [userid: " + userid + " | matchid: " + gameid + " | minute: " + minute + "' | cardtype: " + TypeCard(cardtype) + " | which_half: " + which_half + " | questionid: " + questionid + "]");
+    log("[Card Registered] [userid: " + userid + " | matchid: " + gameid + " | minute: " + minute + "' | cardtype: " + TypeCard(cardtype) + " | which_half: " + which_half + " | questionid: " + questionid + "]","error");
     
     // Instance
     var self = this;
@@ -250,13 +299,13 @@ var Wildcards = {
     RewardFor: function (event) {
         var event_typeid = TypeID(event.data.event_name);
 
-        log("[Event received] Checking for cards of event_typeid: " + event_typeid + " | " + event.data.event_name);
+        log("[Event received] Checking for cards of event_typeid: " + event_typeid + " | " + event.data.event_name,"info");
         // log(event.data.id);
 
         var WinningCards = _.filter(PlayedCards, function (item) {
             return (item.attributes.cardtype == event_typeid && item.attributes.gameid == event.data.match_id && item.attributes.activated == 1);
         });
-        log("Found Winning cards: " + WinningCards.length);
+        log("Found Winning cards: " + WinningCards.length,"debug");
 
         WinningCards.forEach(function (card) {
             card.win(event.data.id);
@@ -272,7 +321,7 @@ var Wildcards = {
         var match = _.filter(WonCards, function (card) {
             return (card.attributes.cardtype == cardtype && card.attributes.userid == userid && card.attributes.gameid == gameid && card.attributes.cardid == cardid);
         });
-        console.log(JSON.stringify(match));
+        log(JSON.stringify(match),"debug");
 
         for (var i = 0; i < WonCards.length; i++) {
             if (WonCards[i].attributes.cardtype == cardtype && WonCards[i].attributes.userid == userid && WonCards[i].attributes.gameid == gameid && WonCards[i].attributes.cardid == cardid) {
@@ -296,19 +345,19 @@ var Wildcards = {
         });
 
         redisclient.on("error", function (err) {
-            console.log("{''Error'': ''" + err + "''}");
+            log("{''Error'': ''" + err + "''}");
         });
 
         redisclient.on("subscribe", function (channel, count) {
-            console.log("[Cards Module] Subscribed to Sportimo Events PUB/SUB channel");
+             log("Subscribed to Sportimo Events PUB/SUB channel");
         });
 
         redisclient.on("unsubscribe", function (channel, count) {
-            console.log("Subscribed from Sportimo Events PUB/SUB channel");
+            log("Subscribed from Sportimo Events PUB/SUB channel");
         });
 
         redisclient.on("end", function () {
-            console.log("{Connection ended}");
+            log("{Connection ended}");
         });
 
         redisclient.subscribe("socketServers");
@@ -370,7 +419,7 @@ var Wildcards = {
         **    API endpoint /getpoints
         */
         app.post('/api/v1/getpoints', function (req, res) {
-            // console.log(JSON.stringify(req.body));
+            // log(JSON.stringify(req.body));
             var card = Wildcards.GetPoints(req.body.cardid, req.body.userid, req.body.gameid, req.body.cardtype);
             return res.send(card.toString());
         });
@@ -405,14 +454,14 @@ var Wildcards = {
              */
 
             var Event = JSON.parse(req.body.data);
-            // // console.log(data.event);
+            // // log(data.event);
             var data = {};
             // // Used in removing event and finding linked cards
             data.eventid = Event.data.id;
             // // Used in correcting match leaderboards
             data.matchid = Event.data.match_id;
 
-            // console.log(JSON.stringify(data));
+            // log(JSON.stringify(data));
 
             needle
                 .post(databaseURL + RemoveEventPHP, data, options, function (error, response) {
@@ -460,25 +509,25 @@ needle
         if (!error && response.statusCode == 200) {
             // log(response.body);
             playedActiveCards = JSON.parse(response.body);
-            console.log(playedActiveCards.length);
+            log("Unhandled Active cards: "+playedActiveCards.length,'debug');
             needle
                 .post(databaseURL + GetlastEventsPHP, this.attributes, options, function (error, response) {
                     if (!error && response.statusCode == 200) {
                         // log(response);
                         lastGameEvents = JSON.parse(response.body);
-                        console.log(lastGameEvents.length);
+                        // log(lastGameEvents.length,'debug');
                         ValidateCards();
                     } else
-                        log(error);
+                        log(error,'error');
                 });
         } else
-            log(error);
+            log(error,'error');
     });
 
 
 
 function ValidateCards() {
-    console.log("[Cards Module] Cards Validation Request");
+     log("Cards Validation Request");
     var indx = 0;
 
     playedActiveCards.forEach(function (card) {
@@ -490,7 +539,7 @@ function ValidateCards() {
             }, indx * 200);
             
             function check(){
-                console.log("in:"+indx);
+                log("in:"+indx);
             }
             
             function validate() {
@@ -532,22 +581,22 @@ function ValidateCards() {
                 if (newWildcard.attributes.activated == 2) return;
 
                 if (event.event_description == cardEvent && (moment.utc(event.created) > cardRange.starts && moment.utc(event.created) < cardRange.ends)) {
-                    log("Result: We found an event in the card's time range");
-                    log(JSON.stringify(event)); 
+                    log("Result: We found an event in the card's time range","warn");
+                    log(JSON.stringify(event),"debug"); 
                     // So, the card has finished
                     newWildcard.attributes.activated = 2;
                     
                     // Set the correct timer 
                     var millisecondsPassed = Math.round(moment.utc(event.created).diff(cardRange.starts) / 1000) * 1000;
 
-                    // console.log("ms: " + millisecondsPassed);
+                    // log("ms: " + millisecondsPassed);
                     newWildcard.defaults.destroy_timer = 300000 - millisecondsPassed;
 
-                    // console.log("The new timer: " + newWildcard.defaults.destroy_timer);
+                    // log("The new timer: " + newWildcard.defaults.destroy_timer);
                     // Count Points
                     newWildcard.attributes.countpoints -= Math.floor(millisecondsPassed / newWildcard.defaults.points_step) * newWildcard.pointIncrement;
                     newWildcard.attributes.points = Math.round(newWildcard.attributes.countpoints + newWildcard.attributes.minpoints);
-                    // console.log(newWildcard.attributes.points);
+                    // log(newWildcard.attributes.points);
                 
                     // Sync the timer that is used in the client for compatibility
                     newWildcard.attributes.timer = newWildcard.defaults.destroy_timer / 1000;
@@ -562,10 +611,10 @@ function ValidateCards() {
             // We don't need to preceed further is the card has won already
             if (newWildcard.attributes.activated == 2) return;
 
-            log("Result: No event found");
+            log("Result: No event found","warn");
         
             // Now we check to see if the card has finished without winning anything
-            log("Check if the card has finished");
+            log("Check if the card has finished","warn");
 
             if (moment.utc() > cardRange.ends) {
                 newWildcard.attributes.activated = 2;
@@ -573,22 +622,22 @@ function ValidateCards() {
                 newWildcard.attributes.timer = 0;
                 newWildcard.save();
                 // No need to clear(). Card was not pushed in anything and timers have not started
-                log("Result: It has finished.");
+                log("Result: It has finished.","warn");
                 return;
             }
          
             // Now let's finish it. If we've reached this point, it means that card has not won but it has time left on the timer.
             // Lets calculate how much that is and send it on its way.
-            log("Set data for active card"); 
+            log("Set data for active card","warn"); 
             // has been activated but not finished
             newWildcard.attributes.activated = 1;
           
             // Set the correct timer 
             var millisecondsPassed = Math.round(moment.utc().diff(cardRange.starts) / 1000) * 1000;
-            console.log(moment.utc().format() + " | " + cardRange.starts.format());
-            // console.log("ms: " + millisecondsPassed);
+            log(moment.utc().format() + " | " + cardRange.starts.format(),"warn");
+            // log("ms: " + millisecondsPassed);
             newWildcard.defaults.destroy_timer = 300000 - millisecondsPassed;
-            // console.log("The new timer: " + newWildcard.defaults.destroy_timer);
+            // log("The new timer: " + newWildcard.defaults.destroy_timer);
             // Sync the timer that is used in the client for compatibility
             newWildcard.attributes.timer = newWildcard.defaults.destroy_timer / 1000;
             // Count Points
