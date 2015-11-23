@@ -9,6 +9,22 @@ var moment = require('moment');
 var _ = require('underscore');
 var bodyParser = require('body-parser');
 
+// Caterpillar (logging stuff)
+var level   = process.argv.indexOf('-d') === -1 ? 6 : 7;
+var logger  = require('caterpillar').createLogger({level:level});
+var filter  = require('caterpillar-filter').createFilter();
+var human   = require('caterpillar-human').createHuman();
+    
+// Pipe to filter to human to stdout
+logger.pipe(filter).pipe(human).pipe(process.stdout);
+ 
+// Set logging level
+level = 7
+
+// If we are debugging, then write the original logger data to debug.log
+if ( level === 7 ) {
+    logger.pipe(require('fs').createWriteStream('./debug.log'));
+}
 
 var databaseURL = "http://162.13.157.7/beta_dashboard/client/";
 // var databaseURL = "http://162.13.157.7/soccerapp/client/";
@@ -22,7 +38,8 @@ var GetlastEventsPHP = "get_last_events.php";
 var RemoveEventPHP = "remove_event.php";
 
 function log(text) {
-    console.log("[Wildcards Module] " + text);
+    // console.log("[Wildcards Module] " + text);
+    logger.log("[Wildcards Module] " + text);
 }
 
 // define( "DATABASE_SERVER", "10.181.75.133" );
@@ -111,7 +128,7 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
             this.attributes.timer = this.defaults.destroy_timer / 1000;
 
             if (this.defaults.destroy_timer <= 0) {
-                console.log("card finished");
+                log("[Card " + this.attributes.userid + "_" + this.attributes.cardid + "] [Card Timer Finished]");
                 this.activated = 2;
             }
              

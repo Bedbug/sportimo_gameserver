@@ -6,6 +6,7 @@
   "version": "0.0.5",
   "dependencies": {
     "body-parser": "",
+    "caterpillar": "^2.0.9",
     "express": "",
     "moment": "^2.10.6",
     "mongoose": "^4.2.0",
