@@ -55,7 +55,7 @@ var logger = new (winston.Logger)({
   }
 });
 
-console.log("log_level: "+process.env.LOG_LEVEL);
+// console.log("log_level: "+process.env.LOG_LEVEL);
 
 logger.add(winston.transports.Console, {level: process.env.LOG_LEVEL || 'core', prettyPrint: true,colorize: 'level'});
 
@@ -90,11 +90,6 @@ function log(text,level) {
     var loglevel = level || 'core';
     logger.log(loglevel, "[Wildcards Module] " + text);
 }
-
-// define( "DATABASE_SERVER", "10.181.75.133" );
-// define( "DATABASE_USERNAME", "root" );
-// define( "DATABASE_PASSWORD", "airae3Dai.qu" );
-// define( "DATABASE_NAME", "rebelcre_beta" );
 
 
 // Card Types: 0 - Goal, 1 - Corner, 2 - Yellow, 3 - Foul
