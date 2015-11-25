@@ -25,3 +25,15 @@
 2015-11-25T09:27:34.344Z - core: [Wildcards Module] [Card 315_2] [Activated]
 2015-11-25T09:27:42.799Z - core: [Wildcards Module] [Card saved in DB]
 2015-11-25T09:27:56.733Z - core: [Wildcards Module] [Card 315_3] [Activated]
+2015-11-25T10:19:16.064Z - core: [Wildcards Module] Start initial card validations
+2015-11-25T10:19:17.720Z - core: [Wildcards Module] Cards Validation Request
+2015-11-25T10:19:17.812Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-25T10:19:17.934Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T10:19:17.935Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T10:19:17.937Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-25T10:19:18.125Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T10:19:18.125Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T10:19:18.126Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T10:19:18.323Z - warn: [Wildcards Module] Result: It has finished.

@@ -75,9 +75,9 @@ logger.add(winston.transports.File, {
  var databaseURL = "";
  
  if(process.env.NODE_ENV == "production") 
-    databaseURL = proccess.env.PRODUCTION_DB || "http://162.13.157.7/soccerapp/client/";
+    databaseURL = process.env.PRODUCTION_DB || "http://162.13.157.7/soccerapp/client/";
  else
-    databaseURL = proccess.env.DEVELOPMENT_DB || "http://162.13.157.7/beta_dashboard/client/";
+    databaseURL = process.env.DEVELOPMENT_DB || "http://162.13.157.7/beta_dashboard/client/";
     
 console.log("DASHBOARD: "+ databaseURL);
 
