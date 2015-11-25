@@ -1,3 +1,27 @@
 2015-11-23T12:40:37.359Z - [90mcore[39m: [Wildcards Module] Start initial card validations
 2015-11-23T12:40:39.016Z - [90mcore[39m: [Wildcards Module] Cards Validation Request
 2015-11-23T12:40:39.143Z - [90mcore[39m: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-25T09:04:10.963Z - core: [Wildcards Module] Start initial card validations
+2015-11-25T09:04:15.844Z - core: [Wildcards Module] Cards Validation Request
+2015-11-25T09:04:15.845Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-25T09:04:16.084Z - core: [Wildcards Module] Looping through game evets
+2015-11-25T09:04:16.086Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T09:04:16.086Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T09:04:16.088Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-25T09:04:16.246Z - core: [Wildcards Module] Looping through game evets
+2015-11-25T09:04:16.248Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T09:04:16.248Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T09:04:16.249Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-25T09:04:16.445Z - core: [Wildcards Module] Looping through game evets
+2015-11-25T09:04:16.466Z - warn: [Wildcards Module] Result: No event found
+2015-11-25T09:04:16.466Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-25T09:04:16.467Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-25T09:22:18.455Z - core: [Wildcards Module] Start initial card validations
+2015-11-25T09:22:19.656Z - core: [Wildcards Module] Cards Validation Request
+2015-11-25T09:22:19.806Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-25T09:26:51.313Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-25T09:27:11.058Z - core: [Wildcards Module] [Card 315_1] [Activated]
+2015-11-25T09:27:15.539Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-25T09:27:34.344Z - core: [Wildcards Module] [Card 315_2] [Activated]
+2015-11-25T09:27:42.799Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-25T09:27:56.733Z - core: [Wildcards Module] [Card 315_3] [Activated]

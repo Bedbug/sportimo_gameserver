@@ -57,7 +57,7 @@ var logger = new (winston.Logger)({
 
 // console.log("log_level: "+process.env.LOG_LEVEL);
 
-logger.add(winston.transports.Console, {level: process.env.LOG_LEVEL || 'core', prettyPrint: true,colorize: 'level'});
+logger.add(winston.transports.Console, {timestamp: true,level: process.env.LOG_LEVEL || 'debug', prettyPrint: true,colorize: 'level'});
 
 logger.add(winston.transports.File, {
   prettyPrint: true,
@@ -72,17 +72,22 @@ logger.add(winston.transports.File, {
 });
  // End Winston
   
-var databaseURL = process.env.DASHBOARD || "http://162.13.157.7/beta_dashboard/client/";
-// var databaseURL = "http://162.13.157.7/soccerapp/client/";
+ var databaseURL = "";
+ 
+ if(process.env.NODE_ENV == "production") 
+    databaseURL = proccess.env.PRODUCTION_DB || "http://162.13.157.7/soccerapp/client/";
+ else
+    databaseURL = proccess.env.DEVELOPMENT_DB || "http://162.13.157.7/beta_dashboard/client/";
+    
+console.log("DASHBOARD: "+ databaseURL);
 
-console.log("DASHBOARD: "+ process.env.DASHBOARD);
 
-
-var InsertCardPHP = "playCard.php";
-var UpdatePHP = "updateCardStatus.php";
+var InsertCardPHP = "_playCard.php";
+var UpdatePHP = "_updateCardStatus.php";
 var AwardPointsPHP = "_reward.php";
 
 var GetOpenCardsPHP = "get_active_cards.php";
+var GetOpenCardsByLinkedEventPHP = "get_active_linked_cards.php";
 var GetlastEventsPHP = "get_last_events.php";
 var RemoveEventPHP = "remove_event.php";
 
@@ -96,7 +101,7 @@ function log(text,level) {
 
 var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, questionid) {
 
-    log("[Card Registered] [userid: " + userid + " | matchid: " + gameid + " | minute: " + minute + "' | cardtype: " + TypeCard(cardtype) + " | which_half: " + which_half + " | questionid: " + questionid + "]","error");
+    log("[Card Registered] [userid: " + userid + " | matchid: " + gameid + " | minute: " + minute + "' | cardtype: " + TypeCard(cardtype) + " | which_half: " + which_half + " | questionid: " + questionid + "]","info");
     
     // Instance
     var self = this;
@@ -203,7 +208,7 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
                     if (!error && response.statusCode == 200) {
                         // log("[Card updated in DB] " + response.body);
                     } else
-                        console.log(error.message);
+                        log(error,"error");
                 });
         }
         else if (this.defaults.shouldUpdate) // save card for the first time
@@ -221,20 +226,25 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
         }
     }
 
-    this.win = function (event_id) {
-        this.attributes.correct = 1;
-        this.attributes.activated = 2;
-        this.attributes.linked_event = event_id;
+    this.win = function (event_id, delay) {
+        var windelay = delay || 0; 
+        self.attributes.correct = 1;
+        self.attributes.activated = 2;
+        self.attributes.linked_event = event_id;
         var options = {};
 
-        if (this.defaults.shouldUpdate)
-            needle
-                .post(databaseURL + AwardPointsPHP, this.attributes, options, function (error, response) {
+        if (self.defaults.shouldUpdate){
+            setTimeout(function(){
+                needle
+                .post(databaseURL + AwardPointsPHP, self.attributes, options, function (error, response) {
                     if (!error && response.statusCode == 200) {
-                        console.log("[Win response] " + response.body);
+                        log("[Win response] " + response.body,"info");
                     } else
-                        console.log(error);
+                        log("[error] "+error,"error");
                 });
+            }, windelay)
+            
+        }
     }
 
     this.clear = function () {
@@ -300,13 +310,15 @@ var Wildcards = {
         var WinningCards = _.filter(PlayedCards, function (item) {
             return (item.attributes.cardtype == event_typeid && item.attributes.gameid == event.data.match_id && item.attributes.activated == 1);
         });
-        log("Found Winning cards: " + WinningCards.length,"debug");
-
+        log("[Result] Winning cards: " + WinningCards.length,"info");
+        var wincardsdelay = WinningCards.length;
         WinningCards.forEach(function (card) {
-            card.win(event.data.id);
+            card.win(event.data.id, wincardsdelay*100);
             card.save();
             WonCards.push(card);
             card.clear();
+            
+            wincardsdelay--;
             // console.log(WonCards.length);
 
         });
@@ -316,6 +328,7 @@ var Wildcards = {
         var match = _.filter(WonCards, function (card) {
             return (card.attributes.cardtype == cardtype && card.attributes.userid == userid && card.attributes.gameid == gameid && card.attributes.cardid == cardid);
         });
+        
         log(JSON.stringify(match),"debug");
 
         for (var i = 0; i < WonCards.length; i++) {
@@ -367,12 +380,12 @@ var Wildcards = {
                 Wildcards.RewardFor(obj);
         });
     },
-    Validate: function (res) {
+    Validate: function (res, data) {
 
         needle
-            .post(databaseURL + GetOpenCardsPHP, this.attributes, options, function (error, response) {
+            .post(databaseURL + GetOpenCardsByLinkedEventPHP, data, options, function (error, response) {
                 if (!error && response.statusCode == 200) {
-                    // log(response.body);
+                    log("Result: "+response.body,'debug');
                     playedActiveCards = JSON.parse(response.body);
                     needle
                         .post(databaseURL + GetlastEventsPHP, this.attributes, options, function (error, response) {
@@ -386,7 +399,7 @@ var Wildcards = {
                             }
                         });
                 } else
-                    log(error.message);
+                    log(error,'error');
             });
     },
     setServerForRoutes: function (app) {
@@ -447,7 +460,7 @@ var Wildcards = {
              *      c. remove points from user_data entry 
              * 3. Validate cards again to set correct timers and points
              */
-
+            log("Remove Event Request");
             var Event = JSON.parse(req.body.data);
             // // log(data.event);
             var data = {};
@@ -461,10 +474,10 @@ var Wildcards = {
             needle
                 .post(databaseURL + RemoveEventPHP, data, options, function (error, response) {
                     if (!error && response.statusCode == 200) {
-                        setTimeout(function () { return thisWildcard.Validate(res); }, 2000);
-
+                        log("Removal succesful - Proceeding to Validation",'info');
+                        setTimeout(function () { return thisWildcard.Validate(res, data); }, 2000);
                     } else
-                        return res.send(error);
+                        return res.send(error,'error');
                 });
 
 
@@ -533,9 +546,9 @@ function ValidateCards() {
             
             }, indx * 200);
             
-            function check(){
-                log("in:"+indx);
-            }
+            // function check(){
+            //     log("in:"+indx);
+            // }
             
             function validate() {
             
@@ -554,7 +567,7 @@ function ValidateCards() {
          
             // First check if it is not active
             if (card.activated == 0) {
-                log("Card has not activate yet in DB");
+                log("Card has not activate yet in DB",'debug');
                 var diff = moment.utc().diff(moment(card.created));
                 if (diff < newWildcard.defaults.delay_timer) {
                     log("Corrected: card will be active in: " + ((newWildcard.defaults.delay_timer - diff) / 1000));
@@ -564,19 +577,19 @@ function ValidateCards() {
                     // We do't need to do anything else
                     return;
                 }
-                log("Result: But it should.");
+                log("Result: But it should.",'debug');
             }
  
             // We must check if the card was won something in its time range.
             // Loop through all the latest events and see if there is a corresponding event in the time range
-            log("Looping through game evets");
+            log("Looping through game evets",'debug');
             var matchEvents = _.where(lastGameEvents, { match_id: card.gameid });
             matchEvents.forEach(function (event) {
 
                 if (newWildcard.attributes.activated == 2) return;
 
                 if (event.event_description == cardEvent && (moment.utc(event.created) > cardRange.starts && moment.utc(event.created) < cardRange.ends)) {
-                    log("Result: We found an event in the card's time range","warn");
+                    log("Result: We found an event in the card's time range","debug");
                     log(JSON.stringify(event),"debug"); 
                     // So, the card has finished
                     newWildcard.attributes.activated = 2;
