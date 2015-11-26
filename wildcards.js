@@ -325,6 +325,7 @@ var Wildcards = {
     },
     GetPoints: function (cardid, userid, gameid, cardtype) {
         // console.log(JSON.stringify(WonCards[0]));
+        setTimeout(function(){
         var match = _.filter(WonCards, function (card) {
             return (card.attributes.cardtype == cardtype && card.attributes.userid == userid && card.attributes.gameid == gameid && card.attributes.cardid == cardid);
         });
@@ -339,6 +340,7 @@ var Wildcards = {
         }
 
         return match[match.length - 1].attributes.points;
+        },2000);
     },
     setDBScriptsURL: function (uri) {
         databaseURL = uri;
