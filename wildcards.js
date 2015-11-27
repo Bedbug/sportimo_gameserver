@@ -324,7 +324,7 @@ var Wildcards = {
         });
     },
     GetPoints: function (cardid, userid, gameid, cardtype) {
-        // console.log(JSON.stringify(WonCards[0]));
+        // Delay by 2 secs so WonCards are able to catch up to the request.
         setTimeout(function(){
         var match = _.filter(WonCards, function (card) {
             return (card.attributes.cardtype == cardtype && card.attributes.userid == userid && card.attributes.gameid == gameid && card.attributes.cardid == cardid);
