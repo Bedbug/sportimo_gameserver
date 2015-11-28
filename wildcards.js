@@ -687,5 +687,4 @@ var TypeCard = function (event) {
 **   EXPORTS
 **  *****************/
 
->>>>>>> origin/master
 module.exports = Wildcards;
