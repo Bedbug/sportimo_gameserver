@@ -152,7 +152,7 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
     // If activated is false, checks will ignore this card when an event is received
     this.activate = function () {
         this.attributes.activated = 1;
-        log("[Card " + this.attributes.userid + "_" + this.attributes.cardid + "] [Activated]");
+        log("[Card " + this.attributes.userid + "_" + this.attributes.cardid + "] [Activated]","info");
         this.save();
         this.startDestroyTimmer = setInterval(function () { self.countDownCard() }, 1000);
     }
@@ -177,8 +177,8 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
             this.attributes.timer = this.defaults.destroy_timer / 1000;
 
             if (this.defaults.destroy_timer <= 0) {
-                log("[Card " + this.attributes.userid + "_" + this.attributes.cardid + "] [Card Timer Finished]");
-                this.activated = 2;
+                log("[Card " + this.attributes.userid + "_" + this.attributes.cardid + "] [Card Timer Finished]","info");
+                this.attributes.activated = 2;
             }
              
             // We will have to update the database here to keep the card in sync 
@@ -200,6 +200,7 @@ var WildCard = function (cardid, userid, gameid, minute, cardtype, which_half, q
     this.save = function () {
         var options = {};
          
+          log("[Card " + JSON.stringify(this.attributes),"prompt");
         //  console.log(self.attributes.saved+" "+this.defaults.shouldUpdate);
         // Now lets update the database entries
         if (this.attributes.saved && this.defaults.shouldUpdate) { // Update
