@@ -37,3 +37,139 @@
 2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Result: No event found
 2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Check if the card has finished
 2015-11-25T10:19:18.323Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-28T07:17:13.465Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:17:15.817Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:17:16.130Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:22:09.013Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:22:11.147Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:22:11.186Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:25:46.688Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:25:47.818Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:25:48.156Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:25:51.574Z - core: [Wildcards Module] "received"
+2015-11-28T07:25:53.586Z - error: [Wildcards Module] No card found
+2015-11-28T07:40:10.625Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:40:11.790Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:40:12.139Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:41:50.764Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:41:51.068Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-28T07:42:10.782Z - core: [Wildcards Module] [Card 315_1] [Activated]
+2015-11-28T07:42:10.782Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:42:20.813Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:42:30.871Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:42:40.917Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:42:50.956Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:01.003Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:11.035Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:21.036Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:31.059Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:41.076Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:43:51.126Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:01.168Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:11.206Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:21.248Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:31.294Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:41.343Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:44:51.395Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:01.445Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:11.507Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:21.552Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:31.582Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:41.623Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:45:51.679Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:01.719Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:11.747Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:21.783Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:31.850Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:41.906Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:46:51.988Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:47:02.058Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:47:12.123Z - core: [Wildcards Module] [Card 315_1] [Card Timer Finished]
+2015-11-28T07:47:12.123Z - core: [Wildcards Module] [Card [object Object]
+2015-11-28T07:50:09.572Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:50:10.933Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:50:11.143Z - warn: [Wildcards Module] Result: No event found
+2015-11-28T07:50:11.159Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-28T07:50:11.159Z - core: [Wildcards Module] [Card {"cardid":"1","userid":"315","gameid":"433","minute":"1","cardtype":"1","timer":0,"which_half":"1","questionid":"4508","countpoints":30,"minpoints":30,"points":0,"correct":0,"activated":2,"linked_event":0,"saved":true}
+2015-11-28T07:50:11.159Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-28T07:50:11.159Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:50:24.941Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":300,"which_half":"1","questionid":4508,"countpoints":40,"minpoints":40,"points":80,"correct":0,"activated":0,"linked_event":0,"saved":false}
+2015-11-28T07:50:25.231Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-28T07:50:44.953Z - core: [Wildcards Module] [Card 315_2] [Activated]
+2015-11-28T07:50:44.953Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":300,"which_half":"1","questionid":4508,"countpoints":40,"minpoints":40,"points":80,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:50:55.006Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":290,"which_half":"1","questionid":4508,"countpoints":38.666666666666664,"minpoints":40,"points":79,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:05.028Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":280,"which_half":"1","questionid":4508,"countpoints":37.33333333333333,"minpoints":40,"points":77,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:15.100Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":270,"which_half":"1","questionid":4508,"countpoints":35.99999999999999,"minpoints":40,"points":76,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:25.142Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":260,"which_half":"1","questionid":4508,"countpoints":34.66666666666666,"minpoints":40,"points":75,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:35.209Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":250,"which_half":"1","questionid":4508,"countpoints":33.33333333333332,"minpoints":40,"points":73,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:45.276Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":240,"which_half":"1","questionid":4508,"countpoints":31.99999999999999,"minpoints":40,"points":72,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:51:55.345Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":230,"which_half":"1","questionid":4508,"countpoints":30.666666666666657,"minpoints":40,"points":71,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:05.385Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":220,"which_half":"1","questionid":4508,"countpoints":29.333333333333325,"minpoints":40,"points":69,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:15.468Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":210,"which_half":"1","questionid":4508,"countpoints":27.999999999999993,"minpoints":40,"points":68,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:25.501Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":200,"which_half":"1","questionid":4508,"countpoints":26.66666666666666,"minpoints":40,"points":67,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:35.552Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":190,"which_half":"1","questionid":4508,"countpoints":25.33333333333333,"minpoints":40,"points":65,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:45.585Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":180,"which_half":"1","questionid":4508,"countpoints":23.999999999999996,"minpoints":40,"points":64,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:52:55.629Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":170,"which_half":"1","questionid":4508,"countpoints":22.666666666666664,"minpoints":40,"points":63,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:05.686Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":160,"which_half":"1","questionid":4508,"countpoints":21.333333333333332,"minpoints":40,"points":61,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:15.722Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":150,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":40,"points":60,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:25.722Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":140,"which_half":"1","questionid":4508,"countpoints":18.666666666666668,"minpoints":40,"points":59,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:35.761Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":130,"which_half":"1","questionid":4508,"countpoints":17.333333333333336,"minpoints":40,"points":57,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:45.787Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":120,"which_half":"1","questionid":4508,"countpoints":16.000000000000004,"minpoints":40,"points":56,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:53:55.836Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":110,"which_half":"1","questionid":4508,"countpoints":14.66666666666667,"minpoints":40,"points":55,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:05.913Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":100,"which_half":"1","questionid":4508,"countpoints":13.333333333333336,"minpoints":40,"points":53,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:15.967Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":90,"which_half":"1","questionid":4508,"countpoints":12.000000000000002,"minpoints":40,"points":52,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:26.000Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":80,"which_half":"1","questionid":4508,"countpoints":10.666666666666668,"minpoints":40,"points":51,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:36.021Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":70,"which_half":"1","questionid":4508,"countpoints":9.333333333333334,"minpoints":40,"points":49,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:46.068Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":60,"which_half":"1","questionid":4508,"countpoints":8,"minpoints":40,"points":48,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:54:56.125Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":50,"which_half":"1","questionid":4508,"countpoints":6.666666666666667,"minpoints":40,"points":47,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:55:06.171Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":40,"which_half":"1","questionid":4508,"countpoints":5.333333333333334,"minpoints":40,"points":45,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:55:16.234Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":30,"which_half":"1","questionid":4508,"countpoints":4.000000000000001,"minpoints":40,"points":44,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:55:26.301Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":20,"which_half":"1","questionid":4508,"countpoints":2.666666666666668,"minpoints":40,"points":43,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:55:36.357Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":10,"which_half":"1","questionid":4508,"countpoints":1.3333333333333346,"minpoints":40,"points":41,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:55:46.397Z - core: [Wildcards Module] [Card 315_2] [Card Timer Finished]
+2015-11-28T07:55:46.397Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":0,"which_half":"1","questionid":4508,"countpoints":1.3322676295501878e-15,"minpoints":40,"points":40,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:58:33.017Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T07:58:34.502Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T07:58:34.751Z - warn: [Wildcards Module] Result: No event found
+2015-11-28T07:58:34.753Z - warn: [Wildcards Module] Check if the card has finished
+2015-11-28T07:58:34.759Z - core: [Wildcards Module] [Card {"cardid":"2","userid":"315","gameid":"433","minute":"10","cardtype":"2","timer":0,"which_half":"1","questionid":"4508","countpoints":40,"minpoints":40,"points":0,"correct":0,"activated":2,"linked_event":0,"saved":true}
+2015-11-28T07:58:34.775Z - warn: [Wildcards Module] Result: It has finished.
+2015-11-28T07:58:34.779Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T07:58:40.384Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":300,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":20,"points":40,"correct":0,"activated":0,"linked_event":0,"saved":false}
+2015-11-28T07:58:40.758Z - core: [Wildcards Module] [Card saved in DB]
+2015-11-28T07:59:00.393Z - core: [Wildcards Module] [Card 315_3] [Activated]
+2015-11-28T07:59:00.394Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":300,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":20,"points":40,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:59:10.407Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":290,"which_half":"1","questionid":4508,"countpoints":19.333333333333332,"minpoints":20,"points":39,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:59:20.427Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":280,"which_half":"1","questionid":4508,"countpoints":18.666666666666664,"minpoints":20,"points":39,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:59:30.444Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":270,"which_half":"1","questionid":4508,"countpoints":17.999999999999996,"minpoints":20,"points":38,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:59:40.459Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":260,"which_half":"1","questionid":4508,"countpoints":17.33333333333333,"minpoints":20,"points":37,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T07:59:50.503Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":250,"which_half":"1","questionid":4508,"countpoints":16.66666666666666,"minpoints":20,"points":37,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:00.535Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":240,"which_half":"1","questionid":4508,"countpoints":15.999999999999995,"minpoints":20,"points":36,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:10.574Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":230,"which_half":"1","questionid":4508,"countpoints":15.333333333333329,"minpoints":20,"points":35,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:20.590Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":220,"which_half":"1","questionid":4508,"countpoints":14.666666666666663,"minpoints":20,"points":35,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:30.654Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":210,"which_half":"1","questionid":4508,"countpoints":13.999999999999996,"minpoints":20,"points":34,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:40.697Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":200,"which_half":"1","questionid":4508,"countpoints":13.33333333333333,"minpoints":20,"points":33,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:00:50.784Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":190,"which_half":"1","questionid":4508,"countpoints":12.666666666666664,"minpoints":20,"points":33,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:00.840Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":180,"which_half":"1","questionid":4508,"countpoints":11.999999999999998,"minpoints":20,"points":32,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:10.925Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":170,"which_half":"1","questionid":4508,"countpoints":11.333333333333332,"minpoints":20,"points":31,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:20.992Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":160,"which_half":"1","questionid":4508,"countpoints":10.666666666666666,"minpoints":20,"points":31,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:31.070Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":150,"which_half":"1","questionid":4508,"countpoints":10,"minpoints":20,"points":30,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:41.101Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":140,"which_half":"1","questionid":4508,"countpoints":9.333333333333334,"minpoints":20,"points":29,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:01:51.106Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":130,"which_half":"1","questionid":4508,"countpoints":8.666666666666668,"minpoints":20,"points":29,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:01.112Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":120,"which_half":"1","questionid":4508,"countpoints":8.000000000000002,"minpoints":20,"points":28,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:11.105Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":110,"which_half":"1","questionid":4508,"countpoints":7.333333333333335,"minpoints":20,"points":27,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:21.109Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":100,"which_half":"1","questionid":4508,"countpoints":6.666666666666668,"minpoints":20,"points":27,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:31.108Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":90,"which_half":"1","questionid":4508,"countpoints":6.000000000000001,"minpoints":20,"points":26,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:41.107Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":80,"which_half":"1","questionid":4508,"countpoints":5.333333333333334,"minpoints":20,"points":25,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:02:51.119Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":70,"which_half":"1","questionid":4508,"countpoints":4.666666666666667,"minpoints":20,"points":25,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:01.126Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":60,"which_half":"1","questionid":4508,"countpoints":4,"minpoints":20,"points":24,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:11.130Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":50,"which_half":"1","questionid":4508,"countpoints":3.3333333333333335,"minpoints":20,"points":23,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:21.130Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":40,"which_half":"1","questionid":4508,"countpoints":2.666666666666667,"minpoints":20,"points":23,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:31.125Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":30,"which_half":"1","questionid":4508,"countpoints":2.0000000000000004,"minpoints":20,"points":22,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:41.126Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":20,"which_half":"1","questionid":4508,"countpoints":1.333333333333334,"minpoints":20,"points":21,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:03:51.133Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":10,"which_half":"1","questionid":4508,"countpoints":0.6666666666666673,"minpoints":20,"points":21,"correct":0,"activated":1,"linked_event":0,"saved":true}
+2015-11-28T08:04:01.144Z - core: [Wildcards Module] [Card 315_3] [Card Timer Finished]
+2015-11-28T08:04:01.146Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":0,"which_half":"1","questionid":4508,"countpoints":6.661338147750939e-16,"minpoints":20,"points":20,"correct":0,"activated":2,"linked_event":0,"saved":true}
+2015-11-28T08:04:14.290Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T08:04:15.707Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T08:04:15.879Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
