@@ -173,3 +173,13 @@
 2015-11-28T08:04:14.290Z - core: [Wildcards Module] Start initial card validations
 2015-11-28T08:04:15.707Z - core: [Wildcards Module] Cards Validation Request
 2015-11-28T08:04:15.879Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T21:57:36.345Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T21:57:36.189Z - core: [Live Matches Module] Connected to MongoDB
+2015-11-28T21:57:40.964Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T21:57:41.839Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T21:57:41.933Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T21:58:39.284Z - core: [Live Matches Module] Connected to MongoDB
+2015-11-28T21:58:39.331Z - core: [Wildcards Module] Start initial card validations
+2015-11-28T21:58:47.386Z - core: [Wildcards Module] Cards Validation Request
+2015-11-28T21:58:47.667Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-11-28T21:58:47.714Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel

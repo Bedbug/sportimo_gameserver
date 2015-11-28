@@ -9,22 +9,6 @@ var moment = require('moment');
 var _ = require('underscore');
 var bodyParser = require('body-parser');
 
-// Caterpillar (logging stuff)
-// var level   = process.argv.indexOf('-d') === -1 ? 6 : 7;
-// var logger  = require('caterpillar').createLogger({level:level});
-// var filter  = require('caterpillar-filter').createFilter();
-// var human   = require('caterpillar-human').createHuman();
-    
-// // Pipe to filter to human to stdout
-// logger.pipe(filter).pipe(human).pipe(process.stdout);
- 
-// // Set logging level
-// level = 7
-
-// // If we are debugging, then write the original logger data to debug.log
-// if ( level === 7 ) {
-//     logger.pipe(require('fs').createWriteStream('./debug.log'));
-// }
 
 // winston logger
 var winston = require('winston');

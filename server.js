@@ -2,11 +2,21 @@
 
 /*
 
- Cards_Server Module
+ Cards_Server Modular
 
  Info:
- This server's purpose is to register playing cards from the clients
- of the Sporimo app and handle timers and scoring.
+ This servers has the following modules:
+ 
+    Wildcards - This module's purpose is to register playing cards from the clients
+    of the Sporimo app and handle timers and scoring.
+ 
+    Notifications - This module's purpose is to register user actions and push notifications
+    from the sportimo dashboard. 
+
+    LiveMatches - This module's purpose is to handle active matches.
+
+    Calendar - This module's purpose is to handle matches calendar.
+
 
  Copyright (c) Bedbug 2015
  Author: Aris Brink
@@ -54,15 +64,23 @@ function onCrossDomainHandler( req, res ) {
     res.end( xml );
 }
 
+var redisCreds = {url:'angelfish.redistogo.com',port:9455 , secret: 'd8deecf088b01d686f7f7cbfd11e96a9',channel:"socketServers"};
+var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
+
+/* Modules */ 
+var LiveMatches = require('./livematches');
+LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
+LiveMatches.setMongoConnection (mongoConnection);
+LiveMatches.setServerForRoutes(app);
 
 var Wildcards = require('./wildcards');
-Wildcards.setRedisPubSub('angelfish.redistogo.com', 9455, 'd8deecf088b01d686f7f7cbfd11e96a9');
+Wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
 Wildcards.setServerForRoutes(app);
-
 
 var Notifications = require('./notifications');
 Notifications.SetupServer(app);
-Notifications.setMongoConnection ('mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523');
+Notifications.setMongoConnection (mongoConnection);
+
 
 
 function log(info) {
