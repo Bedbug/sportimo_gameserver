@@ -52,34 +52,37 @@ var app = express();
 var server = http.createServer(app);
 server.listen(process.env.PORT || 3030);
 
-app.get( "/crossdomain.xml", onCrossDomainHandler );
-function onCrossDomainHandler( req, res ) {
+app.get("/crossdomain.xml", onCrossDomainHandler);
+function onCrossDomainHandler(req, res) {
     var xml = '<?xml version="1.0"?>\n<!DOCTYPE cross-domain-policy SYSTEM' +
         ' "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">\n<cross-domain-policy>\n';
     xml += '<allow-access-from domain="*" to-ports="*"/>\n';
     xml += '</cross-domain-policy>\n';
 
     req.setEncoding('utf8');
-    res.writeHead( 200, {'Content-Type': 'text/xml'} );
-    res.end( xml );
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    res.end(xml);
 }
 
-var redisCreds = {url:'angelfish.redistogo.com',port:9455 , secret: 'd8deecf088b01d686f7f7cbfd11e96a9',channel:"socketServers"};
+var redisCreds = { url: 'angelfish.redistogo.com', port: 9455, secret: 'd8deecf088b01d686f7f7cbfd11e96a9', channel: "socketServers" };
 var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 
-/* Modules */ 
-var LiveMatches = require('./livematches');
-LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
-LiveMatches.setMongoConnection (mongoConnection);
-LiveMatches.setServerForRoutes(app);
 
-var Wildcards = require('./wildcards');
+/* Modules */
+if (process.env.NODE_ENV != "production") {
+    var LiveMatches = require('./sportimo_modules/activematches');
+    LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
+    LiveMatches.setMongoConnection(mongoConnection);
+    LiveMatches.setServerForRoutes(app);
+}
+
+var Wildcards = require('./sportimo_modules/wildcards');
 Wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
 Wildcards.setServerForRoutes(app);
 
-var Notifications = require('./notifications');
+var Notifications = require('./sportimo_modules/notifications');
 Notifications.SetupServer(app);
-Notifications.setMongoConnection (mongoConnection);
+Notifications.setMongoConnection(mongoConnection);
 
 
 

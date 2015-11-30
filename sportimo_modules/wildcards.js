@@ -33,7 +33,7 @@ var logger = new (winston.Logger)({
         debug: 'blue',
         info: 'green',
         core: 'grey',
-        help: 'cyan',
+        help: 'magenta',
         warn: 'yellow',
         error: 'red'
     }
@@ -63,7 +63,7 @@ if (process.env.NODE_ENV == "production")
 else
     databaseURL = process.env.DEVELOPMENT_DB || "http://162.13.157.7/beta_dashboard/client/";
 
-console.log("DASHBOARD: " + databaseURL);
+// console.log("DASHBOARD: " + databaseURL);
 
 
 var InsertCardPHP = "_playCard.php";
@@ -289,7 +289,7 @@ var Wildcards = {
     RewardFor: function (event) {
         var event_typeid = TypeID(event.data.event_name);
 
-        log("[Event received] Checking for cards of event_typeid: " + event_typeid + " | " + event.data.event_name, "info");
+        log("[Event received] Checking for cards of event_typeid: " + event_typeid + " | " + event.data.event_name, "help");
         // log(event.data.id);
 
         var WinningCards = _.filter(PlayedCards, function (item) {
@@ -308,14 +308,14 @@ var Wildcards = {
 
         });
     },
-    GetPoints: function (cardid, userid, gameid, cardtype) {
+    GetPoints: function (cardid, userid, gameid, cardtype, res) {
         // Delay for 2 secs so the Woncards can catchup to the Client request
         setTimeout(function () {
             var match = _.filter(WonCards, function (card) {
                 return (card.attributes.cardtype == cardtype && card.attributes.userid == userid && card.attributes.gameid == gameid && card.attributes.cardid == cardid);
             });
 
-            log(JSON.stringify(match), "debug");
+          //  log(JSON.stringify(match), "debug");
 
             for (var i = 0; i < WonCards.length; i++) {
                 if (WonCards[i].attributes.cardtype == cardtype && WonCards[i].attributes.userid == userid && WonCards[i].attributes.gameid == gameid && WonCards[i].attributes.cardid == cardid) {
@@ -324,11 +324,12 @@ var Wildcards = {
                 }
             }
             
-            if(match[match.length - 1]!=undefined)
-                return match[match.length - 1].attributes.points.toString();
-            else{
+            if(match[match.length - 1] != undefined){
+                log("[Card " + match[match.length - 1].attributes.userid + "_" + match[match.length - 1].attributes.cardid + "] Points returned to Client","info");
+                return res.send(match[match.length - 1].attributes.points.toString());
+            }else{
                 log("No card found","error");
-                return "";
+                return res.send("");
             }
         }, 2000);
     },
@@ -419,9 +420,9 @@ var Wildcards = {
         **    API endpoint /getpoints
         */
         app.post('/api/v1/getpoints', function (req, res) {
-             log(JSON.stringify("received"));
-            var cardpoints = Wildcards.GetPoints(req.body.cardid, req.body.userid, req.body.gameid, req.body.cardtype);
-            return res.send(cardpoints);
+          
+            var cardpoints = Wildcards.GetPoints(req.body.cardid, req.body.userid, req.body.gameid, req.body.cardtype, res);
+           // return res.send(cardpoints);
         });
 
         app.post('/api/v1/event', function (req, res) {

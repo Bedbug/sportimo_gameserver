@@ -31,7 +31,7 @@ var PushOptions = {
 
 
 function log(text) {
-    console.log("[Notifications Module] " + text);
+  //  console.log("[Notifications Module] " + text);
 }
 
 /* ================================
@@ -56,7 +56,6 @@ var notifications = {
     setMongoConnection: function (uri) {
         mongoose.connect(uri);
         log("Connected to MongoDB");
-        // mongoose.connect('mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523');     
     },
     SetupServer: function (server) {
         app = server;
