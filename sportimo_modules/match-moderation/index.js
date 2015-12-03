@@ -16,8 +16,8 @@ var bodyParser = require('body-parser');
 var winston = require('winston');
 
 // Sportimo Modules
-var moderationServices = require('./moderationsServices');
-var Sports = require('./sportSetups');
+var moderationServices = require('./moderations-services');
+var Sports = require('./sports-settings');
  
 /*   Module Variables  */
 var app;
@@ -64,29 +64,31 @@ var match_schema = new mongoose.Schema({
     away_team: { type: String, ref: 'team' },
     home_score: Number,
     away_score: Number,
+    match_date: Date,
     time: Number,
     state: Number,
-    timeline: [matchevent],
-    moderation: [String] // module names ['XMLFeed','Dashboard']
+    timeline: [mongoose.Schema.Types.Mixed],
+    moderation: [String],
+    moderationData: mongoose.Schema.Types.Mixed // module names ['XMLFeed','Dashboard']
 }, { collection: 'scheduled_matches' });
 var scheduled_matches = mongoose.model("scheduled_matches", match_schema);
 
 
-var demoMatch = new scheduled_matches({
-    "_id": "565c4af6e4b030fba33dd459",
-    sport: "soccer",
-    "home_team": "565c4907e4b030fba33dd433",
-    "away_team": "565c492fe4b030fba33dd435",
-    "home_score": 0,
-    "away_score": 0,
-    "time": null
-})
+// var demoMatch = new scheduled_matches({
+//     "_id": "565c4af6e4b030fba33dd459",
+//     sport: "soccer",
+//     "home_team": "565c4907e4b030fba33dd433",
+//     "away_team": "565c492fe4b030fba33dd435",
+//     "home_score": 0,
+//     "away_score": 0,
+//     "time": null
+// })
 
-demoMatch.save(function (err, fluffy) {
-    if (err) return console.error(err);
-    else
-        return console.error(fluffy);
-});
+// demoMatch.save(function (err, fluffy) {
+//     if (err) return console.error(err);
+//     else
+//         return console.error(fluffy);
+// });
 
 /*{
     "_id": {
@@ -141,13 +143,13 @@ var ActiveMatches = {
                     if (err) return log(err, "error");
 
                     if (match) {
+                        var hookedMatch = AddModuleHooks(match);
+                        MATCHES.push(hookedMatch);
+                      //  console.log(hookedMatch);
                         if (callbackres)
-                            callbackres.send(match);
-
-                        match = AddModuleHooks(match);
-                        MATCHES.push(match);
-                        log("Found match with ID [" + match.id + "]. Hooking on it.", "info");
-                        return match;
+                            callbackres.send(hookedMatch);
+                        log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
+                        return hookedMatch;
                     }
                     else {
                         console.log(ActiveMatches.count, "info");
@@ -261,28 +263,83 @@ var Match = function (mongodbID, res) {
 }
 
 var AddModuleHooks = function (match) {
+    
+    var HookedMatch = {};// = match;
     // Set ID
-    match.id = match._id.toString();
+    HookedMatch.id = match._id.toString();
+    
+    // Match data
+    HookedMatch.data = match;
     
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
-    match.Sport = Sports[match.sport];
+    HookedMatch.sport = Sports[match.sport];
   
-    // Methods
-    match.AdvanceState = function () {
-        match.state++;
-        
-        if (match.Sport.segments[match.state].timed == true) {                  //  Should this segment be timed?
-            if (match.Sport.segments[match.state].initialTime)                  //  Does it have initial time?
-                match.time = match.Sport.segments[match.state].initialTime;
+    /*  ---------------
+    **   Methods
+    **  -------------*/
+    
+    /*  SetModerationService
+        Here we set the moderation service for the game. There is only reason to switch to manual
+        only if we don't want a hooked feed. Manual input will always work
+    */
+    HookedMatch.SetModerationService = function (moderationService) {
+        HookedMatch.moderation = [moderationService];
+    }
+     
+    /*  AdvanceState
+        The advance state method is called when we want to advance to the next segment of the game.
+        Depending on setting, here will determine if a timer should begin counting taht hold the
+        game's time.
+    */
+    HookedMatch.AdvanceState = function () {
+        HookedMatch.state++;
 
-            if (!match.Sport.time_dependant)                                    //  Is Time controlled?
-                match.MatchTimeInterval = setInterval(function () {
-                    match.time ++;
+        if (HookedMatch.Sport.segments[HookedMatch.state].timed == true) {                  //  Should this segment be timed?
+            if (HookedMatch.Sport.segments[HookedMatch.state].initialTime)                  //  Does it have initial time?
+                HookedMatch.time = HookedMatch.Sport.segments[HookedMatch.state].initialTime;
+
+            if (!HookedMatch.Sport.time_dependant)                                    //  Is Time controlled?
+                HookedMatch.MatchTimeInterval = setInterval(function () {
+                    match.time++;
                 }, 1000)
         }
     }
+    
+    HookedMatch.GetCurrentSegment = function(){
+        // We assign the name of the segment to the currentSegment var
+        return HookedMatch.Sport.segments[HookedMatch.state].name;
+    }
+    
+    /*  ToggleTimer
+        Toggles the game's timer state.
+    */
+    HookedMatch.ToggleTimer = function () {
+        if (HookedMatch.MatchTimeInterval) {
+            clearInterval(match.MatchTimeInterval);
+        } else {
+            HookedMatch.MatchTimeInterval = setInterval(function () {
+                match.time++;
+            }, 1000)
+        }
+    }
+    
+    /*  AddEvent
+        The addEvent method is a core method to the moderation system. It is called by
+        moderation services on manualy from the dashboard in order to inject events to
+        the timeline and also broadcast them on the sockets channel to be consumed by
+        other instances.
+    */
+    HookedMatch.AddEvent = function (eventCharacteristicsToBeDetermined) {
+        // 1. push event in timeline
+        // 2. broadcast event on pub/sub channel
+        // 3. save match to db
+        // 4. return match to Adder
+    }
 
-    return match;
+
+    console.log(HookedMatch);
+
+    return HookedMatch;
 }
 
 

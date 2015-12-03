@@ -3,6 +3,7 @@
 
 var services = {
 	XMLFeed: {
+		url: "",
 		init: function(){
 			
 		}

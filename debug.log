@@ -1,316 +1,143 @@
-2015-11-23T12:40:37.359Z - [90mcore[39m: [Wildcards Module] Start initial card validations
-2015-11-23T12:40:39.016Z - [90mcore[39m: [Wildcards Module] Cards Validation Request
-2015-11-23T12:40:39.143Z - [90mcore[39m: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-25T09:04:10.963Z - core: [Wildcards Module] Start initial card validations
-2015-11-25T09:04:15.844Z - core: [Wildcards Module] Cards Validation Request
-2015-11-25T09:04:15.845Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-25T09:04:16.084Z - core: [Wildcards Module] Looping through game evets
-2015-11-25T09:04:16.086Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T09:04:16.086Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T09:04:16.088Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-25T09:04:16.246Z - core: [Wildcards Module] Looping through game evets
-2015-11-25T09:04:16.248Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T09:04:16.248Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T09:04:16.249Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-25T09:04:16.445Z - core: [Wildcards Module] Looping through game evets
-2015-11-25T09:04:16.466Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T09:04:16.466Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T09:04:16.467Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-25T09:22:18.455Z - core: [Wildcards Module] Start initial card validations
-2015-11-25T09:22:19.656Z - core: [Wildcards Module] Cards Validation Request
-2015-11-25T09:22:19.806Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-25T09:26:51.313Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-25T09:27:11.058Z - core: [Wildcards Module] [Card 315_1] [Activated]
-2015-11-25T09:27:15.539Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-25T09:27:34.344Z - core: [Wildcards Module] [Card 315_2] [Activated]
-2015-11-25T09:27:42.799Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-25T09:27:56.733Z - core: [Wildcards Module] [Card 315_3] [Activated]
-2015-11-25T10:19:16.064Z - core: [Wildcards Module] Start initial card validations
-2015-11-25T10:19:17.720Z - core: [Wildcards Module] Cards Validation Request
-2015-11-25T10:19:17.812Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-25T10:19:17.934Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T10:19:17.935Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T10:19:17.937Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-25T10:19:18.125Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T10:19:18.125Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T10:19:18.126Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Result: No event found
-2015-11-25T10:19:18.322Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-25T10:19:18.323Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-28T07:17:13.465Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:17:15.817Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:17:16.130Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:22:09.013Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:22:11.147Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:22:11.186Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:25:46.688Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:25:47.818Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:25:48.156Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:25:51.574Z - core: [Wildcards Module] "received"
-2015-11-28T07:25:53.586Z - error: [Wildcards Module] No card found
-2015-11-28T07:40:10.625Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:40:11.790Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:40:12.139Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:41:50.764Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:41:51.068Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-28T07:42:10.782Z - core: [Wildcards Module] [Card 315_1] [Activated]
-2015-11-28T07:42:10.782Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:42:20.813Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:42:30.871Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:42:40.917Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:42:50.956Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:01.003Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:11.035Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:21.036Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:31.059Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:41.076Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:43:51.126Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:01.168Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:11.206Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:21.248Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:31.294Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:41.343Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:44:51.395Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:01.445Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:11.507Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:21.552Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:31.582Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:41.623Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:45:51.679Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:01.719Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:11.747Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:21.783Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:31.850Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:41.906Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:46:51.988Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:47:02.058Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:47:12.123Z - core: [Wildcards Module] [Card 315_1] [Card Timer Finished]
-2015-11-28T07:47:12.123Z - core: [Wildcards Module] [Card [object Object]
-2015-11-28T07:50:09.572Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:50:10.933Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:50:11.143Z - warn: [Wildcards Module] Result: No event found
-2015-11-28T07:50:11.159Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-28T07:50:11.159Z - core: [Wildcards Module] [Card {"cardid":"1","userid":"315","gameid":"433","minute":"1","cardtype":"1","timer":0,"which_half":"1","questionid":"4508","countpoints":30,"minpoints":30,"points":0,"correct":0,"activated":2,"linked_event":0,"saved":true}
-2015-11-28T07:50:11.159Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-28T07:50:11.159Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:50:24.941Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":300,"which_half":"1","questionid":4508,"countpoints":40,"minpoints":40,"points":80,"correct":0,"activated":0,"linked_event":0,"saved":false}
-2015-11-28T07:50:25.231Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-28T07:50:44.953Z - core: [Wildcards Module] [Card 315_2] [Activated]
-2015-11-28T07:50:44.953Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":300,"which_half":"1","questionid":4508,"countpoints":40,"minpoints":40,"points":80,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:50:55.006Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":290,"which_half":"1","questionid":4508,"countpoints":38.666666666666664,"minpoints":40,"points":79,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:05.028Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":280,"which_half":"1","questionid":4508,"countpoints":37.33333333333333,"minpoints":40,"points":77,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:15.100Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":270,"which_half":"1","questionid":4508,"countpoints":35.99999999999999,"minpoints":40,"points":76,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:25.142Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":260,"which_half":"1","questionid":4508,"countpoints":34.66666666666666,"minpoints":40,"points":75,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:35.209Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":250,"which_half":"1","questionid":4508,"countpoints":33.33333333333332,"minpoints":40,"points":73,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:45.276Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":240,"which_half":"1","questionid":4508,"countpoints":31.99999999999999,"minpoints":40,"points":72,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:51:55.345Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":230,"which_half":"1","questionid":4508,"countpoints":30.666666666666657,"minpoints":40,"points":71,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:05.385Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":220,"which_half":"1","questionid":4508,"countpoints":29.333333333333325,"minpoints":40,"points":69,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:15.468Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":210,"which_half":"1","questionid":4508,"countpoints":27.999999999999993,"minpoints":40,"points":68,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:25.501Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":200,"which_half":"1","questionid":4508,"countpoints":26.66666666666666,"minpoints":40,"points":67,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:35.552Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":190,"which_half":"1","questionid":4508,"countpoints":25.33333333333333,"minpoints":40,"points":65,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:45.585Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":180,"which_half":"1","questionid":4508,"countpoints":23.999999999999996,"minpoints":40,"points":64,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:52:55.629Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":170,"which_half":"1","questionid":4508,"countpoints":22.666666666666664,"minpoints":40,"points":63,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:05.686Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":160,"which_half":"1","questionid":4508,"countpoints":21.333333333333332,"minpoints":40,"points":61,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:15.722Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":150,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":40,"points":60,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:25.722Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":140,"which_half":"1","questionid":4508,"countpoints":18.666666666666668,"minpoints":40,"points":59,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:35.761Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":130,"which_half":"1","questionid":4508,"countpoints":17.333333333333336,"minpoints":40,"points":57,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:45.787Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":120,"which_half":"1","questionid":4508,"countpoints":16.000000000000004,"minpoints":40,"points":56,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:53:55.836Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":110,"which_half":"1","questionid":4508,"countpoints":14.66666666666667,"minpoints":40,"points":55,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:05.913Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":100,"which_half":"1","questionid":4508,"countpoints":13.333333333333336,"minpoints":40,"points":53,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:15.967Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":90,"which_half":"1","questionid":4508,"countpoints":12.000000000000002,"minpoints":40,"points":52,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:26.000Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":80,"which_half":"1","questionid":4508,"countpoints":10.666666666666668,"minpoints":40,"points":51,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:36.021Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":70,"which_half":"1","questionid":4508,"countpoints":9.333333333333334,"minpoints":40,"points":49,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:46.068Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":60,"which_half":"1","questionid":4508,"countpoints":8,"minpoints":40,"points":48,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:54:56.125Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":50,"which_half":"1","questionid":4508,"countpoints":6.666666666666667,"minpoints":40,"points":47,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:55:06.171Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":40,"which_half":"1","questionid":4508,"countpoints":5.333333333333334,"minpoints":40,"points":45,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:55:16.234Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":30,"which_half":"1","questionid":4508,"countpoints":4.000000000000001,"minpoints":40,"points":44,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:55:26.301Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":20,"which_half":"1","questionid":4508,"countpoints":2.666666666666668,"minpoints":40,"points":43,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:55:36.357Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":10,"which_half":"1","questionid":4508,"countpoints":1.3333333333333346,"minpoints":40,"points":41,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:55:46.397Z - core: [Wildcards Module] [Card 315_2] [Card Timer Finished]
-2015-11-28T07:55:46.397Z - core: [Wildcards Module] [Card {"cardid":2,"userid":"315","gameid":"433","minute":"10","cardtype":2,"timer":0,"which_half":"1","questionid":4508,"countpoints":1.3322676295501878e-15,"minpoints":40,"points":40,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:58:33.017Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T07:58:34.502Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T07:58:34.751Z - warn: [Wildcards Module] Result: No event found
-2015-11-28T07:58:34.753Z - warn: [Wildcards Module] Check if the card has finished
-2015-11-28T07:58:34.759Z - core: [Wildcards Module] [Card {"cardid":"2","userid":"315","gameid":"433","minute":"10","cardtype":"2","timer":0,"which_half":"1","questionid":"4508","countpoints":40,"minpoints":40,"points":0,"correct":0,"activated":2,"linked_event":0,"saved":true}
-2015-11-28T07:58:34.775Z - warn: [Wildcards Module] Result: It has finished.
-2015-11-28T07:58:34.779Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T07:58:40.384Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":300,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":20,"points":40,"correct":0,"activated":0,"linked_event":0,"saved":false}
-2015-11-28T07:58:40.758Z - core: [Wildcards Module] [Card saved in DB]
-2015-11-28T07:59:00.393Z - core: [Wildcards Module] [Card 315_3] [Activated]
-2015-11-28T07:59:00.394Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":300,"which_half":"1","questionid":4508,"countpoints":20,"minpoints":20,"points":40,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:59:10.407Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":290,"which_half":"1","questionid":4508,"countpoints":19.333333333333332,"minpoints":20,"points":39,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:59:20.427Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":280,"which_half":"1","questionid":4508,"countpoints":18.666666666666664,"minpoints":20,"points":39,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:59:30.444Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":270,"which_half":"1","questionid":4508,"countpoints":17.999999999999996,"minpoints":20,"points":38,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:59:40.459Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":260,"which_half":"1","questionid":4508,"countpoints":17.33333333333333,"minpoints":20,"points":37,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T07:59:50.503Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":250,"which_half":"1","questionid":4508,"countpoints":16.66666666666666,"minpoints":20,"points":37,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:00.535Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":240,"which_half":"1","questionid":4508,"countpoints":15.999999999999995,"minpoints":20,"points":36,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:10.574Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":230,"which_half":"1","questionid":4508,"countpoints":15.333333333333329,"minpoints":20,"points":35,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:20.590Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":220,"which_half":"1","questionid":4508,"countpoints":14.666666666666663,"minpoints":20,"points":35,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:30.654Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":210,"which_half":"1","questionid":4508,"countpoints":13.999999999999996,"minpoints":20,"points":34,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:40.697Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":200,"which_half":"1","questionid":4508,"countpoints":13.33333333333333,"minpoints":20,"points":33,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:00:50.784Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":190,"which_half":"1","questionid":4508,"countpoints":12.666666666666664,"minpoints":20,"points":33,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:00.840Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":180,"which_half":"1","questionid":4508,"countpoints":11.999999999999998,"minpoints":20,"points":32,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:10.925Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":170,"which_half":"1","questionid":4508,"countpoints":11.333333333333332,"minpoints":20,"points":31,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:20.992Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":160,"which_half":"1","questionid":4508,"countpoints":10.666666666666666,"minpoints":20,"points":31,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:31.070Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":150,"which_half":"1","questionid":4508,"countpoints":10,"minpoints":20,"points":30,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:41.101Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":140,"which_half":"1","questionid":4508,"countpoints":9.333333333333334,"minpoints":20,"points":29,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:01:51.106Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":130,"which_half":"1","questionid":4508,"countpoints":8.666666666666668,"minpoints":20,"points":29,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:01.112Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":120,"which_half":"1","questionid":4508,"countpoints":8.000000000000002,"minpoints":20,"points":28,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:11.105Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":110,"which_half":"1","questionid":4508,"countpoints":7.333333333333335,"minpoints":20,"points":27,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:21.109Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":100,"which_half":"1","questionid":4508,"countpoints":6.666666666666668,"minpoints":20,"points":27,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:31.108Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":90,"which_half":"1","questionid":4508,"countpoints":6.000000000000001,"minpoints":20,"points":26,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:41.107Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":80,"which_half":"1","questionid":4508,"countpoints":5.333333333333334,"minpoints":20,"points":25,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:02:51.119Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":70,"which_half":"1","questionid":4508,"countpoints":4.666666666666667,"minpoints":20,"points":25,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:01.126Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":60,"which_half":"1","questionid":4508,"countpoints":4,"minpoints":20,"points":24,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:11.130Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":50,"which_half":"1","questionid":4508,"countpoints":3.3333333333333335,"minpoints":20,"points":23,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:21.130Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":40,"which_half":"1","questionid":4508,"countpoints":2.666666666666667,"minpoints":20,"points":23,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:31.125Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":30,"which_half":"1","questionid":4508,"countpoints":2.0000000000000004,"minpoints":20,"points":22,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:41.126Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":20,"which_half":"1","questionid":4508,"countpoints":1.333333333333334,"minpoints":20,"points":21,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:03:51.133Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":10,"which_half":"1","questionid":4508,"countpoints":0.6666666666666673,"minpoints":20,"points":21,"correct":0,"activated":1,"linked_event":0,"saved":true}
-2015-11-28T08:04:01.144Z - core: [Wildcards Module] [Card 315_3] [Card Timer Finished]
-2015-11-28T08:04:01.146Z - core: [Wildcards Module] [Card {"cardid":3,"userid":"315","gameid":"433","minute":"18","cardtype":3,"timer":0,"which_half":"1","questionid":4508,"countpoints":6.661338147750939e-16,"minpoints":20,"points":20,"correct":0,"activated":2,"linked_event":0,"saved":true}
-2015-11-28T08:04:14.290Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T08:04:15.707Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T08:04:15.879Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T21:57:36.345Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T21:57:36.189Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-28T21:57:40.964Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T21:57:41.839Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T21:57:41.933Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T21:58:39.284Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-28T21:58:39.331Z - core: [Wildcards Module] Start initial card validations
-2015-11-28T21:58:47.386Z - core: [Wildcards Module] Cards Validation Request
-2015-11-28T21:58:47.667Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-28T21:58:47.714Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:29:09.029Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-30T10:29:09.186Z - core: [Wildcards Module] Start initial card validations
-2015-11-30T10:29:09.936Z - core: [Wildcards Module] Cards Validation Request
-2015-11-30T10:29:10.268Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:29:10.288Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:02.762Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-30T10:34:02.813Z - core: [Wildcards Module] Start initial card validations
-2015-11-30T10:34:03.656Z - core: [Wildcards Module] Cards Validation Request
-2015-11-30T10:34:03.790Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:03.820Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:28.209Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-30T10:34:28.260Z - core: [Wildcards Module] Start initial card validations
-2015-11-30T10:34:28.871Z - core: [Wildcards Module] Cards Validation Request
-2015-11-30T10:34:29.148Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:29.161Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:36.836Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-30T10:34:36.887Z - core: [Wildcards Module] Start initial card validations
-2015-11-30T10:34:37.623Z - core: [Wildcards Module] Cards Validation Request
-2015-11-30T10:34:37.710Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T10:34:37.719Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:32:11.631Z - core: [Live Matches Module] Connected to MongoDB
-2015-11-30T12:32:13.155Z - core: [Live Matches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:44:49.844Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:44:50.708Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:45:47.816Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:45:48.656Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:46:26.996Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:46:27.910Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:49:27.655Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:49:28.513Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:50:15.065Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:50:16.010Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:51:21.406Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:51:22.215Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:51:24.641Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T12:52:30.819Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:52:31.621Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T12:52:34.072Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T12:58:58.110Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T12:58:58.995Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:12:10.846Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:12:11.767Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:16:10.177Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:16:11.044Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:16:20.732Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:16:20.735Z - core: [ActiveMatches Module] Active Matches: undefined
-2015-11-30T13:17:03.782Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:17:04.621Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:17:08.001Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:17:08.004Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:17:15.236Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:17:15.238Z - core: [ActiveMatches Module] Active Matches: 2
-2015-11-30T13:17:22.055Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:17:22.056Z - core: [ActiveMatches Module] Active Matches: 3
-2015-11-30T13:22:47.599Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:22:48.635Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:22:50.456Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:23:29.530Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:23:30.517Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:23:38.062Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:24:02.842Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:24:03.697Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:24:06.533Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:24:06.536Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:24:06.537Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:25:13.364Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:25:14.366Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:25:18.198Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:25:18.201Z - core: [ActiveMatches Module] 
-2015-11-30T13:25:18.202Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:28:55.668Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:28:56.628Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:28:59.838Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:28:59.841Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:28:59.842Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:29:41.608Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:29:42.577Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:29:51.488Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:29:51.491Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:29:51.492Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:30:20.059Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:30:20.836Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:30:24.808Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:30:24.814Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:30:24.815Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:30:50.215Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:30:51.061Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:30:55.069Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:30:55.075Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:30:55.076Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:31:20.573Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:31:21.458Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:31:23.988Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:31:23.994Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:31:23.994Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:32:32.494Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:32:33.608Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:32:42.295Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:32:42.301Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:32:42.303Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:33:26.313Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:33:27.347Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:33:31.126Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:33:31.131Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:33:31.131Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:34:09.990Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:34:10.958Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:34:14.626Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:34:14.632Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:34:14.634Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:35:37.004Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:35:37.805Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:36:03.284Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:36:04.091Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:36:07.338Z - core: [ActiveMatches Module] Found match. Hooking on it.
-2015-11-30T13:36:07.345Z - core: [ActiveMatches Module] undefined
-2015-11-30T13:36:07.346Z - core: [ActiveMatches Module] Active Matches: 1
-2015-11-30T13:38:17.860Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-11-30T13:38:18.640Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:40:17.385Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:42:35.620Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:44:47.627Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:46:13.250Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:48:52.043Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:50:01.698Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:51:03.326Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:52:14.614Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:53:15.266Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:53:44.765Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:54:34.580Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-11-30T13:55:15.795Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:12:31.131Z - core: [Wildcards Module] Start initial card validations
+2015-12-03T11:12:30.974Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:12:31.836Z - core: [Wildcards Module] Cards Validation Request
+2015-12-03T11:12:32.027Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:12:32.070Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:14:54.245Z - core: [Wildcards Module] Start initial card validations
+2015-12-03T11:14:54.195Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:14:55.027Z - core: [Wildcards Module] Cards Validation Request
+2015-12-03T11:14:55.160Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:14:55.194Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:18.884Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:15:18.945Z - core: [Wildcards Module] Start initial card validations
+2015-12-03T11:15:19.704Z - core: [Wildcards Module] Cards Validation Request
+2015-12-03T11:15:19.774Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:19.792Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:38.049Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:15:38.099Z - core: [Wildcards Module] Start initial card validations
+2015-12-03T11:15:39.031Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:39.183Z - core: [Wildcards Module] Cards Validation Request
+2015-12-03T11:15:39.677Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:01:00.561Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:00.564Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:00.562Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:01:00.564Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T13:01:32.324Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:32.325Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T13:01:32.327Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:32.329Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:01:35.119Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:01:35.125Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:04:06.873Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T13:04:06.875Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:04:13.700Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:04:13.702Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:10:18.168Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:18.169Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:18.830Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:19.532Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:19.535Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:20.510Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:20.525Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:20.526Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:21.894Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:21.895Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:23.925Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:23.926Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:27.170Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:27.171Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:32.377Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:32.378Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:40.936Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:40.938Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:10:55.253Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:55.254Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:11:19.333Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:11:19.334Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:11:19.335Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:12:00.032Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:12:00.033Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:13:09.004Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:13:09.005Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:15:05.942Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:15:05.943Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:18:26.532Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:58:01.240Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:58:01.241Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:58:01.242Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T13:58:01.240Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:58:14.678Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:58:14.696Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:59:51.657Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:59:51.658Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:59:51.664Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:59:51.665Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:00:02.228Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:00:02.229Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:00:02.237Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:00:02.238Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:00:07.360Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T14:00:27.153Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T14:01:14.258Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:14.258Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:14.316Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:14.316Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:24.681Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:24.682Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:25.435Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:25.559Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:25.560Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:26.465Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:27.667Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:27.884Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:27.885Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:29.976Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:29.977Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:30.906Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:33.298Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:33.301Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:36.154Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:36.155Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:38.502Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:38.502Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:44.971Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:44.972Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:47.108Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:47.110Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:01:59.353Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:59.354Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:02:01.484Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:02:01.486Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:02:23.478Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:02:23.479Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:02:25.588Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:02:25.589Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:03:16.990Z - error: [ActiveMatches Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
+2015-12-03T14:03:52.273Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T14:04:02.361Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:04:02.362Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:04:02.929Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:04:02.929Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:04:07.307Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T14:04:07.531Z - error: [ActiveMatches Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
+2015-12-03T14:04:21.358Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:04:21.359Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:04:31.918Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:04:31.919Z - core: [Wildcards Module] {Connection ended}
+2015-12-03T14:04:36.245Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T14:05:00.582Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:32:28.548Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:35:08.778Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:38:26.973Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:40:16.981Z - error: [ActiveMatches Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
+2015-12-03T14:40:16.982Z - error: [ActiveMatches Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
+2015-12-03T14:45:24.850Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:46:50.813Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:47:45.445Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:50:31.372Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T15:02:49.209Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T15:11:19.105Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T15:20:34.384Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T16:53:58.170Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T17:06:04.535Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T19:47:58.790Z - core: [ActiveMatches Module] Connected to MongoDB

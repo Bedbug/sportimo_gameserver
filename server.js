@@ -70,19 +70,19 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,d
 
 /* Modules */
 if (process.env.NODE_ENV != "production") {
-    var LiveMatches = require('./sportimo_modules/activematches');
-    LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
+    var LiveMatches = require('./sportimo_modules/match-moderation');
+    // LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
     LiveMatches.setMongoConnection(mongoConnection);
     LiveMatches.setServerForRoutes(app);
 }
 
-var Wildcards = require('./sportimo_modules/wildcards');
-Wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
-Wildcards.setServerForRoutes(app);
+// var Wildcards = require('./sportimo_modules/wildcards');
+// Wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
+// Wildcards.setServerForRoutes(app);
 
-var Notifications = require('./sportimo_modules/notifications');
-Notifications.SetupServer(app);
-Notifications.setMongoConnection(mongoConnection);
+// var Notifications = require('./sportimo_modules/notifications');
+// Notifications.SetupServer(app);
+// Notifications.setMongoConnection(mongoConnection);
 
 
 
