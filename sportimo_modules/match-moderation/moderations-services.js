@@ -2,15 +2,30 @@
 */
 
 var services = {
-	XMLFeed: {
+	xmlfeed: {
 		url: "",
-		init: function(){
-			
+		init: function (url) {
+			console.log("Initialize Service from XML Feed.");
+			// this.url = url;
 		}
 	},
-	Dashboard:{
-		
+	manual: {
+		init: function (server, match, log) {
+			
+			
+			log("Initialize manual moderation Service.","info");
+			
+			// Set up Routes
+			server.get('/v1/moderation/' + match.id + '/event', function (req, res) {
+				res.send("All ok");
+			});
+			
+			server.post('/v1/moderation/' + match.id + '/event', function (req, res) {
+				log("Add Event Request for matchid [" + match.id + "]", "info");
+				match.AddEvent(req.body, res);
+			});
+		}
 	}
-}; 
+};
 
 module.exports = services;

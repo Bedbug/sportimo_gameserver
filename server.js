@@ -71,7 +71,7 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,d
 /* Modules */
 if (process.env.NODE_ENV != "production") {
     var LiveMatches = require('./sportimo_modules/match-moderation');
-    // LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
+    LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
     LiveMatches.setMongoConnection(mongoConnection);
     LiveMatches.setServerForRoutes(app);
 }
@@ -90,6 +90,17 @@ function log(info) {
     console.log("[" + Date.now() + "] API CALL: " + info);
 }
 
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+
+
+
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    next();
+});
 
 app.get('/', function (req, res, next) {
     res.send(200, "The Cards Server is running smoothly.");

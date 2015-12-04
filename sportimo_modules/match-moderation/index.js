@@ -17,6 +17,7 @@ var winston = require('winston');
 
 // Sportimo Modules
 var moderationServices = require('./moderations-services');
+var EventsParser = require('./events-parser');
 var Sports = require('./sports-settings');
  
 /*   Module Variables  */
@@ -118,7 +119,8 @@ var scheduled_matches = mongoose.model("scheduled_matches", match_schema);
 
 
 /**/
-var RedisClient;
+var RedisClientPub;
+var RedisClientSub;
 
 var ActiveMatches = {
     count: MATCHES.length,
@@ -145,7 +147,7 @@ var ActiveMatches = {
                     if (match) {
                         var hookedMatch = AddModuleHooks(match);
                         MATCHES.push(hookedMatch);
-                      //  console.log(hookedMatch);
+                        //  console.log(hookedMatch);
                         if (callbackres)
                             callbackres.send(hookedMatch);
                         log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
@@ -168,36 +170,46 @@ var ActiveMatches = {
     },
     setRedisPubSub: function (RedisIP, RedisPort, RedisAuth, RedisChannel) {
         // Initialize and connect to the Redis datastore
-        RedisClient = redis.createClient(RedisPort, RedisIP);
-
-        RedisClient.auth(RedisAuth, function (err) {
+        RedisClientPub = redis.createClient(RedisPort, RedisIP);
+         RedisClientPub.auth(RedisAuth, function (err) {
             if (err) { throw err; }
         });
+        
+        RedisClientSub = redis.createClient(RedisPort, RedisIP);
+         RedisClientSub.auth(RedisAuth, function (err) {
+            if (err) { throw err; }
+        });
+        
+       
 
-        RedisClient.on("error", function (err) {
+RedisClientPub.on("error", function (err) {
+            log("{''Error'': ''" + err + "''}");
+        });
+        
+        RedisClientSub.on("error", function (err) {
             log("{''Error'': ''" + err + "''}");
         });
 
-        RedisClient.on("subscribe", function (channel, count) {
+        RedisClientSub.on("subscribe", function (channel, count) {
             log("Subscribed to Sportimo Events PUB/SUB channel");
         });
 
-        RedisClient.on("unsubscribe", function (channel, count) {
+        RedisClientSub.on("unsubscribe", function (channel, count) {
             log("Subscribed from Sportimo Events PUB/SUB channel");
         });
 
-        RedisClient.on("end", function () {
+        RedisClientSub.on("end", function () {
             log("{Connection ended}");
         });
 
-        RedisClient.subscribe(RedisChannel);
+        RedisClientSub.subscribe(RedisChannel);
 
-        RedisClient.on("message", function (channel, message) {
+        RedisClientSub.on("message", function (channel, message) {
             if (message == "ping")
                 return;
 
-            var obj = JSON.parse(JSON.parse(message).data);
-            log(obj, "debug");
+            // var obj = JSON.parse(JSON.parse(message).data);
+            log("[Redis] :"+message, "debug");
         });
     },
     setServerForRoutes: function (server) {
@@ -226,6 +238,9 @@ var ActiveMatches = {
                 return res.send(match);
             })
         });
+    },
+    InjectEvent: function (evnt, res) {
+        ActiveMatches.GetMatch(evnt.id).AddEvent(evnt.data, res);
     }
 }
 
@@ -263,16 +278,29 @@ var Match = function (mongodbID, res) {
 }
 
 var AddModuleHooks = function (match) {
-    
+
     var HookedMatch = {};// = match;
+    
+    HookedMatch.MODERATION_SERVICES = [];
+    
     // Set ID
     HookedMatch.id = match._id.toString();
     
     // Match data
     HookedMatch.data = match;
     
+    // Validations
+    if (HookedMatch.data.timeline.length == 0) {
+        HookedMatch.data.state = 0;
+        HookedMatch.data.timeline.push([]);
+        HookedMatch.data.markModified('timeline');
+        HookedMatch.data.save();
+    }
+    
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
+    
+    
   
     /*  ---------------
     **   Methods
@@ -282,9 +310,26 @@ var AddModuleHooks = function (match) {
         Here we set the moderation service for the game. There is only reason to switch to manual
         only if we don't want a hooked feed. Manual input will always work
     */
-    HookedMatch.SetModerationService = function (moderationService) {
-        HookedMatch.moderation = [moderationService];
+    HookedMatch.AddModerationService = function (service, initializing) {
+
+        if (HookedMatch.moderation.indexOf(service) > 0)
+            return log("Service already active", "core");
+
+        if (!initializing)
+            HookedMatch.moderation.push(service);
+
+        HookedMatch.MODERATION_SERVICES.push(moderationServices[service]);
+
+        if (service == "manual")
+            HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
+
     }
+     
+    // Set services for the first time
+    HookedMatch.moderation = match.moderation;
+    HookedMatch.moderation.forEach(function (service) {
+        HookedMatch.AddModerationService(service, true);
+    });
      
     /*  AdvanceState
         The advance state method is called when we want to advance to the next segment of the game.
@@ -304,8 +349,8 @@ var AddModuleHooks = function (match) {
                 }, 1000)
         }
     }
-    
-    HookedMatch.GetCurrentSegment = function(){
+
+    HookedMatch.GetCurrentSegment = function () {
         // We assign the name of the segment to the currentSegment var
         return HookedMatch.Sport.segments[HookedMatch.state].name;
     }
@@ -329,15 +374,26 @@ var AddModuleHooks = function (match) {
         the timeline and also broadcast them on the sockets channel to be consumed by
         other instances.
     */
-    HookedMatch.AddEvent = function (eventCharacteristicsToBeDetermined) {
+    HookedMatch.AddEvent = function (event, res) {
+        
+        var evtObject = EventsParser.Parse(event)
+        
         // 1. push event in timeline
+        this.data.timeline[this.data.state].push(evtObject);
+        
         // 2. broadcast event on pub/sub channel
+        RedisClientPub.publish("socketServers", JSON.stringify(evtObject));
+        
         // 3. save match to db
-        // 4. return match to Adder
+        this.data.markModified('timeline');
+        this.data.save();
+        
+        // 4. return match to Sender
+        return res.status(200);
     }
 
 
-    console.log(HookedMatch);
+    // console.log(HookedMatch);
 
     return HookedMatch;
 }
@@ -357,7 +413,7 @@ var logger = new (winston.Logger)({
         prompt: 'grey',
         debug: 'blue',
         info: 'green',
-        core: 'grey',
+        core: 'magenta',
         warn: 'yellow',
         error: 'red'
     }
@@ -365,18 +421,19 @@ var logger = new (winston.Logger)({
 
 logger.add(winston.transports.Console, { timestamp: true, level: process.env.LOG_LEVEL || 'debug', prettyPrint: true, colorize: 'level' });
 
-logger.add(winston.transports.File, {
-    prettyPrint: true,
-    level: 'core',
-    silent: false,
-    colorize: false,
-    timestamp: true,
-    filename: 'debug.log',
-    maxsize: 40000,
-    maxFiles: 10,
-    json: false
-});
-
+if (process.env.NODE_ENV == "production") {
+    logger.add(winston.transports.File, {
+        prettyPrint: true,
+        level: 'core',
+        silent: false,
+        colorize: false,
+        timestamp: true,
+        filename: 'debug.log',
+        maxsize: 40000,
+        maxFiles: 10,
+        json: false
+    });
+}
 function log(text, level) {
     var loglevel = level || 'core';
     logger.log(loglevel, "[ActiveMatches Module] " + text);
