@@ -123,6 +123,7 @@ var RedisClientPub;
 var RedisClientSub;
 
 var ActiveMatches = {
+    mock: true,
     count: MATCHES.length,
     create: function (mongoMatchID, callbackres) {
         if (!mongoMatchID) {
@@ -137,55 +138,88 @@ var ActiveMatches = {
                 callbackres.send(oldMatch);
         }
         else {
+
+             ActiveMatches.LoadMatchFromDB(mongoMatchID,callbackres);
+
+        }
+    },
+    LoadMatchFromDB: function (matchid, res) {
+        if (!this.mock) {
             scheduled_matches
                 .findOne({ _id: mongoMatchID })
                 .populate('home_team')
                 .populate('away_team')
                 .exec(function (err, match) {
+
                     if (err) return log(err, "error");
 
                     if (match) {
                         var hookedMatch = AddModuleHooks(match);
                         MATCHES.push(hookedMatch);
                         //  console.log(hookedMatch);
-                        if (callbackres)
-                            callbackres.send(hookedMatch);
+                        if (res)
+                            res.send(hookedMatch);
                         log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
                         return hookedMatch;
                     }
                     else {
                         console.log(ActiveMatches.count, "info");
-                        callbackres.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
+                        res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
                         return null;
                     }
                 });
+        }
+        else {
+            var match = {
+                _id: "moxxkId",
+                sport: "soccer",
+                home_team: { name:"Pao", logo:"http://placehold.it/100x150"},
+                away_team: { name: "Olympiakos", logo:"http://placehold.it/100x150" },
+                home_score: 2,
+                away_score: 1,
+                match_date: moment().utc(),
+                time: 5,
+                state: 1,
+                timeline: [[],[]],
+                moderation: ['manual']
+            }
+
+            var hookedMatch = AddModuleHooks(match);
+            MATCHES.push(hookedMatch);
+      
+            if (res)
+                res.send(hookedMatch);
+            log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
+            return hookedMatch;
         }
     },
     GetMatch: function (matchID) {
         return _.findWhere(MATCHES, { id: matchID });
     },
     setMongoConnection: function (uri) {
-        mongoose.connect(uri);
+        if(this.mock) return;
+         mongoose.connect(uri);
         log("Connected to MongoDB", "core");
     },
     setRedisPubSub: function (RedisIP, RedisPort, RedisAuth, RedisChannel) {
+         if(this.mock) return;
         // Initialize and connect to the Redis datastore
         RedisClientPub = redis.createClient(RedisPort, RedisIP);
-         RedisClientPub.auth(RedisAuth, function (err) {
+        RedisClientPub.auth(RedisAuth, function (err) {
             if (err) { throw err; }
         });
-        
-        RedisClientSub = redis.createClient(RedisPort, RedisIP);
-         RedisClientSub.auth(RedisAuth, function (err) {
-            if (err) { throw err; }
-        });
-        
-       
 
-RedisClientPub.on("error", function (err) {
+        RedisClientSub = redis.createClient(RedisPort, RedisIP);
+        RedisClientSub.auth(RedisAuth, function (err) {
+            if (err) { throw err; }
+        });
+
+
+
+        RedisClientPub.on("error", function (err) {
             log("{''Error'': ''" + err + "''}");
         });
-        
+
         RedisClientSub.on("error", function (err) {
             log("{''Error'': ''" + err + "''}");
         });
@@ -209,7 +243,7 @@ RedisClientPub.on("error", function (err) {
                 return;
 
             // var obj = JSON.parse(JSON.parse(message).data);
-            log("[Redis] :"+message, "debug");
+            log("[Redis] :" + message, "debug");
         });
     },
     setServerForRoutes: function (server) {
@@ -284,7 +318,7 @@ var AddModuleHooks = function (match) {
     HookedMatch.MODERATION_SERVICES = [];
     
     // Set ID
-    HookedMatch.id = match._id.toString();
+    HookedMatch.id = match._id.toString() || 'moxxkId';
     
     // Match data
     HookedMatch.data = match;
@@ -375,7 +409,7 @@ var AddModuleHooks = function (match) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
-        
+
         var evtObject = EventsParser.Parse(event)
         
         // 1. push event in timeline
