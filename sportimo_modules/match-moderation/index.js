@@ -133,7 +133,7 @@ var ActiveMatches = {
         var oldMatch = ActiveMatches.GetMatch(mongoMatchID);
         // safeguard for duplicates
         if (oldMatch) {
-            log("Match with the same Id already exists", "info");
+            log("Match with the same ID already exists. Hooking.", "info");
             if (callbackres)
                 callbackres.send(oldMatch);
         }
