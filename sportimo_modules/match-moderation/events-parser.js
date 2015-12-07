@@ -1,9 +1,8 @@
 var EventsParser = {
 	Parse: function(data){
 		var evtObject = {};
-		console.log(data.type);
 		switch(data.type){
-			case "message":
+			default:
 				evtObject = data;
 			break;
 		}

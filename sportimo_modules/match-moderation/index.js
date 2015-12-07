@@ -123,7 +123,7 @@ var RedisClientPub;
 var RedisClientSub;
 
 var ActiveMatches = {
-    mock: true,
+    mock: false,
     count: MATCHES.length,
     create: function (mongoMatchID, callbackres) {
         if (!mongoMatchID) {
@@ -139,14 +139,14 @@ var ActiveMatches = {
         }
         else {
 
-             ActiveMatches.LoadMatchFromDB(mongoMatchID,callbackres);
+            ActiveMatches.LoadMatchFromDB(mongoMatchID, callbackres);
 
         }
     },
     LoadMatchFromDB: function (matchid, res) {
         if (!this.mock) {
             scheduled_matches
-                .findOne({ _id: mongoMatchID })
+                .findOne({ _id: matchid })
                 .populate('home_team')
                 .populate('away_team')
                 .exec(function (err, match) {
@@ -173,20 +173,20 @@ var ActiveMatches = {
             var match = {
                 _id: "moxxkId",
                 sport: "soccer",
-                home_team: { name:"Pao", logo:"http://placehold.it/100x150"},
-                away_team: { name: "Olympiakos", logo:"http://placehold.it/100x150" },
+                home_team: { name: "Pao", logo: "" },
+                away_team: { name: "Olympiakos", logo: "" },
                 home_score: 2,
                 away_score: 1,
                 match_date: moment().utc(),
                 time: 5,
                 state: 1,
-                timeline: [[],[]],
+                timeline: [[], []],
                 moderation: ['manual']
             }
 
             var hookedMatch = AddModuleHooks(match);
             MATCHES.push(hookedMatch);
-      
+
             if (res)
                 res.send(hookedMatch);
             log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
@@ -197,12 +197,12 @@ var ActiveMatches = {
         return _.findWhere(MATCHES, { id: matchID });
     },
     setMongoConnection: function (uri) {
-        if(this.mock) return;
-         mongoose.connect(uri);
+        if (this.mock) return;
+        mongoose.connect(uri);
         log("Connected to MongoDB", "core");
     },
     setRedisPubSub: function (RedisIP, RedisPort, RedisAuth, RedisChannel) {
-         if(this.mock) return;
+        if (this.mock) return;
         // Initialize and connect to the Redis datastore
         RedisClientPub = redis.createClient(RedisPort, RedisIP);
         RedisClientPub.auth(RedisAuth, function (err) {
@@ -404,23 +404,29 @@ var AddModuleHooks = function (match) {
     
     /*  AddEvent
         The addEvent method is a core method to the moderation system. It is called by
-        moderation services on manualy from the dashboard in order to inject events to
+        moderation services or manualy from the dashboard in order to inject events to
         the timeline and also broadcast them on the sockets channel to be consumed by
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
 
         var evtObject = EventsParser.Parse(event)
-        
+      
         // 1. push event in timeline
-        this.data.timeline[this.data.state].push(evtObject);
+        if (evtObject.timeline_event){
+            log("Received Timeline event","info");
+            this.data.timeline[this.data.state].push(evtObject);
+         }
         
         // 2. broadcast event on pub/sub channel
         RedisClientPub.publish("socketServers", JSON.stringify(evtObject));
         
         // 3. save match to db
-        this.data.markModified('timeline');
-        this.data.save();
+        if (evtObject.timeline_event) {
+            this.data.markModified('timeline');
+             log("Updating database","info");
+            this.data.save();
+        }
         
         // 4. return match to Sender
         return res.status(200);
