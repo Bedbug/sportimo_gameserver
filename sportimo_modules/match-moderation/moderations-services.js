@@ -21,8 +21,22 @@ var services = {
 			});
 			
 			server.post('/v1/moderation/' + match.id + '/event', function (req, res) {
-				log("Add Event Request for matchid [" + match.id + "]", "info");
-				match.AddEvent(req.body, res);
+				switch(req.body.type){
+					case "removeEvent":
+						log("[moderation-service] Remove Event Request for matchid [" + req.body.match_id + "] and event ID ["+req.body.data.event_id+"]", "info");
+						match.RemoveEvent(req.body, res);
+					break;
+					case "updateEvent":
+						log("[moderation-service] Update Event Request for matchid [" + req.body.match_id + "] and event ID ["+req.body.data.id+"]", "info");
+						match.UpdateEvent(req.body, res);
+					break;
+					default:
+						log("Add Event Request for matchid [" + match.id + "] with eventID ["+req.body.id+"]", "info");
+						match.AddEvent(req.body, res);
+					break;	
+				}
+				
+				
 			});
 		}
 	}

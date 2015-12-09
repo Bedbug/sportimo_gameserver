@@ -68,7 +68,11 @@ var match_schema = new mongoose.Schema({
     match_date: Date,
     time: Number,
     state: Number,
+    matchstats: mongoose.Schema.Types.Mixed,
+    teamstats: mongoose.Schema.Types.Mixed,
+    playerstats: mongoose.Schema.Types.Mixed,
     timeline: [mongoose.Schema.Types.Mixed],
+    settings: mongoose.Schema.Types.Mixed,
     moderation: [String],
     moderationData: mongoose.Schema.Types.Mixed // module names ['XMLFeed','Dashboard']
 }, { collection: 'scheduled_matches' });
@@ -247,6 +251,7 @@ var ActiveMatches = {
         });
     },
     setServerForRoutes: function (server) {
+        log("Setting up moderation Routes");
         app = server;
         app.use(bodyParser.json());
         app.use(function (req, res, next) {
@@ -266,11 +271,10 @@ var ActiveMatches = {
             req.body.last_action_time = moment();
         });
 
-        app.get('/v1/live/match/', function (req, res) {
-
-            scheduled_matches.findById(req.body._id, function (err, match) {
-                return res.send(match);
-            })
+         app.get('/v1/live/match/:id', function (req, res) {
+           
+                return res.send(ActiveMatches.GetMatch(req.params.id));
+           
         });
     },
     InjectEvent: function (evnt, res) {
@@ -425,13 +429,78 @@ var AddModuleHooks = function (match) {
         if (evtObject.timeline_event) {
             this.data.markModified('timeline');
              log("Updating database","info");
-            this.data.save();
         }
         
-        // 4. return match to Sender
-        return res.status(200);
-    }
+  
+         this.data.matchstats.events_sent ++;
+         this.data.markModified('matchstats');
 
+         this.data.save();
+        
+        // 4. return match to Sender
+        return res.status(200).send();
+    }
+    
+    /*  RemoveEvent
+        
+    */
+    HookedMatch.RemoveEvent = function (event, res) {
+        
+        var eventObj = _.findWhere(this.data.timeline[event.data.event_segment], {id: event.data.event_id, match_id: event.match_id});
+        
+        // set status to removed
+        eventObj.status = "removed";
+        
+        // Should we destroy events on just mark them "removed"
+        if(this.data.settings.destroyOnDelete)
+            this.data.timeline[event.data.event_segment] = _.without(this.data.timeline[event.data.event_segment], eventObj );
+
+        // Broadcast the remove event so others can consume it.
+        RedisClientPub.publish("socketServers", JSON.stringify(event));
+        
+        // 3. save match to db
+        this.data.markModified('timeline');
+             log("Updating database","info");
+     
+         this.data.save();
+        
+        // 4. return match to Sender
+       return res.status(200).send();
+    }
+    
+    /*  RemoveEvent
+        
+    */
+    HookedMatch.UpdateEvent = function (event, res) {
+       
+       
+        for (var i = 0; i< this.data.timeline[event.data.state].length; i++){
+           if(this.data.timeline[event.data.state][i].id == event.data.id && this.data.timeline[event.data.state][i].match_id == event.match_id){
+                 console.log(this.data.timeline[event.data.state][i]);
+               this.data.timeline[event.data.state][i] = event.data;
+                console.log(this.data.timeline[event.data.state][i]);
+               break;
+           }
+       }
+       
+        // var indx  = _.indexOf(this.data.timeline[event.data.state], {id: event.data.id, match_id: event.match_id});
+        
+        //  console.log(indx);
+         
+        // this.data.timeline[event.data.data.state][indx] = event;
+
+        // Broadcast the remove event so others can consume it.
+        RedisClientPub.publish("socketServers", JSON.stringify(event));
+        
+        // 3. save match to db
+        this.data.markModified('timeline');
+             log("Updating database","info");
+     
+         this.data.save();
+        
+        // 4. return match to Sender
+       return res.status(200).send();
+    }
 
     // console.log(HookedMatch);
 
@@ -459,7 +528,7 @@ var logger = new (winston.Logger)({
     }
 });
 
-logger.add(winston.transports.Console, { timestamp: true, level: process.env.LOG_LEVEL || 'debug', prettyPrint: true, colorize: 'level' });
+logger.add(winston.transports.Console, { timestamp: true, level: process.env.LOG_LEVEL || 'info', prettyPrint: true, colorize: 'level' });
 
 if (process.env.NODE_ENV == "production") {
     logger.add(winston.transports.File, {

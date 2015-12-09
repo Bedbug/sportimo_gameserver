@@ -64,7 +64,10 @@ function onCrossDomainHandler(req, res) {
     res.end(xml);
 }
 
-var redisCreds = { url: 'angelfish.redistogo.com', port: 9455, secret: 'd8deecf088b01d686f7f7cbfd11e96a9', channel: "socketServers" };
+// OLD PUB/SUB Channel
+// var redisCreds = { url: 'angelfish.redistogo.com', port: 9455, secret: 'd8deecf088b01d686f7f7cbfd11e96a9', channel: "socketServers" };
+
+var redisCreds = { url: 'clingfish.redistogo.com', port: 9307, secret: '075bc004e0e54a4a738c081bf92bc61d', channel: "socketServers" };
 var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 
 
