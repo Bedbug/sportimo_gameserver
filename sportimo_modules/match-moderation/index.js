@@ -17,7 +17,7 @@ var winston = require('winston');
 
 // Sportimo Modules
 var moderationServices = require('./moderations-services');
-var StatsAnalyzer = require('./events-stats-analyzer');
+var StatsHelper = require('./events-stats-analyzer');
 var Sports = require('./sports-settings');
  
 /*   Module Variables  */
@@ -68,9 +68,7 @@ var match_schema = new mongoose.Schema({
     match_date: Date,
     time: Number,
     state: Number,
-    matchstats: mongoose.Schema.Types.Mixed,
-    teamstats: mongoose.Schema.Types.Mixed,
-    playerstats: mongoose.Schema.Types.Mixed,
+    stats: mongoose.Schema.Types.Mixed,
     timeline: [mongoose.Schema.Types.Mixed],
     settings: mongoose.Schema.Types.Mixed,
     moderation: [String],
@@ -413,13 +411,11 @@ var AddModuleHooks = function (match) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
-        
+      
         // Parses the event based on sport and makes changes in the stats of the match
-        StatsAnalyzer.Parse(event, match, log);
-        
-        
-        console.log(this.data.playerstats);
-        
+        StatsHelper.Parse(event, match, log);
+       
+    
         var evtObject = event.data;
       
         // 1. push event in timeline
@@ -438,8 +434,9 @@ var AddModuleHooks = function (match) {
         }
         
   
-         this.data.matchstats.events_sent ++;
-         this.data.markModified('matchstats');
+         StatsHelper.UpdateStat(match.id,{events_sent:1},this.data);
+          
+         this.data.markModified('stats');
 
          this.data.save();
         

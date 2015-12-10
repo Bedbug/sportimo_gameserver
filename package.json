@@ -7,6 +7,7 @@
   "dependencies": {
     "body-parser": "",
     "express": "",
+    "lodash": "^3.10.1",
     "moment": "^2.10.6",
     "mongoose": "^4.2.0",
     "needle": "^0.10.0",
