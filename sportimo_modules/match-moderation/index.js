@@ -17,7 +17,7 @@ var winston = require('winston');
 
 // Sportimo Modules
 var moderationServices = require('./moderations-services');
-var EventsParser = require('./events-parser');
+var StatsAnalyzer = require('./events-stats-analyzer');
 var Sports = require('./sports-settings');
  
 /*   Module Variables  */
@@ -413,8 +413,14 @@ var AddModuleHooks = function (match) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
-
-        var evtObject = EventsParser.Parse(event)
+        
+        // Parses the event based on sport and makes changes in the stats of the match
+        StatsAnalyzer.Parse(event, match, log);
+        
+        
+        console.log(this.data.playerstats);
+        
+        var evtObject = event.data;
       
         // 1. push event in timeline
         if (evtObject.timeline_event){
