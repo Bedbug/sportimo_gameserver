@@ -256,7 +256,11 @@ var ActiveMatches = {
             if (err) { throw err; }
         });
 
+        setInterval(function(){
 
+        RedisClientPub.publish("socketServers", JSON.stringify({server:"[GameServer] Active matches: "+MATCHES.length}) );
+  
+        }, 30000);
 
         RedisClientPub.on("error", function (err) {
             log("{''Error'': ''" + err + "''}");
@@ -281,7 +285,7 @@ var ActiveMatches = {
         RedisClientSub.subscribe(RedisChannel);
 
         RedisClientSub.on("message", function (channel, message) {
-            if (message == "ping")
+            if (JSON.parse(message).server)
                 return;
 
              log("[Redis] : Event has come through the channel.", "info");
@@ -452,7 +456,7 @@ var AddModuleHooks = function (match) {
     */
     HookedMatch.AddEvent = function (event, res) {
       
-        // Parses the event based on sport and makes changes in the stats of the match
+        // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match, log);
 
 
@@ -475,7 +479,7 @@ var AddModuleHooks = function (match) {
         }
 
 
-        StatsHelper.UpdateStat(match.id, { events_sent: 1 }, this.data);
+        StatsHelper.UpsertStat(match.id, { events_sent: 1 }, this.data);
 
         this.data.markModified('stats');
 
@@ -489,15 +493,19 @@ var AddModuleHooks = function (match) {
         
     */
     HookedMatch.RemoveEvent = function (event, res) {
-
-        var eventObj = _.findWhere(this.data.timeline[event.data.event_segment], { id: event.data.event_id, match_id: event.match_id });
+        
+        // Parses the event based on sport and makes changes in the match instance
+        StatsHelper.Parse(event, match, log);
+        
+        console.log(event);
+        var eventObj = _.findWhere(this.data.timeline[event.data.state], { id: event.data.id, match_id: event.data.match_id });
         
         // set status to removed
         eventObj.status = "removed";
         
         // Should we destroy events on just mark them "removed"
         if (this.data.settings.destroyOnDelete)
-            this.data.timeline[event.data.event_segment] = _.without(this.data.timeline[event.data.event_segment], eventObj);
+            this.data.timeline[event.data.state] = _.without(this.data.timeline[event.data.state], eventObj);
 
         // Broadcast the remove event so others can consume it.
         RedisClientPub.publish("socketServers", JSON.stringify(event));
@@ -506,6 +514,9 @@ var AddModuleHooks = function (match) {
         this.data.markModified('timeline');
         log("Updating database", "info");
 
+        StatsHelper.UpsertStat(match.id, { events_sent: 1 }, this.data);
+        this.data.markModified('stats');
+        
         this.data.save();
         
         // 4. return match to Sender
@@ -517,7 +528,9 @@ var AddModuleHooks = function (match) {
     */
     HookedMatch.UpdateEvent = function (event, res) {
 
-
+         // Parses the event based on sport and makes changes in the match instance
+        StatsHelper.Parse(event, match, log);
+        
         for (var i = 0; i < this.data.timeline[event.data.state].length; i++) {
             if (this.data.timeline[event.data.state][i].id == event.data.id && this.data.timeline[event.data.state][i].match_id == event.match_id) {
                 this.data.timeline[event.data.state][i] = event.data;
@@ -531,7 +544,10 @@ var AddModuleHooks = function (match) {
         // 3. save match to db
         this.data.markModified('timeline');
         log("Updating database", "info");
-
+        
+        StatsHelper.UpsertStat(match.id, { events_sent: 1 }, this.data);
+        this.data.markModified('stats');
+        
         this.data.save();
         
         // 4. return match to Sender
