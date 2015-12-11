@@ -6,7 +6,12 @@ var _ = require('lodash');
  * gathering, etc
  * 
  * Soccer stast acronyms:
- * yc: yellow card
+ * yc:	yellow card
+ * rc:	red card
+ * cr:	corner
+ * ofs:	offside
+ * fc:	fouls commited
+ * g:	goal
  * 
 */
 
