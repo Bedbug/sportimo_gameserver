@@ -77,6 +77,7 @@ if (process.env.NODE_ENV != "production") {
     LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
     LiveMatches.setMongoConnection(mongoConnection);
     LiveMatches.setServerForRoutes(app);
+    LiveMatches.init();
 }
 
 // var Wildcards = require('./sportimo_modules/wildcards');

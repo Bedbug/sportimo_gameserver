@@ -127,6 +127,46 @@ var RedisClientSub;
 var ActiveMatches = {
     mock: false,
     count: MATCHES.length,
+    init: function () {
+        if (!this.mock) {
+            scheduled_matches
+                .find({ state: { $gt: -1 } })
+                .populate('home_team')
+                .populate('away_team')
+                .exec(function (err, matches) {
+                    if (err) return log(err, "error");
+                    if (matches) {
+                        _.forEach(matches, function (match) {
+                            var hookedMatch = AddModuleHooks(match);
+                            MATCHES.push(hookedMatch);   
+                            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
+                        })
+                    }
+                    else {
+                        log("No scheduled matches could be found in the database.");
+                    }
+                });
+        }
+        else {
+            var match = {
+                _id: "moxxkId",
+                sport: "soccer",
+                home_team: { name: "Pao", logo: "" },
+                away_team: { name: "Olympiakos", logo: "" },
+                home_score: 2,
+                away_score: 1,
+                match_date: moment().utc(),
+                time: 5,
+                state: 1,
+                timeline: [[], []],
+                moderation: ['manual']
+            }
+
+            var hookedMatch = AddModuleHooks(match);
+            MATCHES.push(hookedMatch);
+            log("Mock match created with ID [" + hookedMatch.id + "].", "info");
+        }
+    },
     create: function (mongoMatchID, callbackres) {
         if (!mongoMatchID) {
             return callbackres.status(404).send("Match ID cannot be empty");
@@ -244,7 +284,7 @@ var ActiveMatches = {
             if (message == "ping")
                 return;
 
-            // var obj = JSON.parse(JSON.parse(message).data);
+             log("[Redis] : Event has come through the channel.", "info");
             log("[Redis] :" + message, "debug");
         });
     },
@@ -269,10 +309,10 @@ var ActiveMatches = {
             req.body.last_action_time = moment();
         });
 
-         app.get('/v1/live/match/:id', function (req, res) {
-           
-                return res.send(ActiveMatches.GetMatch(req.params.id));
-           
+        app.get('/v1/live/match/:id', function (req, res) {
+
+            return res.send(ActiveMatches.GetMatch(req.params.id));
+
         });
     },
     InjectEvent: function (evnt, res) {
@@ -414,31 +454,32 @@ var AddModuleHooks = function (match) {
       
         // Parses the event based on sport and makes changes in the stats of the match
         StatsHelper.Parse(event, match, log);
-       
-    
+
+
         var evtObject = event.data;
       
         // 1. push event in timeline
-        if (evtObject.timeline_event){
-            log("Received Timeline event","info");
+        if (evtObject.timeline_event) {
+            log("Received Timeline event", "info");
             this.data.timeline[this.data.state].push(evtObject);
-         }
+        }
         
         // 2. broadcast event on pub/sub channel
+        log("Pushing event to Redis Pub/Sub channel", "info");
         RedisClientPub.publish("socketServers", JSON.stringify(evtObject));
         
         // 3. save match to db
         if (evtObject.timeline_event) {
             this.data.markModified('timeline');
-             log("Updating database","info");
+            log("Updating database", "info");
         }
-        
-  
-         StatsHelper.UpdateStat(match.id,{events_sent:1},this.data);
-          
-         this.data.markModified('stats');
 
-         this.data.save();
+
+        StatsHelper.UpdateStat(match.id, { events_sent: 1 }, this.data);
+
+        this.data.markModified('stats');
+
+        this.data.save();
         
         // 4. return match to Sender
         return res.status(200).send();
@@ -448,61 +489,53 @@ var AddModuleHooks = function (match) {
         
     */
     HookedMatch.RemoveEvent = function (event, res) {
-        
-        var eventObj = _.findWhere(this.data.timeline[event.data.event_segment], {id: event.data.event_id, match_id: event.match_id});
+
+        var eventObj = _.findWhere(this.data.timeline[event.data.event_segment], { id: event.data.event_id, match_id: event.match_id });
         
         // set status to removed
         eventObj.status = "removed";
         
         // Should we destroy events on just mark them "removed"
-        if(this.data.settings.destroyOnDelete)
-            this.data.timeline[event.data.event_segment] = _.without(this.data.timeline[event.data.event_segment], eventObj );
+        if (this.data.settings.destroyOnDelete)
+            this.data.timeline[event.data.event_segment] = _.without(this.data.timeline[event.data.event_segment], eventObj);
 
         // Broadcast the remove event so others can consume it.
         RedisClientPub.publish("socketServers", JSON.stringify(event));
         
         // 3. save match to db
         this.data.markModified('timeline');
-             log("Updating database","info");
-     
-         this.data.save();
+        log("Updating database", "info");
+
+        this.data.save();
         
         // 4. return match to Sender
-       return res.status(200).send();
+        return res.status(200).send();
     }
     
     /*  RemoveEvent
         
     */
     HookedMatch.UpdateEvent = function (event, res) {
-       
-       
-        for (var i = 0; i< this.data.timeline[event.data.state].length; i++){
-           if(this.data.timeline[event.data.state][i].id == event.data.id && this.data.timeline[event.data.state][i].match_id == event.match_id){
-                 console.log(this.data.timeline[event.data.state][i]);
-               this.data.timeline[event.data.state][i] = event.data;
-                console.log(this.data.timeline[event.data.state][i]);
-               break;
-           }
-       }
-       
-        // var indx  = _.indexOf(this.data.timeline[event.data.state], {id: event.data.id, match_id: event.match_id});
-        
-        //  console.log(indx);
-         
-        // this.data.timeline[event.data.data.state][indx] = event;
+
+
+        for (var i = 0; i < this.data.timeline[event.data.state].length; i++) {
+            if (this.data.timeline[event.data.state][i].id == event.data.id && this.data.timeline[event.data.state][i].match_id == event.match_id) {
+                this.data.timeline[event.data.state][i] = event.data;
+                break;
+            }
+        }
 
         // Broadcast the remove event so others can consume it.
         RedisClientPub.publish("socketServers", JSON.stringify(event));
         
         // 3. save match to db
         this.data.markModified('timeline');
-             log("Updating database","info");
-     
-         this.data.save();
+        log("Updating database", "info");
+
+        this.data.save();
         
         // 4. return match to Sender
-       return res.status(200).send();
+        return res.status(200).send();
     }
 
     // console.log(HookedMatch);

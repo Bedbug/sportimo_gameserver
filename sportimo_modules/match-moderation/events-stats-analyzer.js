@@ -1,7 +1,11 @@
 var _ = require('lodash');
 
 /**
- * STATS:
+ * Stats Analyzer - is a layered service in between the incomming call from the moderation service
+ * and the game manager service. It handles the actual repsonses to the events like scoring, stats
+ * gathering, etc
+ * 
+ * Soccer stast acronyms:
  * yc: yellow card
  * 
 */
@@ -47,7 +51,7 @@ var StatsMethods = {
 		parsers.e.data = event.data;
 		parsers.e.match_id =  event.data.match_id;
 		
-		console.log(CurrentMatch[event.data.team].id);
+
 		parsers.e.team_id = CurrentMatch[event.data.team]._id.toString();
 		
 		
