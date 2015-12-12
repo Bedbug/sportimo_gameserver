@@ -34,6 +34,11 @@ var services = {
 						log("Add Event Request for matchid [" + req.body.match_id + "] with event ID ["+req.body.data.id+"]", "info");
 						match.AddEvent(req.body, res);
 					break;
+					case "AdvanceSegment":
+					console.log(req.body);
+						log("Advance Segment Request for matchid [" + req.body.match_id + "]", "info");
+						match.AdvanceSegment(req.body, res);
+					break;
 					default:
 						
 					break;	

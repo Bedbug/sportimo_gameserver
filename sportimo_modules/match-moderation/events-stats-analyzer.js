@@ -48,7 +48,7 @@ var parsers = {
 			Log = log;
 			
 			var newEvent = event.data;	
-			var previousEvent = _.find(match.timeline[newEvent.state], { id: newEvent.id, match_id: newEvent.match_id });
+			var previousEvent = _.find(match.timeline[newEvent.state].events, { id: newEvent.id, match_id: newEvent.match_id });
 			
 			this.Delete({data:previousEvent}, match, log);
 			this.Add(event, match, log);
