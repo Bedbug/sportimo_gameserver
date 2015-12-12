@@ -82,50 +82,7 @@ var match_schema = new mongoose.Schema({
 var scheduled_matches = mongoose.model("scheduled_matches", match_schema);
 
 
-// var demoMatch = new scheduled_matches({
-//     "_id": "565c4af6e4b030fba33dd459",
-//     sport: "soccer",
-//     "home_team": "565c4907e4b030fba33dd433",
-//     "away_team": "565c492fe4b030fba33dd435",
-//     "home_score": 0,
-//     "away_score": 0,
-//     "time": null
-// })
 
-// demoMatch.save(function (err, fluffy) {
-//     if (err) return console.error(err);
-//     else
-//         return console.error(fluffy);
-// });
-
-/*{
-    "_id": {
-        "$oid": "565c4af6e4b030fba33dd459"
-    },
-    "home_team": {
-        "$oid": "565c4907e4b030fba33dd433"
-    },
-    "away_team": {
-        "$oid": "565c492fe4b030fba33dd435"
-    },
-    "home_score": 0,
-    "away_score": 0,
-    "time": null
-}*/
-
-/*  Moderation Service 
-    Here we select the service that we will use to moderate the match.
-    We can create as many services as we like as long as the implementation
-    is following some specific rules.
-*/
-
-// ? Each match should have it's own moderation service
-//var MODERATION_SERVICE = moderationServices.XMLFeed;
-// We initialize the service
-//MODERATION_SERVICE.init();
-
-
-/**/
 var RedisClientPub;
 var RedisClientSub;
 
@@ -666,8 +623,9 @@ if (process.env.NODE_ENV == "production") {
     });
 }
 function log(text, level) {
-    var loglevel = level || 'core';
-    logger.log(loglevel, "[ActiveMatches Module] " + text);
+    console.log("[ActiveMatches Module] " + text);
+    // var loglevel = level || 'core';
+    // logger.log(loglevel, "[ActiveMatches Module] " + text);
 }
 
 module.exports = ActiveMatches;

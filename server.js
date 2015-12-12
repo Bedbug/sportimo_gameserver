@@ -72,13 +72,13 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,d
 
 
 /* Modules */
-if (process.env.NODE_ENV != "production") {
+// if (process.env.NODE_ENV != "production") {
     var LiveMatches = require('./sportimo_modules/match-moderation');
     LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
     LiveMatches.setMongoConnection(mongoConnection);
     LiveMatches.setServerForRoutes(app);
     LiveMatches.init();
-}
+// }
 
 // var Wildcards = require('./sportimo_modules/wildcards');
 // Wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
