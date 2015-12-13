@@ -14,7 +14,7 @@ var needle = require('needle');
 var moment = require('moment');
 require("moment-duration-format");
 
-var _ = require('underscore');
+var _ = require('lodash');
 var bodyParser = require('body-parser');
 var winston = require('winston');
 
@@ -138,6 +138,7 @@ var ActiveMatches = {
         // safeguard for duplicates
         if (oldMatch) {
             log("Match with the same ID already exists. Hooking.", "info");
+            
             if (callbackres)
                 callbackres.send(oldMatch);
         }
@@ -149,6 +150,11 @@ var ActiveMatches = {
     },
     LoadMatchFromDB: function (matchid, res) {
         if (!this.mock) {
+            
+            // remove match in case it already exists
+            console.log(MATCHES.length);
+            _.remove(MATCHES,{ id: matchid });
+             console.log(MATCHES.length);
             scheduled_matches
                 .findOne({ _id: matchid })
                 .populate('home_team')
@@ -266,8 +272,13 @@ var ActiveMatches = {
         });
 
         app.post('/v1/live/match', function (req, res) {
-            log("Moderation Request for matchid [" + req.body.id + "]", "info");
+            log("[Moderation] Request for matchid [" + req.body.id + "]", "info");
             ActiveMatches.create(req.body.id, res);
+        });
+        
+        app.post('/v1/live/match/reload', function (req, res) {
+            log("[Reload Match] Request for matchid [" + req.body.id + "]", "info");
+            ActiveMatches.LoadMatchFromDB(req.body.id, res);
         });
 
         app.put('/v1/live/match', function (req, res) {
@@ -422,27 +433,31 @@ var AddModuleHooks = function (match) {
 
     HookedMatch.addTimeHooks = function () {
         if (HookedMatch.sport.segments[HookedMatch.data.state]) {
-            var now = moment().utc().format();
-            var then = HookedMatch.data.timeline[HookedMatch.data.state].start;
+            var now = moment().utc();
+            var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
             var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
             var d = moment.duration(ms);
 
 
             HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", { trim: false }) : "";
             HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-        
+            
             //  Should this segment be timed?
             if (HookedMatch.sport.segments[this.data.state].timed) {
 
                 if (!HookedMatch.sport.time_dependant) {                                   //  Is Time controlled?
                     MatchTimers[this.data.match_id] = setInterval(function () {
-                        var now = moment().utc().format();
-                        var then = HookedMatch.data.timeline[HookedMatch.data.state].start;
+                        var now = moment().utc();
+                        var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
                         var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
                         var d = moment.duration(ms);
                         HookedMatch.Match_timer = d.format("mm:ss", { trim: false });
-                        console.log(HookedMatch.sport.segments[HookedMatch.data.state])
+                        // console.log(d.format("mm"));
+                        //  console.log(now);
+                        //  console.log(then);
+                        
                         HookedMatch.data.time = (HookedMatch.sport.segments[HookedMatch.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
+                       
                     }, 1000);
                 }
             }
@@ -451,8 +466,8 @@ var AddModuleHooks = function (match) {
             }
         }
         else {
-                clearInterval(MatchTimers[this.data.match_id]);
-            }
+            clearInterval(MatchTimers[this.data.match_id]);
+        }
     }
     
     
