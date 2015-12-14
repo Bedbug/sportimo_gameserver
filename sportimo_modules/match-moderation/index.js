@@ -20,10 +20,10 @@ var winston = require('winston');
 
 
 // Sportimo Modules
-var moderationServices = require('./moderations-services');
-var StatsHelper = require('./events-stats-analyzer');
-var Sports = require('./sports-settings');
- 
+var moderationServices = require('./lib/moderations-services');
+var StatsHelper = require('./lib/events-stats-analyzer');
+var Sports = require('./lib/sports-settings');
+
 /*   Module Variables  */
 var app;
 var MATCHES = [];
@@ -138,7 +138,7 @@ var ActiveMatches = {
         // safeguard for duplicates
         if (oldMatch) {
             log("Match with the same ID already exists. Hooking.", "info");
-            
+
             if (callbackres)
                 callbackres.send(oldMatch);
         }
@@ -150,7 +150,7 @@ var ActiveMatches = {
     },
     LoadMatchFromDB: function (matchid, res) {
         if (!this.mock) {
-            
+
             // remove match in case it already exists
             console.log(MATCHES.length);
             _.remove(MATCHES,{ id: matchid });
@@ -275,7 +275,7 @@ var ActiveMatches = {
             log("[Moderation] Request for matchid [" + req.body.id + "]", "info");
             ActiveMatches.create(req.body.id, res);
         });
-        
+
         app.post('/v1/live/match/reload', function (req, res) {
             log("[Reload Match] Request for matchid [" + req.body.id + "]", "info");
             ActiveMatches.LoadMatchFromDB(req.body.id, res);
@@ -298,7 +298,7 @@ var ActiveMatches = {
 }
 
 /* The basic match class.
-    This is where everything related to the active match happens. The timers, 
+    This is where everything related to the active match happens. The timers,
     the timeline, reponsibility to sync with database, etc.
     We pass the mongodb ID so the class can hook to the database for updates.
 */
@@ -333,20 +333,20 @@ var Match = function (mongodbID, res) {
 var AddModuleHooks = function (match) {
 
     var HookedMatch = {};// = match;
-    
+
     HookedMatch.MODERATION_SERVICES = [];
-    
+
     // Holds the interval that counts time
     // HookedMatch.Time_interval = null;
     // Holds the actual running time (i.e. 10m:34s)
     HookedMatch.Match_timer = "";
-    
+
     // Set ID
     HookedMatch.id = match._id.toString() || 'moxxkId';
-    
+
     // Match data
     HookedMatch.data = match;
-    
+
     // Validations
     if (HookedMatch.data.timeline.length == 0) {
         HookedMatch.data.state = 0;
@@ -358,16 +358,16 @@ var AddModuleHooks = function (match) {
         HookedMatch.data.markModified('timeline');
         HookedMatch.data.save();
     }
-    
+
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
-    
-    
-  
+
+
+
     /*  ---------------
     **   Methods
     **  -------------*/
-    
+
     /*  SetModerationService
         Here we set the moderation service for the game. There is only reason to switch to manual
         only if we don't want a hooked feed. Manual input will always work
@@ -386,20 +386,20 @@ var AddModuleHooks = function (match) {
             HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
 
     }
-     
+
     // Set services for the first time
     HookedMatch.moderation = match.moderation;
     HookedMatch.moderation.forEach(function (service) {
         HookedMatch.AddModerationService(service, true);
     });
-     
+
     /*  AdvanceSegment
         The advance state method is called when we want to advance to the next segment of the game.
         Depending on setting, here will determine if a timer should begin counting aand hold the
         game's time.
     */
     HookedMatch.AdvanceSegment = function (event, res) {
-        
+
         // Register the time that the previous segment ended
         this.data.timeline[this.data.state].end = moment().utc().format();
         // Advance the state of the match
@@ -411,18 +411,18 @@ var AddModuleHooks = function (match) {
             "events": []
         });
         this.data.timeline[this.data.state].start = moment().utc().format();
-        
+
         //  Does it have initial time?
         // if (HookedMatch.sport.segments[this.data.state].initialTime)
         //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
-                
+
         //     if (HookedMatch.sport.segments[this.data.state].initialTime)
         //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
         // else
         //     this.data.time = "";
 
         // HookedMatch.Match_timer = "";
-        
+
         this.addTimeHooks();
 
         this.data.markModified('timeline');
@@ -441,7 +441,7 @@ var AddModuleHooks = function (match) {
 
             HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", { trim: false }) : "";
             HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-            
+
             //  Should this segment be timed?
             if (HookedMatch.sport.segments[this.data.state].timed) {
 
@@ -455,9 +455,9 @@ var AddModuleHooks = function (match) {
                         // console.log(d.format("mm"));
                         //  console.log(now);
                         //  console.log(then);
-                        
+
                         HookedMatch.data.time = (HookedMatch.sport.segments[HookedMatch.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-                       
+
                     }, 1000);
                 }
             }
@@ -469,8 +469,8 @@ var AddModuleHooks = function (match) {
             clearInterval(MatchTimers[this.data.match_id]);
         }
     }
-    
-    
+
+
     /*  ToggleTimer
         Toggles the game's timer state.
     */
@@ -487,9 +487,9 @@ var AddModuleHooks = function (match) {
         // We assign the name of the segment to the currentSegment var
         return HookedMatch.Sport.segments[HookedMatch.state].name;
     }
-    
-    
-    
+
+
+
     /*  AddEvent
         The addEvent method is a core method to the moderation system. It is called by
         moderation services or manualy from the dashboard in order to inject events to
@@ -497,23 +497,23 @@ var AddModuleHooks = function (match) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
-      
+
         // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match, log);
 
 
         var evtObject = event.data;
-      
+
         // 1. push event in timeline
         if (evtObject.timeline_event) {
             log("Received Timeline event", "info");
             this.data.timeline[this.data.state].events.push(evtObject);
         }
-        
+
         // 2. broadcast event on pub/sub channel
         log("Pushing event to Redis Pub/Sub channel", "info");
         RedisClientPub.publish("socketServers", JSON.stringify(evtObject));
-        
+
         // 3. save match to db
         if (evtObject.timeline_event) {
             this.data.markModified('timeline');
@@ -526,32 +526,32 @@ var AddModuleHooks = function (match) {
         this.data.markModified('stats');
 
         this.data.save();
-        
+
         // 4. return match to Sender
         return res.status(200).send();
     }
-    
+
     /*  RemoveEvent
-        
+
     */
     HookedMatch.RemoveEvent = function (event, res) {
-        
+
         // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match, log);
 
         console.log(event);
         var eventObj = _.findWhere(this.data.timeline[event.data.state], { id: event.data.id, match_id: event.data.match_id });
-        
+
         // set status to removed
         eventObj.status = "removed";
-        
+
         // Should we destroy events on just mark them "removed"
         if (this.data.settings.destroyOnDelete)
             this.data.timeline[event.data.state].events = _.without(this.data.timeline[event.data.state].events, eventObj);
 
         // Broadcast the remove event so others can consume it.
         RedisClientPub.publish("socketServers", JSON.stringify(event));
-        
+
         // 3. save match to db
         this.data.markModified('timeline');
         log("Updating database", "info");
@@ -560,13 +560,13 @@ var AddModuleHooks = function (match) {
         this.data.markModified('stats');
 
         this.data.save();
-        
+
         // 4. return match to Sender
         return res.status(200).send();
     }
-    
+
     /*  RemoveEvent
-        
+
     */
     HookedMatch.UpdateEvent = function (event, res) {
 
@@ -582,7 +582,7 @@ var AddModuleHooks = function (match) {
 
         // Broadcast the remove event so others can consume it.
         RedisClientPub.publish("socketServers", JSON.stringify(event));
-        
+
         // 3. save match to db
         this.data.markModified('timeline');
         log("Updating database", "info");
@@ -591,7 +591,7 @@ var AddModuleHooks = function (match) {
         this.data.markModified('stats');
 
         this.data.save();
-        
+
         // 4. return match to Sender
         return res.status(200).send();
     }
