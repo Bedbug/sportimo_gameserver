@@ -587,7 +587,7 @@ console.log("Wehn adding event:");
 
     // 2. broadcast event on pub/sub channel
     log("Pushing event to Redis Pub/Sub channel", "info");
-    RedisClientPub.publish("socketServers", JSON.stringify(evtObject));
+    RedisClientPub.publish("socketServers", JSON.stringify(event));
 
     // 3. save match to db
     if (evtObject.timeline_event) {
