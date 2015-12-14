@@ -88,8 +88,8 @@ var match_schema = new mongoose.Schema({
   moderation: [String],
   moderationData: mongoose.Schema.Types.Mixed // module names ['XMLFeed','Dashboard']
 }, {
-  collection: 'scheduled_matches'
-});
+    collection: 'scheduled_matches'
+  });
 var scheduled_matches = mongoose.model("scheduled_matches", match_schema);
 
 
@@ -100,7 +100,7 @@ var RedisClientSub;
 var ActiveMatches = {
   mock: false,
   count: AllMatches.length,
-  init: function() {
+  init: function () {
     if (!this.mock) {
       scheduled_matches
         .find({
@@ -110,10 +110,10 @@ var ActiveMatches = {
         })
         .populate('home_team')
         .populate('away_team')
-        .exec(function(err, matches) {
+        .exec(function (err, matches) {
           if (err) return log(err, "error");
           if (matches) {
-            _.forEach(matches, function(match) {
+            _.forEach(matches, function (match) {
               var hookedMatch = AddModuleHooks(match);
               AllMatches.push(hookedMatch);
               log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
@@ -151,7 +151,7 @@ var ActiveMatches = {
       log("Mock match created with ID [" + hookedMatch.id + "].", "info");
     }
   },
-  create: function(mongoMatchID, callbackres) {
+  create: function (mongoMatchID, callbackres) {
     if (!mongoMatchID) {
       return callbackres.status(404).send("Match ID cannot be empty");
     }
@@ -169,7 +169,7 @@ var ActiveMatches = {
 
     }
   },
-  LoadMatchFromDB: function(matchid, res) {
+  LoadMatchFromDB: function (matchid, res) {
     if (!this.mock) {
 
       // remove match in case it already exists
@@ -185,7 +185,7 @@ var ActiveMatches = {
         })
         .populate('home_team')
         .populate('away_team')
-        .exec(function(err, match) {
+        .exec(function (err, match) {
 
           if (err) return log(err, "error");
 
@@ -235,34 +235,34 @@ var ActiveMatches = {
       return hookedMatch;
     }
   },
-  GetMatch: function(matchID) {
+  GetMatch: function (matchID) {
     return _.findWhere(AllMatches, {
       id: matchID
     });
   },
-  setMongoConnection: function(uri) {
+  setMongoConnection: function (uri) {
     if (this.mock) return;
     mongoose.connect(uri);
     log("Connected to MongoDB", "core");
   },
-  setRedisPubSub: function(RedisIP, RedisPort, RedisAuth, RedisChannel) {
+  setRedisPubSub: function (RedisIP, RedisPort, RedisAuth, RedisChannel) {
     if (this.mock) return;
     // Initialize and connect to the Redis datastore
     RedisClientPub = redis.createClient(RedisPort, RedisIP);
-    RedisClientPub.auth(RedisAuth, function(err) {
+    RedisClientPub.auth(RedisAuth, function (err) {
       if (err) {
         throw err;
       }
     });
 
     RedisClientSub = redis.createClient(RedisPort, RedisIP);
-    RedisClientSub.auth(RedisAuth, function(err) {
+    RedisClientSub.auth(RedisAuth, function (err) {
       if (err) {
         throw err;
       }
     });
 
-    setInterval(function() {
+    setInterval(function () {
 
       RedisClientPub.publish("socketServers", JSON.stringify({
         server: "[GameServer] Active matches: " + AllMatches.length
@@ -270,29 +270,29 @@ var ActiveMatches = {
 
     }, 30000);
 
-    RedisClientPub.on("error", function(err) {
+    RedisClientPub.on("error", function (err) {
       log("{''Error'': ''" + err + "''}");
     });
 
-    RedisClientSub.on("error", function(err) {
+    RedisClientSub.on("error", function (err) {
       log("{''Error'': ''" + err + "''}");
     });
 
-    RedisClientSub.on("subscribe", function(channel, count) {
+    RedisClientSub.on("subscribe", function (channel, count) {
       log("Subscribed to Sportimo Events PUB/SUB channel");
     });
 
-    RedisClientSub.on("unsubscribe", function(channel, count) {
+    RedisClientSub.on("unsubscribe", function (channel, count) {
       log("Subscribed from Sportimo Events PUB/SUB channel");
     });
 
-    RedisClientSub.on("end", function() {
+    RedisClientSub.on("end", function () {
       log("{Connection ended}");
     });
 
     RedisClientSub.subscribe(RedisChannel);
 
-    RedisClientSub.on("message", function(channel, message) {
+    RedisClientSub.on("message", function (channel, message) {
       if (JSON.parse(message).server)
         return;
 
@@ -300,36 +300,41 @@ var ActiveMatches = {
       log("[Redis] :" + message, "debug");
     });
   },
-  setServerForRoutes: function(server) {
+  setServerForRoutes: function (server) {
     log("Setting up moderation Routes");
     app = server;
     app.use(bodyParser.json());
-    app.use(function(req, res, next) {
+    app.use(function (req, res, next) {
       res.header("Access-Control-Allow-Origin", "*");
       res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
       res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
       next();
     });
 
-    app.post('/v1/live/match', function(req, res) {
+    app.post('/v1/live/match', function (req, res) {
       log("[Moderation] Request for matchid [" + req.body.id + "]", "info");
       ActiveMatches.create(req.body.id, res);
     });
 
-    app.post('/v1/live/match/reload', function(req, res) {
+    app.post('/v1/live/match/time', function (req, res) {
+      log("[Update Segment Time] Request for matchid [" + req.body.id + "]", "info");
+      ActiveMatches.GetMatch(req.body.id).updateTimes(req.body, res);
+    });
+
+    app.post('/v1/live/match/reload', function (req, res) {
       log("[Reload Match] Request for matchid [" + req.body.id + "]", "info");
       ActiveMatches.LoadMatchFromDB(req.body.id, res);
     });
 
-    app.put('/v1/live/match', function(req, res) {
+    app.put('/v1/live/match', function (req, res) {
       req.body.last_action_time = moment();
     });
 
-    app.get('/v1/live/match/:id', function(req, res) {
+    app.get('/v1/live/match/:id', function (req, res) {
       return res.send(ActiveMatches.GetMatch(req.params.id));
     });
 
-    log("Initialize manual moderation Service.","info");
+    log("Initialize manual moderation Service.", "info");
 
     // Set up Routes
     server.get('/v1/moderation/:id/event', function (req, res) {
@@ -338,32 +343,32 @@ var ActiveMatches = {
 
     server.post('/v1/moderation/:id/event', function (req, res) {
       var match_id = req.params.id;
-      switch(req.body.type){
+      switch (req.body.type) {
         case "Delete":
-          log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID ["+req.body.data.event_id+"]", "info");
+          log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.event_id + "]", "info");
           ActiveMatches.GetMatch(match_id).RemoveEvent(req.body, res);
-        break;
+          break;
         case "Update":
-          log("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID ["+req.body.data.id+"]", "info");
+          log("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]", "info");
           ActiveMatches.GetMatch(match_id).UpdateEvent(req.body, res);
-        break;
+          break;
         case "Add":
-          log("Add Event Request for matchid [" + match_id + "] with event ID ["+req.body.data.id+"]", "info");
+          log("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]", "info");
           ActiveMatches.GetMatch(match_id).AddEvent(req.body, res);
-        break;
+          break;
         case "AdvanceSegment":
-        console.log(req.body);
+          console.log(req.body);
           log("Advance Segment Request for matchid [" + match_id + "]", "info");
           ActiveMatches.GetMatch(match_id).AdvanceSegment(req.body, res);
-        break;
+          break;
         default:
-        break;
+          break;
       }
 
 
     });
   },
-  InjectEvent: function(evnt, res) {
+  InjectEvent: function (evnt, res) {
     ActiveMatches.GetMatch(evnt.id).AddEvent(evnt.data, res);
   }
 }
@@ -373,7 +378,7 @@ var ActiveMatches = {
     the timeline, reponsibility to sync with database, etc.
     We pass the mongodb ID so the class can hook to the database for updates.
 */
-var Match = function(mongodbID, res) {
+var Match = function (mongodbID, res) {
 
   scheduled_matches
     .findOne({
@@ -381,7 +386,7 @@ var Match = function(mongodbID, res) {
     })
     .populate('home_team')
     .populate('away_team')
-    .exec(function(err, match) {
+    .exec(function (err, match) {
       if (err) return log(err, "error");
 
       if (match) {
@@ -402,7 +407,7 @@ var Match = function(mongodbID, res) {
 
 }
 
-var AddModuleHooks = function(match) {
+var AddModuleHooks = function (match) {
 
   var HookedMatch = {}; // = match;
 
@@ -444,7 +449,7 @@ var AddModuleHooks = function(match) {
       Here we set the moderation service for the game. There is only reason to switch to manual
       only if we don't want a hooked feed. Manual input will always work
   */
-  HookedMatch.AddModerationService = function(service, initializing) {
+  HookedMatch.AddModerationService = function (service, initializing) {
 
     if (HookedMatch.moderation.indexOf(service) > 0)
       return log("Service already active", "core");
@@ -461,16 +466,42 @@ var AddModuleHooks = function(match) {
 
   // Set services for the first time
   HookedMatch.moderation = match.moderation;
-  HookedMatch.moderation.forEach(function(service) {
+  HookedMatch.moderation.forEach(function (service) {
     HookedMatch.AddModerationService(service, true);
   });
 
+  HookedMatch.updateTimes = function (data, res) {
+    console.log(data);
+    // make checks
+    if (this.data.timeline[data.index].start != data.data.start) {
+      this.data.timeline[data.index].start = data.data.start;
+
+      if (this.data.timeline[data.index - 1])
+        this.data.timeline[data.index - 1].end = data.data.start;
+        
+      this.data.markModified('timeline');
+      this.data.save();
+    }
+    
+    if (this.data.timeline[data.index].end != data.data.end) {
+      this.data.timeline[data.index].end = data.data.end;
+
+      if (this.data.timeline[data.index + 1])
+        this.data.timeline[data.index + 1].start = data.data.end;
+        
+      this.data.markModified('timeline');
+      this.data.save();
+    }
+
+    res.status(200).send();
+  }
+  
   /*  AdvanceSegment
       The advance state method is called when we want to advance to the next segment of the game.
       Depending on setting, here will determine if a timer should begin counting aand hold the
       game's time.
   */
-  HookedMatch.AdvanceSegment = function(event, res) {
+  HookedMatch.AdvanceSegment = function (event, res) {
 
     // Register the time that the previous segment ended
     this.data.timeline[this.data.state].end = moment().utc().format();
@@ -503,7 +534,9 @@ var AddModuleHooks = function(match) {
     return res.status(200).send(HookedMatch);
   }
 
-  HookedMatch.addTimeHooks = function() {
+
+
+  HookedMatch.addTimeHooks = function () {
     if (HookedMatch.sport.segments[HookedMatch.data.state]) {
       var now = moment().utc();
       var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
@@ -520,7 +553,7 @@ var AddModuleHooks = function(match) {
       if (HookedMatch.sport.segments[this.data.state].timed) {
 
         if (!HookedMatch.sport.time_dependant) { //  Is Time controlled?
-          MatchTimers[this.data.match_id] = setInterval(function() {
+          MatchTimers[this.data.match_id] = setInterval(function () {
             var now = moment().utc();
             var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
             var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
@@ -548,16 +581,16 @@ var AddModuleHooks = function(match) {
   /*  ToggleTimer
       Toggles the game's timer state.
   */
-  HookedMatch.ToggleTimer = function() {
+  HookedMatch.ToggleTimer = function () {
     if (this.Time_interval) {
       clearInterval(MatchTimers[this.data.match_id]);
     } else {
-      MatchTimers[this.data.match_id] = setInterval(function() {
+      MatchTimers[this.data.match_id] = setInterval(function () {
         HookedMatch.countTime();
       }, 1000)
     }
   }
-  HookedMatch.GetCurrentSegment = function() {
+  HookedMatch.GetCurrentSegment = function () {
     // We assign the name of the segment to the currentSegment var
     return HookedMatch.Sport.segments[HookedMatch.state].name;
   }
@@ -570,12 +603,12 @@ var AddModuleHooks = function(match) {
       the timeline and also broadcast them on the sockets channel to be consumed by
       other instances.
   */
-  HookedMatch.AddEvent = function(event, res) {
+  HookedMatch.AddEvent = function (event, res) {
 
     // Parses the event based on sport and makes changes in the match instance
     StatsHelper.Parse(event, match, log);
 
-console.log("Wehn adding event:");
+    console.log("Wehn adding event:");
     console.log(HookedMatch.data.Timeline);
     var evtObject = event.data;
 
@@ -611,7 +644,7 @@ console.log("Wehn adding event:");
   /*  RemoveEvent
 
   */
-  HookedMatch.RemoveEvent = function(event, res) {
+  HookedMatch.RemoveEvent = function (event, res) {
 
     // Parses the event based on sport and makes changes in the match instance
     StatsHelper.Parse(event, match, log);
@@ -632,7 +665,7 @@ console.log("Wehn adding event:");
     // Broadcast the remove event so others can consume it.
     RedisClientPub.publish("socketServers", JSON.stringify(event));
 
-  console.log(ActiveMatches.GetMatch(event.data.match_id).data.timeline);
+    console.log(ActiveMatches.GetMatch(event.data.match_id).data.timeline);
     // 3. save match to db
     this.data.markModified('timeline');
     log("Updating database", "info");
@@ -651,7 +684,7 @@ console.log("Wehn adding event:");
   /*  RemoveEvent
 
   */
-  HookedMatch.UpdateEvent = function(event, res) {
+  HookedMatch.UpdateEvent = function (event, res) {
 
     // Parses the event based on sport and makes changes in the match instance
     StatsHelper.Parse(event, match, log);
@@ -688,7 +721,7 @@ console.log("Wehn adding event:");
 
 
 /*  Winston Logger  */
-var logger = new(winston.Logger)({
+var logger = new (winston.Logger)({
   levels: {
     prompt: 6,
     debug: 5,
