@@ -321,6 +321,11 @@ var ActiveMatches = {
       ActiveMatches.GetMatch(req.body.id).updateTimes(req.body, res);
     });
 
+    app.post('/v1/live/match/time/remove', function (req, res) {
+      log("[Update Segment Time] Request for matchid [" + req.body.id + "]", "info");
+      ActiveMatches.GetMatch(req.body.id).removeSegment(req.body, res);
+    });
+
     app.post('/v1/live/match/reload', function (req, res) {
       log("[Reload Match] Request for matchid [" + req.body.id + "]", "info");
       ActiveMatches.LoadMatchFromDB(req.body.id, res);
@@ -470,6 +475,22 @@ var AddModuleHooks = function (match) {
     HookedMatch.AddModerationService(service, true);
   });
 
+
+  HookedMatch.removeSegment = function (data, res) {
+
+
+    this.data.timeline.splice(data.index, 1);
+
+    HookedMatch.data.state--;
+
+
+    this.data.markModified('timeline');
+    this.data.save();
+
+
+    res.status(200).send(HookedMatch);
+  }
+
   HookedMatch.updateTimes = function (data, res) {
     console.log(data);
     // make checks
@@ -478,17 +499,17 @@ var AddModuleHooks = function (match) {
 
       if (this.data.timeline[data.index - 1])
         this.data.timeline[data.index - 1].end = data.data.start;
-        
+
       this.data.markModified('timeline');
       this.data.save();
     }
-    
+
     if (this.data.timeline[data.index].end != data.data.end) {
       this.data.timeline[data.index].end = data.data.end;
 
       if (this.data.timeline[data.index + 1])
         this.data.timeline[data.index + 1].start = data.data.end;
-        
+
       this.data.markModified('timeline');
       this.data.save();
     }
@@ -537,20 +558,20 @@ var AddModuleHooks = function (match) {
 
 
   HookedMatch.addTimeHooks = function () {
-    if (HookedMatch.sport.segments[HookedMatch.data.state]) {
-      var now = moment().utc();
-      var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
-      var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
-      var d = moment.duration(ms);
+    
+    //  Should this segment be timed?
+    if (HookedMatch.sport.segments[this.data.state].timed) {
+      if (HookedMatch.sport.segments[HookedMatch.data.state]) {
+        var now = moment().utc();
+        var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
+        var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
+        var d = moment.duration(ms);
 
 
-      HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", {
-        trim: false
-      }) : "";
-      HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-
-      //  Should this segment be timed?
-      if (HookedMatch.sport.segments[this.data.state].timed) {
+        HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", {
+          trim: false
+        }) : "";
+        HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
 
         if (!HookedMatch.sport.time_dependant) { //  Is Time controlled?
           MatchTimers[this.data.match_id] = setInterval(function () {
@@ -642,7 +663,7 @@ var AddModuleHooks = function (match) {
   }
 
   /*  RemoveEvent
-
+  
   */
   HookedMatch.RemoveEvent = function (event, res) {
 
@@ -682,7 +703,7 @@ var AddModuleHooks = function (match) {
   }
 
   /*  RemoveEvent
-
+  
   */
   HookedMatch.UpdateEvent = function (event, res) {
 
