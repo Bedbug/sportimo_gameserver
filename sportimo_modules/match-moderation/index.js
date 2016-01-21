@@ -21,6 +21,7 @@ var bodyParser = require('body-parser');
 var winston = require('winston');
 
 
+
 // Sportimo Moderation sub-Modules
 var match_module = require('./lib/match-module.js');
 
@@ -298,9 +299,16 @@ var ActiveMatches = {
       return res.send(ActiveMatches.GetMatch(req.params.id));
     });
 
+/* Moderation services Handling */
+     app.post('/v1/moderation/:id/service/add', function (req, res) {
+      var match_id = req.params.id;
+      ActiveMatches.GetMatch(match_id).AddModerationService(req.body.service, res);
+     });
+      
+      
     log("Initialize manual moderation Service.", "info");
-
-    // Set up Routes
+    
+    // Set up manual Moderation Routes
     server.get('/v1/moderation/:id/event', function (req, res) {
       res.send("All ok");
     });
