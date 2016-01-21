@@ -22,6 +22,10 @@ module.exports = {
 				name: 			"Second Half",
 				timed: 			true,
 				initialTime:	45
+			},
+			{
+				name:			"Match Ended",
+				timed: 			false
 			}
 		]
 		
