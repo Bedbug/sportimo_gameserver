@@ -7,7 +7,6 @@
  */
 
 var Sports = require('./sports-settings');
-var moderationServices = require('./moderations-services');
 var StatsHelper = require('./events-stats-analyzer');
 var moment = require('moment');
 var _ = require('lodash');
@@ -54,26 +53,26 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
       Here we set the moderation service for the game. There is only reason to switch to manual
       only if we don't want a hooked feed. Manual input will always work
   */
-  HookedMatch.AddModerationService = function (service, initializing) {
+//   HookedMatch.AddModerationService = function (service, initializing) {
 
-    if (HookedMatch.moderation.indexOf(service) > 0)
-      return log("Service already active", "core");
+//     if (HookedMatch.moderation.indexOf(service) > 0)
+//       return log("Service already active", "core");
 
-    if (!initializing)
-      HookedMatch.moderation.push(service);
+//     if (!initializing)
+//       HookedMatch.moderation.push(service);
 
-    HookedMatch.MODERATION_SERVICES.push(moderationServices[service]);
+//     HookedMatch.MODERATION_SERVICES.push(moderationServices[service]);
 
-    // if (service == "manual")
-    //   HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
+//     if (service == "manual")
+//       HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
 
-  }
+//   }
 
-  // Set services for the first time
-  HookedMatch.moderation = match.moderation;
-  HookedMatch.moderation.forEach(function (service) {
-    HookedMatch.AddModerationService(service, true);
-  });
+//   // Set services for the first time
+//   HookedMatch.moderation = match.moderation;
+//   HookedMatch.moderation.forEach(function (service) {
+//     HookedMatch.AddModerationService(service, true);
+//   });
 
 
   HookedMatch.removeSegment = function (data, res) {
@@ -158,7 +157,7 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
 
 
   HookedMatch.addTimeHooks = function () {
-    
+    console.log(HookedMatch.sport);
     //  Should this segment be timed?
     if (HookedMatch.sport.segments[this.data.state].timed) {
       if (HookedMatch.sport.segments[HookedMatch.data.state]) {

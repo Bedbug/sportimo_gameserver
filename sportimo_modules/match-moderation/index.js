@@ -23,7 +23,7 @@ var winston = require('winston');
 
 // Sportimo Moderation sub-Modules
 var match_module = require('./lib/match-module.js');
-var moderationServices = require('./lib/moderations-services');
+
 var StatsHelper = require('./lib/events-stats-analyzer');
 var Sports = require('./lib/sports-settings');
 
