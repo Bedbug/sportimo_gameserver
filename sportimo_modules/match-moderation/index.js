@@ -7,9 +7,11 @@
  */
 
 /*  Libraries   */
-var mongoose = require('mongoose');
-var redis = require('redis');
-var needle = require('needle');
+var path = require('path'),
+fs = require('fs'),
+mongoose = require('mongoose'),
+redis = require('redis'),
+needle = require('needle');
 
 var moment = require('moment');
 require("moment-duration-format");
@@ -19,7 +21,8 @@ var bodyParser = require('body-parser');
 var winston = require('winston');
 
 
-// Sportimo Modules
+// Sportimo Moderation sub-Modules
+var match_module = require('./lib/match-module.js');
 var moderationServices = require('./lib/moderations-services');
 var StatsHelper = require('./lib/events-stats-analyzer');
 var Sports = require('./lib/sports-settings');
@@ -29,79 +32,34 @@ var app;
 var AllMatches = [];
 var MatchTimers = [];
 
-// mongoose.connect('mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523');
 
-/*  MONGODB SCHEMAS */
-// var player_schema = new mongoose.Schema({
-//     id: String,
-//     details: mongoose.Schema.Types.Mixed,
-//     career: mongoose.Schema.Types.Mixed,
-//     honors: mongoose.Schema.Types.Mixed,
-//     biography: String,
-//     video: String,
-//     position: String,
-//     photo: String,
-//     birth: Date,
-//     country: mongoose.Schema.Types.Mixed,
-//     personLanguages: mongoose.Schema.Types.Mixed,
-//     weight: String,
-//     height: String,
-//     number: Number
-// });
-// var player = mongoose.model("player", player_schema);
-
-var team_schema = new mongoose.Schema({
-  name: String,
-  logo: String,
-  players: [{
-    type: Number,
-    ref: 'player'
-  }]
-});
-var team = mongoose.model("team", team_schema);
-
-var matchevent = new mongoose.Schema({
-  type: String,
-  time: Number,
-  data: mongoose.Schema.Types.Mixed,
-  created: Date
+/*Bootstrap models*/
+var modelsPath = path.join(__dirname, 'models');
+fs.readdirSync(modelsPath).forEach(function (file) {
+  require(modelsPath + '/' + file);
 });
 
-var match_schema = new mongoose.Schema({
-  sport: String,
-  home_team: {
-    type: String,
-    ref: 'team'
-  },
-  away_team: {
-    type: String,
-    ref: 'team'
-  },
-  home_score: Number,
-  away_score: Number,
-  match_date: Date,
-  time: String,
-  state: Number,
-  stats: mongoose.Schema.Types.Mixed,
-  timeline: [mongoose.Schema.Types.Mixed],
-  settings: mongoose.Schema.Types.Mixed,
-  moderation: [String],
-  moderationData: mongoose.Schema.Types.Mixed // module names ['XMLFeed','Dashboard']
-}, {
-    collection: 'scheduled_matches'
-  });
-var scheduled_matches = mongoose.model("scheduled_matches", match_schema);
+var team = mongoose.models.team;
+var scheduled_matches = mongoose.models.scheduled_matches;
 
-
-
+/**
+ * Redis Pub/Sub Channels
+ */
 var RedisClientPub;
 var RedisClientSub;
 
+
+/** 
+ * CORE MODERATION SERVICE
+ * Handles outside interaction and hold the list
+ * of active matches schedule.
+ */
 var ActiveMatches = {
   mock: false,
   count: AllMatches.length,
   init: function () {
     if (!this.mock) {
+        /* We load all scheduled/active matches from DB on server initialization */
       scheduled_matches
         .find({
           state: {
@@ -113,8 +71,9 @@ var ActiveMatches = {
         .exec(function (err, matches) {
           if (err) return log(err, "error");
           if (matches) {
+              /*For each match found we hook platform specific functionality and add it to the main list*/
             _.forEach(matches, function (match) {
-              var hookedMatch = AddModuleHooks(match);
+              var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
               AllMatches.push(hookedMatch);
               log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
             })
@@ -146,7 +105,7 @@ var ActiveMatches = {
         moderation: ['manual']
       }
 
-      var hookedMatch = AddModuleHooks(match);
+      var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
       AllMatches.push(hookedMatch);
       log("Mock match created with ID [" + hookedMatch.id + "].", "info");
     }
@@ -190,7 +149,7 @@ var ActiveMatches = {
           if (err) return log(err, "error");
 
           if (match) {
-            var hookedMatch = AddModuleHooks(match);
+            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
             AllMatches.push(hookedMatch);
             if (res)
               res.send(hookedMatch);
@@ -226,7 +185,7 @@ var ActiveMatches = {
         moderation: ['manual']
       }
 
-      var hookedMatch = AddModuleHooks(match);
+      var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
       AllMatches.push(hookedMatch);
 
       if (res)
@@ -399,7 +358,7 @@ var Match = function (mongodbID, res) {
         if (res) {
           res.send(match);
         }
-        match = AddModuleHooks(match);
+        match = match_module(match, MatchTimers, RedisClientPub, log);
         ActiveMatches.add(match);
         log("Found match with ID [" + match.id + "]. Hooking on it.");
         return match;
@@ -412,333 +371,333 @@ var Match = function (mongodbID, res) {
 
 }
 
-var AddModuleHooks = function (match) {
+// var AddModuleHooks = function (match) {
 
-  var HookedMatch = {}; // = match;
+//   var HookedMatch = {}; // = match;
 
-  HookedMatch.MODERATION_SERVICES = [];
+//   HookedMatch.MODERATION_SERVICES = [];
 
-  // Holds the interval that counts time
-  // HookedMatch.Time_interval = null;
-  // Holds the actual running time (i.e. 10m:34s)
-  HookedMatch.Match_timer = "";
+//   // Holds the interval that counts time
+//   // HookedMatch.Time_interval = null;
+//   // Holds the actual running time (i.e. 10m:34s)
+//   HookedMatch.Match_timer = "";
 
-  // Set ID
-  HookedMatch.id = match._id.toString() || 'moxxkId';
+//   // Set ID
+//   HookedMatch.id = match._id.toString() || 'moxxkId';
 
-  // Match data
-  HookedMatch.data = match;
+//   // Match data
+//   HookedMatch.data = match;
 
-  // Validations
-  if (HookedMatch.data.timeline.length == 0) {
-    HookedMatch.data.state = 0;
-    HookedMatch.data.timeline.push([{
-      "start": null,
-      "end": null,
-      "events": []
-    }]);
-    HookedMatch.data.markModified('timeline');
-    HookedMatch.data.save();
-  }
+//   // Validations
+//   if (HookedMatch.data.timeline.length == 0) {
+//     HookedMatch.data.state = 0;
+//     HookedMatch.data.timeline.push([{
+//       "start": null,
+//       "end": null,
+//       "events": []
+//     }]);
+//     HookedMatch.data.markModified('timeline');
+//     HookedMatch.data.save();
+//   }
 
-  // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
-  HookedMatch.sport = Sports[match.sport];
-
-
-
-  /*  ---------------
-   **   Methods
-   **  -------------*/
-
-  /*  SetModerationService
-      Here we set the moderation service for the game. There is only reason to switch to manual
-      only if we don't want a hooked feed. Manual input will always work
-  */
-  HookedMatch.AddModerationService = function (service, initializing) {
-
-    if (HookedMatch.moderation.indexOf(service) > 0)
-      return log("Service already active", "core");
-
-    if (!initializing)
-      HookedMatch.moderation.push(service);
-
-    HookedMatch.MODERATION_SERVICES.push(moderationServices[service]);
-
-    if (service == "manual")
-      HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
-
-  }
-
-  // Set services for the first time
-  HookedMatch.moderation = match.moderation;
-  HookedMatch.moderation.forEach(function (service) {
-    HookedMatch.AddModerationService(service, true);
-  });
+//   // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
+//   HookedMatch.sport = Sports[match.sport];
 
 
-  HookedMatch.removeSegment = function (data, res) {
+
+//   /*  ---------------
+//    **   Methods
+//    **  -------------*/
+
+//   /*  SetModerationService
+//       Here we set the moderation service for the game. There is only reason to switch to manual
+//       only if we don't want a hooked feed. Manual input will always work
+//   */
+//   HookedMatch.AddModerationService = function (service, initializing) {
+
+//     if (HookedMatch.moderation.indexOf(service) > 0)
+//       return log("Service already active", "core");
+
+//     if (!initializing)
+//       HookedMatch.moderation.push(service);
+
+//     HookedMatch.MODERATION_SERVICES.push(moderationServices[service]);
+
+//     if (service == "manual")
+//       HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(app, this, log);
+
+//   }
+
+//   // Set services for the first time
+//   HookedMatch.moderation = match.moderation;
+//   HookedMatch.moderation.forEach(function (service) {
+//     HookedMatch.AddModerationService(service, true);
+//   });
 
 
-    this.data.timeline.splice(data.index, 1);
-
-    HookedMatch.data.state--;
+//   HookedMatch.removeSegment = function (data, res) {
 
 
-    this.data.markModified('timeline');
-    this.data.save();
+//     this.data.timeline.splice(data.index, 1);
+
+//     HookedMatch.data.state--;
 
 
-    res.status(200).send(HookedMatch);
-  }
+//     this.data.markModified('timeline');
+//     this.data.save();
 
-  HookedMatch.updateTimes = function (data, res) {
-    console.log(data);
-    // make checks
-    if (this.data.timeline[data.index].start != data.data.start) {
-      this.data.timeline[data.index].start = data.data.start;
 
-      if (this.data.timeline[data.index - 1])
-        this.data.timeline[data.index - 1].end = data.data.start;
+//     res.status(200).send(HookedMatch);
+//   }
 
-      this.data.markModified('timeline');
-      this.data.save();
-    }
+//   HookedMatch.updateTimes = function (data, res) {
+//     console.log(data);
+//     // make checks
+//     if (this.data.timeline[data.index].start != data.data.start) {
+//       this.data.timeline[data.index].start = data.data.start;
 
-    if (this.data.timeline[data.index].end != data.data.end) {
-      this.data.timeline[data.index].end = data.data.end;
+//       if (this.data.timeline[data.index - 1])
+//         this.data.timeline[data.index - 1].end = data.data.start;
 
-      if (this.data.timeline[data.index + 1])
-        this.data.timeline[data.index + 1].start = data.data.end;
+//       this.data.markModified('timeline');
+//       this.data.save();
+//     }
 
-      this.data.markModified('timeline');
-      this.data.save();
-    }
+//     if (this.data.timeline[data.index].end != data.data.end) {
+//       this.data.timeline[data.index].end = data.data.end;
 
-    res.status(200).send();
-  }
+//       if (this.data.timeline[data.index + 1])
+//         this.data.timeline[data.index + 1].start = data.data.end;
+
+//       this.data.markModified('timeline');
+//       this.data.save();
+//     }
+
+//     res.status(200).send();
+//   }
   
-  /*  AdvanceSegment
-      The advance state method is called when we want to advance to the next segment of the game.
-      Depending on setting, here will determine if a timer should begin counting aand hold the
-      game's time.
-  */
-  HookedMatch.AdvanceSegment = function (event, res) {
+//   /*  AdvanceSegment
+//       The advance state method is called when we want to advance to the next segment of the game.
+//       Depending on setting, here will determine if a timer should begin counting aand hold the
+//       game's time.
+//   */
+//   HookedMatch.AdvanceSegment = function (event, res) {
 
-    // Register the time that the previous segment ended
-    this.data.timeline[this.data.state].end = moment().utc().format();
-    // Advance the state of the match
-    this.data.state++;
-    // Register the time that the current segment starts
-    this.data.timeline.push({
-      "start": null,
-      "end": null,
-      "events": []
-    });
-    this.data.timeline[this.data.state].start = moment().utc().format();
+//     // Register the time that the previous segment ended
+//     this.data.timeline[this.data.state].end = moment().utc().format();
+//     // Advance the state of the match
+//     this.data.state++;
+//     // Register the time that the current segment starts
+//     this.data.timeline.push({
+//       "start": null,
+//       "end": null,
+//       "events": []
+//     });
+//     this.data.timeline[this.data.state].start = moment().utc().format();
 
-    //  Does it have initial time?
-    // if (HookedMatch.sport.segments[this.data.state].initialTime)
-    //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
+//     //  Does it have initial time?
+//     // if (HookedMatch.sport.segments[this.data.state].initialTime)
+//     //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
 
-    //     if (HookedMatch.sport.segments[this.data.state].initialTime)
-    //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
-    // else
-    //     this.data.time = "";
+//     //     if (HookedMatch.sport.segments[this.data.state].initialTime)
+//     //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
+//     // else
+//     //     this.data.time = "";
 
-    // HookedMatch.Match_timer = "";
+//     // HookedMatch.Match_timer = "";
 
-    this.addTimeHooks();
+//     this.addTimeHooks();
 
-    this.data.markModified('timeline');
-    this.data.save();
+//     this.data.markModified('timeline');
+//     this.data.save();
 
-    return res.status(200).send(HookedMatch);
-  }
+//     return res.status(200).send(HookedMatch);
+//   }
 
 
 
-  HookedMatch.addTimeHooks = function () {
+//   HookedMatch.addTimeHooks = function () {
     
-    //  Should this segment be timed?
-    if (HookedMatch.sport.segments[this.data.state].timed) {
-      if (HookedMatch.sport.segments[HookedMatch.data.state]) {
-        var now = moment().utc();
-        var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
-        var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
-        var d = moment.duration(ms);
+//     //  Should this segment be timed?
+//     if (HookedMatch.sport.segments[this.data.state].timed) {
+//       if (HookedMatch.sport.segments[HookedMatch.data.state]) {
+//         var now = moment().utc();
+//         var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
+//         var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
+//         var d = moment.duration(ms);
 
 
-        HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", {
-          trim: false
-        }) : "";
-        HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
+//         HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", {
+//           trim: false
+//         }) : "";
+//         HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
 
-        if (!HookedMatch.sport.time_dependant) { //  Is Time controlled?
-          MatchTimers[this.data.match_id] = setInterval(function () {
-            var now = moment().utc();
-            var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
-            var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
-            var d = moment.duration(ms);
-            HookedMatch.Match_timer = d.format("mm:ss", {
-              trim: false
-            });
-            // console.log(d.format("mm"));
-            //  console.log(now);
-            //  console.log(then);
+//         if (!HookedMatch.sport.time_dependant) { //  Is Time controlled?
+//           MatchTimers[this.data.match_id] = setInterval(function () {
+//             var now = moment().utc();
+//             var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
+//             var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
+//             var d = moment.duration(ms);
+//             HookedMatch.Match_timer = d.format("mm:ss", {
+//               trim: false
+//             });
+//             // console.log(d.format("mm"));
+//             //  console.log(now);
+//             //  console.log(then);
 
-            HookedMatch.data.time = (HookedMatch.sport.segments[HookedMatch.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
+//             HookedMatch.data.time = (HookedMatch.sport.segments[HookedMatch.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
 
-          }, 1000);
-        }
-      } else {
-        clearInterval(MatchTimers[this.data.match_id]);
-      }
-    } else {
-      clearInterval(MatchTimers[this.data.match_id]);
-    }
-  }
-
-
-  /*  ToggleTimer
-      Toggles the game's timer state.
-  */
-  HookedMatch.ToggleTimer = function () {
-    if (this.Time_interval) {
-      clearInterval(MatchTimers[this.data.match_id]);
-    } else {
-      MatchTimers[this.data.match_id] = setInterval(function () {
-        HookedMatch.countTime();
-      }, 1000)
-    }
-  }
-  HookedMatch.GetCurrentSegment = function () {
-    // We assign the name of the segment to the currentSegment var
-    return HookedMatch.Sport.segments[HookedMatch.state].name;
-  }
+//           }, 1000);
+//         }
+//       } else {
+//         clearInterval(MatchTimers[this.data.match_id]);
+//       }
+//     } else {
+//       clearInterval(MatchTimers[this.data.match_id]);
+//     }
+//   }
 
 
-
-  /*  AddEvent
-      The addEvent method is a core method to the moderation system. It is called by
-      moderation services or manualy from the dashboard in order to inject events to
-      the timeline and also broadcast them on the sockets channel to be consumed by
-      other instances.
-  */
-  HookedMatch.AddEvent = function (event, res) {
-
-    // Parses the event based on sport and makes changes in the match instance
-    StatsHelper.Parse(event, match, log);
-
-    console.log("Wehn adding event:");
-    console.log(HookedMatch.data.Timeline);
-    var evtObject = event.data;
-
-    // 1. push event in timeline
-    if (evtObject.timeline_event) {
-      log("Received Timeline event", "info");
-      this.data.timeline[this.data.state].events.push(evtObject);
-    }
-
-    // 2. broadcast event on pub/sub channel
-    log("Pushing event to Redis Pub/Sub channel", "info");
-    RedisClientPub.publish("socketServers", JSON.stringify(event));
-
-    // 3. save match to db
-    if (evtObject.timeline_event) {
-      this.data.markModified('timeline');
-      log("Updating database", "info");
-    }
+//   /*  ToggleTimer
+//       Toggles the game's timer state.
+//   */
+//   HookedMatch.ToggleTimer = function () {
+//     if (this.Time_interval) {
+//       clearInterval(MatchTimers[this.data.match_id]);
+//     } else {
+//       MatchTimers[this.data.match_id] = setInterval(function () {
+//         HookedMatch.countTime();
+//       }, 1000)
+//     }
+//   }
+//   HookedMatch.GetCurrentSegment = function () {
+//     // We assign the name of the segment to the currentSegment var
+//     return HookedMatch.Sport.segments[HookedMatch.state].name;
+//   }
 
 
-    StatsHelper.UpsertStat(match.id, {
-      events_sent: 1
-    }, this.data);
 
-    this.data.markModified('stats');
+//   /*  AddEvent
+//       The addEvent method is a core method to the moderation system. It is called by
+//       moderation services or manualy from the dashboard in order to inject events to
+//       the timeline and also broadcast them on the sockets channel to be consumed by
+//       other instances.
+//   */
+//   HookedMatch.AddEvent = function (event, res) {
 
-    this.data.save();
+//     // Parses the event based on sport and makes changes in the match instance
+//     StatsHelper.Parse(event, match, log);
 
-    // 4. return match to Sender
-    return res.status(200).send();
-  }
+//     console.log("Wehn adding event:");
+//     console.log(HookedMatch.data.Timeline);
+//     var evtObject = event.data;
 
-  /*  RemoveEvent
+//     // 1. push event in timeline
+//     if (evtObject.timeline_event) {
+//       log("Received Timeline event", "info");
+//       this.data.timeline[this.data.state].events.push(evtObject);
+//     }
+
+//     // 2. broadcast event on pub/sub channel
+//     log("Pushing event to Redis Pub/Sub channel", "info");
+//     RedisClientPub.publish("socketServers", JSON.stringify(event));
+
+//     // 3. save match to db
+//     if (evtObject.timeline_event) {
+//       this.data.markModified('timeline');
+//       log("Updating database", "info");
+//     }
+
+
+//     StatsHelper.UpsertStat(match.id, {
+//       events_sent: 1
+//     }, this.data);
+
+//     this.data.markModified('stats');
+
+//     this.data.save();
+
+//     // 4. return match to Sender
+//     return res.status(200).send();
+//   }
+
+//   /*  RemoveEvent
   
-  */
-  HookedMatch.RemoveEvent = function (event, res) {
+//   */
+//   HookedMatch.RemoveEvent = function (event, res) {
 
-    // Parses the event based on sport and makes changes in the match instance
-    StatsHelper.Parse(event, match, log);
+//     // Parses the event based on sport and makes changes in the match instance
+//     StatsHelper.Parse(event, match, log);
 
 
-    var eventObj = _.findWhere(this.data.timeline[event.data.state].events, {
-      id: event.data.id,
-      match_id: event.data.match_id
-    });
+//     var eventObj = _.findWhere(this.data.timeline[event.data.state].events, {
+//       id: event.data.id,
+//       match_id: event.data.match_id
+//     });
 
-    // set status to removed
-    eventObj.status = "removed";
+//     // set status to removed
+//     eventObj.status = "removed";
 
-    // Should we destroy events on just mark them "removed"
-    if (this.data.settings.destroyOnDelete)
-      this.data.timeline[event.data.state].events = _.without(this.data.timeline[event.data.state].events, eventObj);
+//     // Should we destroy events on just mark them "removed"
+//     if (this.data.settings.destroyOnDelete)
+//       this.data.timeline[event.data.state].events = _.without(this.data.timeline[event.data.state].events, eventObj);
 
-    // Broadcast the remove event so others can consume it.
-    RedisClientPub.publish("socketServers", JSON.stringify(event));
+//     // Broadcast the remove event so others can consume it.
+//     RedisClientPub.publish("socketServers", JSON.stringify(event));
 
-    console.log(ActiveMatches.GetMatch(event.data.match_id).data.timeline);
-    // 3. save match to db
-    this.data.markModified('timeline');
-    log("Updating database", "info");
+//     console.log(ActiveMatches.GetMatch(event.data.match_id).data.timeline);
+//     // 3. save match to db
+//     this.data.markModified('timeline');
+//     log("Updating database", "info");
 
-    StatsHelper.UpsertStat(match.id, {
-      events_sent: 1
-    }, this.data);
-    this.data.markModified('stats');
+//     StatsHelper.UpsertStat(match.id, {
+//       events_sent: 1
+//     }, this.data);
+//     this.data.markModified('stats');
 
-    this.data.save();
+//     this.data.save();
 
-    // 4. return match to Sender
-    return res.status(200).send();
-  }
+//     // 4. return match to Sender
+//     return res.status(200).send();
+//   }
 
-  /*  RemoveEvent
+//   /*  RemoveEvent
   
-  */
-  HookedMatch.UpdateEvent = function (event, res) {
+//   */
+//   HookedMatch.UpdateEvent = function (event, res) {
 
-    // Parses the event based on sport and makes changes in the match instance
-    StatsHelper.Parse(event, match, log);
+//     // Parses the event based on sport and makes changes in the match instance
+//     StatsHelper.Parse(event, match, log);
 
-    for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
-      if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
-        this.data.timeline[event.data.state].events[i] = event.data;
-        break;
-      }
-    }
+//     for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
+//       if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
+//         this.data.timeline[event.data.state].events[i] = event.data;
+//         break;
+//       }
+//     }
 
-    // Broadcast the remove event so others can consume it.
-    RedisClientPub.publish("socketServers", JSON.stringify(event));
+//     // Broadcast the remove event so others can consume it.
+//     RedisClientPub.publish("socketServers", JSON.stringify(event));
 
-    // 3. save match to db
-    this.data.markModified('timeline');
-    log("Updating database", "info");
+//     // 3. save match to db
+//     this.data.markModified('timeline');
+//     log("Updating database", "info");
 
-    StatsHelper.UpsertStat(match.id, {
-      events_sent: 1
-    }, this.data);
-    this.data.markModified('stats');
+//     StatsHelper.UpsertStat(match.id, {
+//       events_sent: 1
+//     }, this.data);
+//     this.data.markModified('stats');
 
-    this.data.save();
+//     this.data.save();
 
-    // 4. return match to Sender
-    return res.status(200).send();
-  }
+//     // 4. return match to Sender
+//     return res.status(200).send();
+//   }
 
-  HookedMatch.addTimeHooks();
+//   HookedMatch.addTimeHooks();
 
-  return HookedMatch;
-}
+//   return HookedMatch;
+// }
 
 
 /*  Winston Logger  */
