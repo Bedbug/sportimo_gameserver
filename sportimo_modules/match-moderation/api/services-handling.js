@@ -9,7 +9,5 @@ module.exports = function (ModerationModule) {
         ModerationModule.GetMatch(match_id).AddModerationService(req.body.service, res);
     });
 
-
-
     return router;
 }

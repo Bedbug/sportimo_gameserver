@@ -9,8 +9,6 @@
 /*  Libraries   */
 var path = require('path'),
     fs = require('fs'),
-    mongoose = require('mongoose'),
-    redis = require('redis'),
     needle = require('needle');
 
 var moment = require('moment');
@@ -33,13 +31,10 @@ var MatchTimers = [];
 
 
 /*Bootstrap models*/
-var modelsPath = path.join(__dirname, 'models');
-fs.readdirSync(modelsPath).forEach(function (file) {
-    require(modelsPath + '/' + file);
-});
+var team = null,
+    scheduled_matches = null;
 
-var team = mongoose.models.team;
-var scheduled_matches = mongoose.models.scheduled_matches;
+
 
 /**
  * Redis Pub/Sub Channels
@@ -55,6 +50,7 @@ var RedisClientSub;
  */
 var ModerationModule = {
     callback: null,
+    mongoose: null,
     mock: false,
     count: function () {
         return _.size(AllMatches);
@@ -151,14 +147,14 @@ var ModerationModule = {
                         return null;
                     }
                 });
-        } else {           
+        } else {
             var match = new scheduled_matches(mockMatch);
             var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
             AllMatches.push(hookedMatch);
 
             if (res)
                 res.send(hookedMatch);
-            
+
             log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
             return hookedMatch;
         }
@@ -168,30 +164,27 @@ var ModerationModule = {
             id: matchID
         });
     },
-//    InjectEvent: function (evnt, res) {
-//        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
-//    },
-    SetupMongoDB: function (uri) {
+    //    InjectEvent: function (evnt, res) {
+    //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
+    //    },
+    SetupMongoDB: function (mongooseConnection) {
         if (this.mock) return;
-        mongoose.connect(uri);
+        this.mongoose = mongooseConnection;
+        var modelsPath = path.join(__dirname, 'models');
+        fs.readdirSync(modelsPath).forEach(function (file) {
+            require(modelsPath + '/' + file);
+        });
+        team = this.mongoose.models.team;
+        scheduled_matches = this.mongoose.models.scheduled_matches;
         log("Connected to MongoDB", "core");
     },
-    SetupRedis: function (RedisIP, RedisPort, RedisAuth, RedisChannel) {
-        if (this.mock) return;
-        // Initialize and connect to the Redis datastore
-        RedisClientPub = redis.createClient(RedisPort, RedisIP);
-        RedisClientPub.auth(RedisAuth, function (err) {
-            if (err) {
-                throw err;
-            }
-        });
+    SetupRedis: function (Pub, Sub, Channel) {
 
-        RedisClientSub = redis.createClient(RedisPort, RedisIP);
-        RedisClientSub.auth(RedisAuth, function (err) {
-            if (err) {
-                throw err;
-            }
-        });
+        if (this.mock) return;
+
+        // Initialize and connect to the Redis datastore
+        RedisClientPub = Pub;
+        RedisClientSub = Sub;
 
         setInterval(function () {
 
@@ -221,7 +214,7 @@ var ModerationModule = {
             log("{Connection ended}");
         });
 
-        RedisClientSub.subscribe(RedisChannel);
+        RedisClientSub.subscribe(Channel);
 
         RedisClientSub.on("message", function (channel, message) {
             if (JSON.parse(message).server)
@@ -232,7 +225,7 @@ var ModerationModule = {
         });
     },
     // Setting up the Manual Rest-API service
-    SetupManualService: function (server) {
+    SetupAPIRoutes: function (server) {
 
         log("Setting up [Manual] moderation routes");
         var apiPath = path.join(__dirname, 'api');
@@ -240,7 +233,7 @@ var ModerationModule = {
             server.use('/v1', require(apiPath + '/' + file)(ModerationModule));
         });
     }
-    
+
 }
 
 /* The basic match class.

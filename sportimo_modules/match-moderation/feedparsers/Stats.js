@@ -1,7 +1,8 @@
-var Stats = {};
+var Parser = {};
 
-Stats.init = function(){
+Parser.name = "Stats";
+Parser.init = function(){
         return console.log("[Stats] Parser service initiliazed");
     }
 
-module.exports = Stats;
+module.exports = Parser;

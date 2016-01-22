@@ -83,8 +83,6 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
             HookedMatch.moderation.push(service);
             HookedMatch.startService(service);
         }
-
-
     }
 
    HookedMatch.StartService = function(service){

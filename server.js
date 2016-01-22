@@ -42,10 +42,12 @@
 
  */
 
-var express = require("express");
-var http = require('http');
-var bodyParser = require('body-parser');
-var app = express();
+var express = require("express"),
+    http = require('http'),
+    bodyParser = require('body-parser'),
+    app = express(),
+    redis = require('redis'),
+    mongoose = require('mongoose');
 
 
 var TestSuite = {
@@ -72,27 +74,39 @@ function onCrossDomainHandler(req, res) {
     res.end(xml);
 }
 
-// OLD PUB/SUB Channel
-// var redisCreds = { url: 'angelfish.redistogo.com', port: 9455, secret: 'd8deecf088b01d686f7f7cbfd11e96a9', channel: "socketServers" };
 
+// Initialize and connect to the Redis datastore
 var redisCreds = {
     url: 'clingfish.redistogo.com',
     port: 9307,
     secret: '075bc004e0e54a4a738c081bf92bc61d',
     channel: "socketServers"
 };
-var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
+var PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+PublishChannel.auth(redisCreds.secret, function (err) {
+    if (err) {
+        throw err;
+    }
+});
+var SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
+SubscribeChannel.auth(redisCreds.secret, function (err) {
+    if (err) {
+        throw err;
+    }
+});
 
+// Setup MongoDB conenction
+var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
+mongoose.connect(mongoConnection);
 
 /* Modules */
 // if (process.env.NODE_ENV != "production") {
 
 var liveMatches = require('./sportimo_modules/match-moderation');
-liveMatches.SetupRedis(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
-liveMatches.SetupMongoDB(mongoConnection);
-liveMatches.SetupManualService(app);
+liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
+liveMatches.SetupMongoDB(mongoose);
+liveMatches.SetupAPIRoutes(app);
 liveMatches.init(TestSuite.done);
-
 TestSuite.moderation = liveMatches;
 // }
 
@@ -111,7 +125,9 @@ function log(info) {
 }
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
