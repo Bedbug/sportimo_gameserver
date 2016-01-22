@@ -2,7 +2,7 @@
 
 /*
 
- Cards_Server Modular
+ Game Server Modular
 
  Info:
  This servers has the following modules:
@@ -48,11 +48,17 @@ var bodyParser = require('body-parser');
 var app = express();
 
 
+var TestSuite = {
+    done: null
+};
+
+
 // Create Server
 var server = http.createServer(app);
 server.listen(process.env.PORT || 3030);
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
+
 function onCrossDomainHandler(req, res) {
     var xml = '<?xml version="1.0"?>\n<!DOCTYPE cross-domain-policy SYSTEM' +
         ' "http://www.macromedia.com/xml/dtds/cross-domain-policy.dtd">\n<cross-domain-policy>\n';
@@ -60,24 +66,34 @@ function onCrossDomainHandler(req, res) {
     xml += '</cross-domain-policy>\n';
 
     req.setEncoding('utf8');
-    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    res.writeHead(200, {
+        'Content-Type': 'text/xml'
+    });
     res.end(xml);
 }
 
 // OLD PUB/SUB Channel
 // var redisCreds = { url: 'angelfish.redistogo.com', port: 9455, secret: 'd8deecf088b01d686f7f7cbfd11e96a9', channel: "socketServers" };
 
-var redisCreds = { url: 'clingfish.redistogo.com', port: 9307, secret: '075bc004e0e54a4a738c081bf92bc61d', channel: "socketServers" };
+var redisCreds = {
+    url: 'clingfish.redistogo.com',
+    port: 9307,
+    secret: '075bc004e0e54a4a738c081bf92bc61d',
+    channel: "socketServers"
+};
 var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 
 
 /* Modules */
 // if (process.env.NODE_ENV != "production") {
-    var LiveMatches = require('./sportimo_modules/match-moderation');
-    LiveMatches.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
-    LiveMatches.setMongoConnection(mongoConnection);
-    LiveMatches.setServerForRoutes(app);
-    LiveMatches.init();
+
+var liveMatches = require('./sportimo_modules/match-moderation');
+liveMatches.SetupRedis(redisCreds.url, redisCreds.port, redisCreds.secret, redisCreds.channel);
+liveMatches.SetupMongoDB(mongoConnection);
+liveMatches.SetupManualService(app);
+liveMatches.init(TestSuite.done);
+
+TestSuite.moderation = liveMatches;
 // }
 
 // var Wildcards = require('./sportimo_modules/wildcards');
@@ -95,10 +111,7 @@ function log(info) {
 }
 
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
-
-
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -107,5 +120,10 @@ app.use(function (req, res, next) {
 });
 
 app.get('/', function (req, res, next) {
-    res.send(200, "The Cards Server is running smoothly.");
+    res.send(200, "The Game Server is running smoothly.");
 });
+
+
+TestSuite.server = app;
+
+module.exports = TestSuite;

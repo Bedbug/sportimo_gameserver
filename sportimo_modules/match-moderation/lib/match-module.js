@@ -34,7 +34,7 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
     HookedMatch.Match_timer = "";
 
     // Set ID
-    HookedMatch.id = match._id.toString() || 'moxxkId';
+    HookedMatch.id = match._id.toString() || 'mockid';
 
     // Match data
     HookedMatch.data = match;

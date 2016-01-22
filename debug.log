@@ -1,145 +1,145 @@
 2015-12-03T11:12:31.131Z - core: [Wildcards Module] Start initial card validations
-2015-12-03T11:12:30.974Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:12:30.974Z - core: [Moderation Module] Connected to MongoDB
 2015-12-03T11:12:31.836Z - core: [Wildcards Module] Cards Validation Request
-2015-12-03T11:12:32.027Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:12:32.027Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T11:12:32.070Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T11:14:54.245Z - core: [Wildcards Module] Start initial card validations
-2015-12-03T11:14:54.195Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:14:54.195Z - core: [Moderation Module] Connected to MongoDB
 2015-12-03T11:14:55.027Z - core: [Wildcards Module] Cards Validation Request
-2015-12-03T11:14:55.160Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:14:55.160Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T11:14:55.194Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T11:15:18.884Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:15:18.884Z - core: [Moderation Module] Connected to MongoDB
 2015-12-03T11:15:18.945Z - core: [Wildcards Module] Start initial card validations
 2015-12-03T11:15:19.704Z - core: [Wildcards Module] Cards Validation Request
-2015-12-03T11:15:19.774Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:19.774Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T11:15:19.792Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T11:15:38.049Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T11:15:38.049Z - core: [Moderation Module] Connected to MongoDB
 2015-12-03T11:15:38.099Z - core: [Wildcards Module] Start initial card validations
-2015-12-03T11:15:39.031Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T11:15:39.031Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T11:15:39.183Z - core: [Wildcards Module] Cards Validation Request
 2015-12-03T11:15:39.677Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T13:01:00.561Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:00.561Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T13:01:00.564Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:01:00.562Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:01:00.562Z - core: [Moderation Module] {Connection ended}
 2015-12-03T13:01:00.564Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T13:01:32.324Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T13:01:32.325Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T13:01:32.327Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:01:32.329Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:01:35.119Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:01:32.327Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:01:32.329Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:01:35.119Z - core: [Moderation Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
 2015-12-03T13:01:35.125Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
 2015-12-03T13:04:06.873Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T13:04:06.875Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:04:13.700Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:04:06.875Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:04:13.700Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T13:04:13.702Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T13:10:18.168Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:10:18.169Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:18.830Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:19.532Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:10:19.535Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:20.510Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:10:20.525Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:10:20.526Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:21.894Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:10:21.895Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:23.925Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:10:23.926Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:27.170Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:10:27.171Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:32.377Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:10:32.378Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:40.936Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:10:40.938Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:10:55.253Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:10:55.254Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:11:19.333Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:11:19.334Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:11:19.335Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:12:00.032Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:12:00.033Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:13:09.004Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:13:09.005Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:15:05.942Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T13:15:05.943Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:18:26.532Z - core: [ActiveMatches Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T13:58:01.240Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:18.168Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:18.169Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:18.830Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:19.532Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:19.535Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:20.510Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:20.525Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:20.526Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:21.894Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:21.895Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:23.925Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:23.926Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:27.170Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:27.171Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:32.377Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:10:32.378Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:40.936Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:40.938Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:10:55.253Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:10:55.254Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:11:19.333Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:11:19.334Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:11:19.335Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:12:00.032Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:12:00.033Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:13:09.004Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:13:09.005Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:15:05.942Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T13:15:05.943Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:18:26.532Z - core: [Moderation Module] Subscribed to Sportimo Events PUB/SUB channel
+2015-12-03T13:58:01.240Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T13:58:01.241Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T13:58:01.242Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T13:58:01.240Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T13:58:14.678Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T13:58:01.240Z - core: [Moderation Module] {Connection ended}
+2015-12-03T13:58:14.678Z - core: [Moderation Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
 2015-12-03T13:58:14.696Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
-2015-12-03T13:59:51.657Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T13:59:51.658Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T13:59:51.657Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T13:59:51.658Z - core: [Moderation Module] {Connection ended}
 2015-12-03T13:59:51.664Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T13:59:51.665Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:00:02.228Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:00:02.229Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:00:02.237Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T14:00:02.238Z - core: [ActiveMatches Module] {Connection ended}
-2015-12-03T14:00:07.360Z - core: [ActiveMatches Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
+2015-12-03T14:00:02.237Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:00:02.238Z - core: [Moderation Module] {Connection ended}
+2015-12-03T14:00:07.360Z - core: [Moderation Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
 2015-12-03T14:00:27.153Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
 2015-12-03T14:01:14.258Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:01:14.258Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:14.316Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T14:01:14.316Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:14.316Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:14.316Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:24.681Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:01:24.682Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:01:25.435Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:25.559Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T14:01:25.560Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:25.559Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:01:25.560Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:26.465Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:27.667Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:27.667Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:27.884Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:01:27.885Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:01:29.976Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:01:29.977Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:30.906Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:30.906Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:33.298Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:01:33.301Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:36.154Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T14:01:36.155Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:36.154Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:36.155Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:38.502Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:01:38.502Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:44.971Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T14:01:44.972Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:44.971Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:44.972Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:01:47.108Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:01:47.110Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:01:59.353Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T14:01:59.354Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:01:59.353Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:01:59.354Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:02:01.484Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:02:01.486Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:02:23.478Z - core: [ActiveMatches Module] {''Error'': ''Error: ERR max number of clients reached''}
-2015-12-03T14:02:23.479Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:02:23.478Z - core: [Moderation Module] {''Error'': ''Error: ERR max number of clients reached''}
+2015-12-03T14:02:23.479Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:02:25.588Z - core: [Wildcards Module] {''Error'': ''Error: ERR max number of clients reached''}
 2015-12-03T14:02:25.589Z - core: [Wildcards Module] {Connection ended}
-2015-12-03T14:03:16.990Z - error: [ActiveMatches Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
+2015-12-03T14:03:16.990Z - error: [Moderation Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
 2015-12-03T14:03:52.273Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel
-2015-12-03T14:04:02.361Z - core: [ActiveMatches Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
-2015-12-03T14:04:02.362Z - core: [ActiveMatches Module] {Connection ended}
+2015-12-03T14:04:02.361Z - core: [Moderation Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
+2015-12-03T14:04:02.362Z - core: [Moderation Module] {Connection ended}
 2015-12-03T14:04:02.929Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:04:02.929Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:04:07.307Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
-2015-12-03T14:04:07.531Z - error: [ActiveMatches Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
+2015-12-03T14:04:07.531Z - error: [Moderation Module] CastError: Cast to ObjectId failed for value "420" at path "_id"
 2015-12-03T14:04:21.358Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:04:21.359Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:04:31.918Z - core: [Wildcards Module] {''Error'': ''Error: Redis connection to angelfish.redistogo.com:9455 failed - read ECONNRESET''}
 2015-12-03T14:04:31.919Z - core: [Wildcards Module] {Connection ended}
 2015-12-03T14:04:36.245Z - core: [Wildcards Module] {''Error'': ''Error: subscriptions are active but got an invalid reply: OK''}
-2015-12-03T14:05:00.582Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:32:28.548Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:35:08.778Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:38:26.973Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:40:16.981Z - error: [ActiveMatches Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
-2015-12-03T14:40:16.982Z - error: [ActiveMatches Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
-2015-12-03T14:45:24.850Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:46:50.813Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:47:45.445Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T14:50:31.372Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T15:02:49.209Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T15:11:19.105Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T15:20:34.384Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T16:53:58.170Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T17:06:04.535Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-03T19:47:58.790Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-05T14:25:16.084Z - core: [ActiveMatches Module] Connected to MongoDB
-2015-12-06T06:41:20.419Z - core: [ActiveMatches Module] Connected to MongoDB
+2015-12-03T14:05:00.582Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:32:28.548Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:35:08.778Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:38:26.973Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:40:16.981Z - error: [Moderation Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
+2015-12-03T14:40:16.982Z - error: [Moderation Module] MongoError: server ds043523-a0.mongolab.com:43523 sockets closed
+2015-12-03T14:45:24.850Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:46:50.813Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:47:45.445Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T14:50:31.372Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T15:02:49.209Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T15:11:19.105Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T15:20:34.384Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T16:53:58.170Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T17:06:04.535Z - core: [Moderation Module] Connected to MongoDB
+2015-12-03T19:47:58.790Z - core: [Moderation Module] Connected to MongoDB
+2015-12-05T14:25:16.084Z - core: [Moderation Module] Connected to MongoDB
+2015-12-06T06:41:20.419Z - core: [Moderation Module] Connected to MongoDB
