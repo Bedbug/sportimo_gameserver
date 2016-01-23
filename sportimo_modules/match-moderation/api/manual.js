@@ -1,7 +1,7 @@
 var express = require('express'),
     router = express.Router();
 
-module.exports = function (ModerationModule) {
+module.exports = function (ModerationModule, log) {
 
 
     router.post('/v1/live/match', function (req, res) {
@@ -28,7 +28,7 @@ module.exports = function (ModerationModule) {
         req.body.last_action_time = moment();
     });
 
-    router.get('/live/match/:id', function (req, res) {
+    router.get('/v1/live/match/:id', function (req, res) {
         return res.send(ModerationModule.GetMatch(req.params.id));
     });
 

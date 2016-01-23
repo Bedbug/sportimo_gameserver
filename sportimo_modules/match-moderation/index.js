@@ -49,6 +49,7 @@ var RedisClientSub;
  * of active matches schedule.
  */
 var ModerationModule = {
+    testing: false,
     callback: null,
     mongoose: null,
     mock: false,
@@ -224,13 +225,23 @@ var ModerationModule = {
             log("[Redis] :" + message, "debug");
         });
     },
-    // Setting up the Manual Rest-API service
     SetupAPIRoutes: function (server) {
+        // Load up the Rest-API routes
+        server.use(bodyParser.json());
+        server.use(bodyParser.urlencoded({
+            extended: true
+        }));
+        server.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+            next();
+        });
 
         log("Setting up [Manual] moderation routes");
         var apiPath = path.join(__dirname, 'api');
         fs.readdirSync(apiPath).forEach(function (file) {
-            server.use('/v1', require(apiPath + '/' + file)(ModerationModule));
+            server.use('/', require(apiPath + '/' + file)(ModerationModule, log));
         });
     }
 
@@ -241,34 +252,34 @@ var ModerationModule = {
     the timeline, reponsibility to sync with database, etc.
     We pass the mongodb ID so the class can hook to the database for updates.
 */
-var Match = function (mongodbID, res) {
+// var Match = function (mongodbID, res) {
 
-    scheduled_matches
-        .findOne({
-            _id: mongodbID
-        })
-        .populate('home_team')
-        .populate('away_team')
-        .exec(function (err, match) {
-            if (err) return log(err, "error");
+//     scheduled_matches
+//         .findOne({
+//             _id: mongodbID
+//         })
+//         .populate('home_team')
+//         .populate('away_team')
+//         .exec(function (err, match) {
+//             if (err) return log(err, "error");
 
-            if (match) {
+//             if (match) {
 
-                if (res) {
-                    res.send(match);
-                }
-                match = match_module(match, MatchTimers, RedisClientPub, log);
-                ModerationModule.add(match);
-                log("Found match with ID [" + match.id + "]. Hooking on it.");
-                return match;
-            } else {
-                console.log(ModerationModule.count, "info");
-                res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
-                return null;
-            }
-        });
+//                 if (res) {
+//                     res.send(match);
+//                 }
+//                 match = match_module(match, MatchTimers, RedisClientPub, log);
+//                 ModerationModule.add(match);
+//                 log("Found match with ID [" + match.id + "]. Hooking on it.");
+//                 return match;
+//             } else {
+//                 console.log(ModerationModule.count, "info");
+//                 res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
+//                 return null;
+//             }
+//         });
 
-}
+// }
 
 // A Mock Match object in case we need it for testing
 var mockMatch = {
@@ -329,7 +340,7 @@ var logger = new(winston.Logger)({
 
 logger.add(winston.transports.Console, {
     timestamp: true,
-    level: process.env.LOG_LEVEL || 'info',
+    level: ModerationModule.testing?'warn':( process.env.LOG_LEVEL || 'info'),
     prettyPrint: true,
     colorize: 'level'
 });
@@ -349,6 +360,7 @@ if (process.env.NODE_ENV == "production") {
 }
 
 function log(text, level) {
+    if(!ModerationModule.testing)
     console.log("[Moderation Module] " + text);
     // var loglevel = level || 'core';
     // logger.log(loglevel, "[Moderation Module] " + text);

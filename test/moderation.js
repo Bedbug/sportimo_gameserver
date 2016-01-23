@@ -7,6 +7,8 @@ var expect = require('chai').expect,
 var TestSuite = require('../server');
 //var LiveMatches = require('../sportimo_modules/match-moderation');
 
+ TestSuite.moderation.testing = true;
+
 before(function (done) {
     // TestSuite.moderation.mock = true;
     TestSuite.moderation.callback = done;
@@ -14,7 +16,6 @@ before(function (done) {
 });
 
 describe('Moderation Module', function () {
-
 
     describe('#MongoDB', function () {
 
@@ -35,76 +36,126 @@ describe('Moderation Module', function () {
             expect(TestSuite.moderation.count()).to.not.equal(0);
         });
     });
-    
-      var match = null;
-    var service = null;
-    
-    describe("Manual API", function () {
+});
+var match = null;
+var service = null;
+
+describe("Moderation Services", function () {
+    describe("Manual Service", function () {
 
 
-        describe('#Get Match [/v1/live/match/565c4af6e4b030fba33dd459]', function () {
-          
-            it('should return the match with id 565c4af6e4b030fba33dd459', function (done) {
+        describe('#Get Match [/v1/live/match/56a38549e4b067030e9f871d]', function () {
+
+            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
                 request(TestSuite.server)
-                    .get('/v1/live/match/565c4af6e4b030fba33dd459')
+                    .get('/v1/live/match/56a38549e4b067030e9f871d')
                     .expect(200)
                     .end(function (err, res) {
                         expect(err).to.equal(null);
-                        expect(res.body.id).to.equal("565c4af6e4b030fba33dd459");
+                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
                         match = res.body;
                         done();
                     })
             })
+        });
 
-           
+        describe('#Post Match [/v1/live/match]', function () {
+//            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+//                request(TestSuite.server)
+//                    .post('/v1/live/match')
+//                    .send({
+//                        id: '56a38549e4b067030e9f871d'
+//                    })
+//                    .expect(200)
+//                    .end(function (err, res) {
+//                        if (err) return done(err);
+//                        expect(err).to.equal(null);
+//                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+//                        match = res.body;
+//                        done();
+//                    })
+//            });
+        });
+
+        describe('#Post Event [/v1/moderation/:id/event]', function () {
+
+            var eventobj = {
+                "id": 16,
+                "match_id": "56a38549e4b067030e9f871d",
+                "type": "yellow",
+                "stats": {
+                    "yc": 1
+                },
+                "playerscount": 1,
+                "status": "active",
+                "timeline_event": true,
+                "state": 0,
+                "sender": "Moderator",
+                "time": "54",
+                "team": "away_team",
+                "players": [
+                    {
+                        "id": "565c4af6e",
+                        "team": "away_team",
+                        "name": "jekhis",
+                        "$$hashKey": "object:108"
+                    }
+                ]
+            }
+            
+            // Add
+             var addEventData = {
+                type: "Add",
+                match_id: "56a38549e4b067030e9f871d",
+                data: eventobj
+            };
+            // Remove
+            var removeEventData = {
+                    type: "Delete",
+                    match_id: "56a38549e4b067030e9f871d",
+                    data: eventobj
+            };
+
+            it('Add: should add a new event', function (done) {
+                request(TestSuite.server)
+                    .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                    .send(addEventData)
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                       expect(res.body.data.timeline[0].events.length).to.equal(1);
+                        done();
+                    })
+            });
+            
+             it('Delete: should delete the last event', function (done) {
+                request(TestSuite.server)
+                    .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                    .send(removeEventData)
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        expect(res.body.data.timeline[0].events.length).to.equal(0);
+                        done();
+                    })
+            });
 
 
         });
-
-      
     });
-    
-      describe('RSS-Feed Service', function () {
+    describe('RSS-Feed Service', function () {
         it('match should have an RSS-Feed service registered', function () {
-                service = _.findWhere(match.MODERATION_SERVICES, {
-                    type: 'rss-feed'
-                });
-                expect(service).to.not.be.equal(null);
+            service = _.findWhere(match.MODERATION_SERVICES, {
+                type: 'rss-feed'
             });
-          
-            it('should use a STATS parser', function () {
-//                console.log(service);
-                expect(service.parsername).to.be.equal("Stats");
-                expect(service.parser.name).to.be.equal("Stats");
-            });
+            expect(service).to.not.be.equal(null);
         });
-    //   describe('#hook', function() {
-    //     it('hook to live match', function(done) {
-    //       request(app)
-    //         .post('/users/signup')
-    //         .send({email: 'test@test.com', password: 'password'})
-    //         .expect(200)
-    //         .end(function(err, res) {
-    //           if (err) return done(err); 
-    //           expect(err).to.equal(null);
-    //           expect(res.body.success).to.equal(true);
-    //           expect(res.body.user).to.be.an('object');
-    //           expect(res.body.user.email).to.equal('test@test.com');
-    //           // we will filter the user object and not return the 
-    //           // password hash back
-    //           expect(res.body.user.password).to.equal(undefined);
-    //           done();
-    //         });
-    //     });
-    //   });
-});
 
-// var assert = require('assert');
-// describe('Array', function () {
-//     describe('#indexOf()', function () {
-//         it('should return -1 when the value is not present', function () {
-//             assert.equal(-1, [1, 2, 3].indexOf(5));
-//             assert.equal(-1, [1, 2, 3].indexOf(0));
-//         });
-//     });
-// });
+        it('should use a STATS parser', function () {
+            //                console.log(service);
+            expect(service.parsername).to.be.equal("Stats");
+            expect(service.parser.name).to.be.equal("Stats");
+        });
+    });
+
+});

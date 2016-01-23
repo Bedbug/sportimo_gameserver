@@ -251,8 +251,9 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
         // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match, log);
 
-        console.log("Wehn adding event:");
-        console.log(HookedMatch.data.Timeline);
+//        console.log("When adding event:");
+//        console.log(HookedMatch.data.timeline[this.data.state]);
+        
         var evtObject = event.data;
 
         // 1. push event in timeline
@@ -281,7 +282,7 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
         this.data.save();
 
         // 4. return match to Sender
-        return res.status(200).send();
+        return res.status(200).send(this);
     }
 
     /*  RemoveEvent
@@ -320,7 +321,7 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
         this.data.save();
 
         // 4. return match to Sender
-        return res.status(200).send();
+        return res.status(200).send(this);
     }
 
     /*  RemoveEvent

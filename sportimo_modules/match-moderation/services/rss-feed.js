@@ -41,7 +41,7 @@ feed_service.init = function () {
         
     parsers[this.parsername].init();
     
-    return console.log("[RSS-Feed] Service initialized");
+//    return console.log("[RSS-Feed] Service initialized");
 }
 
 module.exports = feed_service;
