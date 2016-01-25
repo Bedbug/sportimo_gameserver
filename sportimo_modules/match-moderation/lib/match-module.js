@@ -22,7 +22,7 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 });
 
 
-var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
+var matchModule = function (match, MatchTimers, PubChannel, log) {
 
     var HookedMatch = {}; // = match;
 
@@ -363,4 +363,4 @@ var AddModuleHooks = function (match, MatchTimers, PubChannel, log) {
 }
 
 
-module.exports = AddModuleHooks;
+module.exports = matchModule;

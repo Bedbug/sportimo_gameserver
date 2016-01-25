@@ -143,3 +143,6 @@
 2015-12-03T19:47:58.790Z - core: [Moderation Module] Connected to MongoDB
 2015-12-05T14:25:16.084Z - core: [Moderation Module] Connected to MongoDB
 2015-12-06T06:41:20.419Z - core: [Moderation Module] Connected to MongoDB
+2016-01-23T16:36:32.667Z - core: [Wildcards Module] Start initial card validations
+2016-01-23T16:36:33.453Z - core: [Wildcards Module] Cards Validation Request
+2016-01-23T16:36:33.684Z - core: [Wildcards Module] Subscribed to Sportimo Events PUB/SUB channel

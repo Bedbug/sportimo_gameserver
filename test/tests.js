@@ -1,13 +1,17 @@
 var expect = require('chai').expect,
     request = require('supertest'),
     _ = require('lodash');
+
+
+var cardObject = require("./testObjects/cardObject");
+
 // var mongoose = require('mongoose');  
 // var mockgoose = require('mockgoose');
 // mockgoose(mongoose);  
 var TestSuite = require('../server');
 //var LiveMatches = require('../sportimo_modules/match-moderation');
 
- TestSuite.moderation.testing = true;
+TestSuite.moderation.testing = true;
 
 before(function (done) {
     // TestSuite.moderation.mock = true;
@@ -19,7 +23,7 @@ describe('Moderation Module', function () {
 
     describe('#MongoDB', function () {
 
-        it('should have connected to the database', function () {
+        it('expect to be connected to the database', function () {
             expect(TestSuite.moderation.mongoose).to.not.be.equal(null);
         });
     });
@@ -28,11 +32,11 @@ describe('Moderation Module', function () {
 
         //   TestSuite.moderation.mock = true;
 
-        it('should not be set to mock enviroment', function () {
+        it('expect to not be set to mock enviroment', function () {
             expect(TestSuite.moderation.mock).to.be.false;
         })
 
-        it('should have loaded matches from database', function () {
+        it('expect to have loaded matches from database', function () {
             expect(TestSuite.moderation.count()).to.not.equal(0);
         });
     });
@@ -60,21 +64,21 @@ describe("Moderation Services", function () {
         });
 
         describe('#Post Match [/v1/live/match]', function () {
-//            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
-//                request(TestSuite.server)
-//                    .post('/v1/live/match')
-//                    .send({
-//                        id: '56a38549e4b067030e9f871d'
-//                    })
-//                    .expect(200)
-//                    .end(function (err, res) {
-//                        if (err) return done(err);
-//                        expect(err).to.equal(null);
-//                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
-//                        match = res.body;
-//                        done();
-//                    })
-//            });
+            //            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+            //                request(TestSuite.server)
+            //                    .post('/v1/live/match')
+            //                    .send({
+            //                        id: '56a38549e4b067030e9f871d'
+            //                    })
+            //                    .expect(200)
+            //                    .end(function (err, res) {
+            //                        if (err) return done(err);
+            //                        expect(err).to.equal(null);
+            //                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+            //                        match = res.body;
+            //                        done();
+            //                    })
+            //            });
         });
 
         describe('#Post Event [/v1/moderation/:id/event]', function () {
@@ -102,18 +106,18 @@ describe("Moderation Services", function () {
                     }
                 ]
             }
-            
+
             // Add
-             var addEventData = {
+            var addEventData = {
                 type: "Add",
                 match_id: "56a38549e4b067030e9f871d",
                 data: eventobj
             };
             // Remove
             var removeEventData = {
-                    type: "Delete",
-                    match_id: "56a38549e4b067030e9f871d",
-                    data: eventobj
+                type: "Delete",
+                match_id: "56a38549e4b067030e9f871d",
+                data: eventobj
             };
 
             it('Add: should add a new event', function (done) {
@@ -123,12 +127,12 @@ describe("Moderation Services", function () {
                     .expect(200)
                     .end(function (err, res) {
                         if (err) return done(err);
-                       expect(res.body.data.timeline[0].events.length).to.equal(1);
+                        expect(res.body.data.timeline[0].events.length).to.equal(1);
                         done();
                     })
             });
-            
-             it('Delete: should delete the last event', function (done) {
+
+            it('Delete: should delete the last event', function (done) {
                 request(TestSuite.server)
                     .post('/v1/moderation/56a38549e4b067030e9f871d/event')
                     .send(removeEventData)
@@ -156,6 +160,61 @@ describe("Moderation Services", function () {
             expect(service.parsername).to.be.equal("Stats");
             expect(service.parser.name).to.be.equal("Stats");
         });
+    });
+
+
+
+});
+
+describe('Wildcards Module', function () {
+
+    //    describe('#Init', function () {
+    //        it('the CardsInPlay List should be empty', function () {
+    //            expect(TestSuite.wildcards.CardsInPlay.length).to.be.equal(0);
+    //        });
+    //    });
+
+    describe('API', function () {
+        var cardid = "";
+        describe('ADD:', function () {
+            it('should add a new wildacard', function (done) {
+                request(TestSuite.server)
+                    .post('/v1/wildcards')
+                    .send(cardObject)
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        cardid = res.body.id;                    
+                        expect(res.body.model.userid).to.equal("56a6800f6304484833115a2c");
+                        done();
+                    })
+            });
+            
+            it('expect CardsInPlay to have been raised to 1', function () {
+                expect(TestSuite.wildcards.CardsInPlay.length).to.be.equal(1);
+            });
+        });
+         describe('DELETE:', function () {
+            it('should delete the last wildacard from the database', function (done) {
+                request(TestSuite.server)
+                    .delete('/v1/wildcards')
+                    .send({id:cardid})
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        expect(TestSuite.wildcards.CardsInPlay.length).to.be.equal(0);
+                        done();
+                    })
+            });
+             it('expect CardsInPlay to fall back to 0', function (done) {
+       
+                        expect(TestSuite.wildcards.CardsInPlay.length).to.be.equal(0);
+                        done();
+       
+            });
+            
+        });
+
     });
 
 });
