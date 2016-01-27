@@ -2,7 +2,7 @@
 The main server where functionality is added through module plugins
 
 
-TESTS
+## Tests
 npm install -g mocha
 npm install --dev
 mocha
