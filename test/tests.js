@@ -21,14 +21,14 @@ before(function (done) {
 
 describe('Moderation Module', function () {
 
-    describe('#MongoDB', function () {
+    describe('MongoDB', function () {
 
         it('expect to be connected to the database', function () {
             expect(TestSuite.moderation.mongoose).to.not.be.equal(null);
         });
     });
 
-    describe('#init', function () {
+    describe('Init', function () {
 
         //   TestSuite.moderation.mock = true;
 
@@ -40,15 +40,12 @@ describe('Moderation Module', function () {
             expect(TestSuite.moderation.count()).to.not.equal(0);
         });
     });
-});
-var match = null;
-var service = null;
-
-describe("Moderation Services", function () {
+    
+    describe("Services", function () {
     describe("Manual Service", function () {
 
 
-        describe('#Get Match [/v1/live/match/56a38549e4b067030e9f871d]', function () {
+        describe('- Get Match [/v1/live/match/56a38549e4b067030e9f871d]', function () {
 
             it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
                 request(TestSuite.server)
@@ -63,7 +60,7 @@ describe("Moderation Services", function () {
             })
         });
 
-        describe('#Post Match [/v1/live/match]', function () {
+        describe('- Post Match [/v1/live/match]', function () {
             //            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
             //                request(TestSuite.server)
             //                    .post('/v1/live/match')
@@ -81,7 +78,7 @@ describe("Moderation Services", function () {
             //            });
         });
 
-        describe('#Post Event [/v1/moderation/:id/event]', function () {
+        describe('- Post Event [/v1/moderation/:id/event]', function () {
 
             var eventobj = {
                 "id": 16,
@@ -165,6 +162,11 @@ describe("Moderation Services", function () {
 
 
 });
+});
+var match = null;
+var service = null;
+
+
 
 describe('Wildcards Module', function () {
 

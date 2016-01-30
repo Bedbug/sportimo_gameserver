@@ -7,18 +7,19 @@
  */
 
 var Sports = require('./sports-settings');
-var StatsHelper = require('./events-stats-analyzer');
+var StatsHelper = require('./stats-handler');
 var moment = require('moment');
-var _ = require('lodash');
+var _ = require('lodash'),
+    StatMods = require('../models/stats-mod');
 
 var path = require('path'),
-fs = require('fs');
+    fs = require('fs');
 
 /*Bootstrap service*/
 var services = [];
 var servicesPath = path.join(__dirname, '../services');
 fs.readdirSync(servicesPath).forEach(function (file) {
-   services[path.basename (file,".js")] = require(servicesPath + '/' + file);
+    services[path.basename(file, ".js")] = require(servicesPath + '/' + file);
 });
 
 
@@ -42,11 +43,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     // Validations
     if (HookedMatch.data.timeline.length == 0) {
         HookedMatch.data.state = 0;
-        HookedMatch.data.timeline.push([{
+        HookedMatch.data.timeline.push({
             "start": null,
             "end": null,
             "events": []
-        }]);
+        });
         HookedMatch.data.markModified('timeline');
         HookedMatch.data.save();
     }
@@ -75,30 +76,30 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     HookedMatch.AddModerationService = function (service, res) {
       
         // Check if service of same type already exists 
-        if(_.findWhere(HookedMatch.moderation,{type: service.type}))
-        {
+        if (_.findWhere(HookedMatch.moderation, { type: service.type })) {
             log("Service already active", "core");
             return res.send("Service type already active. Please remove the old one first.");
-        }else{
+        } else {
             HookedMatch.moderation.push(service);
             HookedMatch.startService(service);
         }
     }
 
-   HookedMatch.StartService = function(service){
-       var newService = services[service.type];
-       _.merge(newService, service);
-       
-       HookedMatch.MODERATION_SERVICES.push(newService);      
-       HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init();
-   }
+    HookedMatch.StartService = function (service) {
+        var newService = services[service.type];
+
+        _.merge(newService, service);
+
+        HookedMatch.MODERATION_SERVICES.push(newService);
+        HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init();
+    }
 
 
-      // Set services for the first time
-      HookedMatch.moderation = match.moderation;
-      HookedMatch.moderation.forEach(function (service) {
+    // Set services for the first time
+    HookedMatch.moderation = match.moderation;
+    HookedMatch.moderation.forEach(function (service) {
         HookedMatch.StartService(service);
-      });
+    });
 
 
     HookedMatch.removeSegment = function (data, res) {
@@ -249,10 +250,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     HookedMatch.AddEvent = function (event, res) {
 
         // Parses the event based on sport and makes changes in the match instance
-        StatsHelper.Parse(event, match, log);
+        event.data.linked_mods = StatsHelper.Parse(event, match, log);
+        // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
-//        console.log("When adding event:");
-//        console.log(HookedMatch.data.timeline[this.data.state]);
+        //        console.log("When adding event:");
+        //        console.log(HookedMatch.data.timeline[this.data.state]);
         
         var evtObject = event.data;
 
@@ -271,7 +273,6 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             this.data.markModified('timeline');
             log("Updating database", "info");
         }
-
 
         StatsHelper.UpsertStat(match.id, {
             events_sent: 1
@@ -299,6 +300,8 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             match_id: event.data.match_id
         });
 
+        HANDLE_EVENT_REMOVAL(event.data);
+        
         // set status to removed
         eventObj.status = "removed";
 
@@ -362,5 +365,26 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     return HookedMatch;
 }
 
+// TODO: [x] Stats update according to the removal of a previous stat modifier 
+// TODO: Add validation after event removal and stats update
+var HANDLE_EVENT_REMOVAL = function (linked) {
+
+    linked.linked_mods.forEach(function(link) {
+
+        // 1. Find the corresponding document
+        StatMods.findById(link, function (err, mod) {
+           
+            // 2. Update all documents from created date on with the deleted modification
+            // more multi updates
+            StatMods.where({match_id: mod.match_id, stat_for: mod.stat_for, stat: mod.stat, created: {$gt: mod.created}})
+                .setOptions({ multi: true })
+                .update({ $inc: { was: -mod.by } },function(err,doc){
+                });
+                
+            // 3. Remove the document from the collection
+            mod.remove();
+        });
+    });
+};
 
 module.exports = matchModule;

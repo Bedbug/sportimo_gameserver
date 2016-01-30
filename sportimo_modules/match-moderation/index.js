@@ -56,119 +56,10 @@ var ModerationModule = {
     count: function () {
         return _.size(AllMatches);
     },
-    init: function (done) {
-        if (!this.mock) {
-            /* We load all scheduled/active matches from DB on server initialization */
-            scheduled_matches
-                .find({
-                    state: {
-                        $gt: -1
-                    }
-                })
-                .populate('home_team')
-                .populate('away_team')
-                .exec(function (err, matches) {
-                    if (err) return log(err, "error");
-                    if (matches) {
-                        /*For each match found we hook platform specific functionality and add it to the main list*/
-                        _.forEach(matches, function (match) {
-                            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-                            AllMatches.push(hookedMatch);
-                            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
-                        })
-                    } else {
-                        log("No scheduled matches could be found in the database.");
-                    }
-
-                    // Callback we are done for whomever needs it
-                    if (ModerationModule.callback != null)
-                        ModerationModule.callback();
-
-                });
-
-
-        } else {
-
-
-            var match = new scheduled_matches(mockMatch);
-
-            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-            AllMatches.push(hookedMatch);
-            log("Mock match created with ID [" + hookedMatch.id + "].", "info");
-
-            // Callback we are done for whomever needs it
-            if (ModerationModule.callback != null)
-                ModerationModule.callback();
-        }
+    init: function(done){
+        initModule(done);
     },
-    create: function (mongoMatchID, callbackres) {
-        if (!mongoMatchID) {
-            return callbackres.status(404).send("Match ID cannot be empty");
-        }
-
-        var oldMatch = ModerationModule.GetMatch(mongoMatchID);
-        // safeguard for duplicates
-        if (oldMatch) {
-            log("Match with the same ID already exists. Hooking.", "info");
-
-            if (callbackres)
-                callbackres.send(oldMatch);
-        } else {
-
-            ModerationModule.LoadMatchFromDB(mongoMatchID, callbackres);
-
-        }
-    },
-    LoadMatchFromDB: function (matchid, res) {
-        if (!this.mock) {
-            // remove match in case it already exists
-            _.remove(AllMatches, {
-                id: matchid
-            });
-            scheduled_matches
-                .findOne({
-                    _id: matchid
-                })
-                .populate('home_team')
-                .populate('away_team')
-                .exec(function (err, match) {
-
-                    if (err) return log(err, "error");
-
-                    if (match) {
-                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-                        AllMatches.push(hookedMatch);
-                        if (res)
-                            res.send(hookedMatch);
-                        log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
-                        return hookedMatch;
-                    } else {
-                        console.log(ModerationModule.count, "info");
-                        res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
-                        return null;
-                    }
-                });
-        } else {
-            var match = new scheduled_matches(mockMatch);
-            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-            AllMatches.push(hookedMatch);
-
-            if (res)
-                res.send(hookedMatch);
-
-            log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
-            return hookedMatch;
-        }
-    },
-    GetMatch: function (matchID) {
-        return _.findWhere(AllMatches, {
-            id: matchID
-        });
-    },
-    //    InjectEvent: function (evnt, res) {
-    //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
-    //    },
-    SetupMongoDB: function (mongooseConnection) {
+     SetupMongoDB: function (mongooseConnection) {
         if (this.mock) return;
         this.mongoose = mongooseConnection;
         var modelsPath = path.join(__dirname, 'models');
@@ -243,7 +134,75 @@ var ModerationModule = {
         fs.readdirSync(apiPath).forEach(function (file) {
             server.use('/', require(apiPath + '/' + file)(ModerationModule, log));
         });
+    },
+    create: function (mongoMatchID, callbackres) {
+        if (!mongoMatchID) {
+            return callbackres.status(404).send("Match ID cannot be empty");
+        }
+
+        var oldMatch = ModerationModule.GetMatch(mongoMatchID);
+        // safeguard for duplicates
+        if (oldMatch) {
+            log("Match with the same ID already exists. Hooking.", "info");
+
+            if (callbackres)
+                callbackres.send(oldMatch);
+        } else {
+
+            ModerationModule.LoadMatchFromDB(mongoMatchID, callbackres);
+
+        }
+    },
+    LoadMatchFromDB: function (matchid, res) {
+        if (!this.mock) {
+            // remove match in case it already exists
+            _.remove(AllMatches, {
+                id: matchid
+            });
+            scheduled_matches
+                .findOne({
+                    _id: matchid
+                })
+                .populate('home_team')
+                .populate('away_team')
+                .exec(function (err, match) {
+
+                    if (err) return log(err, "error");
+
+                    if (match) {
+                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+                        AllMatches.push(hookedMatch);
+                        if (res)
+                            res.send(hookedMatch);
+                        log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
+                        return hookedMatch;
+                    } else {
+                        console.log(ModerationModule.count, "info");
+                        res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
+                        return null;
+                    }
+                });
+        } else {
+            var match = new scheduled_matches(mockMatch);
+            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+            AllMatches.push(hookedMatch);
+
+            if (res)
+                res.send(hookedMatch);
+
+            log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
+            return hookedMatch;
+        }
+    },
+    GetMatch: function (matchID) {
+        return _.findWhere(AllMatches, {
+            id: matchID
+        });
     }
+    //    InjectEvent: function (evnt, res) {
+    //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
+    //    },
+   
 
 }
 
@@ -281,42 +240,54 @@ var ModerationModule = {
 
 // }
 
-// A Mock Match object in case we need it for testing
-var mockMatch = {
-    "_id": "565c4af6e4b030fba33dd459",
-    "sport": "soccer",
-    "home_team": "565c4907e4b030fba33dd433",
-    "away_team": "565c492fe4b030fba33dd435",
-    "home_score": 0,
-    "away_score": 0,
-    "time": "54",
-    "moderation": [
-        {
-            "type": "rss-feed",
-            "eventid": "15253",
-            "feedurl": "http://feed-somewhere.com?event-id=",
-            "interval": 500,
-            "parsername": "Stats"
-        }
-    ],
-    "stats": [
-        {
-            "rc": 0,
-            "fc": 0,
-            "id": "565c4af6e4b030fba33dd459",
-            "yc": 0,
-            "name": "match",
-            "events_sent": 16
-        },
+function initModule(done){
+     if (!this.mock) {
+            /* We load all scheduled/active matches from DB on server initialization */
+            scheduled_matches
+                .find({
+                    state: {
+                        $gt: -1
+                    }
+                })
+                .populate('home_team')
+                .populate('away_team')
+                .exec(function (err, matches) {
+                    if (err) return log(err, "error");
+                    if (matches) {
+                        /*For each match found we hook platform specific functionality and add it to the main list*/
+                        _.forEach(matches, function (match) {
+                            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+                            AllMatches.push(hookedMatch);
+                            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
+                        })
+                    } else {
+                        log("No scheduled matches could be found in the database.");
+                    }
 
-    ],
-    "timeline": [],
-    "settings": {
-        "destroyOnDelete": true
-    },
-    "state": 0,
-    "__v": 43
-}
+                    // Callback we are done for whomever needs it
+                    if (ModerationModule.callback != null)
+                        ModerationModule.callback();
+
+                });
+
+
+        } else {
+
+
+            var match = new scheduled_matches(mockMatch);
+
+            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+            AllMatches.push(hookedMatch);
+            log("Mock match created with ID [" + hookedMatch.id + "].", "info");
+
+            // Callback we are done for whomever needs it
+            if (ModerationModule.callback != null)
+                ModerationModule.callback();
+        }
+};
+
+// A Mock Match object in case we need it for testing
+var mockMatch = require('./mocks/mock-match');
 
 /*  Winston Logger  */
 var logger = new(winston.Logger)({

@@ -3,7 +3,7 @@ var path = require('path'),
 
 var parsers = [];
 
-var servicesPath = path.join(__dirname, '../feedparsers');
+var servicesPath = path.join(__dirname, '../parsers');
 fs.readdirSync(servicesPath).forEach(function (file) {
     parsers[path.basename(file, ".js")] = require(servicesPath + '/' + file);
 });
@@ -33,12 +33,12 @@ feed_service.parser = null;
 
 // Initialize feed and validate response
 feed_service.init = function () {
-    
+  
     if (this.parsername == null)
         return "No parser attached to service";
     else
         this.parser = parsers[this.parsername];
-        
+  
     parsers[this.parsername].init();
     
 //    return console.log("[RSS-Feed] Service initialized");

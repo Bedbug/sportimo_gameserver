@@ -121,7 +121,6 @@ wildcards.SetupAPIRoutes = function (server) {
     // Loading wildcard schemas
     var apiPath = path.join(__dirname, 'api');
     fs.readdirSync(apiPath).forEach(function (file) {
-        console.log(apiPath + '/' + file);
         server.use('/', require(apiPath + '/' + file)(wildcards));
     });
 }
