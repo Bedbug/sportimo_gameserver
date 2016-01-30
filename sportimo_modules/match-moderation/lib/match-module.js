@@ -58,9 +58,9 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
 
     /*  -------------
-    **   Methods
-    **  -------------
-    */
+     **   Methods
+     **  -------------
+     */
 
     /*  SetModerationService
         Here we set the moderation service for the game. "service" is the object of the corresponding
@@ -74,9 +74,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         } 
     */
     HookedMatch.AddModerationService = function (service, res) {
-      
+
         // Check if service of same type already exists 
-        if (_.findWhere(HookedMatch.moderation, { type: service.type })) {
+        if (_.findWhere(HookedMatch.moderation, {
+                type: service.type
+            })) {
             log("Service already active", "core");
             return res.send("Service type already active. Please remove the old one first.");
         } else {
@@ -139,7 +141,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         res.status(200).send();
     }
-  
+
     /*  AdvanceSegment
         The advance state method is called when we want to advance to the next segment of the game.
         Depending on setting, here will determine if a timer should begin counting aand hold the
@@ -181,7 +183,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
 
     HookedMatch.addTimeHooks = function () {
-      
+
+        // In Case match State is erroneous
+        if (this.data.state > this.data.timeline.length - 1)
+            this.data.state = this.data.timeline.length - 1;
+
         //  Should this segment be timed?
         if (HookedMatch.sport.segments[this.data.state].timed) {
             if (HookedMatch.sport.segments[HookedMatch.data.state]) {
@@ -249,14 +255,18 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     */
     HookedMatch.AddEvent = function (event, res) {
 
-        // Parses the event based on sport and makes changes in the match instance
-        event.data.linked_mods = StatsHelper.Parse(event, match, log);
+
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
         //        console.log("When adding event:");
         //        console.log(HookedMatch.data.timeline[this.data.state]);
-        
+
         var evtObject = event.data;
+
+        // Parses the event based on sport and makes changes in the match instance
+        evtObject.linked_mods = StatsHelper.Parse(event, match, log);
+
+
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
@@ -300,8 +310,8 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             match_id: event.data.match_id
         });
 
-        HANDLE_EVENT_REMOVAL(event.data);
-        
+
+
         // set status to removed
         eventObj.status = "removed";
 
@@ -324,7 +334,8 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         this.data.save();
 
         // 4. return match to Sender
-        return res.status(200).send(this);
+        return HANDLE_EVENT_REMOVAL(event.data, res, this);
+        //        res.status(200).send(this);
     }
 
     /*  RemoveEvent
@@ -365,26 +376,47 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     return HookedMatch;
 }
 
+
 // TODO: [x] Stats update according to the removal of a previous stat modifier 
 // TODO: Add validation after event removal and stats update
-var HANDLE_EVENT_REMOVAL = function (linked) {
+var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
 
-    linked.linked_mods.forEach(function(link) {
+    var finished = linked.linked_mods.length;
 
+    linked.linked_mods.forEach(function (link) {
         // 1. Find the corresponding document
         StatMods.findById(link, function (err, mod) {
-           
+
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
-            StatMods.where({match_id: mod.match_id, stat_for: mod.stat_for, stat: mod.stat, created: {$gt: mod.created}})
-                .setOptions({ multi: true })
-                .update({ $inc: { was: -mod.by } },function(err,doc){
-                });
-                
+            StatMods.where({
+                    match_id: mod.match_id,
+                    stat_for: mod.stat_for,
+                    stat: mod.stat,
+                    created: {
+                        $gt: mod.created
+                    }
+                })
+                .setOptions({
+                    multi: true
+                })
+                .update({
+                    $inc: {
+                        was: -mod.by, is: -mod.by
+                    }
+                }, function (err, doc) {});
+
             // 3. Remove the document from the collection
-            mod.remove();
+            mod.remove(function (err) {
+                finished--;
+
+                if (finished == 0)
+                    res.status(200).send(returnData);
+
+            });
         });
     });
+
 };
 
 module.exports = matchModule;

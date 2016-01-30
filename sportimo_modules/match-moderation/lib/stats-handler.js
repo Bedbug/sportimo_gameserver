@@ -130,6 +130,7 @@ var StatsMethods = {
                         stat: changedStat.key,
                         by: 1,
                         was: changedStat.was,
+                         is: changedStat.is,
                         segment: CurrentMatch.state,
                         created: moment.utc()
                     });
@@ -164,6 +165,7 @@ var StatsMethods = {
                         stat: changedStat.key,
                         by: 1,
                         was: changedStat.was,
+                        is: changedStat.is,
                         segment: CurrentMatch.state,
                         created: moment.utc()
                     });
@@ -216,7 +218,8 @@ var StatsMethods = {
         var stats = Object.keys(statsToChange);
         var statChanged = {
             key: "",
-            was: 0
+            was: 0,
+            is: 0
         };
 
         _.forEach(stats, function (stat) {
@@ -228,10 +231,12 @@ var StatsMethods = {
                     statChanged.key = stat;
                     statChanged.was = statkey[stat];
                     statkey[stat] += statsToChange[stat];
+                    statChanged.is = statkey[stat];
                 }
             } else {
                 statChanged.key = stat;
                 statkey[stat] = statsToChange[stat];
+                 statChanged.is = statsToChange[stat];
             }
         });
 

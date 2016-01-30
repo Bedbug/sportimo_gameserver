@@ -24,6 +24,7 @@ else {
         stat: String,
         by: Number,
         was: Number,
+        is: Number,
         segment: Number,
         linked_event: String,
         created: Date
