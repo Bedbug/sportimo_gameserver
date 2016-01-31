@@ -3,7 +3,8 @@ module.exports = {
     gameid: "56a38549e4b067030e9f871d",
     minute: 5,
     segment: 1,
-    duration: 300000, // 5'
+    activates_in: 1000,
+    duration: 10000, // 10"
     timer: 0,
     appear_conditions: [], // empty - always avalable
     win_conditions: {

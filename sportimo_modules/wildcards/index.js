@@ -80,7 +80,7 @@ var ValidateTempCards = function (cards) {
 // ADD
 wildcards.add = function (wildcard) {
     wildcards.CardsInPlay.push(wildcard);
-    wildcard.init();
+    wildcard.init(this);
 
     return wildcard;
 }
