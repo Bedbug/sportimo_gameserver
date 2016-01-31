@@ -15,6 +15,7 @@ var mongoose = require('mongoose'),
 var wildcard = new mongoose.Schema({
     userid: String,
     gameid: String,
+    text: String,
     minute: Number,
     segment: Number,
     activates_in: Number,

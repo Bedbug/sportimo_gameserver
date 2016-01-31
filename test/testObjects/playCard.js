@@ -6,13 +6,13 @@ module.exports = {
     activates_in: 1000,
     duration: 10000, // 10"
     timer: 0,
+    text: "Jokovic will get 2 yellow cards",
     appear_conditions: [], // empty - always avalable
     win_conditions: {
         match: [], // empty - no match conditions 
         stats: [{
-            "yc": {
-                "@gt": 3
-            }
+            id:  "56a385413eb067030e9f87dd1",
+            "yellow": 2
         }]
     },
     points: 0,

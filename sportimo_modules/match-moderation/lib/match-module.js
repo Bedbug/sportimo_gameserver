@@ -387,6 +387,7 @@ var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
         // 1. Find the corresponding document
         StatMods.findById(link, function (err, mod) {
 
+            //            console.log(mod);
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
             StatMods.where({
@@ -402,7 +403,8 @@ var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
                 })
                 .update({
                     $inc: {
-                        was: -mod.by, is: -mod.by
+                        was: -mod.by,
+                        is: -mod.by
                     }
                 }, function (err, doc) {});
 

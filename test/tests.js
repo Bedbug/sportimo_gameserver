@@ -2,15 +2,31 @@ var expect = require('chai').expect,
     request = require('supertest'),
     _ = require('lodash');
 
-
+/****************************************************
+ * Test helper objects
+ */
+var eventobj = require("./testObjects/eventYellow");
 var playCard = require("./testObjects/playCard");
 
-// var mongoose = require('mongoose');  
+var addEventData = {
+    type: "Add",
+    match_id: "56a38549e4b067030e9f871d",
+    data: eventobj
+};
+
+var removeEventData = {
+    type: "Delete",
+    match_id: "56a38549e4b067030e9f871d",
+    data: eventobj
+};
+
+/***************************************************/
+
+
 // var mockgoose = require('mockgoose');
 // mockgoose(mongoose);  
-var TestSuite = require('../server');
-//var LiveMatches = require('../sportimo_modules/match-moderation');
 
+var TestSuite = require('../server');
 TestSuite.moderation.testing = true;
 
 before(function (done) {
@@ -80,42 +96,7 @@ describe('MODERATION Module', function () {
 
     describe('POST [/v1/moderation/:id/event]', function () {
 
-        var eventobj = {
-            "id": 16,
-            "match_id": "56a38549e4b067030e9f871d",
-            "type": "yellow",
-            "stats": {
-                "yc": 1
-            },
-            "playerscount": 1,
-            "status": "active",
-            "timeline_event": true,
-            "state": 0,
-            "sender": "Moderator",
-            "time": "54",
-            "team": "away_team",
-            "players": [
-                {
-                    "id": "565c4af6e",
-                    "team": "away_team",
-                    "name": "jekhis",
-                    "$$hashKey": "object:108"
-                    }
-                ]
-        }
 
-        // Add
-        var addEventData = {
-            type: "Add",
-            match_id: "56a38549e4b067030e9f871d",
-            data: eventobj
-        };
-        // Remove
-        var removeEventData = {
-            type: "Delete",
-            match_id: "56a38549e4b067030e9f871d",
-            data: eventobj
-        };
 
         var returnedEvent;
         it('event type: Add, should add a new event', function (done) {
@@ -180,15 +161,9 @@ var service = null;
 
 describe('WILDCARDS Module', function () {
 
-    //    describe('#Init', function () {
-    //        it('the CardsInPlay List should be empty', function () {
-    //            expect(TestSuite.wildcards.CardsInPlay.length).to.be.equal(0);
-    //        });
-    //    });
 
-    //    describe('API', function () {
     var cardid = "";
-    describe('Add', function () {
+    describe('Play card / 2 yellows', function () {
         it('should add a new wildacard', function (done) {
             request(TestSuite.server)
                 .post('/v1/wildcards')
@@ -207,13 +182,93 @@ describe('WILDCARDS Module', function () {
         });
     });
 
-    describe('Moderation event sent', function () {
+    var returnedYellowOne;
+    var returnedYellowTwo;
+
+    /** ***********************************************
+     *   2 Yellow Events to test winning wildcard
+     */
+    describe('Sent two yellow events', function () {
+
+        it('first one should incerement stat "yellow" to 1', function (done) {
+            request(TestSuite.server)
+                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .send(addEventData)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) return done(err);
+                    returnedYellowOne = res.body.data.timeline[res.body.data.state].events[res.body.data.timeline[res.body.data.state].events.length - 1];
+
+                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f871d").data.stats;
+
+                    var stat = _.find(stats, {
+                        id: "56a385413eb067030e9f87dd1"
+                    });
+
+                    expect(stat.yellow).to.be.equal(1);
+                    done();
+                })
+        });
+
+        it('second one should incerement stat "yellow" to 2', function (done) {
+            request(TestSuite.server)
+                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .send(addEventData)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) return done(err);
+
+                    returnedYellowTwo = res.body.data.timeline[res.body.data.state].events[res.body.data.timeline[res.body.data.state].events.length - 1];
+
+                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f871d").data.stats;
+
+                    var stat = _.find(stats, {
+                        id: "56a385413eb067030e9f87dd1"
+                    });
+
+                    expect(stat.yellow).to.be.equal(2);
+                    done();
+                })
+        });
+
         it('should win the played card', function (done) {
             expect(TestSuite.wildcards.CardsInPlay[0].model.won).to.not.be.equal(null);
         })
+
+
+
+        it('should delete the first yellow event', function (done) {
+            removeEventData.data = returnedYellowOne;
+            request(TestSuite.server)
+                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .send(removeEventData)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) return done(err);
+                    expect(res.body.data.timeline[0].events.length).to.equal(1);
+                    done();
+                })
+        });
+
+        it('should delete the second yellow event', function (done) {
+            removeEventData.data = returnedYellowTwo;
+            request(TestSuite.server)
+                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .send(removeEventData)
+                .expect(200)
+                .end(function (err, res) {
+                    if (err) return done(err);
+                    expect(res.body.data.timeline[0].events.length).to.equal(0);
+                    done();
+                })
+        });
+
     })
 
-    describe('Delete', function () {
+    /************************************************************/
+
+
+    describe('Clean Up', function () {
 
         it('should delete the last wildacard from the database', function (done) {
             request(TestSuite.server)
