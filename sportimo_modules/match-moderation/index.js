@@ -81,7 +81,7 @@ var ModerationModule = {
         setInterval(function () {
 
             RedisClientPub.publish("socketServers", JSON.stringify({
-                server: "[GameServer] Active matches: " + this.ModeratedMatches.length
+                server: "[GameServer] Active matches: " + ModerationModule.ModeratedMatches.length
             }));
 
         }, 30000);
