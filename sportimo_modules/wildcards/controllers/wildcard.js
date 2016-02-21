@@ -122,6 +122,8 @@ var WildCard = function (CardObject) {
         self.model.save();
     };
 
+    //TODO: The win functionality of wildcards. Here they should attribute points to its user.
+    // Save to database and destroy card from CardsInPlay
     this.win = function () {
 
     };

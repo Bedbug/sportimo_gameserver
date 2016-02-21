@@ -7,6 +7,7 @@ var expect = require('chai').expect,
  */
 var eventobj = require("./testObjects/eventYellow");
 var playCard = require("./testObjects/playCard");
+var mockMatch = require("./testObjects/mockMatch")
 
 var addEventData = {
     type: "Add",
@@ -35,66 +36,103 @@ before(function (done) {
     // setTimeout(done, 6000);
 });
 
-describe('MODERATION Module', function () {
+describe('Moderation Module', function () {
 
-    describe('MongoDB', function () {
+    describe('Init - Mongodb database', function () {
 
         it('expect to be connected to the database', function () {
             expect(TestSuite.moderation.mongoose).to.not.be.equal(null);
         });
     });
 
-    describe('Init', function () {
+    describe('Init - Load scheduled matches', function () {
 
         //   TestSuite.moderation.mock = true;
 
-        it('expect to not be set to mock enviroment', function () {
-            expect(TestSuite.moderation.mock).to.be.false;
-        })
+        // it('expect to not be set to mock enviroment', function () {
+        //     expect(TestSuite.moderation.mock).to.be.false;
+        // })
 
         it('expect to have loaded matches from database', function () {
             expect(TestSuite.moderation.count()).to.not.equal(0);
         });
     });
 
-    //    describe("Services", function () {
-    //        describe("Manual Service", function () {
+    // //    describe("Services", function () {
+    // //        describe("Manual Service", function () {
+    // describe('- Post Match [/v1/live/match]', function () {
+    //     it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+    //         request(TestSuite.server)
+    //             .post('/v1/live/match')
+    //             .send({
+    //                 id: '56a38549e4b067030e9f871d'
+    //             })
+    //             .expect(200)
+    //             .end(function (err, res) {
+    //                 if (err) return done(err);
+    //                 expect(err).to.equal(null);
+    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+    //                 match = res.body;
+    //                 done();
+    //             })
+    //     });
+    // });
+    // describe("SCHEDULE", function () {
+
+        describe('Schedule new match [/v1/schedule]', function () {
+            it('should add a new match to Scheduled Matches', function (done) {
+                // TestSuite.moderation.Add(mockMatch);
+                // done();
+                request(TestSuite.server)
+                    .post('/v1/schedule')
+                    .send(mockMatch)
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        expect(res.status).to.equal(200);
+                        expect(res.body.id).to.equal('56a38549e4b067030e9f871d');
+                        done();
+                    })
+            });
+
+        });
+
+        describe('Get match from schedule [/v1/schedule/56a38549e4b067030e9f871d]', function () {
+
+            it('should return the match with ID 56a38549e4b067030e9f871d', function (done) {
+                request(TestSuite.server)
+                    .get('/v1/schedule/56a38549e4b067030e9f871d')
+                    .expect(200)
+                    .end(function (err, res) {
+                        expect(err).to.equal(null);
+                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+                        match = res.body;
+                        done();
+                    })
+            })
+        });
 
 
-    describe('GET [/v1/live/match/56a38549e4b067030e9f871d]', function () {
+    // });
 
-        it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
-            request(TestSuite.server)
-                .get('/v1/live/match/56a38549e4b067030e9f871d')
-                .expect(200)
-                .end(function (err, res) {
-                    expect(err).to.equal(null);
-                    expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
-                    match = res.body;
-                    done();
-                })
-        })
-    });
 
-    //            describe('- Post Match [/v1/live/match]', function () {
-    //            it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
-    //                request(TestSuite.server)
-    //                    .post('/v1/live/match')
-    //                    .send({
-    //                        id: '56a38549e4b067030e9f871d'
-    //                    })
-    //                    .expect(200)
-    //                    .end(function (err, res) {
-    //                        if (err) return done(err);
-    //                        expect(err).to.equal(null);
-    //                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
-    //                        match = res.body;
-    //                        done();
-    //                    })
-    //            });
-    //            });
 
-    describe('POST [/v1/moderation/:id/event]', function () {
+    // describe('GET [/v1/live/match/56a38549e4b067030e9f871d]', function () {
+
+    //     it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+    //         request(TestSuite.server)
+    //             .get('/v1/live/match/56a38549e4b067030e9f871d')
+    //             .expect(200)
+    //             .end(function (err, res) {
+    //                 expect(err).to.equal(null);
+    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+    //                 match = res.body;
+    //                 done();
+    //             })
+    //     })
+    // });
+
+    describe('Send Event commands [/v1/moderation/:id/event]', function () {
 
 
 
@@ -159,7 +197,7 @@ var service = null;
 
 
 
-describe('WILDCARDS Module', function () {
+describe('Wildcards Module', function () {
 
 
     var cardid = "";
@@ -293,6 +331,22 @@ describe('WILDCARDS Module', function () {
 
     });
 
-    //    });
+    // describe("SCHEDULE", function () {
+
+        describe('Delete [/v1/schedule]', function () {
+            it('should delete the match from Scheduled Matches', function (done) {
+
+                request(TestSuite.server)
+                    .delete('/v1/schedule')
+                    .send(mockMatch)
+                    .expect(200)
+                    .end(function (err, res) {
+                        if (err) return done(err);
+                        expect(res.status).to.equal(200);
+                        done();
+                    })
+            });
+        });
+    // });
 
 });

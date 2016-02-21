@@ -1,3 +1,25 @@
+/*
+ * ***********************************************************************
+ * Wildcards Module
+ *
+ * @description :: The Wildcards Module is repsonsible for handling
+ * cards in the game. It is repsonsible for holding the list of active
+ * cards and handle their destruction or winnings.
+ * 
+ * At its core there is the wildcard controller/class that hadndles 
+ * internal timers, saving to the database, winning conditions, etc.
+ * 
+ * The module hooks and listens the pub/sub Redis channel for events
+ * on stat changes and handles them accordingly.
+ * 
+ * It also creates API routes that instruct the module to ADD cards
+ * from clients. Once the call has been received and a new wildcard
+ * has been created the class handles everything else (activation /
+ * destruction / db connections)
+ * 
+ * **********************************************************************
+ */
+
 var path = require('path'),
     fs = require('fs'),
     WildcardCtrl = require("./controllers/wildcard"),

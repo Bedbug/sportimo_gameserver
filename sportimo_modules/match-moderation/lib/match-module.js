@@ -378,7 +378,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
 
 // TODO: [x] Stats update according to the removal of a previous stat modifier 
-// TODO: Add validation after event removal and stats update
+// TODO: Add validation after event removal and stats update. There should be a looped process wher each card player after the removed event is validated for win.
 var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
 
     var finished = linked.linked_mods.length;

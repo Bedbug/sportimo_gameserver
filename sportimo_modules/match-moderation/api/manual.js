@@ -27,12 +27,10 @@ module.exports = function (ModerationModule, log) {
     router.put('/v1/live/match', function (req, res) {
         req.body.last_action_time = moment();
     });
-
+    
     router.get('/v1/live/match/:id', function (req, res) {
         return res.send(ModerationModule.GetMatch(req.params.id));
     });
-
-
 
     // Set up manual Moderation Routes
     router.get('/v1/moderation/:id/event', function (req, res) {

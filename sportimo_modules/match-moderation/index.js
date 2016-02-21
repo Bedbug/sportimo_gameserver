@@ -56,10 +56,10 @@ var ModerationModule = {
     count: function () {
         return _.size(this.ModeratedMatches);
     },
-    init: function(done){
+    init: function (done) {
         initModule(done);
     },
-     SetupMongoDB: function (mongooseConnection) {
+    SetupMongoDB: function (mongooseConnection) {
         if (this.mock) return;
         this.mongoose = mongooseConnection;
         var modelsPath = path.join(__dirname, 'models');
@@ -156,7 +156,7 @@ var ModerationModule = {
     LoadMatchFromDB: function (matchid, res) {
         if (!this.mock) {
             // remove match in case it already exists
-            _.remove(this.ModeratedMatches, {
+            _.remove(ModerationModule.ModeratedMatches, {
                 id: matchid
             });
             scheduled_matches
@@ -171,9 +171,12 @@ var ModerationModule = {
 
                     if (match) {
                         var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-                        this.ModeratedMatches.push(hookedMatch);
+
+                        ModerationModule.ModeratedMatches.push(hookedMatch);
+
                         if (res)
                             res.send(hookedMatch);
+
                         log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
                         return hookedMatch;
                     } else {
@@ -185,7 +188,7 @@ var ModerationModule = {
         } else {
             var match = new scheduled_matches(mockMatch);
             var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-            this.ModeratedMatches.push(hookedMatch);
+            ModerationModule.ModeratedMatches.push(hookedMatch);
 
             if (res)
                 res.send(hookedMatch);
@@ -195,7 +198,7 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        return _.findWhere(this.ModeratedMatches, {
+        return _.findWhere(ModerationModule.ModeratedMatches, {
             id: matchID
         });
     }
@@ -204,6 +207,31 @@ var ModerationModule = {
     //    },
    
 
+}
+
+/**
+ * Adds a new match to the schedule.
+ */
+ModerationModule.AddScheduleMatch = function (match, res) {
+    scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, function (e, r) {
+        if (e)
+            console.log(e);
+        else
+            ModerationModule.LoadMatchFromDB(match._id, res);
+    });
+}
+
+/**
+ * Adds a new match to the schedule.
+ */
+ModerationModule.RemoveScheduleMatch = function (match, res) {
+    // Delete from database
+    ModerationModule.GetMatch(match._id).data.remove();
+   
+    // Remove from list in memory
+    _.remove(ModerationModule.ModeratedMatches, { id: match._id });
+    
+    res.send();
 }
 
 /* The basic match class.
@@ -240,57 +268,57 @@ var ModerationModule = {
 
 // }
 
-function initModule(done){
-     if (!this.mock) {
-            /* We load all scheduled/active matches from DB on server initialization */
-            scheduled_matches
-                .find({
-                    state: {
-                        $gt: -1
-                    }
-                })
-                .populate('home_team')
-                .populate('away_team')
-                .exec(function (err, matches) {
-                    if (err) return log(err, "error");
-                    if (matches) {
-                        /*For each match found we hook platform specific functionality and add it to the main list*/
-                        _.forEach(matches, function (match) {
-                            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-                            ModerationModule.ModeratedMatches.push(hookedMatch);
-                            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
-                        })
-                    } else {
-                        log("No scheduled matches could be found in the database.");
-                    }
+function initModule(done) {
+    if (!this.mock) {
+        /* We load all scheduled/active matches from DB on server initialization */
+        scheduled_matches
+            .find({
+                state: {
+                    $gt: -1
+                }
+            })
+            .populate('home_team')
+            .populate('away_team')
+            .exec(function (err, matches) {
+                if (err) return log(err, "error");
+                if (matches) {
+                    /*For each match found we hook platform specific functionality and add it to the main list*/
+                    _.forEach(matches, function (match) {
+                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+                        ModerationModule.ModeratedMatches.push(hookedMatch);
+                        log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
+                    })
+                } else {
+                    log("No scheduled matches could be found in the database.");
+                }
 
-                    // Callback we are done for whomever needs it
-                    if (ModerationModule.callback != null)
-                        ModerationModule.callback();
+                // Callback we are done for whomever needs it
+                if (ModerationModule.callback != null)
+                    ModerationModule.callback();
 
-                });
-
-
-        } else {
+            });
 
 
-            var match = new scheduled_matches(mockMatch);
+    } else {
 
-            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-            this.ModeratedMatches.push(hookedMatch);
-            log("Mock match created with ID [" + hookedMatch.id + "].", "info");
 
-            // Callback we are done for whomever needs it
-            if (ModerationModule.callback != null)
-                ModerationModule.callback();
-        }
+        var match = new scheduled_matches(mockMatch);
+
+        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+        this.ModeratedMatches.push(hookedMatch);
+        log("Mock match created with ID [" + hookedMatch.id + "].", "info");
+
+        // Callback we are done for whomever needs it
+        if (ModerationModule.callback != null)
+            ModerationModule.callback();
+    }
 };
 
 // A Mock Match object in case we need it for testing
 var mockMatch = require('./mocks/mock-match');
 
 /*  Winston Logger  */
-var logger = new(winston.Logger)({
+var logger = new (winston.Logger)({
     levels: {
         prompt: 6,
         debug: 5,
@@ -311,7 +339,7 @@ var logger = new(winston.Logger)({
 
 logger.add(winston.transports.Console, {
     timestamp: true,
-    level: ModerationModule.testing?'warn':( process.env.LOG_LEVEL || 'info'),
+    level: ModerationModule.testing ? 'warn' : (process.env.LOG_LEVEL || 'info'),
     prettyPrint: true,
     colorize: 'level'
 });
@@ -331,8 +359,8 @@ if (process.env.NODE_ENV == "production") {
 }
 
 function log(text, level) {
-    if(!ModerationModule.testing)
-    console.log("[Moderation Module] " + text);
+    if (!ModerationModule.testing)
+        console.log("[Moderation Module] " + text);
     // var loglevel = level || 'core';
     // logger.log(loglevel, "[Moderation Module] " + text);
 }
