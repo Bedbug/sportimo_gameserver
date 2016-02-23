@@ -13,16 +13,7 @@
 		"interval": 500,
 		"parsername": "Stats"
 	}],
-	"stats": [{
-			"rc": 0,
-			"fc": 0,
-			"id": "56a38549e4b067030e9f871d",
-			"yc": 0,
-			"name": "match",
-			"events_sent": 16
-		}
-
-	],
+	"stats": [],
 	"timeline": [],
 	"settings": {
 		"destroyOnDelete": true

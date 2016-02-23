@@ -6,8 +6,20 @@ var express = require('express'),
     router = express.Router();
 
 module.exports = function (ModerationModule, log) {
-
+    
+     // GET all schedule
+    router.get('/v1/schedule/', function (req, res) {
+        log("[SCHEDULE] Request all Matches Schedule.", "info");
+        ModerationModule.GetSchedule(res);
+    });
+    
     // GET a match from schedule
+    router.put('/v1/schedule/:id', function (req, res) {
+        log("[SCHEDULE] Updating Match info.", "info");
+        ModerationModule.UpdateScheduleMatch(req.body, res);
+    });
+    
+     // GET a match from schedule
     router.get('/v1/schedule/:id', function (req, res) {
         log("[SCHEDULE] Match request from schedule.", "info");
         return res.send(ModerationModule.GetMatch(req.params.id));

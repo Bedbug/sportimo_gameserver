@@ -8,10 +8,8 @@ ObjectId = Schema.ObjectId;
 var team_schema = new mongoose.Schema({
   name: String,
   logo: String,
-  players: [{
-    type: Number,
-    ref: 'player'
-  }]
+  name_en: String,
+  league: String
 });
 
 module.exports = mongoose.model("team", team_schema);

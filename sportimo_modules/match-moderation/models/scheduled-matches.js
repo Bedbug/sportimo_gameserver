@@ -22,6 +22,8 @@ var match_schema = new mongoose.Schema({
     type: String,
     ref: 'team'
   },
+  start: Date,
+  competition: String,
   home_score: Number,
   away_score: Number,
   match_date: Date,
@@ -32,7 +34,8 @@ var match_schema = new mongoose.Schema({
   settings: mongoose.Schema.Types.Mixed,
   moderation: [mongoose.Schema.Types.Mixed]
 }, {
-    collection: 'scheduled_matches'
+    collection: 'scheduled_matches',
+    minimize: false
   });
   
 module.exports = mongoose.model("scheduled_matches", match_schema);

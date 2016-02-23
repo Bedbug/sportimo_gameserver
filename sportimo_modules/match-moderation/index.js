@@ -28,12 +28,9 @@ var match_module = require('./lib/match-module.js');
 /*   Module Variables  */
 var MatchTimers = [];
 
-
 /*Bootstrap models*/
 var team = null,
     scheduled_matches = null;
-
-
 
 /**
  * Redis Pub/Sub Channels
@@ -209,15 +206,59 @@ var ModerationModule = {
 
 }
 
+ModerationModule.GetSchedule = function(res){
+    scheduled_matches
+            .find({})
+            .populate('home_team')
+            .populate('away_team')
+            .exec(function (err, schedule) {
+                if (err) return log(err, "error");
+                if (schedule){
+                    res.send(schedule);
+                }
+            });
+}
+
 /**
  * Adds a new match to the schedule.
  */
 ModerationModule.AddScheduleMatch = function (match, res) {
+    
+   var matchTemplate = require('./mocks/empty-match');
+   matchTemplate = Object.assign(matchTemplate, match );
+    var newMatch = new scheduled_matches(matchTemplate);
+    
+    newMatch.save(function(er, saved){
+      if(!er){
+        console.log(saved);
+        res.send(saved)
+        }
+    
+    })
+ 
+    // console.log(newMatch);
+    
+    // scheduled_matches.findOneAndUpdate({ _id: match._id }, newMatch, { upsert: true }, function (e, r) {
+    //     if (e)
+    //         console.log(e);
+    //     else{
+    //         res.send(r);
+    //     }
+    // });
+}
+
+
+/**
+ * Adds a new match to the schedule.
+ */
+ModerationModule.UpdateScheduleMatch = function (match, res) {
     scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, function (e, r) {
         if (e)
             console.log(e);
-        else
-            ModerationModule.LoadMatchFromDB(match._id, res);
+        else{
+            res.send(r);
+        }
+            // ModerationModule.LoadMatchFromDB(match._id, res);
     });
 }
 
