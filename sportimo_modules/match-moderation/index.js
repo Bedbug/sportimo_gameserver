@@ -232,9 +232,7 @@ ModerationModule.AddScheduleMatch = function (match, res) {
     newMatch.save(function (er, saved) {
         if (!er){
             res.send(saved);
-            var hookedMatch = match_module(saved, MatchTimers, RedisClientPub, log);
-            ModerationModule.ModeratedMatches.push(hookedMatch);
-            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
+          ModerationModule.LoadMatchFromDB(saved._id);
         }
     })
 }
