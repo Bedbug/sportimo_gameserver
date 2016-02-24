@@ -206,17 +206,17 @@ var ModerationModule = {
 
 }
 
-ModerationModule.GetSchedule = function(res){
+ModerationModule.GetSchedule = function (res) {
     scheduled_matches
-            .find({})
-            .populate('home_team')
-            .populate('away_team')
-            .exec(function (err, schedule) {
-                if (err) return log(err, "error");
-                if (schedule){
-                    res.send(schedule);
-                }
-            });
+        .find({})
+        .populate('home_team')
+        .populate('away_team')
+        .exec(function (err, schedule) {
+            if (err) return log(err, "error");
+            if (schedule) {
+                res.send(schedule);
+            }
+        });
 }
 
 /**
@@ -226,29 +226,17 @@ ModerationModule.GetSchedule = function(res){
 var objectAssign = require('object-assign');
 
 ModerationModule.AddScheduleMatch = function (match, res) {
-    
-   var matchTemplate = require('./mocks/empty-match');
-   matchTemplate = objectAssign(matchTemplate, match );
- 
+    var matchTemplate = require('./mocks/empty-match');
+    matchTemplate = objectAssign(matchTemplate, match);
     var newMatch = new scheduled_matches(matchTemplate);
-    
-    newMatch.save(function(er, saved){
-      if(!er){
-
-        res.send(saved)
+    newMatch.save(function (er, saved) {
+        if (!er){
+            res.send(saved);
+            var hookedMatch = match_module(saved, MatchTimers, RedisClientPub, log);
+            ModerationModule.ModeratedMatches.push(hookedMatch);
+            log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
         }
-    
     })
- 
-    // console.log(newMatch);
-    
-    // scheduled_matches.findOneAndUpdate({ _id: match._id }, newMatch, { upsert: true }, function (e, r) {
-    //     if (e)
-    //         console.log(e);
-    //     else{
-    //         res.send(r);
-    //     }
-    // });
 }
 
 
@@ -259,23 +247,21 @@ ModerationModule.UpdateScheduleMatch = function (match, res) {
     scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, function (e, r) {
         if (e)
             console.log(e);
-        else{
+        else {
             res.send(r);
         }
-            // ModerationModule.LoadMatchFromDB(match._id, res);
+        // ModerationModule.LoadMatchFromDB(match._id, res);
     });
 }
 
 /**
  * Adds a new match to the schedule.
  */
-ModerationModule.RemoveScheduleMatch = function (match, res) {
+ModerationModule.RemoveScheduleMatch = function (id, res) {
     // Delete from database
-    ModerationModule.GetMatch(match._id).data.remove();
-   
+    ModerationModule.GetMatch(id).data.remove();
     // Remove from list in memory
-    _.remove(ModerationModule.ModeratedMatches, { id: match._id });
-    
+    _.remove(ModerationModule.ModeratedMatches, { id: id });
     res.send();
 }
 
