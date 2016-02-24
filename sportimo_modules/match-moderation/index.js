@@ -222,15 +222,19 @@ ModerationModule.GetSchedule = function(res){
 /**
  * Adds a new match to the schedule.
  */
+
+var objectAssign = require('object-assign');
+
 ModerationModule.AddScheduleMatch = function (match, res) {
     
    var matchTemplate = require('./mocks/empty-match');
-   matchTemplate = Object.assign(matchTemplate, match );
+   matchTemplate = objectAssign(matchTemplate, match );
+ 
     var newMatch = new scheduled_matches(matchTemplate);
     
     newMatch.save(function(er, saved){
       if(!er){
-        console.log(saved);
+
         res.send(saved)
         }
     

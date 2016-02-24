@@ -122,10 +122,10 @@ TestSuite.wildcards = wildcards;
 // Notifications.SetupServer(app);
 // Notifications.setMongoConnection(mongoConnection);
 
-var dataModule = require('./sportimo_modules/data-module');
-dataModule.SetupMongoDB(mongoose);
-dataModule.SetupAPIRoutes(app);
-TestSuite.dataModule = dataModule;
+// var dataModule = require('./sportimo_modules/data-module');
+// dataModule.SetupMongoDB(mongoose);
+// dataModule.SetupAPIRoutes(app);
+// TestSuite.dataModule = dataModule;
 
 function log(info) {
     console.log("[" + Date.now() + "] API CALL: " + info);

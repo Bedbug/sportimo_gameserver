@@ -12,6 +12,7 @@
     "moment-duration-format": "^1.3.0",
     "mongoose": "^4.2.0",
     "needle": "^0.10.0",
+    "object-assign": "^4.0.1",
     "redis": "",
     "underscore": "^1.8.3",
     "winston": "^2.1.1",
