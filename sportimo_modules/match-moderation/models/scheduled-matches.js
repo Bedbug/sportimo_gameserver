@@ -23,6 +23,7 @@ var match_schema = new mongoose.Schema({
     ref: 'team'
   },
   start: Date,
+  color: String,
   competition: String,
   home_score: Number,
   away_score: Number,

@@ -45,7 +45,6 @@
 var express = require("express"),
     http = require('http'),
     bodyParser = require('body-parser'),
-    app = express(),
     redis = require('redis'),
     mongoose = require('mongoose');
 
@@ -54,6 +53,7 @@ var TestSuite = {
     done: null
 };
 
+var app = module.exports = exports.app = express();
 
 // Create Server
 var server = http.createServer(app);
@@ -126,6 +126,8 @@ TestSuite.wildcards = wildcards;
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;
+
+var leaderboards = require('./sportimo_modules/leaderpay');
 
 function log(info) {
     console.log("[" + Date.now() + "] API CALL: " + info);
