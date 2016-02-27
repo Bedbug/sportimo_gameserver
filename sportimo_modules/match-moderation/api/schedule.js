@@ -37,10 +37,11 @@ module.exports = function (ModerationModule, log) {
      *  ModerationModule should handle deletion from database.
      */
     router.delete('/v1/schedule/:id', function (req, res) {
-        console.log(req.params.id);
+        
         log("[SCHEDULE] Request to remove match from schedule.", "info");
         ModerationModule.RemoveScheduleMatch(req.params.id, res);
     });
+   
 
     return router;
 }

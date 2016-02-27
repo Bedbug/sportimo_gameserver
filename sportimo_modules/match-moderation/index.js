@@ -230,9 +230,13 @@ ModerationModule.AddScheduleMatch = function (match, res) {
     matchTemplate = objectAssign(matchTemplate, match);
     var newMatch = new scheduled_matches(matchTemplate);
     newMatch.save(function (er, saved) {
-        if (!er){
-            res.send(saved);
-          ModerationModule.LoadMatchFromDB(saved._id);
+        //   console.log(saved)
+        
+        // if (!er){
+        //     res.send(saved);
+            
+            if (!er){
+          ModerationModule.LoadMatchFromDB(saved._id, res);
         }
     })
 }

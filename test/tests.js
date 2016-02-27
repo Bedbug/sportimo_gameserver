@@ -45,18 +45,18 @@ describe('Moderation Module', function () {
         });
     });
 
-    describe('Init - Load scheduled matches', function () {
+    // describe('Init - Load scheduled matches', function () {
 
-        //   TestSuite.moderation.mock = true;
+    //     //   TestSuite.moderation.mock = true;
 
-        // it('expect to not be set to mock enviroment', function () {
-        //     expect(TestSuite.moderation.mock).to.be.false;
-        // })
+    //     // it('expect to not be set to mock enviroment', function () {
+    //     //     expect(TestSuite.moderation.mock).to.be.false;
+    //     // })
 
-        it('expect to have loaded matches from database', function () {
-            expect(TestSuite.moderation.count()).to.not.equal(0);
-        });
-    });
+    //     it('expect to have loaded matches from database', function () {
+    //         expect(TestSuite.moderation.count()).to.not.equal(0);
+    //     });
+    // });
 
     // //    describe("Services", function () {
     // //        describe("Manual Service", function () {
@@ -88,6 +88,7 @@ describe('Moderation Module', function () {
                     .send(mockMatch)
                     .expect(200)
                     .end(function (err, res) {
+      
                         if (err) return done(err);
                         expect(res.status).to.equal(200);
                         expect(res.body.id).to.equal('56a38549e4b067030e9f871d');
@@ -332,12 +333,12 @@ describe('Wildcards Module', function () {
     });
 
     // describe("SCHEDULE", function () {
-
-        describe('Delete [/v1/schedule]', function () {
+// 
+        // describe('Delete [/v1/schedule]', function () {
             it('should delete the match from Scheduled Matches', function (done) {
 
                 request(TestSuite.server)
-                    .delete('/v1/schedule')
+                    .delete('/v1/schedule/'+mockMatch._id)
                     .send(mockMatch)
                     .expect(200)
                     .end(function (err, res) {
@@ -346,7 +347,7 @@ describe('Wildcards Module', function () {
                         done();
                     })
             });
-        });
+        // });
     // });
 
 });
