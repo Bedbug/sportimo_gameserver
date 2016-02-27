@@ -26,7 +26,30 @@ module.exports = {
 			{
 				name:			"Match Ended",
 				timed: 			false
+			},
+            {
+				name: 			"Overtime First Half",
+				timed: 			true,
+				initialTime:	90
+			},
+			{
+				name:			"Overtime Half Time",
+				timed: 			false
+			},
+            {
+				name: 			"Overtime Second Half",
+				timed: 			true,
+				initialTime:	115
+			},
+			{
+				name:			"Overtime Ended",
+				timed: 			false
+			},
+			{
+				name:			"Penalties",
+				timed: 			false
 			}
+            
 		]
 		
 	}

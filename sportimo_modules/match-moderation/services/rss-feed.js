@@ -1,3 +1,20 @@
+
+/**
+ * Services are attached to match-modules based on the configuration
+ * of the scheduled-match. 
+ * e.g. 
+ * "moderation": [{
+		"type": "rss-feed",
+		"eventid": "15253",
+		"feedurl": "http://feed-somewhere.com?event-id=",
+		"interval": 500,
+		"parsername": "Stats"
+	}]
+ * should add an rss-feed service with the above configurations. 
+ * The service is then responsible to handle the moderation of
+ * the scheduled-match. 
+*/
+
 var path = require('path'),
     fs = require('fs');
 

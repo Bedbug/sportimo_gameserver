@@ -19,16 +19,15 @@ try {
 
 } catch (ex) {
     // Start server
-    
+    app =  module.exports = exports.app = express.Router();
     var port = process.env.PORT || 3000;
     app.listen(port, function () {
         console.log('Express server listening on port %d in %s mode', port, app.get('env'));
     });
 }
 
-// var app =  module.exports = exports.app = express.Router();
 
-// app.locals.siteName = "LeaderPay";
+app.locals.siteName = "LeaderPay";
 
 var accessLogStream = fs.createWriteStream(__dirname + '/../'+app.locals.siteName+'_access.log', {flags: 'a'})
 
