@@ -18,7 +18,7 @@
 var path = require('path'),
     fs = require('fs');
 
-var parsers = [];
+var parsers = [ ];
 
 var servicesPath = path.join(__dirname, '../parsers');
 fs.readdirSync(servicesPath).forEach(function (file) {
