@@ -1,7 +1,0 @@
-::1 - POST /api/leaderboard HTTP/1.1 200 69 - 311.087 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 2.193 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 1.936 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 1.984 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 1.979 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 1.305 ms
-::ffff:127.0.0.1 - DELETE /v1/schedule HTTP/1.1 404 27 - 1.941 ms

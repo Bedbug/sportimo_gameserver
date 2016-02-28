@@ -1,2 +1,4 @@
 .gitignore
+.gitattributes
+debug.log
 node_modules
