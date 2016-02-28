@@ -86,7 +86,7 @@ var WildCard = function (CardObject) {
         // Raise timer by 1"
         this.model.timer += 1000;
 
-        console.log(this.model.timer);
+        // console.log(this.model.timer);
 
         // Decrease points
         this.model.points -= this.model.points_step;

@@ -58,8 +58,8 @@ describe('Moderation Module', function () {
     //     });
     // });
 
-    // //    describe("Services", function () {
-    // //        describe("Manual Service", function () {
+    //    describe("Services", function () {
+    //        describe("Manual Service", function () {
     // describe('- Post Match [/v1/live/match]', function () {
     //     it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
     //         request(TestSuite.server)
@@ -107,6 +107,7 @@ describe('Moderation Module', function () {
                     .end(function (err, res) {
                         expect(err).to.equal(null);
                         expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+                       
                         match = res.body;
                         done();
                     })
@@ -329,13 +330,8 @@ describe('Wildcards Module', function () {
             done();
 
         });
-
-    });
-
-    // describe("SCHEDULE", function () {
-// 
-        // describe('Delete [/v1/schedule]', function () {
-            it('should delete the match from Scheduled Matches', function (done) {
+        
+         it('should delete the match from Scheduled Matches', function (done) {
 
                 request(TestSuite.server)
                     .delete('/v1/schedule/'+mockMatch._id)
@@ -347,6 +343,24 @@ describe('Wildcards Module', function () {
                         done();
                     })
             });
+
+    });
+
+    // describe("SCHEDULE", function () {
+// 
+        // describe('Delete [/v1/schedule]', function () {
+            // it('should delete the match from Scheduled Matches', function (done) {
+
+            //     request(TestSuite.server)
+            //         .delete('/v1/schedule/'+mockMatch._id)
+            //         .send(mockMatch)
+            //         .expect(200)
+            //         .end(function (err, res) {
+            //             if (err) return done(err);
+            //             expect(res.status).to.equal(200);
+            //             done();
+            //         })
+            // });
         // });
     // });
 

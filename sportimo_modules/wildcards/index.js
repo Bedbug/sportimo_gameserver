@@ -27,25 +27,28 @@ var path = require('path'),
     _ = require('lodash'),
     bodyParser = require('body-parser');
 
+/* Mongoose model
+Used to access wildcards store in database*/
 var DatabaseWildcard;
 
 
+/*Main module*/
 var wildcards = {};
 
-
-//  The list that holds all active cards 
+/*The list that holds all active cards*/ 
 wildcards.CardsInPlay = [];
 
-// The database connection
+/*The database connection*/
 wildcards.db = null;
 
-// Load models and setup database connection
+/*Load models and setup database connection*/
 wildcards.SetupMongoDB = function (dbconenction) {
     this.db = dbconenction;
     var modelsPath = path.join(__dirname, 'models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });
+    
     DatabaseWildcard = this.db.models.wildcard;
 }
 
@@ -57,7 +60,7 @@ wildcards.init = function () {
         return;
     }
 
-    // Get All cards from database with status lower than 2 (not closed)
+    /*Get All cards from database with status lower than 2 (not closed)*/
     DatabaseWildcard.find({
         "status": {
             $lt: 2
@@ -65,7 +68,8 @@ wildcards.init = function () {
     }, function (err, cards) {
         if (err)
             return;
-        // If there are any, sort them out and handle them
+            
+        /*If there are any, sort them out and handle them*/
         if (cards.length > 0) {
             ValidateTempCards(cards);
         }
@@ -86,7 +90,7 @@ var ValidateTempCards = function (cards) {
         }, idx * 200);
 
         function validate() {
-            // Create a wildcard controller from the stored database card
+            /*Create a wildcard controller from the stored database card*/
             var wildcard = new WildcardCtrl(card);
         };
 
@@ -103,7 +107,6 @@ var ValidateTempCards = function (cards) {
 wildcards.add = function (wildcard) {
     wildcards.CardsInPlay.push(wildcard);
     wildcard.init(this);
-
     return wildcard;
 }
 // REMOVE
