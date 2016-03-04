@@ -7,7 +7,7 @@ l=require('../config/lib');
 var api = {};
 // ALL
 api.teams = function (req, res) {
-	var skip=null,limit=10;
+	var skip=null,limit=null;
 
 	if(req.query.skip!=undefined)
 		skip=req.query.skip;
@@ -19,7 +19,7 @@ api.teams = function (req, res) {
 		if (err) {
 			res.status(500).json(err);
 		} else {
-			res.status(200).json({teams: data});
+			res.status(200).json(data);
 		}
 	}); 
 };
@@ -41,7 +41,17 @@ api.team = function (req, res) {
 		if (err) {
 			res.status(404).json(err);
 		} else {
-			res.status(200).json({team: data});
+			res.status(200).json({data});
+		}
+	}); 
+};
+api.teamFull = function (req, res) {
+	var id = req.params.id;
+	team.getTeamFull(id,function(err,data){
+		if (err) {
+			res.status(404).json(err);
+		} else {
+			res.status(200).json(data);
 		}
 	}); 
 };
@@ -50,7 +60,7 @@ api.team = function (req, res) {
 api.editTeam = function (req, res) {
 	var id = req.params.id;
 
-	return team.editTeam(id,req.body.team, function (err, data) {
+	return team.editTeam(id,req.body, function (err, data) {
 		if (!err) {
 			l.p("updated team");
 			return res.status(200).json(data);
@@ -94,17 +104,19 @@ api.deleteAllTeams = function (req, res) {
 */
 
 
-router.post('/team',api.addteam);
+router.post('/v1/data/teams',api.addteam);
 
-router.route('/team/:id')
+router.route('/v1/data/teams/:id')
 .get(api.team)
 .put(api.editTeam)
 .delete(api.deleteTeam);
 
+router.route('/v1/data/teams/:id/full')
+.get(api.teamFull);
 
-router.route('/teams')
-.get(api.teams)
-.delete(api.deleteAllTeams);
+router.route('/v1/data/teams')
+.get(api.teams);
+// .delete(api.deleteAllTeams);
 
 
 router.get('/teams/test',function(req,res){

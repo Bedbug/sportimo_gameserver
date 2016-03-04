@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Team = mongoose.models.Team,
+Team = mongoose.models.team,
 api = {},
 l=require('../config/lib');
 
@@ -33,6 +33,16 @@ api.getTeam = function (id,cb) {
   });
 };
 
+api.getTeamFull = function (id,cb) {
+
+  Team.findOne({ '_id': id })
+  .populate('players')
+  .exec(function(err, team) {
+    cbf(cb,err,team);
+  });
+  
+};
+
 // POST
 api.addTeam = function (team,cb) {
 
@@ -49,42 +59,46 @@ api.addTeam = function (team,cb) {
 
 // PUT
 api.editTeam = function (id,updateData, cb) {
-  Team.findById(id, function (err, team) {
+    
+    return Team.findOneAndUpdate({_id:id},updateData,function (err,res) {
+    cbf(cb,err, res); 
+    });
+//   Team.findById(id, function (err, team) {
    
-   if(updateData===undefined || team===undefined){
-    return cbf(cb,'Invalid Data. Please Check team and/or updateData fields',null); 
-  }
+//    if(updateData===undefined || team===undefined){
+//     return cbf(cb,'Invalid Data. Please Check team and/or updateData fields',null); 
+//   }
   
   
-    if(typeof updateData["name"] != 'undefined'){
-      team["name"] = updateData["name"];
-    }
+//     if(typeof updateData["name"] != 'undefined'){
+//       team["name"] = updateData["name"];
+//     }
     
-    if(typeof updateData["name_en"] != 'undefined'){
-      team["name_en"] = updateData["name_en"];
-    }
+//     if(typeof updateData["name_en"] != 'undefined'){
+//       team["name_en"] = updateData["name_en"];
+//     }
     
-    if(typeof updateData["logo"] != 'undefined'){
-      team["logo"] = updateData["logo"];
-    }
+//     if(typeof updateData["logo"] != 'undefined'){
+//       team["logo"] = updateData["logo"];
+//     }
     
-    if(typeof updateData["league"] != 'undefined'){
-      team["league"] = updateData["league"];
-    }
+//     if(typeof updateData["league"] != 'undefined'){
+//       team["league"] = updateData["league"];
+//     }
     
-    if(typeof updateData["parser"] != 'undefined'){
-      team["parser"] = updateData["parser"];
-    }
+//     if(typeof updateData["parser"] != 'undefined'){
+//       team["parser"] = updateData["parser"];
+//     }
     
-    if(typeof updateData["created"] != 'undefined'){
-      team["created"] = updateData["created"];
-    }
+//     if(typeof updateData["created"] != 'undefined'){
+//       team["created"] = updateData["created"];
+//     }
     
 
-  return team.save(function (err) {
-    cbf(cb,err,team.toObject()); 
-    }); //eo team.save
-  });// eo team.find
+//   return team.save(function (err) {
+//     cbf(cb,err,team.toObject()); 
+//     }); //eo team.save
+//   });// eo team.find
 };
 
 // DELETE

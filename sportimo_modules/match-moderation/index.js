@@ -126,6 +126,7 @@ var ModerationModule = {
             next();
         });
 
+
         log("Setting up [Manual] moderation routes");
         var apiPath = path.join(__dirname, 'api');
         fs.readdirSync(apiPath).forEach(function (file) {

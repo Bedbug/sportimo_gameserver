@@ -1,15 +1,27 @@
 'use strict';
 
 var mongoose = require('mongoose'),
-Schema = mongoose.Schema,
-ObjectId = Schema.ObjectId;
+    Schema = mongoose.Schema,
+    ObjectId = Schema.ObjectId;
 
 
-var team_schema = new mongoose.Schema({
-  name: String,
-  logo: String,
-  name_en: String,
-  league: String
-});
+if (mongoose.models.team)
+    module.exports = mongoose.model.team;
+else {
+var team = {
+    name: [{ lang: String, text: String }],
+    name_en: { type: String },
+    logo: { type: String },
+    league: { type: String },
+    parser: { type: Array },
+    players: [{
+        type: String,
+        ref: 'player'
+    }],
+    created: { type: Date, default: Date.now }
+};
 
-module.exports = mongoose.model("team", team_schema);
+var teamSchema = new Schema(team);
+
+module.exports = mongoose.model('team', teamSchema);
+}

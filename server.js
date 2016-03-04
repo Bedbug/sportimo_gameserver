@@ -57,7 +57,12 @@ var app = module.exports = exports.app = express();
 
 // Create Server
 var server = http.createServer(app);
-server.listen(process.env.PORT || 3030);
+// server.listen(process.env.PORT || 3030);
+var port = (process.env.PORT || 3030)
+app.listen(port, function () {
+        console.log('Express server listening on port %d in %s mode', port, app.get('env'));
+    });
+
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
 
@@ -122,7 +127,7 @@ TestSuite.wildcards = wildcards;
 // Notifications.SetupServer(app);
 // Notifications.setMongoConnection(mongoConnection);
 
-// var dataModule = require('./sportimo_modules/data-module');
+var dataModule = require('./sportimo_modules/data-module');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;

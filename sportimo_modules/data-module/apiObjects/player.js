@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Player = mongoose.models.Player,
+Player = mongoose.models.player,
 api = {},
 l=require('../config/lib');
 
@@ -50,7 +50,7 @@ api.addPlayer = function (player,cb) {
 // PUT
 api.editPlayer = function (id,updateData, cb) {
   Player.findById(id, function (err, player) {
-   
+
    if(updateData===undefined || player===undefined){
     return cbf(cb,'Invalid Data. Please Check player and/or updateData fields',null); 
   }
@@ -60,16 +60,16 @@ api.editPlayer = function (id,updateData, cb) {
       player["name"] = updateData["name"];
     }
     
-    if(typeof updateData["team_id"] != 'undefined'){
-      player["team_id"] = updateData["team_id"];
+    if(typeof updateData["team"] != 'undefined'){
+      player["team"] = updateData["team"];
     }
     
     if(typeof updateData["pic"] != 'undefined'){
       player["pic"] = updateData["pic"];
     }
     
-    if(typeof updateData["team_name"] != 'undefined'){
-      player["team_name"] = updateData["team_name"];
+    if(typeof updateData["position"] != 'undefined'){
+      player["position"] = updateData["position"];
     }
     
     if(typeof updateData["created"] != 'undefined'){

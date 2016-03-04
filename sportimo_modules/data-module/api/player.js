@@ -7,7 +7,7 @@ l=require('../config/lib');
 var api = {};
 // ALL
 api.players = function (req, res) {
-	var skip=null,limit=10;
+	var skip=null,limit=null;
 
 	if(req.query.skip!=undefined)
 		skip=req.query.skip;
@@ -19,7 +19,7 @@ api.players = function (req, res) {
 		if (err) {
 			res.status(500).json(err);
 		} else {
-			res.status(200).json({players: data});
+			res.status(200).json(data);
 		}
 	}); 
 };
@@ -50,7 +50,7 @@ api.player = function (req, res) {
 api.editPlayer = function (req, res) {
 	var id = req.params.id;
 
-	return player.editPlayer(id,req.body.player, function (err, data) {
+	return player.editPlayer(id,req.body, function (err, data) {
 		if (!err) {
 			l.p("updated player");
 			return res.status(200).json(data);
@@ -94,17 +94,17 @@ api.deleteAllPlayers = function (req, res) {
 */
 
 
-router.post('/player',api.addplayer);
+router.post('/v1/data/players',api.addplayer);
 
-router.route('/player/:id')
+router.route('/v1/data/players/:id')
 .get(api.player)
 .put(api.editPlayer)
 .delete(api.deletePlayer);
 
 
-router.route('/players')
-.get(api.players)
-.delete(api.deleteAllPlayers);
+router.route('/v1/data/players')
+.get(api.players);
+// .delete(api.deleteAllPlayers);
 
 
 router.get('/players/test',function(req,res){
