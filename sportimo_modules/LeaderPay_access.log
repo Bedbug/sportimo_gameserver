@@ -312,3 +312,6 @@
 ::1 - POST /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 55 - 0.834 ms
 ::1 - PUT /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 54 - 0.115 ms
 ::1 - POST /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 55 - 1.532 ms
+::1 - GET /v1/data/articles HTTP/1.1 404 29 - 2.168 ms
+::1 - GET /favicon.ico HTTP/1.1 404 24 - 1.738 ms
+::1 - GET /v1/data/articles HTTP/1.1 404 29 - 0.524 ms

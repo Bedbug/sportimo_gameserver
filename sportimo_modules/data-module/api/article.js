@@ -22,9 +22,12 @@ api.articlesSearch = function (req, res) {
         if (req.body.maxDate != undefined)
             queries.publishDate.$lt = req.body.maxDate;
     }
+    
     if (req.body.tags != undefined)
         queries['tags.name.en'] = { "$regex": req.body.tags, "$options": "i" };
 
+    if (req.body.related != undefined)
+        queries['tags._id'] = req.body.related;
 
     if (req.body.type != undefined)
         queries.type = req.body.type;

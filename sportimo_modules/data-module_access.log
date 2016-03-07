@@ -3417,3 +3417,10 @@
 ::1 - POST /v1/data/articles/search HTTP/1.1 200 5953 - 160.170 ms
 ::1 - OPTIONS /v1/data/articles/search HTTP/1.1 200 24 - 0.239 ms
 ::1 - POST /v1/data/articles/search HTTP/1.1 200 5953 - 162.468 ms
+::1 - GET /v1/data/articles HTTP/1.1 404 29 - 2.168 ms
+::1 - GET /favicon.ico HTTP/1.1 404 24 - 1.738 ms
+::1 - GET /v1/data/articles HTTP/1.1 404 29 - 0.524 ms
+::1 - POST /v1/data/articles/search HTTP/1.1 200 35620 - 378.121 ms
+::1 - POST /v1/data/articles/search HTTP/1.1 200 2 - 167.027 ms
+::1 - POST /v1/data/articles/search HTTP/1.1 200 35620 - 339.809 ms
+::1 - POST /v1/data/articles/search HTTP/1.1 200 17915 - 326.689 ms
