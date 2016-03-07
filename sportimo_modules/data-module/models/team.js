@@ -14,7 +14,7 @@ var team = {
     name_en: { type: String },
     logo: { type: String },
     league: { type: String },
-    parser: { type: Array },
+    parserids: { type: Array },
     players: [{
         type: String,
         ref: 'player'
