@@ -10,11 +10,11 @@ if (mongoose.models.team)
     module.exports = mongoose.model.team;
 else {
 var team = {
-    name: [{ lang: String, text: String }],
+    name: { type: Schema.Types.Mixed },
     name_en: { type: String },
     logo: { type: String },
     league: { type: String },
-    parser: { type: Array },
+    parserids: {  type: Schema.Types.Mixed },
     players: [{
         type: String,
         ref: 'player'

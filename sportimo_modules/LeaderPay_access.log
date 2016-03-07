@@ -303,3 +303,12 @@
 ::1 - GET /v1/data/players HTTP/1.1 404 28 - 0.610 ms
 ::1 - GET /v1/data/teams/565c4907e4b030fba33dd433/full HTTP/1.1 404 56 - 0.948 ms
 ::1 - GET /v1/data/teams/565c4907e4b030fba33dd433/full HTTP/1.1 404 56 - 0.624 ms
+::1 - POST /api/v1/articles HTTP/1.1 404 29 - 2.013 ms
+::1 - POST /api/v1/data/articles HTTP/1.1 404 34 - 0.539 ms
+::1 - POST /api/v1/data/tags HTTP/1.1 404 30 - 0.749 ms
+::1 - GET /api/v1/data/tags HTTP/1.1 404 29 - 1.555 ms
+::1 - GET /v1/data/articles HTTP/1.1 404 29 - 0.458 ms
+::1 - PUT /v1/data/tags/565c4907e4b030fba33dd433 HTTP/1.1 404 50 - 1.125 ms
+::1 - POST /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 55 - 0.834 ms
+::1 - PUT /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 54 - 0.115 ms
+::1 - POST /v1/data/articles/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 55 - 1.532 ms
