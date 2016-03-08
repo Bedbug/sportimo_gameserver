@@ -134,6 +134,8 @@ var dataModule = require('./sportimo_modules/data-module');
 
 var leaderboards = require('./sportimo_modules/leaderpay');
 
+var users = require('./sportimo_modules/users');
+
 function log(info) {
     console.log("[" + Date.now() + "] API CALL: " + info);
 }
@@ -144,7 +146,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
     next();
 });

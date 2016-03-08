@@ -23,6 +23,7 @@ var app = null;
 
 try {
     app = require('./../../server');
+    module.exports = this;
 
 } catch (ex) {
     // Start server
@@ -33,21 +34,30 @@ try {
     });
 }
 
-module.exports = this;
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    next();
+});
+
 
 app.locals.siteName = "data-module";
 
 var accessLogStream = fs.createWriteStream(__dirname + '/../'+app.locals.siteName+'_access.log', {flags: 'a'})
 
 
-// app.use(cors());
-app.use(morgan('dev'));
-app.use(morgan('short', { stream: accessLogStream }));
-
 // Connect to database
 // var db = require('./config/db');
 
 app.use(express.static(__dirname + '/public'));
+
+// app.use(function (req, res, next) {
+//     res.header("Access-Control-Allow-Origin", "*");
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
+//     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+//     next();
+// });
 
 var env = process.env.NODE_ENV || 'development';
 
