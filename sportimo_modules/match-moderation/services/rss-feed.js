@@ -49,14 +49,14 @@ feed_service.parsername = null;
 feed_service.parser = null;
 
 // Initialize feed and validate response
-feed_service.init = function () {
+feed_service.init = function (matchHandler) {
   
     if (this.parsername == null)
         return "No parser attached to service";
     else
         this.parser = parsers[this.parsername];
   
-    parsers[this.parsername].init();
+    parsers[this.parsername].init(matchHandler);
     
 //    return console.log("[RSS-Feed] Service initialized");
 }

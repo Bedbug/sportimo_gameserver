@@ -93,7 +93,9 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         _.merge(newService, service);
 
         HookedMatch.MODERATION_SERVICES.push(newService);
-        HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init();
+        
+        // init the service by passing this as a context reference for internal communication (sending events)
+        HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
     }
 
 
