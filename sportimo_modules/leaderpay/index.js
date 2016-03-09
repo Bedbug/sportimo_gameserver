@@ -26,6 +26,12 @@ try {
     });
 }
 
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    next();
+});
 
 app.locals.siteName = "LeaderPay";
 
@@ -37,7 +43,7 @@ app.use(morgan('dev'));
 app.use(morgan('short', { stream: accessLogStream }));
 
 // Connect to database
-var db = require('./config/db');
+// var db = require('./config/db');
 app.use(express.static(__dirname + '/public'));
 
 
