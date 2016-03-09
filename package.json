@@ -5,9 +5,11 @@
   },
   "version": "0.0.5",
   "dependencies": {
+    "async": "^1.5.2",
     "bcryptjs": "^2.3.0",
     "body-parser": "",
     "cors": "latest",
+    "crypto": "0.0.3",
     "errorhandler": "^1.4.3",
     "express": "",
     "express-jwt": "^3.3.0",
