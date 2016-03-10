@@ -26,6 +26,6 @@ api.leaderboard = function (req, res) {
 	}); 
 };
 
-router.post('/leaderboard', api.leaderboard);
+router.post('/v1/leaderboards', api.leaderboard);
 
 module.exports = router;

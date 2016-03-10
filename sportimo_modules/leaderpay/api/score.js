@@ -94,15 +94,15 @@ api.deleteAllScores = function (req, res) {
 */
 
 
-router.post('/score',api.addscore);
+router.post('/v1/scores',api.addscore);
 
-router.route('/score/:id')
+router.route('/v1/scores/:id')
 .get(api.score)
 .put(api.editScore)
 .delete(api.deleteScore);
 
 
-router.route('/scores')
+router.route('/v1/scores')
 .get(api.scores)
 .delete(api.deleteAllScores);
 
