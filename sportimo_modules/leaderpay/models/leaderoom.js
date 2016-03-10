@@ -31,6 +31,6 @@ var leaderoom = {
     created: {type: Date, default: Date.now}
 };
 
-var leaderoomSchema = new Schema(fields);
+var leaderoomSchema = new Schema(leaderoom);
 
 module.exports = mongoose.model('leaderoom', leaderoomSchema);
