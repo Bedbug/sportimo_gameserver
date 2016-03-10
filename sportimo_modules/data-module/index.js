@@ -44,7 +44,7 @@ app.use(function (req, res, next) {
 
 app.locals.siteName = "data-module";
 
-var accessLogStream = fs.createWriteStream(__dirname + '/../'+app.locals.siteName+'_access.log', {flags: 'a'})
+// var accessLogStream = fs.createWriteStream(__dirname + '/../'+app.locals.siteName+'_access.log', {flags: 'a'})
 
 
 // Connect to database

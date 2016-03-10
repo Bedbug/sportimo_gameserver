@@ -44,8 +44,8 @@ api.tags = function(req, res) {
             m.exec(function(err, matches) {
                 matches.forEach(function(match) {
                     if (match.home_team) {
-                        var matchTag = {};
-                        matchTag['name.en'] = match.home_team.name.en + " - " + match.away_team.name.en;
+                        var matchTag = {name:{en:""}};
+                        matchTag.name.en= match.home_team.name.en + " - " + match.away_team.name.en;
                         matchTag._id = match._id;
                         matchTag.type = "Event";
                         tags.push(matchTag);

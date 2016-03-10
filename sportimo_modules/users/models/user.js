@@ -4,7 +4,7 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
-     name: {
+    name: {
         type: String,
         required: true
     },
@@ -13,31 +13,30 @@ var UserSchema = new Schema({
         unique: true,
         required: true
     },
-
     password: {
         type: String,
         required: true
     },
-     pic: String,
-    admin: Boolean 
+    picture: String,
+    admin: Boolean
 
 }, {
-    toObject: {
-        virtuals: true
-    }, toJSON: {
-        virtuals: true
-    }
-});
+        toObject: {
+            virtuals: true
+        }, toJSON: {
+            virtuals: true
+        }
+    });
 
-UserSchema.pre('save', function (next) {
+UserSchema.pre('save', function(next) {
     var user = this;
     console.log(user);
     if (this.isModified('password') || this.isNew) {
-        bcrypt.genSalt(10, function (err, salt) {
+        bcrypt.genSalt(10, function(err, salt) {
             if (err) {
                 return next(err);
             }
-            bcrypt.hash(user.password, salt, function (err, hash) {
+            bcrypt.hash(user.password, salt, function(err, hash) {
                 if (err) {
                     return next(err);
                 }
@@ -50,8 +49,8 @@ UserSchema.pre('save', function (next) {
     }
 });
 
-UserSchema.methods.comparePassword = function (passw, cb) {
-    bcrypt.compare(passw, this.password, function (err, isMatch) {
+UserSchema.methods.comparePassword = function(passw, cb) {
+    bcrypt.compare(passw, this.password, function(err, isMatch) {
         if (err) {
             return cb(err);
         }

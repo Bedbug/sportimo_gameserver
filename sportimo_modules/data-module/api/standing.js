@@ -2,12 +2,12 @@
 var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
-    article = mongoose.models.article,
+    item = mongoose.models.standing,
     api = {};
 
 
 // ALL
-api.articlesSearch = function(req, res) {
+api.itemsSearch = function(req, res) {
     var skip = null, limit = null;
     //  publishDate: { $gt: req.body.minDate, $lt: req.body.maxDate }, type: req.body.type, tags: { "$regex": req.body.tags, "$options": "i" }
     var queries = {};
@@ -33,26 +33,26 @@ api.articlesSearch = function(req, res) {
     if (req.body.type != undefined)
         queries.type = req.body.type;
 
-    var q = article.find(queries);
+    var q = item.find(queries);
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);
 
-    q.exec(function(err, articles) {
+    q.exec(function(err, items) {
 
-        return res.send(articles);
+        return res.send(items);
     });
 
 };
 
 // POST
-api.addarticle = function(req, res) {
+api.additem = function(req, res) {
 
     if (req.body == 'undefined') {
-        return res.status(500).json('No Article Provided. Please provide valid team data.');
+        return res.status(500).json('No item Provided. Please provide valid team data.');
     }
 
-    var newItem = new article(req.body);
+    var newItem = new item(req.body);
 
     return newItem.save(function(err, data) {
         if (!err) {
@@ -65,29 +65,35 @@ api.addarticle = function(req, res) {
 };
 
 // GET
-api.article = function(req, res) {
+api.item = function(req, res) {
     var id = req.params.id;
-
+    item.findById(id, function(err, returnedItem) {
+        if (!err) {
+                return res.status(200).json(returnedItem);
+            } else {
+                return res.status(500).json(err);
+            }
+    });
 };
 
 // PUT
-api.editArticle = function(req, res) {
+api.edititem = function(req, res) {
     var id = req.params.id;
     var updateData = req.body;
-    article.findById(id, function(err, art) {
+    item.findById(id, function(err, returnedItem) {
 
-        if (updateData === undefined || art === undefined) {
+        if (updateData === undefined || returnedItem === undefined) {
             return res.status(500).json("Error: Data is not correct.");
         }
 
-        art.photo = updateData.photo;
-        art.tags = updateData.tags;
-        art.publishDate = updateData.publishDate;
-        art.type = updateData.type;
-        art.publication = updateData.publication;
+        returnedItem.photo = updateData.photo;
+        returnedItem.tags = updateData.tags;
+        areturnedItemrt.publishDate = updateData.publishDate;
+        returnedItem.type = updateData.type;
+        returnedItemart.publication = updateData.publication;
         // art.markModified('tags');
 
-        return art.save(function(err, data) {
+        return returnedItem.save(function(err, data) {
             if (!err) {
                 return res.status(200).json(data);
             } else {
@@ -100,7 +106,7 @@ api.editArticle = function(req, res) {
 };
 
 // DELETE
-api.deleteArticle = function(req, res) {
+api.deleteitem = function(req, res) {
     var id = req.params.id;
 
 };
@@ -111,14 +117,14 @@ api.deleteArticle = function(req, res) {
 =====================  ROUTES  =====================
 */
 
-router.route('/v1/data/articles/search')
-    .post(api.articlesSearch);
+router.route('/v1/data/standings/search')
+    .post(api.itemsSearch);
 
-router.post('/v1/data/articles', api.addarticle);
+router.post('/v1/data/standings', api.additem);
 
-router.route('/v1/data/articles/:id')
-    .get(api.article)
-    .put(api.editArticle)
-    .delete(api.deleteArticle);
+router.route('/v1/data/standings/:id')
+    .get(api.item)
+    .put(api.edititem)
+    .delete(api.deleteitem);
 
 module.exports = router;

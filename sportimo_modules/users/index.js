@@ -7,7 +7,7 @@ var morgan = require('morgan');
 var mongoose = require('mongoose');
 
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens
-
+var jwtDecode = require('jwt-decode');
 var config = require('./config'); // get our config file
 var User = require('./models/user'); // get our mongoose model
 
@@ -29,7 +29,7 @@ try {
 app.set('superSecret', config.secret); // secret variable
 
 
-app.use(function (req, res, next) {
+app.use(function(req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
@@ -73,15 +73,15 @@ var apiRoutes = express.Router();
 
 // route middleware to verify a token
 var jwtMiddle = function(req, res, next) {
-
+ 
     // check header or url parameters or post parameters for token
-    var token = req.body.token || req.query.token || req.headers['X-Access-Token'];
-
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+   
     // decode token
     if (token) {
 
         // verifies secret and checks exp
-        jsonwebtoken.verify(token, app.get('superSecret'), function(err, decoded) {
+        jsonwebtoken.verify(token, app.get('superSecret'), function(err, decoded) {       
             if (err) {
                 return res.json({ success: false, message: 'Failed to authenticate token.' });
             } else {
@@ -103,33 +103,28 @@ var jwtMiddle = function(req, res, next) {
     }
 };
 
-// TODO: route to authenticate a user (POST http://localhost:8080/api/authenticate)
+// Route to create a new user (POST /v1/users)
 apiRoutes.post('/v1/users', function(req, res) {
-
     // save the sample user
     var newUser = new User(req.body);
-    
-    console.log(newUser);
     newUser.save(function(err, user) {
         if (err) res.status(500).send(err);
         else {
             var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                 expiresInMinutes: 1440 // expires in 24 hours
             });
-
+            user = user.toObject();
+            user.token = token;
+            user.success = true;
             // return the information including token as JSON
-            res.json({
-                success: true,
-                message: 'Enjoy your token!',
-                token: token
-            });
+            res.status(200).send(user);
         }
     });
 });
-    
- 
 
-// TODO: route to authenticate a user (POST http://localhost:8080/api/authenticate)
+
+
+//Route to authenticate a user (POST /v1/users/authenticate)
 apiRoutes.post('/v1/users/authenticate', function(req, res) {
 
     // find the user
@@ -151,19 +146,14 @@ apiRoutes.post('/v1/users/authenticate', function(req, res) {
 
                     // if user is found and password is right
                     // create a token
+                    user = user.toObject();
                     var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                         expiresInMinutes: 1440 // expires in 24 hours
                     });
-
+                    user.token = token;
+                    user.success = true;
                     // return the information including token as JSON
-                    res.json({
-                        success: true,
-                        admin: user.admin,
-                        name: user.name,
-                        picture: user.pic,
-                        message: 'Enjoy your token!',
-                        token: token
-                    });
+                    res.status(200).send(user);
                 }
             });
         }
@@ -171,11 +161,32 @@ apiRoutes.post('/v1/users/authenticate', function(req, res) {
     });
 });
 
-// route to return all users (GET http://localhost:8080/api/users)
+// Route to return all users (GET http://localhost:8080/api/users)
 apiRoutes.get('/v1/users', jwtMiddle, function(req, res) {
     User.find({}, function(err, users) {
         res.json(users);
     });
+});
+
+// Route to return specific user (GET http://localhost:8080/api/users)
+apiRoutes.get('/v1/users/:id', jwtMiddle, function(req, res) {
+
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+    var decoded = jwt_decode(token);
+    console.log(decoded);
+    if (decoded.admin) {
+        // Full user Profile
+        User.findById(req.params.id, function(err, user) {
+            res.json(user);
+        });
+    }
+    else
+    {
+        // Mini Profile
+         User.findById(req.params.id, function(err, user) {
+            res.json(user);
+        });
+    }
 });
 
 // apply the routes to our application with the prefix /api
