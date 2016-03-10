@@ -10,6 +10,7 @@
     "body-parser": "",
     "cors": "latest",
     "crypto": "0.0.3",
+    "crypto-js": "^3.1.6",
     "errorhandler": "^1.4.3",
     "express": "",
     "express-jwt": "^3.3.0",
