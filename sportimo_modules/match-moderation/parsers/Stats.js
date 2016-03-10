@@ -1,4 +1,4 @@
-var localConfiguration = require('./configuration.js');
+var localConfiguration = require('./StatsConfiguration');
 var scheduler = require('node-schedule');
 var needle = require("needle");
 var crypto = require("crypto-js");
