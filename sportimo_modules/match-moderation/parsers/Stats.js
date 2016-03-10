@@ -1,16 +1,63 @@
-var localConfiguration = require('./StatsConfiguration.js');
 var scheduler = require('node-schedule');
 var needle = require("needle");
 var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
 
+// Settings for the development environment
+
+// languageMapping maps Sportimo langage locale to Stats.com language Ids. For a list of ISO codes, see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+var languageMapping = {
+    "ar": "10", // arabic
+    "en": "1", // english
+    "yi": "28" // yiddish (hebrew)
+    
+    // Add all required language mappings here from Stats.com
+};
+    
+
+var statsComConfigDevelopment = {
+    // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
+    supportedLanguages : ["en"],
+    urlPrefix : "http://api.stats.com/v1/stats/soccer/",
+    apiKey : "83839j82xy3mty4bf6459rnt",
+    apiSecret : "VqmfcMTdQe",
+    //gameServerUrlPrefix : "http://gameserverv2-56657.onmodulus.net/v1/",
+    //gameServerTeamApi : "data/teams",
+    //gameServerPlayerApi : "data/players",
+    eventsInterval : 1000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
+    parserIdName : "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
+};
+
+// Settings for the production environment
+var statsComConfigProduction = {
+    // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
+    supportedLanguages : ["en"],
+    urlPrefix : "http://api.stats.com/v1/stats/soccer/",
+    apiKey : "83839j82xy3mty4bf6459rnt",
+    apiSecret : "VqmfcMTdQe",
+    eventsInterval : 1000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
+    parserIdName : "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
+};
+
+// Assign the settings for the current environment
+var localConfiguration = statsComConfigDevelopment;
+
+
 
 
 var Parser = function() {
     // Settings properties
     var configuration = localConfiguration;
+    
+    //update configuration settings with this object settings
+    if (this.interval)
+        configuration.eventsInterval = this.interval;
+    if (this.parsername)
+        configuration.parserIdName = this.parsername;
+        
     var matchHandler = null;
+    var feedService = null;
     var recurringTask = null;
     
     // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
@@ -222,9 +269,10 @@ var Parser = function() {
     this.Name = configuration.parserIdName;
 
     // Restrict to Only call this once in the lifetime of this object
-    this.init = _.once(function(matchHandlerRef){
+    this.init = _.once(function(matchHandlerRef, feedServiceContext){
     //        return console.log("[Stats] Parser service initiliazed");
-        matchHandler = matchHandlerRef.HookedMatch;
+        matchHandler = matchHandlerRef;
+        feedService = feedServiceContext;
         
         // fill in the matchParserId var
         matchParserId = matchHandler.data.parserids[configuration.parserIdName];
@@ -402,7 +450,7 @@ var Parser = function() {
     
     // and now, the functions that can be called from outside modules.
     this.TickMatchFeed = function() {
-        if (!matchHandler || !matchParserId)
+        if (!matchHandler || !matchParserId || !feedService)
         {
             console.log('Invalid call of TickMatchFeed before binding to a match');
             return;
@@ -431,7 +479,7 @@ var Parser = function() {
             {
                var translatedEvent = TranslateMatchEvent(event);
                if (translatedEvent)
-                    matchHandler.Parse(event, matchHandler.data, null);
+                    feedService.ParseEvent(event);
             });
                 
             var lastEvent = _.findLast(data, function(n)
