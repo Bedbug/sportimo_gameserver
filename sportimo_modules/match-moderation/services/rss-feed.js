@@ -51,14 +51,24 @@ feed_service.parser = null;
 // Initialize feed and validate response
 feed_service.init = function (matchHandler) {
   
+    this.match_module = matchHandler;
+    
     if (this.parsername == null)
         return "No parser attached to service";
     else
         this.parser = parsers[this.parsername];
   
-    parsers[this.parsername].init(matchHandler);
+    parsers[this.parsername].init(matchHandler.HookedMatch, this);
     
 //    return console.log("[RSS-Feed] Service initialized");
-}
+};
+
+
+feed_service.ParseEvent = function(event) {
+    if (!this.match_module)
+        return;
+        
+    this.match_module.parse(event, this.match_module.data, null);
+};
 
 module.exports = feed_service;
