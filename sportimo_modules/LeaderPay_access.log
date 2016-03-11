@@ -413,3 +413,8 @@
 ::1 - GET /leaderpay/v1/pools/timed/ HTTP/1.1 200 955 - 166.521 ms
 ::1 - POST /leaderpay/v1/pools HTTP/1.1 200 555 - 181.279 ms
 ::1 - GET /leaderpay/v1/pools/timed/ HTTP/1.1 200 1511 - 204.706 ms
+::1 - GET /v1/pools/forgame/56bb621cde6e82ea00ad4cb6 HTTP/1.1 404 54 - 1.451 ms
+::1 - GET /leaderpay/v1/pools/timed/ HTTP/1.1 200 1511 - 222.854 ms
+::1 - GET /v1/leaderpay/v1/pools/timed/ HTTP/1.1 404 41 - 0.727 ms
+::1 - GET /leaderpay/v1/pools/timed/ HTTP/1.1 200 1511 - 234.815 ms
+::1 - GET /leaderpay/v1/pools/forgame/56bb621cde6e82ea00ad4cb6 HTTP/1.1 200 1184 - 233.108 ms

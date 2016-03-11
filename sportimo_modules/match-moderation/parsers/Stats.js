@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-var localConfiguration = require('./StatsConfiguration');
-=======
->>>>>>> 8ce5b886d42b7b98b89d4b5a602402f0046247c3
 var scheduler = require('node-schedule');
 var needle = require("needle");
 var crypto = require("crypto-js");

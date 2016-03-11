@@ -1,4 +1,5 @@
 .gitignore
 .gitattributes
 debug.log
+sportimo_modules/*.log
 node_modules
