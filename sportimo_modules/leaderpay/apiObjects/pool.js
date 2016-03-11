@@ -1,8 +1,7 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-    Score = mongoose.models.Score,
-    api = {},
-    l = require('../config/lib');
+    Pool = mongoose.models.pool,
+    api = {};
 
 
 
@@ -11,7 +10,7 @@ var mongoose = require('mongoose'),
 */
 
 // ALL
-api.getLeaderboard = function (conditions, skip, limit, cb) {
+api.getPool = function (conditions, skip, limit, cb) {
 
     var q = Score.aggregate({
         $match: conditions
@@ -34,8 +33,8 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
     
     q.sort({score: -1});
 
-    return q.exec(function (err, leaderboard) {
-        cbf(cb, err, leaderboard);
+    return q.exec(function (err, pool) {
+        cbf(cb, err, pool);
     });
 };
 
