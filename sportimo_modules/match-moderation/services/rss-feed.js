@@ -16,14 +16,20 @@
 */
 
 var path = require('path'),
-    fs = require('fs');
+    fs = require('fs'),
+    mongoose = require('../config/db.js');
 
 var parsers = [ ];
 
 var servicesPath = path.join(__dirname, '../parsers');
-fs.readdirSync(servicesPath).forEach(function (file) {
-    parsers[path.basename(file, ".js")] = require(servicesPath + '/' + file);
-});
+    fs.readdirSync(servicesPath).forEach(function (file) {
+        parsers[path.basename(file, ".js")] = require(servicesPath + '/' + file);
+    });
+
+var modelsPath = path.join(__dirname, '../models');
+    fs.readdirSync(modelsPath).forEach(function (file) {
+        require(modelsPath + '/' + file);
+    });
 
 var feed_service = {};
 
@@ -36,7 +42,7 @@ feed_service.eventid = "";
 // The match module that this feed will moderate
 feed_service.match_module = null;
 
-// The url for the feed.
+// The url for the feed. // Note: Each parser knows and is responsible for its own feed url endpoint.
 feed_service.feedurl = "";
 
 // The interval that the module will request an update
@@ -69,6 +75,20 @@ feed_service.ParseEvent = function(event) {
         return;
         
     this.match_module.parse(event, this.match_module.data, null);
+};
+
+
+feed_service.LoadPlayers = function(teamId, callback)
+{
+    if (!mongoose)
+        return callback(null);
+        
+    mongoose.models.player.find({team: teamId}, function(error, data) {
+        if (error)
+            return;
+            
+        return callback(null, data);
+    });
 };
 
 module.exports = feed_service;
