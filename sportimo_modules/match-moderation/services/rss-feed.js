@@ -69,15 +69,24 @@ feed_service.init = function (matchHandler) {
 //    return console.log("[RSS-Feed] Service initialized");
 };
 
-
-feed_service.ParseEvent = function(event) {
+// Manage match events, simple proxy to match module
+feed_service.AddEvent = function(event) {
     if (!this.match_module)
         return;
         
-    this.match_module.parse(event, this.match_module.data, null);
+    this.match_module.HookedMatch.AddEventCore(event);
+};
+
+// Manage match segment advances, simple proxy to match module
+feed_service.AdvanceMatchSegment = function() {
+    if (!this.match_module)
+        return;
+    
+    this.match_module.HookedMatch.AdvanceSegmentCore(null);
 };
 
 
+// Helper function that loads a team players from the mongoDb store
 feed_service.LoadPlayers = function(teamId, callback)
 {
     if (!mongoose)
@@ -90,5 +99,6 @@ feed_service.LoadPlayers = function(teamId, callback)
         return callback(null, data);
     });
 };
+
 
 module.exports = feed_service;

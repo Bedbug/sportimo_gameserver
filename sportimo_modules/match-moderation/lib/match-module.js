@@ -83,7 +83,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             return res.send("Service type already active. Please remove the old one first.");
         } else {
             HookedMatch.moderation.push(service);
-            HookedMatch.startService(service);
+            HookedMatch.StartService(service);
         }
     }
 
@@ -151,6 +151,14 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     */
     HookedMatch.AdvanceSegment = function (event, res) {
 
+        HookedMatch.AdvanceSegmentCore(event);
+
+        return res.status(200).send(HookedMatch);
+    }
+    
+    // This is the core used by both the module API and the rss-feed service.
+    HookedMatch.AdvanceSegmentCore = function(event)
+    {
         // Register the time that the previous segment ended
         this.data.timeline[this.data.state].end = moment().utc().format();
         // Advance the state of the match
@@ -178,9 +186,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         this.data.markModified('timeline');
         this.data.save();
-
-        return res.status(200).send(HookedMatch);
-    }
+    };
 
 
 
@@ -256,8 +262,16 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
+        HookedMatch.AddEventCore(event);
+        
+            // 4. return match to Sender
+        return res.status(200).send(this);
+
+    };
 
 
+    HookedMatch.AddEventCore = function (event)
+    {
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
         //        console.log("When adding event:");
@@ -267,8 +281,6 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         // Parses the event based on sport and makes changes in the match instance
         evtObject.linked_mods = StatsHelper.Parse(event, match, log);
-
-
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
@@ -293,10 +305,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         this.data.markModified('stats');
 
         this.data.save();
-
-        // 4. return match to Sender
-        return res.status(200).send(this);
-    }
+    };
 
     /*  RemoveEvent
      

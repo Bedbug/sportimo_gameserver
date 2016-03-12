@@ -72,204 +72,206 @@ var Parser = function() {
     // ToDo: the parser would like to know the 2 teams (home and away) parserids
     var matchTeamsLookup = {};
 
-    
+    /* 
+    // This is just for reference, depicts all Stats.com event ids and their name
     var eventTypes = [
-            {
-                "playEventId": 1,
-                "name": "Ball Location"
-            }, {
-                "playEventId": 2,
-                "name": "Caution"   // yellow card
-            }, {
-                "playEventId": 3,
-                "name": "Clear"
-            }, {
-                "playEventId": 4,
-                "name": "Comments"
-            }, {
-                "playEventId": 5,
-                "name": "Corner Kick"
-            }, {
-                "playEventId": 6,
-                "name": "Cross"
-            }, {
-                "playEventId": 7,
-                "name": "Expulsion" // red card
-            }, {
-                "playEventId": 8,
-                "name": "Foul"
-            }, {
-                "playEventId": 9,
-                "name": "Free Kick"
-            }, {
-                "playEventId": 10,
-                "name": "Game Over"
-            }, {
-                "playEventId": 11,
-                "name": "Goal"
-            }, {
-                "playEventId": 12,
-                "name": "Goalkeeper Punt"
-            }, {
-                "playEventId": 13,
-                "name": "Half Over"
-            }, {
-                "playEventId": 14,
-                "name": "Injury"
-            }, {
-                "playEventId": 15,
-                "name": "New Player"
-            }, {
-                "playEventId": 16,
-                "name": "Offside"
-            }, {
-                "playEventId": 17,
-                "name": "Penalty Kick - Good"
-            }, {
-                "playEventId": 18,
-                "name": "Penalty Kick - No Good"
-            }, {
-                "playEventId": 19,
-                "name": "Shot"
-            }, {
-                "playEventId": 20,
-                "name": "Shot on Goal"
-            }, {
-                "playEventId": 21,
-                "name": "Start Half"
-            }, {
-                "playEventId": 22,
-                "name": "Substitution"
-            }, {
-                "playEventId": 23,
-                "name": "Starting Lineups - Home"
-            }, {
-                "playEventId": 24,
-                "name": "Starting Lineups - Visit"
-            }, {
-                "playEventId": 25,
-                "name": "Coach - Home"
-            }, {
-                "playEventId": 26,
-                "name": "Coach - Visit"
-            }, {
-                "playEventId": 27,
-                "name": "Game Info"
-            }, {
-                "playEventId": 28,
-                "name": "Own Goal"
-            }, {
-                "playEventId": 29,
-                "name": "Goalie Change"
-            }, {
-                "playEventId": 30,
-                "name": "Shootout Goal"
-            }, {
-                "playEventId": 31,
-                "name": "Shootout Save"
-            }, {
-                "playEventId": 32,
-                "name": "Hand Ball Foul"
-            }, {
-                "playEventId": 33,
-                "name": "Shootout"
-            }, {
-                "playEventId": 34,
-                "name": "Game Start"
-            }, {
-                "playEventId": 35,
-                "name": "Half-Time"
-            }, {
-                "playEventId": 36,
-                "name": "End of Regulation"
-            }, {
-                "playEventId": 37,
-                "name": "Begin Overtime"
-            }, {
-                "playEventId": 38,
-                "name": "End Overtime"
-            }, {
-                "playEventId": 39,
-                "name": "Save (Shot off Target)"
-            }, {
-                "playEventId": 40,
-                "name": "Save (Shot on Target)"
-            }, {
-                "playEventId": 41,
-                "name": "Shootout Miss"
-            }, {
-                "playEventId": 42,
-                "name": "Left Flank Attack"
-            }, {
-                "playEventId": 43,
-                "name": "Center Flank Attack"
-            }, {
-                "playEventId": 44,
-                "name": "Right Flank Attack"
-            }, {
-                "playEventId": 45,
-                "name": "Long Ball Attack"
-            }, {
-                "playEventId": 46,
-                "name": "Goal Kick"
-            }, {
-                "playEventId": 47,
-                "name": "Throw-In"
-            }, {
-                "playEventId": 48,
-                "name": "Manager Expulsion"
-            }, {
-                "playEventId": 49,
-                "name": "Defensive Action"
-            }, {
-                "playEventId": 50,
-                "name": "Pass"
-            }, {
-                "playEventId": 51,
-                "name": "Run With Ball"
-            }, {
-                "playEventId": 52,
-                "name": "Tackle"
-            }, {
-                "playEventId": 53,
-                "name": "Deflection"
-            }, {
-                "playEventId": 54,
-                "name": "Clock Start"
-            }, {
-                "playEventId": 55,
-                "name": "Clock Stop"
-            }, {
-                "playEventId": 56,
-                "name": "Clock Inc"
-            }, {
-                "playEventId": 57,
-                "name": "Clock Dec"
-            }, {
-                "playEventId": 58,
-                "name": "Abandoned"
-            }, {
-                "playEventId": 59,
-                "name": "Delayed"
-            }, {
-                "playEventId": 60,
-                "name": "10-Yard"
-            }, {
-                "playEventId": 61,
-                "name": "Back-Pass"
-            }, {
-                "playEventId": 62,
-                "name": "Time"
-            }, {
-                "playEventId": 65,
-                "name": "Delay Over"
-            }, {
-                "playEventId": 66,
-                "name": "Injury Time"
-            }];
+        {
+            "playEventId": 1,
+            "name": "Ball Location"
+        }, {
+            "playEventId": 2,
+            "name": "Caution"   // yellow card
+        }, {
+            "playEventId": 3,
+            "name": "Clear"
+        }, {
+            "playEventId": 4,
+            "name": "Comments"
+        }, {
+            "playEventId": 5,
+            "name": "Corner Kick"
+        }, {
+            "playEventId": 6,
+            "name": "Cross"
+        }, {
+            "playEventId": 7,
+            "name": "Expulsion" // red card
+        }, {
+            "playEventId": 8,
+            "name": "Foul"
+        }, {
+            "playEventId": 9,
+            "name": "Free Kick"
+        }, {
+            "playEventId": 10,
+            "name": "Game Over"
+        }, {
+            "playEventId": 11,
+            "name": "Goal"
+        }, {
+            "playEventId": 12,
+            "name": "Goalkeeper Punt"
+        }, {
+            "playEventId": 13,
+            "name": "Half Over"
+        }, {
+            "playEventId": 14,
+            "name": "Injury"
+        }, {
+            "playEventId": 15,
+            "name": "New Player"
+        }, {
+            "playEventId": 16,
+            "name": "Offside"
+        }, {
+            "playEventId": 17,
+            "name": "Penalty Kick - Good"
+        }, {
+            "playEventId": 18,
+            "name": "Penalty Kick - No Good"
+        }, {
+            "playEventId": 19,
+            "name": "Shot"
+        }, {
+            "playEventId": 20,
+            "name": "Shot on Goal"
+        }, {
+            "playEventId": 21,
+            "name": "Start Half"
+        }, {
+            "playEventId": 22,
+            "name": "Substitution"
+        }, {
+            "playEventId": 23,
+            "name": "Starting Lineups - Home"
+        }, {
+            "playEventId": 24,
+            "name": "Starting Lineups - Visit"
+        }, {
+            "playEventId": 25,
+            "name": "Coach - Home"
+        }, {
+            "playEventId": 26,
+            "name": "Coach - Visit"
+        }, {
+            "playEventId": 27,
+            "name": "Game Info"
+        }, {
+            "playEventId": 28,
+            "name": "Own Goal"
+        }, {
+            "playEventId": 29,
+            "name": "Goalie Change"
+        }, {
+            "playEventId": 30,
+            "name": "Shootout Goal"
+        }, {
+            "playEventId": 31,
+            "name": "Shootout Save"
+        }, {
+            "playEventId": 32,
+            "name": "Hand Ball Foul"
+        }, {
+            "playEventId": 33,
+            "name": "Shootout"
+        }, {
+            "playEventId": 34,
+            "name": "Game Start"
+        }, {
+            "playEventId": 35,
+            "name": "Half-Time"
+        }, {
+            "playEventId": 36,
+            "name": "End of Regulation"
+        }, {
+            "playEventId": 37,
+            "name": "Begin Overtime"
+        }, {
+            "playEventId": 38,
+            "name": "End Overtime"
+        }, {
+            "playEventId": 39,
+            "name": "Save (Shot off Target)"
+        }, {
+            "playEventId": 40,
+            "name": "Save (Shot on Target)"
+        }, {
+            "playEventId": 41,
+            "name": "Shootout Miss"
+        }, {
+            "playEventId": 42,
+            "name": "Left Flank Attack"
+        }, {
+            "playEventId": 43,
+            "name": "Center Flank Attack"
+        }, {
+            "playEventId": 44,
+            "name": "Right Flank Attack"
+        }, {
+            "playEventId": 45,
+            "name": "Long Ball Attack"
+        }, {
+            "playEventId": 46,
+            "name": "Goal Kick"
+        }, {
+            "playEventId": 47,
+            "name": "Throw-In"
+        }, {
+            "playEventId": 48,
+            "name": "Manager Expulsion"
+        }, {
+            "playEventId": 49,
+            "name": "Defensive Action"
+        }, {
+            "playEventId": 50,
+            "name": "Pass"
+        }, {
+            "playEventId": 51,
+            "name": "Run With Ball"
+        }, {
+            "playEventId": 52,
+            "name": "Tackle"
+        }, {
+            "playEventId": 53,
+            "name": "Deflection"
+        }, {
+            "playEventId": 54,
+            "name": "Clock Start"
+        }, {
+            "playEventId": 55,
+            "name": "Clock Stop"
+        }, {
+            "playEventId": 56,
+            "name": "Clock Inc"
+        }, {
+            "playEventId": 57,
+            "name": "Clock Dec"
+        }, {
+            "playEventId": 58,
+            "name": "Abandoned"
+        }, {
+            "playEventId": 59,
+            "name": "Delayed"
+        }, {
+            "playEventId": 60,
+            "name": "10-Yard"
+        }, {
+            "playEventId": 61,
+            "name": "Back-Pass"
+        }, {
+            "playEventId": 62,
+            "name": "Time"
+        }, {
+            "playEventId": 65,
+            "name": "Delay Over"
+        }, {
+            "playEventId": 66,
+            "name": "Injury Time"
+        }];
+    */
             
     var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28,30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
-    
+    var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
     
     this.Name = configuration.parserIdName;
 
@@ -427,6 +429,19 @@ var Parser = function() {
         return translatedEvent;
     };
     
+    
+    var TranslateMatchSegment = function(parserEvent)
+    {
+        if (!parserEvent)
+            return null;
+        
+        //Not supported event types
+        if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) == -1)
+            return null;
+        
+        return 1;   // return anything but null
+    };
+    
     // and now, the functions that can be called from outside modules.
     this.TickMatchFeed = function() {
         if (!matchHandler || !matchParserId || !feedService)
@@ -453,12 +468,20 @@ var Parser = function() {
             if (eventsDiff.length == 0)
                 return;
                 
-            // Translate all events in eventsDiff and send them to matchHandler
+            // Translate all events in eventsDiff and send them to feedService
             _.forEach(eventsDiff, function(event)
             {
+                // First try parsing a normal event
                var translatedEvent = TranslateMatchEvent(event);
                if (translatedEvent)
-                    feedService.ParseEvent(event);
+                    feedService.AddEvent(event);
+                else
+                {
+                    // Then try to parse a match segment advancing event
+                    var translatedMatchSegment = TranslateMatchSegment(event);
+                    if (translatedMatchSegment)
+                        feedService.AdvanceMatchSegment();
+                }
             });
                 
             var lastEvent = _.findLast(events, function(n)

@@ -10,15 +10,14 @@ var _ = require('lodash');
 var languageMapping = {
     "ar": "10", // arabic
     "en": "1", // english
-    "yi": "28" // yiddish (hebrew)
-    
+    "yi": "28", // yiddish (hebrew)
+    "ru": "16" // russian
     // Add all required language mappings here from Stats.com
 };
     
-
 var statsComConfigDevelopment = {
     // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
-    supportedLanguages : ["en"],
+    supportedLanguages : ["en", "ar", "ru"],
     urlPrefix : "http://api.stats.com/v1/stats/soccer/",
     apiKey : "83839j82xy3mty4bf6459rnt",
     apiSecret : "VqmfcMTdQe",
