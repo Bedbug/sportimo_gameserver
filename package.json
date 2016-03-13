@@ -34,10 +34,5 @@
   "engines": {
     "node": "0.10.x"
   },
-  "os": "sunos",
-  "devDependencies": {
-    "chai": "^3.4.1",
-    "mockgoose": "^5.2.2",
-    "supertest": "^1.1.0"
-  }
+  "os": "sunos"
 }

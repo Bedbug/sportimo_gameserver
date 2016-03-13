@@ -73,15 +73,15 @@ var apiRoutes = express.Router();
 
 // route middleware to verify a token
 var jwtMiddle = function(req, res, next) {
- 
+
     // check header or url parameters or post parameters for token
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
-   
+
     // decode token
     if (token) {
 
         // verifies secret and checks exp
-        jsonwebtoken.verify(token, app.get('superSecret'), function(err, decoded) {       
+        jsonwebtoken.verify(token, app.get('superSecret'), function(err, decoded) {
             if (err) {
                 return res.json({ success: false, message: 'Failed to authenticate token.' });
             } else {
@@ -180,13 +180,25 @@ apiRoutes.get('/v1/users/:id', jwtMiddle, function(req, res) {
             res.json(user);
         });
     }
-    else
-    {
+    else {
         // Mini Profile
-         User.findById(req.params.id, function(err, user) {
+        User.findById(req.params.id, function(err, user) {
             res.json(user);
         });
     }
+});
+
+
+// Update specific user (PUT /v1/users)
+apiRoutes.put('/v1/users/:id', function(req, res) {
+
+    User.findOneAndUpdate({ _id: req.params.id }, req.body, function(err) {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            res.send({ success: true });
+}
+    });
 });
 
 // apply the routes to our application with the prefix /api

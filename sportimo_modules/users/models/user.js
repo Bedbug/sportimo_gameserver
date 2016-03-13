@@ -18,6 +18,7 @@ var UserSchema = new Schema({
         required: true
     },
     picture: String,
+    country: String,
     admin: Boolean
 
 }, {
