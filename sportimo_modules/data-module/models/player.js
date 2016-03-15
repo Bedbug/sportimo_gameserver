@@ -6,12 +6,19 @@ var mongoose = require('mongoose'),
     l = require('../config/lib');
 
 var player = {
-    name: { type: Schema.Types.Mixed },
-    team: {
+    firstName: { type: Schema.Types.Mixed },
+    firstName_en: { type: String },
+    lastName: { type: Schema.Types.Mixed },
+    lastName_en: { type: String },
+    uniformNumber : { type: String },
+    pic: { type: String },
+    position: { type: String },
+    personalData: { type: Schema.Types.Mixed },
+    parserids: {  type: Schema.Types.Mixed },
+    teamId: {
         type: String,
         ref: 'team'
     },
-	pic: { type: String },
     created: { type: Date, default: Date.now }
 };
 

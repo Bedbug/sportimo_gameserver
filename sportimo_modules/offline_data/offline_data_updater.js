@@ -13,9 +13,10 @@ var app = express();
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
-var port = (process.env.PORT || 3030)
+var port = (process.env.PORT || 3030);
 server.listen(port, function () {
-        console.log('Express server listening on port %d in %s mode', port, app.get('env'));
+        //console.log('Express server listening on port %d in %s mode', port, app.get('env') || 'development');
+        console.log('Express server listening on port %d', port);
     });
 
 

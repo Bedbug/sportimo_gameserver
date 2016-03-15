@@ -3,8 +3,13 @@ var needle = require("needle");
 var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
+var mongoose = require('../config/db.js');
+var objectId = mongoose.mongoose.Schema.ObjectId;
+
 
 // Settings for the development environment
+var mongoDb = mongoose.mongoose.models;
+//var mongoConn = mongoose.mongoose.connections[0];
 
 // languageMapping maps Sportimo langage locale to Stats.com language Ids. For a list of ISO codes, see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 var languageMapping = {
@@ -158,7 +163,7 @@ Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
 
 // Parser methods that other modules may call:
 
-Parser.UpdateTeams = function(leagueName, existingTeams, existingPlayers, callback)
+Parser.UpdateTeams = function(leagueName, callback)
 {
     if (! Parser.Configuration.supportedLanguages)
         return callback(new Error('No supported languages are defined in parser&apos;s configuration'));
@@ -166,89 +171,256 @@ Parser.UpdateTeams = function(leagueName, existingTeams, existingPlayers, callba
     if (_.indexOf(Parser.Configuration.supportedLanguages, "en") < 0)
         return callback(new Error('The default english language ("en") is NOT set amongst the supported languages in parser&apos;s configuration.'));
         
-    var languageData = {};
+    var existingTeams = [];
+    var existingPlayers = [];
     
-    var existingTeamsLookup = {};
-    _.forEach(existingTeams, function(team) {
-        if (team.parserids[Parser.Name] && !existingTeamsLookup[team.parserids[Parser.Name]]) 
-            existingTeamsLookup[team.parserids[Parser.Name]] = team;
-    });
     
-    async.eachSeries(Parser.Configuration.supportedLanguages, function(language, callback) {
-        if (languageMapping[language]) {
-            Parser.GetTeamPlayers(leagueName, languageMapping[language], function(error, data) {
-                if (error)
+	async.parallel([
+	    function(cbk) {
+	        mongoDb.teams.find({league: leagueName}, function(error, data) {
+        	    if (error)
+        	        return cbk(error);
+        	        
+        	    existingTeams = data;
+        	    cbk();    
+        	});
+	    },
+	    function(cbk) {
+	        mongoDb.players.find({league: leagueName}, function(error, data) {
+        	    if (error)
+        	        return cbk(error);
+        	        
+        	    existingPlayers = data;
+        	    cbk();    
+        	});
+	    }
+	    ], function(error) {
+	        if (error)
+	            return callback();
+	            
+            var languageData = {};
+            
+            var existingTeamsLookup = {};
+            _.forEach(existingTeams, function(team) {
+                if (team.parserids[Parser.Name] && !existingTeamsLookup[team.parserids[Parser.Name]]) 
+                    existingTeamsLookup[team.parserids[Parser.Name]] = team;
+            });
+            
+            var existingPlayersLookup = {};
+            _.forEach(existingPlayers, function(player) {
+                if (player.parserids[Parser.Name] && !existingPlayersLookup[player.parserids[Parser.Name]]) 
+                    existingPlayersLookup[player.parserids[Parser.Name]] = player;
+            });
+            
+            async.eachSeries(Parser.Configuration.supportedLanguages, function(language, cbk) {
+                if (languageMapping[language]) {
+                    Parser.GetTeamPlayers(leagueName, languageMapping[language], function(error, data) {
+                        if (error)
+                            return cbk(error);
+                        
+                        languageData[language] = data;
+                        cbk();
+                    });
+                }
+                else {
+                    async.setImmediate(function () {
+                        cbk(new Error('language ' + language + ' is not found amongst languageMapping dictionary.'));
+                    });
+                }
+            },
+            function(error) {
+                if (error && !languageData["en"])
                     return callback(error);
                 
-                languageData[language] = data;
-                callback();
-            });
-        }
-        else {
-            async.setImmediate(function () {
-                callback(new Error('language ' + language + ' is not found amongst languageMapping dictionary.'));
-            });
-        }
-    },
-    function(error) {
-        if (error && !languageData["en"])
-            return callback(error);
-        
-        
-        var parsedTeams = {};
-        var parsedPlayers = {};
-        
-        // Scan the english data to get all teams
-        _.forEach(languageData["en"].players, function(player) {
-            if (player.team && player.team.teamId && !parsedTeams[player.team.teamId])
-            {
-                parsedTeams[player.team.teamId] = {
-                    name_en : player.team.displayName,
-                    name : { "en" : player.team.displayName },
-                    parserids : { }
-                };
-                parsedTeams[player.team.teamId].parserids[Parser.Name] = player.team.teamId;
-            }
-            if (player.playerId && !parsedPlayers[player.playerId])
-            {
-                parsedPlayers[player.playerId] = {
-                    firstName_en : player.firstName,
-                    firstName : { "en" : player.firstName },
-                    lastName_en : player.lastName,
-                    lastName : { "en" : player.lastName },
-                    uniformNumber : player.uniform,
-                    position: player.positions[0].name,
-                    personalData: {
-                        height: player.height,
-                        weight: player.weight,
-                        birth: player.birth,
-                        nationality: player.nationality
-                    },
-                    parserids : { }
-                };
-                parsedPlayers[player.playerId].parserids[Parser.Name] = player.playerId;
-            }
-        });
-            
-            
-        // Now merge other languages data with english ones, based on their id.
-        _.forEach(languageData, function(value, key, val) {
-            _.forEach(value.players, function(player) {
-                if (parsedTeams[player.team.teamId])
-                    parsedTeams[player.team.teamId].name[key] = player.team.displayName;
                 
-                if (parsedPlayers[player.playerId])
+                var parsedTeams = {};
+                var parsedPlayers = {};
+                var teamsToAdd = [];
+                var teamsToUpdate = [];
+                var playersToAdd = [];
+                var playersToUpdate = [];
+                
+                var creationDate = new Date();
+                
+                // Scan the english data to get all teams
+                _.forEach(languageData["en"].players, function(player) {
+                    if (player.team && player.team.teamId)
+                    {
+                        if (!parsedTeams[player.team.teamId])
+                        {
+                            // If new team, add to teamsToAdd collection
+                            if (!existingTeamsLookup[player.team.teamId])
+                            {
+                                var newTeam = new mongoDb.teams(); 
+                                newTeam.name_en = player.team.displayName;
+                                newTeam.name = { "en" : player.team.displayName };
+                                newTeam.logo = null;
+                                newTeam.league = leagueName;
+                                newTeam.created = creationDate;
+                                newTeam.parserids = { };
+                                newTeam.parserids[Parser.Name] = player.team.teamId;
+
+                                parsedTeams[player.team.teamId] = newTeam;
+                                teamsToAdd.push(newTeam);
+                            }
+                            else
+                            {
+                                var oldTeam = existingTeamsLookup[player.team.teamId];
+                                oldTeam.name_en = player.team.displayName;
+                                if (!oldTeam.name)
+                                    oldTeam.name = {};
+                                oldTeam.name["en"] = player.team.displayName;
+                                oldTeam.logo = null;
+                                oldTeam.league = leagueName;
+                                if (!oldTeam.parserids)
+                                    oldTeam.parserids = {};
+                                oldTeam.parserids[Parser.Name] = player.team.teamId;
+                                
+                                parsedTeams[player.team.teamId] = oldTeam;
+                                teamsToUpdate.push(oldTeam);
+                            }
+                        }
+                        
+                        if (player.playerId && !parsedPlayers[player.playerId])
+                        {
+                            // If new player, add to playersToAdd collection
+                            if (!existingPlayersLookup[player.playerId])
+                            {
+                                var newPlayer = new mongoDb.players();
+                                newPlayer.firstName_en = player.firstName;
+                                newPlayer.firstName = { "en" : player.firstName };
+                                newPlayer.lastName_en = player.lastName;
+                                newPlayer.lastName = { "en" : player.lastName };
+                                newPlayer.uniformNumber = player.uniform;
+                                newPlayer.position = player.positions[0].name;
+                                newPlayer.personalData = {
+                                    height: player.height,
+                                    weight: player.weight,
+                                    birth: player.birth,
+                                    nationality: player.nationality
+                                };
+                                newPlayer.parserids = { };
+                                newPlayer.parserids[Parser.Name] = player.playerId;
+                                newPlayer.created = creationDate;
+                                
+                                if (parsedTeams[player.team.teamId]._id)
+                                    newPlayer.teamId = parsedTeams[player.team.teamId].id;
+                                    
+                                parsedPlayers[player.playerId] = newPlayer;
+                                playersToAdd.push(newPlayer);
+                            }
+                            else
+                            {
+                                var oldPlayer = existingPlayersLookup[player.playerId];
+                                oldPlayer.firstName_en = player.firstName;
+                                if (!oldPlayer.firstName)
+                                    oldPlayer.firstName = {};
+                                oldPlayer.firstName["en"] = player.firstName;
+                                oldPlayer.lastName_en = player.lastName;
+                                if (!oldPlayer.lastName)
+                                    oldPlayer.lastName = {};
+                                oldPlayer.lastName["en"] = player.lastName;
+                                oldPlayer.uniformNumber = player.uniform;
+                                oldPlayer.position = player.positions[0].name;
+                                oldPlayer.personalData = {
+                                    height: player.height,
+                                    weight: player.weight,
+                                    birth: player.birth,
+                                    nationality: player.nationality
+                                };
+                                if (!oldPlayer.parserids)
+                                    oldPlayer.parserids = { };
+                                oldPlayer.parserids[Parser.Name] = player.playerId;
+
+                                if (parsedTeams[player.team.teamId]._id)
+                                    oldPlayer.teamId = parsedTeams[player.team.teamId].id;
+                                    
+                                parsedPlayers[player.playerId] = oldPlayer;
+                                playersToUpdate.push(oldPlayer);
+                                
+                            }
+                        }
+                    }
+                });
+                    
+                    
+                // Now merge other languages data with english ones, based on their id.
+                _.forEach(languageData, function(value, key, val) {
+                    _.forEach(value.players, function(player) {
+                        if (parsedTeams[player.team.teamId])
+                            parsedTeams[player.team.teamId].name[key] = player.team.displayName;
+                        
+                        if (parsedPlayers[player.playerId])
+                        {
+                            parsedPlayers[player.playerId].firstName[key] = player.firstName;
+                            parsedPlayers[player.playerId].lastName[key] = player.lastName;
+                        }
+                    });
+                });
+                
+                // Now merge the parsed teams and players lookups with the existingTeamsLookup and existingPlayersLookup
+                // _.forEach(existingTeams, function(existingTeam) {
+                //     var key = existingTeam.parserids[Parser.Name];
+                //     if (key && parsedTeams[key])
+                //     {
+                //       // Merge
+                //       _.merge(existingTeam, parsedTeams[key]);
+                //       //teamsToUpdate.push(existingTeam);
+                //     }
+                // });
+        
+                // _.forEach(existingPlayers, function(existingPlayer) {
+                //   var key = existingPlayer.parserids[Parser.Name];
+                //   if (key && parsedPlayers[key])
+                //   {
+                //       _.merge(existingPlayer, parsedPlayers[key]);
+                //       //playersToUpdate.push((existingPlayer));
+                //   }
+                // });
+                
+                
+                // Try Upserting in mongo all teams and players
+                try
                 {
-                    parsedPlayers[player.playerId].firstName[key] = player.firstName;
-                    parsedPlayers[player.playerId].lastName[key] = player.lastName;
+                    if (teamsToAdd && teamsToAdd.length > 0)
+                    {
+                        _.forEach(teamsToAdd, function(team) {
+                            team.save();
+                        });
+                    }
+                    
+                    if (playersToAdd && playersToAdd.length > 0)
+                    {
+                        _.forEach(playersToAdd, function(player) {
+                            player.save();
+                        });
+                    }
+                    
+                    if (teamsToUpdate && teamsToUpdate.length > 0)
+                    {
+                        _.forEach(teamsToUpdate, function(team) {
+                            team.save();
+                        });
+                    }
+                    
+                    if (playersToUpdate && playersToUpdate.length > 0)
+                    {
+                        _.forEach(playersToUpdate, function(player) {
+                            player.save();
+                        });
+                    }
+
                 }
-            });
-        });
-        
-        // Now merge the parsed teams and players lookups with the existingTeamsLookup and existingPlayersLookup
-        
-        callback(null, parsedTeams, null, parsedPlayers, null);
+                catch (err)
+                {
+                    return callback(error);
+                }                
+                
+                
+                callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+            });	            
     });
+    
 };
 
 module.exports = Parser;

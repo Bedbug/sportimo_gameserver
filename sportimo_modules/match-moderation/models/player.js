@@ -17,10 +17,10 @@ var player = {
     position: { type: String },
     personalData: { type: Schema.Types.Mixed },
     parserids: {  type: Schema.Types.Mixed },
-    team: [{
+    teamId: {
         type: String,
         ref: 'team'
-    }],
+    },
     created: { type: Date, default: Date.now }
 };
 

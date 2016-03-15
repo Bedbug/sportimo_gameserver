@@ -24,5 +24,4 @@ mongoose.connect(uristring, mongoOptions, function (err, res) {
   }
 });
 
-
 exports.mongoose = mongoose;
