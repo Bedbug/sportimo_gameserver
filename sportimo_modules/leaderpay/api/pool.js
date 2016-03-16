@@ -1,44 +1,44 @@
 // Module dependencies.
 var express = require('express'),
-router = express.Router(),
-mongoose = require('mongoose'),
-Pool = mongoose.models.pool,
-l=require('../config/lib');
+    router = express.Router(),
+    mongoose = require('mongoose'),
+    Pool = mongoose.models.pool,
+    l = require('../config/lib');
 
 var api = {};
 
 /**
  * Returns a pool based on suplied condtions
  */
-api.pool = function (req, res) {
- 
+api.pool = function(req, res) {
+
 };
 
 /**
  * Returns all pools for a specific game
  */
-api.poolbygameid = function (req, res) {
-    
-	var q = Pool.find({gameid:req.params.id});
-    
-    q.exec(function(err, pools){
-        if(err) res.satus(500).send(err);
-            else
-        res.status(200).send(pools);
+api.poolbygameid = function(req, res) {
+
+    var q = Pool.find({ gameid: req.params.id });
+
+    q.exec(function(err, pools) {
+        if (err) res.satus(500).send(err);
+        else
+            res.status(200).send(pools);
     })
 };
 
 /**
  * Returns all pools for a specific game
  */
-api.timedpools = function (req, res) {
-    
-	var q = Pool.find({gameid:{ "$exists" : false }});
-    
-    q.exec(function(err, pools){
-        if(err) res.satus(500).send(err);
-            else
-        res.status(200).send(pools);
+api.timedpools = function(req, res) {
+
+    var q = Pool.find({ gameid: { "$exists": false } });
+
+    q.exec(function(err, pools) {
+        if (err) res.satus(500).send(err);
+        else
+            res.status(200).send(pools);
     })
 };
 
@@ -63,8 +63,39 @@ api.addPool = function(req, res) {
 
 };
 
+// PUT
+api.editPool = function(req, res) {
+
+    Pool.findOneAndUpdate({ _id: req.params.id }, req.body, function(err) {
+        if (err) {
+            res.status(500).send(err);
+        } else {
+            res.send({ success: true });
+        }
+        
+    });
+};
+
+
+// PUT
+api.deletePool = function(req, res) {
+    Pool.findById(req.params.id, function(err, pool) {
+        pool.remove(function(err) {
+            if (err) {
+                res.status(500).send(err);
+            } else {
+                res.send({ success: true });
+            }
+        });
+
+    });
+};
+
 
 router.post('/v1/pools', api.addPool);
+
+router.put('/v1/pools/:id', api.editPool);
+router.delete('/v1/pools/:id', api.deletePool);
 
 // A pool atatched to a gameid is basicaly attached to the leaderboard
 // of that specific game. It will start and finish during this game's 
