@@ -42,20 +42,48 @@ module.exports = function (ModerationModule, log) {
         switch (req.body.type) {
             case "Delete":
                 log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.event_id + "]", "info");
-                ModerationModule.GetMatch(match_id).RemoveEvent(req.body, res);
+                try 
+                {
+                    ModerationModule.GetMatch(match_id).RemoveEvent(req.body, res);
+                }
+                catch (err)
+                {
+                    res.status(500).json({error: err.message});
+                }
                 break;
             case "Update":
                 log("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]", "info");
-                ModerationModule.GetMatch(match_id).UpdateEvent(req.body, res);
+                try 
+                {
+                    ModerationModule.GetMatch(match_id).UpdateEvent(req.body, res);
+                }
+                catch (err)
+                {
+                    res.status(500).json({error: err.message});
+                }                
                 break;
             case "Add":
                 log("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]", "info");
-                ModerationModule.GetMatch(match_id).AddEvent(req.body, res);
+                try
+                {
+                    ModerationModule.GetMatch(match_id).AddEvent(req.body, res);
+                }
+                catch (err)
+                {
+                    res.status(500).json({error: err.message});
+                }
                 break;
             case "AdvanceSegment":
                 console.log(req.body);
                 log("Advance Segment Request for matchid [" + match_id + "]", "info");
-                ModerationModule.GetMatch(match_id).AdvanceSegment(req.body, res);
+                try
+                {
+                    ModerationModule.GetMatch(match_id).AdvanceSegment(req.body, res);
+                }
+                catch (err)
+                {
+                    res.status(500).json({error: err.message});
+                }
                 break;
             default:
                 break;

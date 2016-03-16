@@ -198,8 +198,8 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        return _.findWhere(ModerationModule.ModeratedMatches, {
-            id: matchID
+        return _.find(ModerationModule.ModeratedMatches, function(match) {
+            match.id == matchID
         });
     }
     //    InjectEvent: function (evnt, res) {
@@ -235,13 +235,11 @@ ModerationModule.AddScheduleMatch = function (match, res) {
     newMatch.save(function (er, saved) {
         //   console.log(saved)
         
-        // if (!er){
-        //     res.send(saved);
+        if (er)
+            res.send(500).json({error: er.message});
             
-            if (!er){
-          ModerationModule.LoadMatchFromDB(saved._id, res);
-        }
-    })
+        ModerationModule.LoadMatchFromDB(saved._id, res);
+    });
 }
 
 

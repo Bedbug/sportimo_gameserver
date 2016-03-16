@@ -22,7 +22,17 @@ module.exports = function (ModerationModule, log) {
      // GET a match from schedule
     router.get('/v1/schedule/:id', function (req, res) {
         log("[SCHEDULE] Match request from schedule.", "info");
-        return res.send(ModerationModule.GetMatch(req.params.id));
+        try
+        {
+            var matchFound = ModerationModule.GetMatch(req.params.id);
+            if (!matchFound)
+                return res.status(404).json({error: 'match id ' + req.params.id + ' was not found.'});
+            return res.status(200).json(matchFound);
+        }
+        catch (err)
+        {
+            res.status(500).json({error: err.message});
+        }
     });
 
     /** POST schedules a new match. 
@@ -30,7 +40,15 @@ module.exports = function (ModerationModule, log) {
     */
     router.post('/v1/schedule/', function (req, res) {
         log("[SCHEDULE] Request to schedule a new match.", "info");
-        ModerationModule.AddScheduleMatch(req.body, res);
+        try
+        {
+            ModerationModule.AddScheduleMatch(req.body, res);
+            //res.send(200).json(ModerationModule.GetSchedule())
+        }
+        catch(error)
+        {
+            return res.status(500).json({error: error.message});
+        }
     });
    
     /** DELETE removes a match from schedule. 
@@ -39,7 +57,14 @@ module.exports = function (ModerationModule, log) {
     router.delete('/v1/schedule/:id', function (req, res) {
         
         log("[SCHEDULE] Request to remove match from schedule.", "info");
-        ModerationModule.RemoveScheduleMatch(req.params.id, res);
+        try
+        {
+            ModerationModule.RemoveScheduleMatch(req.params.id, res);
+        }
+        catch(error)
+        {
+            return res.status(500).json({error: error.message});
+        }    
     });
    
 
