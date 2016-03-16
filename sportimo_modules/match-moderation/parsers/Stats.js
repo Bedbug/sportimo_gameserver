@@ -45,32 +45,32 @@ var localConfiguration = statsComConfigDevelopment;
 
 
 
+var Parser = { };
 
-var Parser = function() {
-    // Settings properties
-    var configuration = localConfiguration;
+// Settings properties
+var configuration = localConfiguration;
+
+//update configuration settings with this object settings
+if (Parser.interval)
+    configuration.eventsInterval = Parser.interval;
+if (Parser.parsername)
+    configuration.parserIdName = Parser.parsername;
     
-    //update configuration settings with this object settings
-    if (this.interval)
-        configuration.eventsInterval = this.interval;
-    if (this.parsername)
-        configuration.parserIdName = this.parsername;
-        
-    var matchHandler = null;
-    var feedService = null;
-    var recurringTask = null;
-    
-    // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
-    var eventFeedSnapshot = [];
-    
-    // the parser would like to know the match parserid
-    var matchParserId = null;
-    
-    // ToDo: the parser would like to know all team players and their parserids.
-    var matchPlayersLookup = {};
-    
-    // ToDo: the parser would like to know the 2 teams (home and away) parserids
-    var matchTeamsLookup = {};
+var matchHandler = null;
+var feedService = null;
+var recurringTask = null;
+
+// holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
+var eventFeedSnapshot = [];
+
+// the parser would like to know the match parserid
+var matchParserId = null;
+
+// ToDo: the parser would like to know all team players and their parserids.
+var matchPlayersLookup = {};
+
+// ToDo: the parser would like to know the 2 teams (home and away) parserids
+var matchTeamsLookup = {};
 
     /* 
     // This is just for reference, depicts all Stats.com event ids and their name
@@ -270,233 +270,235 @@ var Parser = function() {
         }];
     */
             
-    var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28,30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
-    var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
-    
-    this.Name = configuration.parserIdName;
+var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28,30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
+var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
 
-    // Restrict to Only call this once in the lifetime of this object
-    this.init = _.once(function(matchContext, feedServiceContext){
-    //        return console.log("[Stats] Parser service initiliazed");
-        matchHandler = matchContext;
-        feedService = feedServiceContext;
+Parser.Name = configuration.parserIdName;
+
+// Restrict to Only call this once in the lifetime of this object
+Parser.init = _.once(function(matchContext, feedServiceContext){
+//        return console.log("[Stats] Parser service initiliazed");
+    matchHandler = matchContext;
+    feedService = feedServiceContext;
+    
+    // fill in the matchParserId var
+    if (!matchHandler.data.parserids || !matchHandler.data.parserids[configuration.parserIdName])
+        return;
         
-        // fill in the matchParserId var
-        matchParserId = matchHandler.data.parserids[configuration.parserIdName];
-        
-        // Schedule match feed event calls
-        if (matchHandler.data.start)
+    matchParserId = matchHandler.data.parserids[configuration.parserIdName];
+    
+    // Schedule match feed event calls
+    if (matchHandler.data.start)
+    {
+        scheduler.scheduleJob(matchHandler.data.start, function()
         {
-            scheduler.scheduleJob(matchHandler.data.start, function()
-            {
-                recurringTask = setInterval(this.TickMatchFeed, configuration.eventsInterval);
+            recurringTask = setInterval(this.TickMatchFeed, configuration.eventsInterval);
+        });
+    }
+    
+    // Set the team ids and parserids mapping
+    var homeTeam = _.cloneDeep(matchContext.home_team);
+    homeTeam['matchType'] = 'home_team';
+    matchTeamsLookup[matchContext.home_team.parserids[matchParserId]] = homeTeam;
+    
+    var awayTeam = _.cloneDeep(matchContext.away_team);
+    awayTeam['matchType'] = 'away_team';
+    matchTeamsLookup[matchContext.away_team.parserids[matchParserId]] = awayTeam;
+    
+    // Execute multiple async functions in parallel getting the player ids and parserids mapping
+    async.parallel([
+        function(callback) {
+            feedServiceContext.LoadPlayers(matchContext.home_team._id, function(error, response) {
+                if (error)
+                    return callback(error);
+                    
+                if (!_.isArrayLike(response))
+                    return callback();
+                    
+                _.forEach(response, function(item) {
+                    if (item.parserids[matchParserId] && !matchPlayersLookup[item.parserids[matchParserId]])
+                        matchPlayersLookup[item.parserids[matchParserId]] = item;
+                });
+                
+                return callback();
+            });
+        },
+        function(callback) {
+            feedServiceContext.LoadPlayers(matchContext.away_team._id, function(error, response) {
+                if (error)
+                    return callback(error);
+                    
+                if (!_.isArrayLike(response))
+                    return callback();
+                    
+                _.forEach(response, function(item) {
+                    if (item.parserids[matchParserId] && !matchPlayersLookup[item.parserids[matchParserId]])
+                        matchPlayersLookup[item.parserids[matchParserId]] = item;
+                });
+                
+                return callback();
             });
         }
-        
-        // Set the team ids and parserids mapping
-        var homeTeam = _.cloneDeep(matchContext.home_team);
-        homeTeam['matchType'] = 'home_team';
-        matchTeamsLookup[matchContext.home_team.parserids[matchParserId]] = homeTeam;
-        
-        var awayTeam = _.cloneDeep(matchContext.away_team);
-        awayTeam['matchType'] = 'away_team';
-        matchTeamsLookup[matchContext.away_team.parserids[matchParserId]] = awayTeam;
-        
-        // Execute multiple async functions in parallel getting the player ids and parserids mapping
-        async.parallel([
-            function(callback) {
-                feedServiceContext.LoadPlayers(matchContext.home_team._id, function(error, response) {
-                    if (error)
-                        return callback(error);
-                        
-                    if (!_.isArrayLike(response))
-                        return callback();
-                        
-                    _.forEach(response, function(item) {
-                        if (item.parserids[matchParserId] && !matchPlayersLookup[item.parserids[matchParserId]])
-                            matchPlayersLookup[item.parserids[matchParserId]] = item;
-                    });
-                    
-                    return callback();
-                });
-            },
-            function(callback) {
-                feedServiceContext.LoadPlayers(matchContext.away_team._id, function(error, response) {
-                    if (error)
-                        return callback(error);
-                        
-                    if (!_.isArrayLike(response))
-                        return callback();
-                        
-                    _.forEach(response, function(item) {
-                        if (item.parserids[matchParserId] && !matchPlayersLookup[item.parserids[matchParserId]])
-                            matchPlayersLookup[item.parserids[matchParserId]] = item;
-                    });
-                    
-                    return callback();
-                });
-            }
-            ], function(error) {
-                if (error)
-                    console.log(error.message);
-            });
-    });
-
-    // Helper Methods
-    
-    // Approximate calculation of season Year from current date
-    var GetSeasonYear = function()
-    {
-        var now = new Date();
-        if (now.getMonth() > 6)
-            return now.getFullYear();
-        else return now.getFullYear() - 1;
-    };
-    
-    var GetMatchEvents = function(leagueName, matchId, callback)
-    {
-        var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-        var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature;
-        
-        needle.get(url, function(error, response)
-        {
+        ], function(error) {
             if (error)
-                return callback(error);
-            try {
-                var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
-                var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
-                var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
-                callback(null, events, teams, matchStatus);
-            }
-            catch(err) {
-                return callback(err);
-            }
-        });        
-    };
+                console.log(error.message);
+        });
+});
+
+// Helper Methods
+
+// Approximate calculation of season Year from current date
+var GetSeasonYear = function()
+{
+    var now = new Date();
+    if (now.getMonth() > 6)
+        return now.getFullYear();
+    else return now.getFullYear() - 1;
+};
+
+var GetMatchEvents = function(leagueName, matchId, callback)
+{
+    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature;
     
-    
-    var TranslateMatchEvent = function(parserEvent)
+    needle.get(url, function(error, response)
     {
-        if (!parserEvent)
-            return null;
-        
-        //Not supported event types
-        if (_.indexOf(supportedEventTypes, parserEvent.playEvent.playEventId) == -1)
-            return null;
-        
-        var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
-            {
-                id : matchPlayersLookup[parserEvent.defensivePlayer.playerId]._id,
-                name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
-                team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].team,
-                $$hashKey : ''
-            } : null;
-        var offensivePlayer = parserEvent.offensivePlayer  && matchPlayersLookup[parserEvent.offensivePlayer.playerId] ? 
-            {
-                id : matchPlayersLookup[parserEvent.offensivePlayer.playerId]._id,
-                name : matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
-                team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].team,
-                $$hashKey : ''
-            } : null;
-        
-        var translatedEvent = {
-            type: 'Add',
-            time: parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
-            data: {
-                id: parserEvent.sequenceNumber,
-                status: 'active',
-                state: 0,
-                sender: configuration.parserIdName,
-                time: parserEvent.time.minutes,
-                timeline_event: true,
-                team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
-                match_id: matchHandler.data._id,
-                players: [],
-                stats: { }
-            },
-            created: new Date() // ToDo: Infer creation time from match minute
-        };
-        
-        // ToDo: In certain match events, we may want to split the event in two (or three)
-        if (defensivePlayer)
-            translatedEvent.players.push(defensivePlayer);
-        if (offensivePlayer)
-            translatedEvent.players.push(offensivePlayer);
-        
-        // Make sure that the value set here is the quantity for the event only, not for the whole match    
-        translatedEvent.stats[parserEvent.playEvent.name] = 1;
-        
-        return translatedEvent;
-    };
+        if (error)
+            return callback(error);
+        try {
+            var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
+            var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
+            var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
+            callback(null, events, teams, matchStatus);
+        }
+        catch(err) {
+            return callback(err);
+        }
+    });        
+};
+
+
+var TranslateMatchEvent = function(parserEvent)
+{
+    if (!parserEvent)
+        return null;
     
+    //Not supported event types
+    if (_.indexOf(supportedEventTypes, parserEvent.playEvent.playEventId) == -1)
+        return null;
     
-    var TranslateMatchSegment = function(parserEvent)
-    {
-        if (!parserEvent)
-            return null;
-        
-        //Not supported event types
-        if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) == -1)
-            return null;
-        
-        return 1;   // return anything but null
-    };
-    
-    // and now, the functions that can be called from outside modules.
-    this.TickMatchFeed = function() {
-        if (!matchHandler || !matchParserId || !feedService)
+    var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
         {
-            console.log('Invalid call of TickMatchFeed before binding to a match');
+            id : matchPlayersLookup[parserEvent.defensivePlayer.playerId]._id,
+            name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
+            team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].team,
+            $$hashKey : ''
+        } : null;
+    var offensivePlayer = parserEvent.offensivePlayer  && matchPlayersLookup[parserEvent.offensivePlayer.playerId] ? 
+        {
+            id : matchPlayersLookup[parserEvent.offensivePlayer.playerId]._id,
+            name : matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
+            team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].team,
+            $$hashKey : ''
+        } : null;
+    
+    var translatedEvent = {
+        type: 'Add',
+        time: parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
+        data: {
+            id: parserEvent.sequenceNumber,
+            status: 'active',
+            state: 0,
+            sender: configuration.parserIdName,
+            time: parserEvent.time.minutes,
+            timeline_event: true,
+            team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
+            match_id: matchHandler.data._id,
+            players: [],
+            stats: { }
+        },
+        created: new Date() // ToDo: Infer creation time from match minute
+    };
+    
+    // ToDo: In certain match events, we may want to split the event in two (or three)
+    if (defensivePlayer)
+        translatedEvent.players.push(defensivePlayer);
+    if (offensivePlayer)
+        translatedEvent.players.push(offensivePlayer);
+    
+    // Make sure that the value set here is the quantity for the event only, not for the whole match    
+    translatedEvent.stats[parserEvent.playEvent.name] = 1;
+    
+    return translatedEvent;
+};
+
+
+var TranslateMatchSegment = function(parserEvent)
+{
+    if (!parserEvent)
+        return null;
+    
+    //Not supported event types
+    if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) == -1)
+        return null;
+    
+    return 1;   // return anything but null
+};
+
+// and now, the functions that can be called from outside modules.
+Parser.TickMatchFeed = function() {
+    if (!matchHandler || !matchParserId || !feedService)
+    {
+        console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
+        return;
+    }
+    
+    var leagueName = matchHandler.data.league;
+    
+    GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
+        if (error)
+        {
+            console.log('error in TickMatchFeed: ' + error.message);
             return;
         }
         
-        var leagueName = matchHandler.data.league;
-        
-        GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
-            if (error)
-            {
-                console.log('error in TickMatchFeed: ' + error.message);
-                return;
-            }
-            
-            // Produce the diff with eventFeedSnapshot
-            var eventsDiff = _.differenceWith(eventFeedSnapshot, events, function(first, second) {
-                return first.sequenceNumber == second.sequenceNumber;
-            });
-            
-            // Nothing to add
-            if (eventsDiff.length == 0)
-                return;
-                
-            // Translate all events in eventsDiff and send them to feedService
-            _.forEach(eventsDiff, function(event)
-            {
-                // First try parsing a normal event
-               var translatedEvent = TranslateMatchEvent(event);
-               if (translatedEvent)
-                    feedService.AddEvent(event);
-                else
-                {
-                    // Then try to parse a match segment advancing event
-                    var translatedMatchSegment = TranslateMatchSegment(event);
-                    if (translatedMatchSegment)
-                        feedService.AdvanceMatchSegment();
-                }
-            });
-                
-            var lastEvent = _.findLast(events, function(n)
-            {
-                return n.sequenceNumber;
-            });
-            
-            // Game Over?
-            if (lastEvent.playEventId == 10)
-                clearInterval(recurringTask);
-            
+        // Produce the diff with eventFeedSnapshot
+        var eventsDiff = _.differenceWith(eventFeedSnapshot, events, function(first, second) {
+            return first.sequenceNumber == second.sequenceNumber;
         });
-    };
-    
+        
+        // Nothing to add
+        if (eventsDiff.length == 0)
+            return;
+            
+        // Translate all events in eventsDiff and send them to feedService
+        _.forEach(eventsDiff, function(event)
+        {
+            // First try parsing a normal event
+           var translatedEvent = TranslateMatchEvent(event);
+           if (translatedEvent)
+                feedService.AddEvent(event);
+            else
+            {
+                // Then try to parse a match segment advancing event
+                var translatedMatchSegment = TranslateMatchSegment(event);
+                if (translatedMatchSegment)
+                    feedService.AdvanceMatchSegment();
+            }
+        });
+            
+        var lastEvent = _.findLast(events, function(n)
+        {
+            return n.sequenceNumber;
+        });
+        
+        // Game Over?
+        if (lastEvent.playEventId == 10)
+            clearInterval(recurringTask);
+        
+    });
 };
+    
 
 
 

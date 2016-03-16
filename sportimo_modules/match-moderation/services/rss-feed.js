@@ -19,7 +19,7 @@ var path = require('path'),
     fs = require('fs'),
     mongoose = require('../config/db.js');
 
-var parsers = [ ];
+var parsers = {};
 
 var servicesPath = path.join(__dirname, '../parsers');
     fs.readdirSync(servicesPath).forEach(function (file) {
@@ -64,7 +64,7 @@ feed_service.init = function (matchHandler) {
     else
         this.parser = parsers[this.parsername];
   
-    parsers[this.parsername].init(matchHandler.HookedMatch, this);
+    parsers[this.parsername].init(matchHandler, this);
     
 //    return console.log("[RSS-Feed] Service initialized");
 };

@@ -33,9 +33,7 @@ api.UpdateTeams = function (req, res) {
 		return res.status(400).json({error: "No 'league' name parameter defined in the request path."});
 		
 	var leagueName = req.params.leagueName;
-	var leagueTeams = null;
-	var leaguePlayers = null;
-	
+
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
 	        
