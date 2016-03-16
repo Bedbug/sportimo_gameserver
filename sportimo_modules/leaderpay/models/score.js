@@ -6,11 +6,11 @@ var mongoose = require('mongoose'),
 
 var fields = {
     user_id: {type: String},
-    user_pic: {type: String},
+    pic: {type: String},
     user_name: {type: String},
     game_id: {type: String},
     score: {type: Number},
-    country_id: {type: String},
+    country: {type: String},
     created: {type: Date, default: Date.now}
 };
 

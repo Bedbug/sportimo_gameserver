@@ -13,7 +13,7 @@ api.leaderboard = function (req, res) {
     
     /* The conditions for the leaderboard
      * (match_id, starts, ends, contry_id) */
-	var conditions = req.body.conditions;
+	var conditions = req.body;
     var skip = req.body.skip;
     var limit = req.body.limit;
     
@@ -21,7 +21,7 @@ api.leaderboard = function (req, res) {
 		if (err) {
 			res.status(404).json(err);
 		} else {
-			res.status(200).json({leaderboard: data});
+			res.status(200).json(data);
 		}
 	}); 
 };
