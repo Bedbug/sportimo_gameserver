@@ -105,8 +105,8 @@ describe('Moderation Module', function () {
                     .get('/v1/schedule/56a38549e4b067030e9f8111')
                     .expect(200)
                     .end(function (err, res) {
-                        //  console.log(err);
-                        // console.log(res.body);
+                       //  console.log("TEST Get Match:"+ err);
+                    //    console.log(res.body);
                         expect(err).to.equal(null);
                         expect(res.body.id).to.equal("56a38549e4b067030e9f8111");
                        
@@ -174,8 +174,8 @@ describe('Moderation Module', function () {
                 })
         });
 
-
     });
+    
     //        });
     describe('RSS-Feed Service', function () {
         it('match should have an RSS-Feed service registered', function () {
@@ -190,6 +190,8 @@ describe('Moderation Module', function () {
             expect(service.parsername).to.be.equal("Stats");
             expect(service.parser.name).to.be.equal("Stats");
         });
+        
+       
     });
 
 
@@ -274,6 +276,7 @@ describe('Wildcards Module', function () {
         });
 
         it('should win the played card', function (done) {
+            console.log(TestSuite.wildcards.CardsInPlay[0].model.won);
             expect(TestSuite.wildcards.CardsInPlay[0].model.won).to.not.be.equal(null);
         })
 

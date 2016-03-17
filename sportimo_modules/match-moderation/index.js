@@ -198,7 +198,9 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        return _.findWhere(ModerationModule.ModeratedMatches, {id: matchID});
+        var match = _.findWhere(ModerationModule.ModeratedMatches, {id: matchID});
+        // if(match) console.log("We have a match");
+        return match;
     }
     //    InjectEvent: function (evnt, res) {
     //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
