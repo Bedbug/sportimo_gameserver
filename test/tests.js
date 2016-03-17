@@ -276,7 +276,7 @@ describe('Wildcards Module', function () {
         });
 
         it('should win the played card', function (done) {
-            console.log(TestSuite.wildcards.CardsInPlay[0].model.won);
+           console.log("This fails as expected  - Not implemented yet");
             expect(TestSuite.wildcards.CardsInPlay[0].model.won).to.not.be.equal(null);
         })
 
