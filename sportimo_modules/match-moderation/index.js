@@ -154,11 +154,13 @@ var ModerationModule = {
         }
     },
     LoadMatchFromDB: function (matchid, res) {
+     
         if (!this.mock) {
             // remove match in case it already exists
             _.remove(ModerationModule.ModeratedMatches, {
                 id: matchid
             });
+            
             scheduled_matches
                 .findOne({
                     _id: matchid
@@ -166,12 +168,10 @@ var ModerationModule = {
                 .populate('home_team')
                 .populate('away_team')
                 .exec(function (err, match) {
-
-                    if (err) return log(err, "error");
-
+                   
+                    //if (err) return log(err, "error");
                     if (match) {
-                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
-
+                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);                                    
                         ModerationModule.ModeratedMatches.push(hookedMatch);
 
                         if (res)
@@ -198,9 +198,9 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        return _.find(ModerationModule.ModeratedMatches, function(match) {
-            match.id == matchID
-        });
+        var match = _.findWhere(ModerationModule.ModeratedMatches, {id: matchID});
+        // if(match) console.log("We have a match");
+        return match;
     }
     //    InjectEvent: function (evnt, res) {
     //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
@@ -230,14 +230,17 @@ var objectAssign = require('object-assign');
 
 ModerationModule.AddScheduleMatch = function (match, res) {
     var matchTemplate = require('./mocks/empty-match');
+    
     matchTemplate = objectAssign(matchTemplate, match);
+    
     var newMatch = new scheduled_matches(matchTemplate);
+    
+    
     newMatch.save(function (er, saved) {
-        //   console.log(saved)
-        
+     
         if (er)
-            res.send(500).json({error: er.message});
-            
+            res.sendStatus(500).json({error: er.message});
+      
         ModerationModule.LoadMatchFromDB(saved._id, res);
     });
 }
@@ -318,6 +321,7 @@ function initModule(done) {
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
+                        // console.log(match);
                         var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
