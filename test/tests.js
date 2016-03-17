@@ -1,5 +1,7 @@
 var expect = require('chai').expect,
     request = require('supertest'),
+    mitm = require('mitm'),
+    url = require('url'),
     _ = require('lodash');
 
 /****************************************************
@@ -44,6 +46,9 @@ describe('Moderation Module', function () {
             expect(TestSuite.moderation.mongoose).to.not.be.equal(null);
         });
     });
+    
+    
+    
 
     // describe('Init - Load scheduled matches', function () {
 
@@ -93,7 +98,7 @@ describe('Moderation Module', function () {
                         expect(res.status).to.equal(200);
                         expect(res.body.id).to.equal('56a38549e4b067030e9f871d');
                         done();
-                    })
+                    });
             });
 
         });
@@ -113,7 +118,31 @@ describe('Moderation Module', function () {
                     })
             })
         });
+        
+        /*
+        describe('Send match series of events', function() {
+            var interceptor = null;
+            beforeEach(function() { interceptor = mitm(); });
+            afterEach(function() { interceptor.disable() });
+            var matchResponse = require('./testObjects/statsMatchEvolution.js');
 
+            // http request interception: Return ready-made responses for known endpoints
+            interceptor.on('request', function(req, res) {
+                var uri = url.parse(req.url);
+                if (uri.host == 'api.stats.com')
+                switch(uri.pathname) {
+                   case '/v1/stats/soccer/epl/events/' :
+                       res.status(200).send(matchResponse);
+                       break;
+               }
+            });
+            
+            it('should start the match and advance the first segment', function(done) {
+                
+                
+           }); 
+        });
+        */
 
     // });
 
