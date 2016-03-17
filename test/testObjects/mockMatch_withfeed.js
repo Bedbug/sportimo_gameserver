@@ -16,7 +16,13 @@
         "$date": "2016-03-24T16:50:00.000Z"
     },
      "start": new Date(),
-	"moderation": [],
+	"moderation": [ {
+            "type": "rss-feed",
+            "eventid": "15253",
+            "feedurl": "http://feed-somewhere.com?event-id=",
+            "interval": 500,
+            "parsername": "Stats"
+        }],
     "parserids": { "Stats" : 1547146 },
     "timeline": [
         {

@@ -11,13 +11,13 @@ var mockMatch = require("./testObjects/mockMatch")
 
 var addEventData = {
     type: "Add",
-    match_id: "56a38549e4b067030e9f871d",
+    match_id: "56a38549e4b067030e9f8111",
     data: eventobj
 };
 
 var removeEventData = {
     type: "Delete",
-    match_id: "56a38549e4b067030e9f871d",
+    match_id: "56a38549e4b067030e9f8111",
     data: eventobj
 };
 
@@ -61,24 +61,24 @@ describe('Moderation Module', function () {
     //    describe("Services", function () {
     //        describe("Manual Service", function () {
     // describe('- Post Match [/v1/live/match]', function () {
-    //     it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+    //     it('should return the match with id 56a38549e4b067030e9f8111', function (done) {
     //         request(TestSuite.server)
     //             .post('/v1/live/match')
     //             .send({
-    //                 id: '56a38549e4b067030e9f871d'
+    //                 id: '56a38549e4b067030e9f8111'
     //             })
     //             .expect(200)
     //             .end(function (err, res) {
     //                 if (err) return done(err);
     //                 expect(err).to.equal(null);
-    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f8111");
     //                 match = res.body;
     //                 done();
     //             })
     //     });
     // });
     // describe("SCHEDULE", function () {
-
+ 
         describe('Schedule new match [/v1/schedule]', function () {
             it('should add a new match to Scheduled Matches', function (done) {
                 // TestSuite.moderation.Add(mockMatch);
@@ -88,25 +88,27 @@ describe('Moderation Module', function () {
                     .send(mockMatch)
                     .expect(200)
                     .end(function (err, res) {
-      
+                       
                         if (err) return done(err);
                         expect(res.status).to.equal(200);
-                        expect(res.body.id).to.equal('56a38549e4b067030e9f871d');
+                        expect(res.body.id).to.equal('56a38549e4b067030e9f8111');
                         done();
                     })
             });
 
         });
 
-        describe('Get match from schedule [/v1/schedule/56a38549e4b067030e9f871d]', function () {
+        describe('Get match from schedule [/v1/schedule/56a38549e4b067030e9f8111]', function () {
 
-            it('should return the match with ID 56a38549e4b067030e9f871d', function (done) {
+            it('should return the match with ID 56a38549e4b067030e9f8111', function (done) {
                 request(TestSuite.server)
-                    .get('/v1/schedule/56a38549e4b067030e9f871d')
+                    .get('/v1/schedule/56a38549e4b067030e9f8111')
                     .expect(200)
                     .end(function (err, res) {
+                        //  console.log(err);
+                        // console.log(res.body);
                         expect(err).to.equal(null);
-                        expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+                        expect(res.body.id).to.equal("56a38549e4b067030e9f8111");
                        
                         match = res.body;
                         done();
@@ -119,15 +121,15 @@ describe('Moderation Module', function () {
 
 
 
-    // describe('GET [/v1/live/match/56a38549e4b067030e9f871d]', function () {
+    // describe('GET [/v1/live/match/56a38549e4b067030e9f8111]', function () {
 
-    //     it('should return the match with id 56a38549e4b067030e9f871d', function (done) {
+    //     it('should return the match with id 56a38549e4b067030e9f8111', function (done) {
     //         request(TestSuite.server)
-    //             .get('/v1/live/match/56a38549e4b067030e9f871d')
+    //             .get('/v1/live/match/56a38549e4b067030e9f8111')
     //             .expect(200)
     //             .end(function (err, res) {
     //                 expect(err).to.equal(null);
-    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f871d");
+    //                 expect(res.body.id).to.equal("56a38549e4b067030e9f8111");
     //                 match = res.body;
     //                 done();
     //             })
@@ -141,7 +143,7 @@ describe('Moderation Module', function () {
         var returnedEvent;
         it('event type: Add, should add a new event', function (done) {
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(addEventData)
                 .expect(200)
                 .end(function (err, res) {
@@ -162,7 +164,7 @@ describe('Moderation Module', function () {
 
         it('event type: Delete, should delete the last event', function (done) {
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(removeEventData)
                 .expect(200)
                 .end(function (err, res) {
@@ -232,14 +234,14 @@ describe('Wildcards Module', function () {
 
         it('first one should incerement stat "yellow" to 1', function (done) {
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(addEventData)
                 .expect(200)
                 .end(function (err, res) {
                     if (err) return done(err);
                     returnedYellowOne = res.body.data.timeline[res.body.data.state].events[res.body.data.timeline[res.body.data.state].events.length - 1];
 
-                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f871d").data.stats;
+                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f8111").data.stats;
 
                     var stat = _.find(stats, {
                         id: "56a385413eb067030e9f87dd1"
@@ -252,7 +254,7 @@ describe('Wildcards Module', function () {
 
         it('second one should incerement stat "yellow" to 2', function (done) {
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(addEventData)
                 .expect(200)
                 .end(function (err, res) {
@@ -260,7 +262,7 @@ describe('Wildcards Module', function () {
 
                     returnedYellowTwo = res.body.data.timeline[res.body.data.state].events[res.body.data.timeline[res.body.data.state].events.length - 1];
 
-                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f871d").data.stats;
+                    var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f8111").data.stats;
 
                     var stat = _.find(stats, {
                         id: "56a385413eb067030e9f87dd1"
@@ -280,7 +282,7 @@ describe('Wildcards Module', function () {
         it('should delete the first yellow event', function (done) {
             removeEventData.data = returnedYellowOne;
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(removeEventData)
                 .expect(200)
                 .end(function (err, res) {
@@ -293,7 +295,7 @@ describe('Wildcards Module', function () {
         it('should delete the second yellow event', function (done) {
             removeEventData.data = returnedYellowTwo;
             request(TestSuite.server)
-                .post('/v1/moderation/56a38549e4b067030e9f871d/event')
+                .post('/v1/moderation/56a38549e4b067030e9f8111/event')
                 .send(removeEventData)
                 .expect(200)
                 .end(function (err, res) {
