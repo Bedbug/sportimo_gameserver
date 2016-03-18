@@ -287,6 +287,8 @@ Parser.UpdateTeams = function(leagueName, callback)
                             if (!existingPlayersLookup[player.playerId])
                             {
                                 var newPlayer = new mongoDb.players();
+                                newPlayer.name_en = player.firstName + " " + player.lastName;
+                                newPlayer.name = { "en" : player.firstName + " " + player.lastName };
                                 newPlayer.firstName_en = player.firstName;
                                 newPlayer.firstName = { "en" : player.firstName };
                                 newPlayer.lastName_en = player.lastName;
@@ -320,6 +322,10 @@ Parser.UpdateTeams = function(leagueName, callback)
                                 if (!oldPlayer.lastName)
                                     oldPlayer.lastName = {};
                                 oldPlayer.lastName["en"] = player.lastName;
+                                oldPlayer.name_en = player.firstName + " " + player.lastName;
+                                if (!oldPlayer.name)
+                                    oldPlayer.name = {};
+                                oldPlayer.name["en"] = player.firstName + " " + player.lastName;
                                 oldPlayer.uniformNumber = player.uniform;
                                 oldPlayer.position = player.positions[0].name;
                                 oldPlayer.personalData = {
@@ -354,6 +360,7 @@ Parser.UpdateTeams = function(leagueName, callback)
                         {
                             parsedPlayers[player.playerId].firstName[key] = player.firstName;
                             parsedPlayers[player.playerId].lastName[key] = player.lastName;
+                            parsedPlayers[player.playerId].name[key] = player.firstName + " " + player.lastName;
                         }
                     });
                 });
