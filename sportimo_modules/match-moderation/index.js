@@ -175,7 +175,7 @@ var ModerationModule = {
                         ModerationModule.ModeratedMatches.push(hookedMatch);
 
                         if (res)
-                            res.send(hookedMatch);
+                            res.status(200).send(hookedMatch);
 
                         log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
                         return hookedMatch;
@@ -215,7 +215,11 @@ ModerationModule.GetSchedule = function (res) {
         .populate('home_team')
         .populate('away_team')
         .exec(function (err, schedule) {
-            if (err) return log(err, "error");
+            if (err) 
+            {
+                log(err, "error");
+                return res.status(500).json({error: err.message});
+            }
             if (schedule) {
                 res.send(schedule);
             }

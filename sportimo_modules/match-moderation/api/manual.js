@@ -41,7 +41,7 @@ module.exports = function (ModerationModule, log) {
         var match_id = req.params.id;
         switch (req.body.type) {
             case "Delete":
-                log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.event_id + "]", "info");
+                log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]", "info");
                 try 
                 {
                     ModerationModule.GetMatch(match_id).RemoveEvent(req.body, res);

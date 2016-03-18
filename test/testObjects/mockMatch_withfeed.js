@@ -12,10 +12,10 @@
     },
     "state": 0,
     "competition": "Champions League",
-    "start": {
-        "$date": "2016-03-24T16:50:00.000Z"
-    },
-     "start": new Date(),
+    // "start": {
+    //     "$date": "2016-03-24T16:50:00.000Z"
+    // },
+    "start": new Date(),
 	"moderation": [ {
             "type": "rss-feed",
             "eventid": "15253",

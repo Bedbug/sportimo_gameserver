@@ -33,7 +33,8 @@ var match_schema = new mongoose.Schema({
   stats: mongoose.Schema.Types.Mixed,
   timeline: [mongoose.Schema.Types.Mixed],
   settings: mongoose.Schema.Types.Mixed,
-  moderation: [mongoose.Schema.Types.Mixed]
+  moderation: [mongoose.Schema.Types.Mixed],
+  parserids: mongoose.Schema.Types.Mixed
 }, {
     collection: 'scheduled_matches',
     minimize: false

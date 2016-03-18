@@ -24,10 +24,12 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 
 
 var matchModule = function (match, MatchTimers, PubChannel, log) {
+    
+    var moderationServices = [];
 
     var HookedMatch = {}; // = match;
 
-    HookedMatch.MODERATION_SERVICES = [];
+    //HookedMatch.MODERATION_SERVICES = [];
 
     // Holds the interval that counts time
     // HookedMatch.Time_interval = null;
@@ -55,7 +57,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
 
-
+    
 
     /*  -------------
      **   Methods
@@ -73,6 +75,12 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             "interval": 500 
         } 
     */
+    
+    HookedMatch.GetModerationServices = function()
+    {
+        return moderationServices;
+    };
+    
     HookedMatch.AddModerationService = function (service, res) {
 
         // Check if service of same type already exists 
@@ -92,10 +100,12 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         _.merge(newService, service);
 
-        HookedMatch.MODERATION_SERVICES.push(newService);
+        //HookedMatch.MODERATION_SERVICES.push(newService);
+        moderationServices.push(newService);
         
         // init the service by passing this as a context reference for internal communication (sending events)
-        HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
+        //HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
+        newService.init(this);
     }
 
 
@@ -141,7 +151,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             this.data.save();
         }
 
-        res.status(200).send();
+        res.status(200).send(HookedMatch);
     }
 
     /*  AdvanceSegment
@@ -264,8 +274,8 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     HookedMatch.AddEvent = function (event, res) {
         HookedMatch.AddEventCore(event);
         
-            // 4. return match to Sender
-        return res.status(200).send(this);
+        // 4. return match to Sender
+        return res.status(200).send(HookedMatch); //HookedMatch
 
     };
 

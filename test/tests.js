@@ -9,7 +9,7 @@ var expect = require('chai').expect,
  */
 var eventobj = require("./testObjects/eventYellow");
 var playCard = require("./testObjects/playCard");
-var mockMatch = require("./testObjects/mockMatch")
+var mockMatch = require("./testObjects/mockMatch_withfeed.js");
 
 var addEventData = {
     type: "Add",
@@ -208,7 +208,7 @@ describe('Moderation Module', function () {
     //        });
     describe('RSS-Feed Service', function () {
         it('match should have an RSS-Feed service registered', function () {
-            service = _.findWhere(match.MODERATION_SERVICES, {
+            service = _.findWhere(match.GetModerationServices(), {
                 type: 'rss-feed'
             });
             expect(service).to.not.be.equal(null);
