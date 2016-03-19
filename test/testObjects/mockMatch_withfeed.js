@@ -1,7 +1,7 @@
  module.exports = {
     "_id": "56a38549e4b067030e9f8111",
     "sport": "soccer",
-    "home_team": "56e81b7c30345c282c01b2c9",
+    "home_team": "56e81b7c30345c282c01b2c2",
     "away_team": "56e81b7c30345c282c01b2cb",
     "home_score": 0,
     "away_score": 0,
@@ -11,15 +11,14 @@
         "destroyOnDelete": true
     },
     "state": 0,
-    "competition": "Champions League",
+    "competition": "epl",
     // "start": {
-    //     "$date": "2016-03-24T16:50:00.000Z"
+    //     "$date": "2016-03-19T01:25:00.000Z"
     // },
-    "start": new Date(),
+    "start": "2016-03-19T13:55:00.000Z",
 	"moderation": [ {
             "type": "rss-feed",
             "eventid": "15253",
-            "feedurl": "http://feed-somewhere.com?event-id=",
             "interval": 500,
             "parsername": "Stats"
         }],

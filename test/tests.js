@@ -2,6 +2,7 @@ var expect = require('chai').expect,
     request = require('supertest'),
     mitm = require('mitm'),
     url = require('url'),
+    assert = require('assert'),
     _ = require('lodash');
 
 /****************************************************
@@ -28,6 +29,66 @@ var removeEventData = {
 
 // var mockgoose = require('mockgoose');
 // mockgoose(mongoose);  
+
+
+
+describe('Unit-Test the rss-service and Parser modules', function() {
+   var service = require("../sportimo_modules/match-moderation/services/rss-feed");
+   service.parsername = "Stats";
+   
+   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
+   // Set the match start 10  seconds from now
+   mockMatch.start.setSeconds(mockMatch.start.getSeconds() + 10);
+   
+   service.init(mockMatch, function(err) {
+        it('should have a service started without errors', function(done) {
+            expect(!err).to.be.equal(true);
+            done();
+        });
+   });
+   
+   it('should have a service started with a valid parser', function() {
+       //expect(err).to.be.equal(null);
+       expect(service.match_module).to.not.be.equal(null);
+       expect(service.parser).to.not.be.equal(null);
+   });
+   
+    var segmentEventsNumber = 0;
+    var eventsNumber = 0;
+    var endOfMatch = false;
+    
+    service.emitter.on('nextMatchSegment', function(match) {
+        segmentEventsNumber ++;
+    });
+    service.emitter.on('matchEvent', function(match) {
+        eventsNumber ++;
+    });
+    service.emitter.on('endOfMatch', function(match) {
+        endOfMatch = true;
+    });
+    service.emitter.on('error', function(error) {
+        assert(false, 'An error event just came in: ' + error.message);
+    });
+
+    it('the service emitter ended within time', function(done) { 
+        var timeout = setTimeout(function() {
+            done();
+        }, 40000);
+    });
+        
+    it('should emit messages to event subscribers without errors', function() {
+        expect(eventsNumber).to.not.be.equal(0);
+    });
+    it('should emit segment advances to event subscribers without errors', function() {
+        expect(segmentEventsNumber).to.not.be.equal(0);
+    });
+    it('should emit the end of match to event subscribers without errors', function() {
+        expect(endOfMatch).to.be.equal(true);
+    });
+});
+
+
+
 
 var TestSuite = require('../server');
 TestSuite.moderation.testing = true;
@@ -116,39 +177,40 @@ describe('Moderation Module', function () {
                         expect(res.body.id).to.equal("56a38549e4b067030e9f8111");
                        
                         match = res.body;
+                        
                         done();
                     })
             })
         });
         
-        /*
-        describe('Send match series of events', function() {
-            var interceptor = null;
-            beforeEach(function() { interceptor = mitm(); });
-            afterEach(function() { interceptor.disable() });
-            var matchResponse = require('./testObjects/statsMatchEvolution.js');
+        
+        // describe('Send match series of events', function() {
+        //     var interceptor = null;
+        //     beforeEach(function() { interceptor = mitm(); });
+        //     afterEach(function() { interceptor.disable() });
+        //     var matchResponse = require('./testObjects/statsMatchEvolution.js');
 
-            // http request interception: Return ready-made responses for known endpoints
-            interceptor.on('request', function(req, res) {
-                var uri = url.parse(req.url);
-                if (uri.host == 'api.stats.com')
-                switch(uri.pathname) {
-                   case '/v1/stats/soccer/epl/events/' :
-                       res.status(200).send(matchResponse);
-                       break;
-               }
-            });
+        //     // http request interception: Return ready-made responses for known endpoints
+        //     interceptor.on('request', function(req, res) {
+        //         var uri = url.parse(req.url);
+        //         if (uri.host == 'api.stats.com')
+        //         switch(uri.pathname) {
+        //           case '/v1/stats/soccer/epl/events/' :
+        //               res.status(200).send(matchResponse);
+        //               break;
+        //       }
+        //     });
             
-            it('should start the match and advance the first segment', function(done) {
+        //     it('should start the match and advance the first segment', function(done) {
                 
                 
-           }); 
-        });
-        */
+        //   }); 
+        // });
+        
 
     // });
 
-
+ 
 
     // describe('GET [/v1/live/match/56a38549e4b067030e9f8111]', function () {
 
@@ -205,10 +267,11 @@ describe('Moderation Module', function () {
 
     });
     
+    
     //        });
     describe('RSS-Feed Service', function () {
         it('match should have an RSS-Feed service registered', function () {
-            service = _.findWhere(match.GetModerationServices(), {
+            service = _.findWhere(match.MODERATION_SERVICES, {
                 type: 'rss-feed'
             });
             expect(service).to.not.be.equal(null);
@@ -217,7 +280,6 @@ describe('Moderation Module', function () {
         it('should use a STATS parser', function () {
             //                console.log(service);
             expect(service.parsername).to.be.equal("Stats");
-            expect(service.parser.name).to.be.equal("Stats");
         });
         
        
@@ -258,9 +320,9 @@ describe('Wildcards Module', function () {
     var returnedYellowOne;
     var returnedYellowTwo;
 
-    /** ***********************************************
-     *   2 Yellow Events to test winning wildcard
-     */
+    //** ***********************************************
+    //   2 Yellow Events to test winning wildcard
+    //
     describe('Sent two yellow events', function () {
 
         it('first one should incerement stat "yellow" to 1', function (done) {
@@ -339,7 +401,7 @@ describe('Wildcards Module', function () {
 
     })
 
-    /************************************************************/
+    //************************************************************
 
 
     describe('Clean Up', function () {
@@ -399,3 +461,4 @@ describe('Wildcards Module', function () {
     // });
 
 });
+

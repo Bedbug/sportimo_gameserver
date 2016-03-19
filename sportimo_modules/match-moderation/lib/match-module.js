@@ -29,7 +29,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
     var HookedMatch = {}; // = match;
 
-    //HookedMatch.MODERATION_SERVICES = [];
+    HookedMatch.MODERATION_SERVICES = [];
 
     // Holds the interval that counts time
     // HookedMatch.Time_interval = null;
@@ -75,11 +75,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             "interval": 500 
         } 
     */
-    
-    HookedMatch.GetModerationServices = function()
-    {
-        return moderationServices;
-    };
+
     
     HookedMatch.AddModerationService = function (service, res) {
 
@@ -93,20 +89,20 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             HookedMatch.moderation.push(service);
             HookedMatch.StartService(service);
         }
-    }
+    };
 
     HookedMatch.StartService = function (service) {
         var newService = services[service.type];
 
         _.merge(newService, service);
 
-        //HookedMatch.MODERATION_SERVICES.push(newService);
+        HookedMatch.MODERATION_SERVICES.push(newService);
         moderationServices.push(newService);
         
         // init the service by passing this as a context reference for internal communication (sending events)
         //HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
-        newService.init(this);
-    }
+        newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {});
+    };
 
 
     // Set services for the first time

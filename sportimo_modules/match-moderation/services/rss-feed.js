@@ -17,7 +17,9 @@
 
 var path = require('path'),
     fs = require('fs'),
-    mongoose = require('../config/db.js');
+    mongoose = require('../config/db.js'),
+    EventEmitter = require('events'),
+    util = require('util');
 
 var parsers = {};
 
@@ -39,50 +41,55 @@ feed_service.type = "rss-feed";
 // The id of the corresponding event(match)
 feed_service.eventid = "";
 
-// The match module that this feed will moderate
-feed_service.match_module = null;
-
-// The url for the feed. // Note: Each parser knows and is responsible for its own feed url endpoint.
-feed_service.feedurl = "";
-
 // The interval that the module will request an update
 feed_service.interval = 1;
 
 // The parser name for this feed
 feed_service.parsername = null;
 
-// The parser used for this feed
-feed_service.parser = null;
+// Build a node.js event emitter (see: https://nodejs.org/api/events.html)
+var MyEmitter = function()
+{
+    EventEmitter.call(this);
+};
+util.inherits(MyEmitter, EventEmitter);
+
+feed_service.emitter = new MyEmitter();
+
 
 // Initialize feed and validate response
-feed_service.init = function (matchHandler) {
+feed_service.init = function (matchHandler, done) {
   
-    this.match_module = matchHandler;
+    //this.match_module = matchHandler;
     
     if (this.parsername == null)
         return "No parser attached to service";
-    else
-        this.parser = parsers[this.parsername];
-  
-    parsers[this.parsername].init(matchHandler, this);
-    
-//    return console.log("[RSS-Feed] Service initialized");
+
+    return parsers[this.parsername].init(matchHandler, this, done);
 };
 
 // Manage match events, simple proxy to match module
 feed_service.AddEvent = function(event) {
-    if (!this.match_module)
-        return;
+    // if (!this.match_module)
+    //     return;
         
-    this.match_module.HookedMatch.AddEventCore(event);
+    feed_service.emitter.emit('matchEvent', event);
 };
 
 // Manage match segment advances, simple proxy to match module
 feed_service.AdvanceMatchSegment = function() {
-    if (!this.match_module)
-        return;
+    // if (!this.match_module)
+    //     return;
     
-    this.match_module.HookedMatch.AdvanceSegmentCore(null);
+    feed_service.emitter.emit('nextMatchSegment', this.match_module);
+};
+
+feed_service.EndOfMatch = function() {
+    feed_service.emitter.emit('endOfMatch', this.match_module);
+    
+    // Try disposing all parser objects
+    //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
+    this.parsername = null;
 };
 
 
@@ -92,7 +99,21 @@ feed_service.LoadPlayers = function(teamId, callback)
     if (!mongoose)
         return callback(null);
         
-    mongoose.models.player.find({team: teamId}, function(error, data) {
+    mongoose.mongoose.models.players.find({team: teamId}, function(error, data) {
+        if (error)
+            return;
+            
+        return callback(null, data);
+    });
+};
+
+
+feed_service.LoadTeam = function(teamId, callback)
+{
+    if (!mongoose)
+        return callback(null);
+        
+    mongoose.mongoose.models.teams.findById(teamId, function(error, data) {
         if (error)
             return;
             
