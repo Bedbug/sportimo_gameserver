@@ -33,8 +33,17 @@ var removeEventData = {
 
 
 describe('Unit-Test the rss-service and Parser modules', function() {
-   var service = require("../sportimo_modules/match-moderation/services/rss-feed");
-   service.parsername = "Stats";
+    var service = require("../sportimo_modules/match-moderation/services/rss-feed");
+    service.parsername = "Stats";
+    var matchResponse = require('./testObjects/statsMatchEvolution.js');
+
+   
+    // Set up the mitm module's http request interception
+    var interceptor = null;
+    beforeEach(function() { interceptor = mitm(); });
+    afterEach(function() { interceptor.disable() });
+   
+   
    
    mockMatch.start = new Date(); //Date.parse(mockMatch.start);
    // Set the match start 10  seconds from now
@@ -73,7 +82,32 @@ describe('Unit-Test the rss-service and Parser modules', function() {
     it('the service emitter ended within time', function(done) { 
         var timeout = setTimeout(function() {
             done();
-        }, 40000);
+        }, 20000);
+        
+        // http request interception: Return ready-made responses for known endpoints
+        // see: https://github.com/moll/node-mitm
+        interceptor.on('request', function(req, res) {
+            var uri = url.parse(req.url);
+            if (req.headers.host == 'api.stats.com') {
+                switch(uri.pathname) {
+                case '/v1/stats/soccer/epl/events/1547146' :
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify(matchResponse));
+                    break;
+                default :
+                    break;
+                }
+            }
+            else
+            {
+                // default behavior
+                res.statusCode = 404;
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({error: 'Not a known endpoint. Blocking http request.'}));
+            }
+        });
+            
     });
         
     it('should emit messages to event subscribers without errors', function() {
@@ -88,7 +122,7 @@ describe('Unit-Test the rss-service and Parser modules', function() {
 });
 
 
-
+/*
 
 var TestSuite = require('../server');
 TestSuite.moderation.testing = true;
@@ -461,4 +495,4 @@ describe('Wildcards Module', function () {
     // });
 
 });
-
+*/

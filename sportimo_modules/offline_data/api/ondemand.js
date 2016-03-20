@@ -71,6 +71,45 @@ api.UpdateTeams = function (req, res) {
             
 };
 
+api.UpdateStandings = function(req, res) {
+	if(!req.params.leagueName)
+		return res.status(400).json({error: "No 'league' name parameter defined in the request path."});
+		
+	var leagueName = req.params.leagueName;
+
+    // UpdateTeams for each supported parser
+    var response = { error: null, parsers: {} };
+	        
+    // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+	async.eachSeries(parsers, function(parser, callback) {
+        parser.UpdateStandings(leagueName, function(error, teamsIncluded) {
+            if (!error)
+            {
+                response.parsers[parser.Name] = { 
+                    error: null,
+                    teamsNumber: teamsIncluded
+                };
+
+                callback();
+            }
+            else {
+                response.parsers[parser.Name] = {
+                    error: error.message
+                };
+                callback();
+            }
+        });
+    }, function done(error) {
+        if (error)
+        {
+            response.error = error.message;
+            return res.status(500).json(response);
+        }
+        else
+            return res.status(200).json(response);
+    });
+};
+
 api.Welcome = function(req, res)
 {
     return res.status(200).json({response: 'The offline_data Api is up and running.'});
@@ -83,5 +122,7 @@ api.Welcome = function(req, res)
 router.get('/', api.Welcome);
 
 router.post('/:leagueName/teams', api.UpdateTeams);
+
+router.post('/:leagueName/standings', api.UpdateStandings);
 
 module.exports = router;

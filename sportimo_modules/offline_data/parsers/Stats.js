@@ -165,6 +165,9 @@ Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
 
 Parser.UpdateTeams = function(leagueName, callback)
 {
+    if (!leagueName)
+        return callback(new Error('No league name is defined in call'));
+    
     if (! Parser.Configuration.supportedLanguages)
         return callback(new Error('No supported languages are defined in parser&apos;s configuration'));
         
@@ -429,5 +432,22 @@ Parser.UpdateTeams = function(leagueName, callback)
     });
     
 };
+
+Parser.UpdateStandings = function(leagueName, callback)
+{
+    if (!leagueName)
+        return callback(new Error('No league name is defined in call'));
+
+    Parser.GetLeagueStandings(leagueName, function(error, standings) {
+        if (error)
+            return callback(error);
+            
+        var translateStanding = function(teamStanding) {
+            
+        };
+        
+        // Translate the global properties and then iterate over the team properties inside the teams array.
+    });
+}
 
 module.exports = Parser;
