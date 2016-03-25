@@ -10,7 +10,6 @@
         {
             "type": "rss-feed",
             "eventid": "15253",
-            "feedurl": "http://feed-somewhere.com?event-id=",
             "interval": 500,
             "parsername": "Stats"
         }

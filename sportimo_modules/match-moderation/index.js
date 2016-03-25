@@ -171,7 +171,7 @@ var ModerationModule = {
                    
                     //if (err) return log(err, "error");
                     if (match) {
-                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);                                    
+                        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);                                    
                         ModerationModule.ModeratedMatches.push(hookedMatch);
 
                         if (res)
@@ -187,7 +187,7 @@ var ModerationModule = {
                 });
         } else {
             var match = new scheduled_matches(mockMatch);
-            var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+            var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
             ModerationModule.ModeratedMatches.push(hookedMatch);
 
             if (res)
@@ -327,7 +327,7 @@ function initModule(done) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
                         // console.log(match);
-                        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+                        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
                     })
@@ -347,7 +347,7 @@ function initModule(done) {
 
         var match = new scheduled_matches(mockMatch);
 
-        var hookedMatch = match_module(match, MatchTimers, RedisClientPub, log);
+        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
         this.ModeratedMatches.push(hookedMatch);
         log("Mock match created with ID [" + hookedMatch.id + "].", "info");
 

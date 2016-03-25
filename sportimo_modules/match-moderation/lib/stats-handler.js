@@ -97,10 +97,10 @@ var StatsMethods = {
     toObject: function (event) {
         parsers.e.data = event.data;
         parsers.e.match_id = event.data.match_id;
-        parsers.e.team_id = CurrentMatch[event.data.team]._id.toString();
-        parsers.e.team_name = event.data.team;
-        parsers.e.player_id = event.data.players[0].id;
-        parsers.e.player_name = event.data.players[0].name;
+        parsers.e.team_id = CurrentMatch[event.data.team]._id.toString(); //CurrentMatch[event.data.team]._id ? CurrentMatch[event.data.team]._id.toString() : null;
+        parsers.e.team_name = event.data.team; //event.data.team ? event.data.team : null;
+        parsers.e.player_id = event.data.players[0].id; //event.data.players[0] ? event.data.players[0].id : null;
+        parsers.e.player_name = event.data.players[0].name; //event.data.players[0] ? event.data.players[0].name : null;
 
     },
     UpsertStat: function (ids, stats, names) {

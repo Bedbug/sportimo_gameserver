@@ -1,10 +1,10 @@
 module.exports = {
     userid: "56a6800f6304484833115a2c",
-    gameid: "56a38549e4b067030e9f871d",
+    gameid: "56a38549e4b067030e9f8111",
     minute: 5,
     segment: 1,
     activates_in: 50,
-    duration: 10000, // 10"
+    duration: 90000, // 90"
     timer: 0,
     text: "Jokovic will get 2 yellow cards",
     appear_conditions: [], // empty - always avalable

@@ -11,6 +11,7 @@ var expect = require('chai').expect,
 var eventobj = require("./testObjects/eventYellow");
 var playCard = require("./testObjects/playCard");
 var mockMatch = require("./testObjects/mockMatch_withfeed.js");
+var matchResponse = require('./testObjects/statsMatchShort.js');
 
 var addEventData = {
     type: "Add",
@@ -31,11 +32,16 @@ var removeEventData = {
 // mockgoose(mongoose);  
 
 
+   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
+   // Set the match start 10  seconds from now
+   mockMatch.start.setMinutes(mockMatch.start.getMinutes() + 1);
 
+
+
+/*
 describe('Unit-Test the rss-service and Parser modules', function() {
     var service = require("../sportimo_modules/match-moderation/services/rss-feed");
     service.parsername = "Stats";
-    var matchResponse = require('./testObjects/statsMatchEvolution.js');
 
    
     // Set up the mitm module's http request interception
@@ -44,10 +50,6 @@ describe('Unit-Test the rss-service and Parser modules', function() {
     afterEach(function() { interceptor.disable() });
    
    
-   
-   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
-   // Set the match start 10  seconds from now
-   mockMatch.start.setSeconds(mockMatch.start.getSeconds() + 10);
    
    service.init(mockMatch, function(err) {
         it('should have a service started without errors', function(done) {
@@ -82,7 +84,7 @@ describe('Unit-Test the rss-service and Parser modules', function() {
     it('the service emitter ended within time', function(done) { 
         var timeout = setTimeout(function() {
             done();
-        }, 20000);
+        }, 120000);
         
         // http request interception: Return ready-made responses for known endpoints
         // see: https://github.com/moll/node-mitm
@@ -120,9 +122,9 @@ describe('Unit-Test the rss-service and Parser modules', function() {
         expect(endOfMatch).to.be.equal(true);
     });
 });
+*/
 
 
-/*
 
 var TestSuite = require('../server');
 TestSuite.moderation.testing = true;
@@ -218,28 +220,6 @@ describe('Moderation Module', function () {
         });
         
         
-        // describe('Send match series of events', function() {
-        //     var interceptor = null;
-        //     beforeEach(function() { interceptor = mitm(); });
-        //     afterEach(function() { interceptor.disable() });
-        //     var matchResponse = require('./testObjects/statsMatchEvolution.js');
-
-        //     // http request interception: Return ready-made responses for known endpoints
-        //     interceptor.on('request', function(req, res) {
-        //         var uri = url.parse(req.url);
-        //         if (uri.host == 'api.stats.com')
-        //         switch(uri.pathname) {
-        //           case '/v1/stats/soccer/epl/events/' :
-        //               res.status(200).send(matchResponse);
-        //               break;
-        //       }
-        //     });
-            
-        //     it('should start the match and advance the first segment', function(done) {
-                
-                
-        //   }); 
-        // });
         
 
     // });
@@ -438,6 +418,51 @@ describe('Wildcards Module', function () {
     //************************************************************
 
 
+    describe('Send match series of events', function() {
+        // Set up the mitm module's http request interception
+        var interceptor = null;
+        beforeEach(function() { interceptor = mitm(); });
+        afterEach(function() { interceptor.disable() });
+        
+        it('the service emitter ended within time', function(done) { 
+            var timeout = setTimeout(function() {
+                done();
+            }, 90000);
+            
+            // http request interception: Return ready-made responses for known endpoints
+            // see: https://github.com/moll/node-mitm
+            interceptor.on('request', function(req, res) {
+                var uri = url.parse(req.url);
+                if (req.headers.host == 'api.stats.com') {
+                    switch(uri.pathname) {
+                    case '/v1/stats/soccer/epl/events/1547146' :
+                        res.statusCode = 200;
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify(matchResponse));
+                        break;
+                    default :
+                        break;
+                    }
+                }
+                else
+                {
+                    // default behavior
+                    res.statusCode = 404;
+                    res.setHeader('Content-Type', 'application/json');
+                    res.end(JSON.stringify({error: 'Not a known endpoint. Blocking http request.'}));
+                }
+            });
+            
+            
+        });
+        
+        // it('should have added 5 events', function() {
+        //     expect(match.GetCurrentSegment()).to.equal("First Half");
+        // }); 
+    });
+
+
+
     describe('Clean Up', function () {
 
         it('should delete the last wildacard from the database', function (done) {
@@ -495,4 +520,4 @@ describe('Wildcards Module', function () {
     // });
 
 });
-*/
+

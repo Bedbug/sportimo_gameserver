@@ -25,8 +25,6 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 
 var matchModule = function (match, MatchTimers, PubChannel, log) {
     
-    var moderationServices = [];
-
     var HookedMatch = {}; // = match;
 
     HookedMatch.MODERATION_SERVICES = [];
@@ -97,11 +95,22 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         _.merge(newService, service);
 
         HookedMatch.MODERATION_SERVICES.push(newService);
-        moderationServices.push(newService);
-        
+
         // init the service by passing this as a context reference for internal communication (sending events)
         //HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
-        newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {});
+        newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {
+            
+            // Register this match module to the events emitted by the new service, but first filter only those relative to its match id. 
+            newService.emitter.on('matchEvent', function(matchEvent) {
+                if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id) 
+                    HookedMatch.AddEventCore(matchEvent);
+            });
+            newService.emitter.on('nextMatchSegment', function(matchEvent) {
+                if (matchEvent && matchEvent._id == HookedMatch.data.id) 
+                    HookedMatch.AdvanceSegmentCore(matchEvent);
+            });
+
+        });
     };
 
 

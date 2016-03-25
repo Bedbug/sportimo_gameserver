@@ -59,33 +59,43 @@ feed_service.emitter = new MyEmitter();
 
 // Initialize feed and validate response
 feed_service.init = function (matchHandler, done) {
-  
-    //this.match_module = matchHandler;
-    
     if (this.parsername == null)
         return "No parser attached to service";
 
     return parsers[this.parsername].init(matchHandler, this, done);
 };
 
+feed_service.pause = function()
+{
+    if (this.parsername == null)
+        return "No parser attached to service";
+
+    parsers[this.parsername].isPaused = true;    
+};
+
+feed_service.resume = function()
+{
+    if (this.parsername == null)
+        return "No parser attached to service";
+
+    parsers[this.parsername].isPaused = false;    
+};
+
 // Manage match events, simple proxy to match module
 feed_service.AddEvent = function(event) {
-    // if (!this.match_module)
-    //     return;
-        
+
     feed_service.emitter.emit('matchEvent', event);
 };
 
 // Manage match segment advances, simple proxy to match module
-feed_service.AdvanceMatchSegment = function() {
-    // if (!this.match_module)
-    //     return;
-    
-    feed_service.emitter.emit('nextMatchSegment', this.match_module);
+feed_service.AdvanceMatchSegment = function(matchInstance) {
+
+    feed_service.emitter.emit('nextMatchSegment', matchInstance);
 };
 
-feed_service.EndOfMatch = function() {
-    feed_service.emitter.emit('endOfMatch', this.match_module);
+feed_service.EndOfMatch = function(matchInstance) {
+    
+    feed_service.emitter.emit('endOfMatch', matchInstance);
     
     // Try disposing all parser objects
     //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
@@ -99,7 +109,7 @@ feed_service.LoadPlayers = function(teamId, callback)
     if (!mongoose)
         return callback(null);
         
-    mongoose.mongoose.models.players.find({team: teamId}, function(error, data) {
+    mongoose.mongoose.models.players.find({teamId: teamId}, function(error, data) {
         if (error)
             return;
             

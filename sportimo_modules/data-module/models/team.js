@@ -1,9 +1,7 @@
 'use strict';
 
 var mongoose = require('mongoose'),
-    Schema = mongoose.Schema,
-    ObjectId = Schema.ObjectId,
-    l = require('../config/lib');
+    Schema = mongoose.Schema;
 
 
 if (mongoose.models.team)
@@ -11,18 +9,13 @@ if (mongoose.models.team)
 else {
 var team = {
     name: { type: Schema.Types.Mixed },
-    name_en: { type: String },
     logo: { type: String },
-    league: { type: String },
     parserids: {  type: Schema.Types.Mixed },
-    players: [{
-        type: String,
-        ref: 'player'
-    }],
+    competitionid: { type: String, ref: 'competition' },
     created: { type: Date, default: Date.now }
 };
 
 var teamSchema = new Schema(team);
 
-module.exports = mongoose.model('team', teamSchema);
+module.exports = mongoose.model('teams', teamSchema);
 }
