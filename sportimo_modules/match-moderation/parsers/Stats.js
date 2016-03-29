@@ -190,7 +190,7 @@ var GetSeasonYear = function()
 var GetMatchEvents = function(leagueName, matchId, callback)
 {
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature;
+    var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature; // &box=true for boxing statistics
     
     needle.get(url, function(error, response)
     {

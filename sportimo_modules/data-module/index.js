@@ -62,7 +62,7 @@ app.use(express.static(__dirname + '/public'));
 var env = process.env.NODE_ENV || 'development';
 
 // Bootstrap models
-var modelsPath = path.join(__dirname, 'models');
+var modelsPath = path.join(__dirname, '../models');
 fs.readdirSync(modelsPath).forEach(function (file) {
     require(modelsPath + '/' + file);
 });

@@ -77,6 +77,27 @@ Parser.GetSeasonYear = function()
 };
 
 // Stats.com Endpoint invocation Methods
+
+Parser.GetPlayerCareerStats = function(leagueName, playerId, callback)
+{
+    //soccer/epl/stats/players/345879?enc=true&
+    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    var url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + "?enc=true&careerOnly=true&" + signature;
+
+    needle.get(url, function(error, response)
+    {
+        if (error)
+            return callback(error);
+        try {
+            var playerStats = response.body.apiResults[0].league.players[0].seasons[0].eventType[0].splits[0].playerStats;
+            callback(null, playerStats);
+        }
+        catch(err) {
+            return callback(err);
+        }
+    });
+}
+
 Parser.GetTeamPlayers = function(leagueName, languageId, callback)
 {
     //soccer/epl/participants/teams/6154?languageId=19

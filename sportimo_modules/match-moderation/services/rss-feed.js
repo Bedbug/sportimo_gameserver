@@ -28,7 +28,7 @@ var servicesPath = path.join(__dirname, '../parsers');
         parsers[path.basename(file, ".js")] = require(servicesPath + '/' + file);
     });
 
-var modelsPath = path.join(__dirname, '../models');
+var modelsPath = path.join(__dirname, '../../models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });

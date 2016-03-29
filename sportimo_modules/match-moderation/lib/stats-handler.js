@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    StatMods = require('../models/stats-mod'),
+    StatMods = require('../../models/stats-mod'),
     moment = require('moment');
 
 /**

@@ -10,7 +10,7 @@ var Sports = require('./sports-settings');
 var StatsHelper = require('./stats-handler');
 var moment = require('moment');
 var _ = require('lodash'),
-    StatMods = require('../models/stats-mod');
+    StatMods = require('../../models/stats-mod');
 
 var path = require('path'),
     fs = require('fs');

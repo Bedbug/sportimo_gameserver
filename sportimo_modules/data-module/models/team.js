@@ -4,8 +4,8 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 
-if (mongoose.models.team)
-    module.exports = mongoose.model.team;
+if (mongoose.models.teams)
+    module.exports = mongoose.models.teams;
 else {
 var team = {
     name: { type: Schema.Types.Mixed },

@@ -5,7 +5,7 @@
  * 
  ***********************************************************/
 var moment = require('moment');
-var WildcardModel = require('../models/wildcard');
+var WildcardModel = require('../../models/wildcard');
 
 var WildCard = function (CardObject) {
 

@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Team = mongoose.models.team,
+Team = mongoose.models.teams,
 api = {},
 l=require('../config/lib');
 

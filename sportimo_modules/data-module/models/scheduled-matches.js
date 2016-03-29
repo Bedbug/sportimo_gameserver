@@ -6,7 +6,7 @@ var mongoose = require('mongoose'),
 
 
 if (mongoose.models.scheduled_matches)
-    module.exports = mongoose.model.scheduled_matches;
+    module.exports = mongoose.models.scheduled_matches;
 else {
     var match_schema = new mongoose.Schema({
         sport: String,

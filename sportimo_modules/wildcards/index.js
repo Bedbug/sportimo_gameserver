@@ -44,7 +44,7 @@ wildcards.db = null;
 /*Load models and setup database connection*/
 wildcards.SetupMongoDB = function (dbconenction) {
     this.db = dbconenction;
-    var modelsPath = path.join(__dirname, 'models');
+    var modelsPath = path.join(__dirname, '../models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });

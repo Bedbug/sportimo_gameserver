@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Player = mongoose.models.player,
+Player = mongoose.models.players,
 api = {},
 l=require('../config/lib');
 

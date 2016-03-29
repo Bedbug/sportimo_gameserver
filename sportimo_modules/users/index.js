@@ -9,7 +9,7 @@ var mongoose = require('mongoose');
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var jwtDecode = require('jwt-decode');
 var config = require('./config'); // get our config file
-var User = require('./models/user'); // get our mongoose model
+var User = require('../models/user'); // get our mongoose model
 
 
 var app = null;

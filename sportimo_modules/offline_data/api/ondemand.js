@@ -2,7 +2,8 @@ var express = require('express'),
     router = express.Router(),
     path = require("path"),
     fs = require("fs"),
-    async = require('async');
+    async = require('async'),
+    winston = require('winston');
 
 
 var parsers = {};
@@ -14,7 +15,7 @@ var servicesPath = path.join(__dirname, '../parsers');
     });
 
 // Recursively add models
-var modelsPath = path.join(__dirname, '../models');
+var modelsPath = path.join(__dirname, '../../models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });
@@ -52,6 +53,7 @@ api.UpdateAllTeams = function (req, res) {
                 callback();
             }
             else {
+                winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
                 response.parsers[parser.Name] = {
                     error: error.message
                 };
@@ -92,6 +94,7 @@ api.UpdateLeagueStandings = function(req, res) {
                 callback();
             }
             else {
+                winston.warn('Error calling UpdateLeagueStandings for parser ' + parser.Name + ': ' + error.message);
                 response.parsers[parser.Name] = {
                     error: error.message
                 };
@@ -127,6 +130,7 @@ api.UpdateAllStandings = function(req, res) {
                 callback();
             }
             else {
+                winston.warn('Error calling UpdateAllStandings for parser ' + parser.Name + ': ' + error.message);
                 response.parsers[parser.Name] = {
                     error: error.message
                 };
@@ -166,6 +170,7 @@ api.GetCompetitionFixtures = function(req, res)
                 callback();
             }
             else {
+                winston.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
                 response.parsers[parser.Name] = {
                     error: error.message
                 };
