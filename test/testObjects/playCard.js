@@ -11,7 +11,7 @@ module.exports = {
     win_conditions: {
         match: [], // empty - no match conditions 
         stats: [{
-            id:  "56a385413eb067030e9f87dd1",
+            id:  "56ebd1add299e8ed04e93df5",
             "yellow": 2
         }]
     },

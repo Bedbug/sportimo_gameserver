@@ -351,7 +351,7 @@ describe('Wildcards Module', function () {
                     var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f8111").data.stats;
 
                     var stat = _.find(stats, {
-                        id: "56a385413eb067030e9f87dd1"
+                        id: "56ebd1add299e8ed04e93df5"
                     });
 
                     expect(stat.yellow).to.be.equal(1);
@@ -372,7 +372,7 @@ describe('Wildcards Module', function () {
                     var stats = TestSuite.moderation.GetMatch("56a38549e4b067030e9f8111").data.stats;
 
                     var stat = _.find(stats, {
-                        id: "56a385413eb067030e9f87dd1"
+                        id: "56ebd1add299e8ed04e93df5"
                     });
 
                     expect(stat.yellow).to.be.equal(2);
@@ -417,7 +417,7 @@ describe('Wildcards Module', function () {
 
     //************************************************************
 
-
+/*
     describe('Send match series of events', function() {
         // Set up the mitm module's http request interception
         var interceptor = null;
@@ -460,7 +460,7 @@ describe('Wildcards Module', function () {
         //     expect(match.GetCurrentSegment()).to.equal("First Half");
         // }); 
     });
-
+*/
 
 
     describe('Clean Up', function () {
