@@ -98,6 +98,8 @@ SubscribeChannel.auth(redisCreds.secret, function (err) {
     if (err) {
         throw err;
     }
+    else
+    console.log("Redis Connected.")
 });
 
 // Setup MongoDB conenction

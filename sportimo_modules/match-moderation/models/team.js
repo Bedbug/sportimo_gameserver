@@ -17,5 +17,5 @@ var team = {
 
 var teamSchema = new Schema(team);
 
-module.exports = mongoose.model('teams', teamSchema);
+module.exports = mongoose.model('team', teamSchema);
 }

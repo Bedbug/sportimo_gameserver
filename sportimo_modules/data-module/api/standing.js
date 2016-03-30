@@ -6,6 +6,23 @@ var express = require('express'),
     api = {};
 
 
+api.items = function(req, res) {
+
+    var skip = null, limit = null;
+    //  publishDate: { $gt: req.body.minDate, $lt: req.body.maxDate }, type: req.body.type, tags: { "$regex": req.body.tags, "$options": "i" }
+    var queries = {};
+    var userCountry = req.params.country;
+
+    var q = item.find({ $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
+
+    q.exec(function(err, items) {
+
+        return res.send(items);
+    });
+
+};
+
+
 // ALL
 api.itemsSearch = function(req, res) {
     var skip = null, limit = null;
@@ -64,15 +81,42 @@ api.additem = function(req, res) {
 
 };
 
+api.updateVisibility = function(req, res) {
+
+    console.log(req.body.competitionid);
+
+
+    item.find({competitionid: req.body.competitionid}, function(err,standings) {
+        
+        if (standings) {
+            standings.forEach(function(standing) {
+                standing.visiblein = req.body.visiblein;
+                standing.save(function(err, data) {
+                    if (err) {
+                        res.status(500).json(data);
+                        return;
+                    }
+                })
+            })
+            res.status(200).send();
+        } else {
+            console.log("404");
+            res.status(404).send();
+        }
+    });
+
+
+};
+
 // GET
 api.item = function(req, res) {
     var id = req.params.id;
     item.findById(id, function(err, returnedItem) {
         if (!err) {
-                return res.status(200).json(returnedItem);
-            } else {
-                return res.status(500).json(err);
-            }
+            return res.status(200).json(returnedItem);
+        } else {
+            return res.status(500).json(err);
+        }
     });
 };
 
@@ -117,10 +161,16 @@ api.deleteitem = function(req, res) {
 =====================  ROUTES  =====================
 */
 
-router.route('/v1/data/standings/search')
-    .post(api.itemsSearch);
+router.route('/v1/data/standings/')
+    .get(api.itemsSearch);
 
 router.post('/v1/data/standings', api.additem);
+
+router.post('/v1/data/standings/visibility', api.updateVisibility);
+
+router.route('/v1/data/standings/country/:country')
+    .get(api.items);
+
 
 router.route('/v1/data/standings/:id')
     .get(api.item)
