@@ -13,6 +13,7 @@ api.items = function(req, res) {
     var queries = {};
     var userCountry = req.params.country;
 
+
     var q = item.find({ $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
 
     q.exec(function(err, items) {

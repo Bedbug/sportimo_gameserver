@@ -4,6 +4,7 @@ var express = require('express'),
     mongoose = require('mongoose'),
     Pool = mongoose.models.pool,
     l = require('../config/lib');
+_ = require('lodash');
 
 var api = {};
 
@@ -19,13 +20,46 @@ api.pool = function(req, res) {
  */
 api.poolbygameid = function(req, res) {
 
-    var q = Pool.find({ gameid: req.params.id });
+    // var q = Pool.find({ gameid: req.params.id });
+
+    // q.exec(function(err, pools) {
+    //     if (err) res.satus(500).send(err);
+    //     else
+    //         res.status(200).send(pools);
+    // })
+    
+    
+    
+    var querry = { gameid: req.params.id, $or: [{ country: { "$size": 0 } }] };
+
+    if (req.params.country)
+        querry.$or[1] = { country: req.params.country.toUpperCase() };
+
+    var q = Pool.find(querry);
 
     q.exec(function(err, pools) {
         if (err) res.satus(500).send(err);
-        else
+        else {
+            // var uniqueArray = _.pluck(pools, 'roomtype');
+            // uniqueArray = _.uniq(uniqueArray);
+            
+            var uniqueArray = ['Season','Week'];
+            
+            _.each(uniqueArray, function(type) {
+                var poolsWithType = _.filter(pools, { roomtype: type});
+                if (_.size(poolsWithType) > 1){
+                    pools = _.remove(pools, function(n) {
+                        return !(n.roomtype == type && n.country.length == 0);
+                    });
+                }
+            })
+
             res.status(200).send(pools);
+        }
+
     })
+    
+    
 };
 
 /**
@@ -33,12 +67,33 @@ api.poolbygameid = function(req, res) {
  */
 api.timedpools = function(req, res) {
 
-    var q = Pool.find({ gameid: { "$exists": false } });
+    var querry = { gameid: { "$exists": false }, $or: [{ country: { "$size": 0 } }] };
+
+    if (req.params.country)
+        querry.$or[1] = { country: req.params.country.toUpperCase() };
+
+    var q = Pool.find(querry);
 
     q.exec(function(err, pools) {
         if (err) res.satus(500).send(err);
-        else
+        else {
+            // var uniqueArray = _.pluck(pools, 'roomtype');
+            // uniqueArray = _.uniq(uniqueArray);
+            
+            var uniqueArray = ['Season','Week'];
+            
+            _.each(uniqueArray, function(type) {
+                var poolsWithType = _.filter(pools, { roomtype: type});
+                if (_.size(poolsWithType) > 1){
+                    pools = _.remove(pools, function(n) {
+                        return !(n.roomtype == type && n.country.length == 0);
+                    });
+                }
+            })
+
             res.status(200).send(pools);
+        }
+
     })
 };
 
@@ -72,7 +127,7 @@ api.editPool = function(req, res) {
         } else {
             res.send({ success: true });
         }
-        
+
     });
 };
 
@@ -101,10 +156,12 @@ router.delete('/v1/pools/:id', api.deletePool);
 // of that specific game. It will start and finish during this game's 
 // period and wiiners will be evaluated automaticaly.
 router.get('/v1/pools/forgame/:id', api.poolbygameid);
+router.get('/v1/pools/forgame/:id/:country', api.poolbygameid);
 
 // Timed pools are pools not tied up to a specific game but to a certain
 // time-span. They can repeat in specific intervals or they can last an
 // exact period of time. 
-router.get('/v1/pools/timed', api.timedpools);
+router.get('/v1/pools/timed/', api.timedpools);
+router.get('/v1/pools/timed/:country', api.timedpools);
 
 module.exports = router;
