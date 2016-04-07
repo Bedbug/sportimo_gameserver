@@ -31,6 +31,7 @@ else {
             ref: 'competitions'
         },
     visiblein: [String],
+    isTimeCounting: {type:Boolean, default: false},
     home_score: Number,
     away_score: Number,
     match_date: Date,

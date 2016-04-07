@@ -60,7 +60,7 @@ var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
 var port = (process.env.PORT || 3030)
 app.listen(port, function () {
-        console.log('Express server listening on port %d in %s mode', port, app.get('env'));
+         console.log("[Game Server] Server listening on port %d in %s mode", port, app.get('env'));
     });
 
 
@@ -99,14 +99,20 @@ SubscribeChannel.auth(redisCreds.secret, function (err) {
         throw err;
     }
     else
-    console.log("Redis Connected.")
+    console.log("[Game Server] Redis Connected.")
 });
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
-if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
-    mongoose.connect(mongoConnection);
+// if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
+    mongoose.connect(mongoConnection, function (err, res) {
+  if(err){
+    console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);
+  }else{
+    console.log("[Game Server] MongoDB Connected.")
+  }
+});
 
 /* Modules */
 // if (process.env.NODE_ENV != "production") {
@@ -133,14 +139,15 @@ app.use('/offline_data/', require('./sportimo_modules/offline_data/api/ondemand.
 // Notifications.SetupServer(app);
 // Notifications.setMongoConnection(mongoConnection);
 
+var leaderboards = require('./sportimo_modules/leaderpay');
+
+var users = require('./sportimo_modules/users');
+
 var dataModule = require('./sportimo_modules/data-module');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;
 
-var leaderboards = require('./sportimo_modules/leaderpay');
-
-var users = require('./sportimo_modules/users');
 
 function log(info) {
     console.log("[" + Date.now() + "] API CALL: " + info);

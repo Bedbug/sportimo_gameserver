@@ -65,7 +65,7 @@ var ModerationModule = {
         });
         team = this.mongoose.models.team;
         scheduled_matches = this.mongoose.models.scheduled_matches;
-        log("Connected to MongoDB", "core");
+        // log("Connected to MongoDB", "core");
     },
     SetupRedis: function (Pub, Sub, Channel) {
 
