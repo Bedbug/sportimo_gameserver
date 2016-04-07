@@ -656,9 +656,9 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                     if (fixture.teams[0].teamLocationType.teamLocationTypeId == 2)
                         awayTeam = fixture.teams[0];
                     if (fixture.teams[1].teamLocationType.teamLocationTypeId == 1)
-                        homeTeam = fixture.teams[0];
+                        homeTeam = fixture.teams[1];
                     if (fixture.teams[1].teamLocationType.teamLocationTypeId == 2)
-                        awayTeam = fixture.teams[0];
+                        awayTeam = fixture.teams[1];
                         
                     var schedule = {
                         sport: 'soccer',
