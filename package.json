@@ -21,7 +21,7 @@
     "mitm": "^1.2.0",
     "moment": "^2.10.6",
     "moment-duration-format": "^1.3.0",
-    "mongoose": "^4.2.0",
+    "mongoose": "4.4.11",
     "morgan": "^1.7.0",
     "needle": "^0.10.0",
     "node-schedule": "^1.1.0",
@@ -31,9 +31,5 @@
     "underscore": "^1.8.3",
     "winston": "^2.1.1",
     "ws": ""
-  },
-  "engines": {
-    "node": "0.10.x"
-  },
-  "os": "sunos"
+  }
 }
