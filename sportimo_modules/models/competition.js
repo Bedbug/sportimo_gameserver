@@ -5,15 +5,18 @@ var mongoose = require('mongoose'),
 
 
 if (mongoose.models.competitions)
-    module.exports = mongoose.models.competitionss;
+    module.exports = mongoose.models.competitions;
 else {
     var competition = {
         name: { type: Schema.Types.Mixed },
-        pic: { type: String },
-        parserids: {  type: Schema.Types.Mixed }
+        logo: { type: String },
+        parserids: { type: Schema.Types.Mixed },
+        visiblein: [String],
+        status: {type:String},
+        created: { type: Date, default: Date.now }
     };
-    
+
     var competitionSchema = new Schema(competition);
-    
+
     module.exports = mongoose.model('competitions', competitionSchema);
 }

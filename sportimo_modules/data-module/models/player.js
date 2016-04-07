@@ -1,27 +1,27 @@
-'use strict';
+// 'use strict';
 
-var mongoose = require('mongoose'),
-    Schema = mongoose.Schema,
-    ObjectId = Schema.ObjectId,
-    l = require('../config/lib');
+// var mongoose = require('mongoose'),
+//     Schema = mongoose.Schema,
+//     ObjectId = Schema.ObjectId,
+//     l = require('../config/lib');
 
-var player = {
-    firstName: { type: Schema.Types.Mixed },
-    firstName_en: { type: String },
-    lastName: { type: Schema.Types.Mixed },
-    lastName_en: { type: String },
-    uniformNumber : { type: String },
-    pic: { type: String },
-    position: { type: String },
-    personalData: { type: Schema.Types.Mixed },
-    parserids: {  type: Schema.Types.Mixed },
-    teamId: {
-        type: String,
-        ref: 'team'
-    },
-    created: { type: Date, default: Date.now }
-};
+// var player = {
+//     firstName: { type: Schema.Types.Mixed },
+//     firstName_en: { type: String },
+//     lastName: { type: Schema.Types.Mixed },
+//     lastName_en: { type: String },
+//     uniformNumber : { type: String },
+//     pic: { type: String },
+//     position: { type: String },
+//     personalData: { type: Schema.Types.Mixed },
+//     parserids: {  type: Schema.Types.Mixed },
+//     teamId: {
+//         type: String,
+//         ref: 'team'
+//     },
+//     created: { type: Date, default: Date.now }
+// };
 
-var playerSchema = new Schema(player);
+// var playerSchema = new Schema(player);
 
-module.exports = mongoose.model('player', playerSchema);
+// module.exports = mongoose.model('player', playerSchema);

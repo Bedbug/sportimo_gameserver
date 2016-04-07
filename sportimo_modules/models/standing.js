@@ -13,7 +13,7 @@ else {
         competitionid: { type: String, ref: 'competitions' },
         name: { type: Schema.Types.Mixed, required: true },
         teams: [{ type: Schema.Types.Mixed }],
-        visiblein: [{ type: Schema.Types.Mixed}],
+        visiblein: [String],
         parserids: { type: Array },
         created: {type:Date, default:Date.now},
         lastupdate: {type:Date, default:Date.now}

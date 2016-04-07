@@ -2,7 +2,7 @@
 var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
-    item = mongoose.models.standings,
+    item = mongoose.models.scheduled_matches,
     api = {};
 
 
@@ -15,6 +15,12 @@ api.items = function(req, res) {
 
 
     var q = item.find({ $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
+    
+    q.populate('home_team','name logo')
+        .populate('away_team','name logo')
+        .populate('competition','name logo');
+        
+    q.select('home_team home_score away_team away_score competition time status');
 
     q.exec(function(err, items) {
 
@@ -51,11 +57,17 @@ api.itemsSearch = function(req, res) {
     if (req.body.type != undefined)
         queries.type = req.body.type;
 
-    var q = item.find(queries);
+    var q = item.find(queries)
+        .populate('home_team')
+        .populate('away_team')
+        .populate('competition');
+        
+    q.select('home_team home_score away_team away_score competition time status');
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);
 
+   
     q.exec(function(err, items) {
 
         return res.send(items);
@@ -87,12 +99,12 @@ api.updateVisibility = function(req, res) {
     console.log(req.body.competitionid);
 
 
-    item.find({competitionid: req.body.competitionid}, function(err,standings) {
-        
-        if (standings) {
-            standings.forEach(function(standing) {
-                standing.visiblein = req.body.visiblein;
-                standing.save(function(err, data) {
+    item.find({ competition: req.body.competitionid }, function(err, matches) {
+
+        if (matches) {
+            matches.forEach(function(match) {
+                match.visiblein = req.body.visiblein;
+                match.save(function(err, data) {
                     if (err) {
                         res.status(500).json(data);
                         return;
@@ -162,18 +174,19 @@ api.deleteitem = function(req, res) {
 =====================  ROUTES  =====================
 */
 
-router.route('/v1/data/standings/')
-    .get(api.itemsSearch);
-
-router.post('/v1/data/standings', api.additem);
-
-router.post('/v1/data/standings/visibility', api.updateVisibility);
-
-router.route('/v1/data/standings/country/:country')
+// Request the schedule based on user's country
+router.route('/v1/data/schedule/country/:country')
     .get(api.items);
 
+router.route('/v1/data/schedule/')
+    .get(api.itemsSearch);
 
-router.route('/v1/data/standings/:id')
+router.post('/v1/data/schedule', api.additem);
+
+router.post('/v1/data/schedule/visibility', api.updateVisibility);
+
+
+router.route('/v1/data/schedule/:id')
     .get(api.item)
     .put(api.edititem)
     .delete(api.deleteitem);

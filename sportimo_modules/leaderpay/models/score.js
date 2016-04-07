@@ -16,4 +16,4 @@ var fields = {
 
 var scoreSchema = new Schema(fields);
 
-module.exports = mongoose.model('Score', scoreSchema);
+module.exports = mongoose.model('scores', scoreSchema);

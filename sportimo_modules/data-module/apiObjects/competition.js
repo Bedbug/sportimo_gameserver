@@ -1,6 +1,8 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Competition = mongoose.models.Competition,
+Competition = mongoose.models.competitions,
+Matches = mongoose.models.scheduled_matches,
+Standings = mongoose.models.standings,
 api = {},
 l=require('../config/lib');
 
@@ -49,37 +51,16 @@ api.addCompetition = function (competition,cb) {
 
 // PUT
 api.editCompetition = function (id,updateData, cb) {
-  Competition.findById(id, function (err, competition) {
+  Competition.findByIdAndUpdate(id, updateData, function (err, competition) {
    
-   if(updateData===undefined || competition===undefined){
-    return cbf(cb,'Invalid Data. Please Check competition and/or updateData fields',null); 
-  }
-  
-  
-    if(typeof updateData["name"] != 'undefined'){
-      competition["name"] = updateData["name"];
-    }
-    
-    if(typeof updateData["visiblein"] != 'undefined'){
-      competition["visiblein"] = updateData["visiblein"];
-    }
-    
-    if(typeof updateData["logo"] != 'undefined'){
-      competition["logo"] = updateData["logo"];
-    }
-    
-    if(typeof updateData["parserids"] != 'undefined'){
-      competition["parserids"] = updateData["parserids"];
-    }
-    
-    if(typeof updateData["created"] != 'undefined'){
-      competition["created"] = updateData["created"];
-    }
-    
+    return Matches.update({ competition: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
+        if(!err)
+         Standings.update({ competitionid: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
+             if(!err)
+                return cbf(cb,err,competition.toObject()); 
+         });
+    });
 
-  return competition.save(function (err) {
-    cbf(cb,err,competition.toObject()); 
-    }); //eo competition.save
   });// eo competition.find
 };
 

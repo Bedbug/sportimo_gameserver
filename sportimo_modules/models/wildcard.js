@@ -37,5 +37,5 @@ else {
         linked_event: 0
     });
     
-    module.exports = mongoose.model("wildcard", wildcard);
+    module.exports = mongoose.model("wildcards", wildcard);
 }

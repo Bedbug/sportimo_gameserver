@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Sponsor = mongoose.models.Sponsor,
+Sponsor = mongoose.models.sponsors,
 api = {},
 l=require('../config/lib');
 

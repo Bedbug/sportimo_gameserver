@@ -2,7 +2,7 @@
 var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
-    article = mongoose.models.article,
+    article = mongoose.models.articles,
     api = {};
 
 

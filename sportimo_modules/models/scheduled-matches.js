@@ -26,7 +26,11 @@ else {
     },
     start: Date,
     color: String,
-    competition: String,
+    competition: {
+            type: String,
+            ref: 'competitions'
+        },
+    visiblein: [String],
     home_score: Number,
     away_score: Number,
     match_date: Date,

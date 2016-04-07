@@ -1,6 +1,6 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Score = mongoose.models.Score,
+Score = mongoose.models.scores,
 api = {},
 l=require('../config/lib');
 

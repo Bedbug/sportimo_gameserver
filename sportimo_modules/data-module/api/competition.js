@@ -49,10 +49,13 @@ api.competition = function (req, res) {
 // PUT
 api.editCompetition = function (req, res) {
 	var id = req.params.id;
-
-	return competition.editCompetition(id,req.body.competition, function (err, data) {
+    
+    
+    
+	return competition.editCompetition(id,req.body, function (err, data) {
 		if (!err) {
-			l.p("updated competition");
+			l.p("updated competition"); 
+            
 			return res.status(200).json(data);
 		} else {
 			return res.status(500).json(err);
