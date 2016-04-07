@@ -126,6 +126,9 @@ wildcards.SetupAPIRoutes(app);
 wildcards.init();
 TestSuite.wildcards = wildcards;
 
+
+app.use('/offline_data/', require('./sportimo_modules/offline_data/api/ondemand.js'));
+
 // var Notifications = require('./sportimo_modules/notifications');
 // Notifications.SetupServer(app);
 // Notifications.setMongoConnection(mongoConnection);
