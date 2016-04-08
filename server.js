@@ -139,11 +139,13 @@ app.use('/offline_data/', require('./sportimo_modules/offline_data/api/ondemand.
 // Notifications.SetupServer(app);
 // Notifications.setMongoConnection(mongoConnection);
 
-var leaderboards = require('./sportimo_modules/leaderpay');
+var leaderboards_module = require('./sportimo_modules/leaderpay');
 
-var users = require('./sportimo_modules/users');
+var questions_module = require('./sportimo_modules/questions');
 
-var dataModule = require('./sportimo_modules/data-module');
+var users_module = require('./sportimo_modules/users');
+
+var data_module = require('./sportimo_modules/data-module');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;

@@ -21,7 +21,8 @@ var mongoose = require('mongoose'),
 var answer = new Schema({
     text: { type: Schema.Types.Mixed },
     img: String,
-    points: Number
+    points: Number,
+    answered: {type:Number,default:0}
 })
 
 var fields = {
@@ -35,6 +36,7 @@ var fields = {
     userAnswer: String,
     created: { type: Date, default: Date.now }
 };
+
 
 
 var schema = new Schema(fields);

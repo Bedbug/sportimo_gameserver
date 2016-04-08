@@ -1,0 +1,224 @@
+// Module dependencies.
+var mongoose = require('mongoose'),
+    Question = mongoose.models.questions,
+    Answer = mongoose.models.answers,
+    Scores = mongoose.models.scores,
+    Users = mongoose.models.users,
+    _ = require('lodash'),
+    redis = require('redis'),
+    api = {},
+    l = require('../config/lib');
+
+// Initialize and connect to the Redis datastore
+var redisCreds = {
+    url: 'clingfish.redistogo.com',
+    port: 9307,
+    secret: '075bc004e0e54a4a738c081bf92bc61d',
+    channel: "socketServers"
+};
+var Pub = redis.createClient(redisCreds.port, redisCreds.url);
+Pub.auth(redisCreds.secret, function(err) {
+    if (err) {
+        throw err;
+    }
+});
+
+/*
+========= [ CORE METHODS ] =========
+*/
+
+// ALL
+api.getAllQuestions = function(skip, limit, cb) {
+    var q = Question.find();
+
+    if (skip != undefined)
+        q.skip(skip * 1);
+
+    if (limit != undefined)
+        q.limit(limit * 1);
+
+    return q.exec(function(err, questions) {
+        cbf(cb, err, questions);
+    });
+};
+
+// GET
+api.getQuestion = function(id, cb) {
+
+    Question.findOne({ '_id': id }, function(err, question) {
+        cbf(cb, err, question);
+    });
+};
+
+// POST
+api.addQuestion = function(question, cb) {
+
+    if (question == 'undefined') {
+        cb('No Question Provided. Please provide valid question data.');
+    }
+
+    question = new Question(question);
+
+    question.save(function(err) {
+        cbf(cb, err, question.toObject());
+    });
+};
+
+api.userAnswerQuestion = function(answer, cb) {
+
+    if (answer == 'undefined' || _.isEmpty(answer)) {
+        cb('No answer Provided. Please provide valid answer data.');
+    }
+    else
+        Question.findOne({ '_id': answer.questionid }, function(err, question) {
+            if (question.status > 0)
+                cb('Question already answered by moderator.');
+            else {
+                _.find(question.answers, function(o) {
+                    return o._id == answer.answerid;
+                }).answered++;
+
+                question.save(function(err) { });
+
+                answer = new Answer(answer);
+                answer.save(function(err) {
+                    cbf(cb, err, answer.toObject());
+                });
+            }
+        });
+};
+
+
+
+// PUT
+api.editQuestion = function(id, updateData, cb) {
+    Question.findById(id, function(err, question) {
+
+        // First check change in status and user privilages
+        if (updateData["admin"] == true && question["status"] == 0 && updateData["status"] == 1) {
+            // then if we have a correct answer
+            if (typeof updateData["correct"] != 'undefined') {
+                question["status"] = updateData["status"];
+                question["correct"] = updateData["correct"];
+
+                // TODO: Give points to all users who answered correctly (update their score and questions_answered_correctly stat)
+                var pointsToGive = _.find(question.answers, function(o) { return o._id == updateData["correct"]; }).points;
+
+                Answer.find({ questionid: question._id, answerid: updateData["correct"] }, 'userid', function(err, ids) {
+                    var userids = _.map(ids, 'userid');
+
+                    Scores.update({ match_id: question.matchid, user_id: { $in: userids } },
+                        { $inc: { score: pointsToGive } },
+                        { safe: true, new: true, multi: true },
+                        function(err, result) {
+                            if (err)
+                                console.log(err);
+                            // TODO: Send Socket Event with the changes in the question
+                            Pub.publish("socketServers", JSON.stringify({
+                                client: {
+                                    type: "question_answered",
+                                    room: question.matchid,
+                                    data: question 
+                                }
+                            }));
+                        });
+
+                })
+            }
+
+            // TODO: Save status of the card in db
+            return question.save(function(err) {
+                cbf(cb, err, question.toObject());
+            }); //eo question.save
+
+        } else {
+
+
+
+
+            if (typeof updateData["text"] != 'undefined') {
+                question["text"] = updateData["text"];
+            }
+
+            if (typeof updateData["answers"] != 'undefined') {
+                question["answers"] = updateData["answers"];
+            }
+
+            if (typeof updateData["matchid"] != 'undefined') {
+                question["matchid"] = updateData["matchid"];
+            }
+
+            if (typeof updateData["type"] != 'undefined') {
+                question["type"] = updateData["type"];
+            }
+
+            if (typeof updateData["photo"] != 'undefined') {
+                question["photo"] = updateData["photo"];
+            }
+
+            if (typeof updateData["created"] != 'undefined') {
+                question["created"] = updateData["created"];
+            }
+
+
+            return question.save(function(err) {
+                cbf(cb, err, question.toObject());
+            }); //eo question.save
+        }
+    });// eo question.find
+};
+
+// DELETE
+api.deleteQuestion = function(id, cb) {
+    return Question.findById(id, function(err, question) {
+        return question.remove(function(err) {
+            cbf(cb, err, true);
+        });
+    });
+};
+
+
+
+/*
+========= [ SPECIAL METHODS ] =========
+*/
+
+
+//TEST
+api.test = function(cb) {
+    cbf(cb, false, { result: 'ok' });
+};
+
+
+api.deleteAllQuestions = function(cb) {
+    return Question.remove({}, function(err) {
+        cbf(cb, err, true);
+    });
+};
+
+
+
+
+
+
+/*
+========= [ UTILITY METHODS ] =========
+*/
+
+/** Callback Helper
+ * @param  {Function} - Callback Function
+ * @param  {Object} - The Error Object
+ * @param  {Object} - Data Object
+ * @return {Function} - Callback
+ */
+
+var cbf = function(cb, err, data) {
+    if (cb && typeof (cb) == 'function') {
+        if (err) cb(err);
+        else cb(false, data);
+    }
+};
+
+
+
+module.exports = api;
