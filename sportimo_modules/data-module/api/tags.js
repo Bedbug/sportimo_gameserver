@@ -2,8 +2,8 @@
 var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
-    player = mongoose.models.player,
-    team = mongoose.models.team,
+    player = mongoose.models.players,
+    team = mongoose.models.teams,
     match = mongoose.models.scheduled_matches,
     api = {},
     tags = [];

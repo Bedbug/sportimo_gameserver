@@ -10,13 +10,16 @@ var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify 
 var jwtDecode = require('jwt-decode');
 var config = require('./config'); // get our config file
 var User = require('../models/user'); // get our mongoose model
+var Message = require('../models/message'); // get our mongoose model
 
 
 var app = null;
+var tools = {};
+
 
 try {
     app = require('./../../server');
-
+    module.exports = tools;
 } catch (ex) {
     // Start server
     app = module.exports = exports.app = express.Router();
@@ -197,9 +200,49 @@ apiRoutes.put('/v1/users/:id', function(req, res) {
             res.status(500).send(err);
         } else {
             res.send({ success: true });
-}
+        }
     });
 });
+
+
+
+//Sends message to routers
+apiRoutes.post('/v1/users/messages', function(req, res) {
+
+    tools.SendMessageToInbox(req.body, function(err, data) {
+        if (!err)
+            res.send(data);
+        else
+            res.sendStatus(500).send(err);
+    })
+
+});
+
+tools.SendMessageToInbox = function(msgData, callback) {
+
+    //First create the message
+    var newMessage = new Message(msgData);
+     newMessage.save(function(err, message) {
+        
+        if (err)  callback(err);
+        else {         
+            var querry = {};
+            
+            if (msgData.recipients) querry._id = { $in: msgData.recipients };
+            // if (msgData.id) querry._id = msgData.id;
+
+            User.update(querry,
+                { $push: { inbox: message._id}, $inc: { unread: 1 } },
+                { safe: true, new: true, multi: true },
+                function(err, model) {
+                    console.log("err:"+err);
+                    callback(err, model);
+                }
+            );
+        }
+    });
+
+}
 
 // apply the routes to our application with the prefix /api
 app.use('/', apiRoutes);

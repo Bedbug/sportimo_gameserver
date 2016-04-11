@@ -18,6 +18,12 @@ var UserSchema = new Schema({
         required: true
     },
     picture: String,
+    inbox: [{
+        type:String,
+        ref: 'messages'
+    }],
+    unread: Number,
+    pushToken: String,
     country: String,
     admin: Boolean
 

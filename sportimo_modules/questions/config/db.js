@@ -16,7 +16,6 @@ var uristring = "mongodb://" + login + config.host + port + "/" + config.db;
 var mongoOptions = { db: { safe: true } };
 
 // Connect to Database
-if (mongoose.connection.readyState == 0)
 mongoose.connect(uristring, mongoOptions, function (err, res) {
   if(err){
     console.log('ERROR connecting to: ' + uristring + '. ' + err);

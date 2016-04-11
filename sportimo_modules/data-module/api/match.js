@@ -4,26 +4,68 @@ var express = require('express'),
     mongoose = require('mongoose'),
     Matches = mongoose.models.scheduled_matches,
     Questions = mongoose.models.questions,
+    Answers = mongoose.models.answers,
     Scores = mongoose.models.scores,
-    Cards = 
-    api = {};
+    _ = require('lodash'),
+        api = {};
 
 
 // GET
 api.item = function(req, res) {
     var gameid = req.params.gameid;
     var userid = req.params.userid;
+
+    var game = {
+        userScore: 0,
+        questions: [],
+        playedCards: []
+    };
+
+    // First we get the match data
     Matches.findById(gameid)
-        .populate('home_team','name logo')
-        .populate('away_team','name logo')
-        .exec(function(err,match){
-        if (!err) {
-            return res.status(200).json(match);
-        } else {
-            return res.status(500).json(err);
-        }
-    });
-  
+        .select('home_team away_team home_score away_score time isTimeCounting stats timeline start')
+        .populate('home_team', 'name logo')
+        .populate('away_team', 'name logo')
+        .exec(function(err, match) {
+            if (!err) {
+                // Assign the data if everything is ok
+                game.matchData = match;
+                // Now lets get the questions for the match
+                Questions.find({ matchid: match._id }, function(err, questions) {
+                    if (!err) {                       
+                        // And the answers
+                        Answers.find({userid:userid, matchid: match._id }, function(err, answers) {                            
+                            // Now that we have both we should marry them 
+                            _.each(questions,function(question){                                
+                                var answer = _.find(answers,function(o){
+                                     return o.questionid == question._id});                                
+                                if(answer){
+                                    question.userAnswer = answer.answerid;
+                                }
+                            })
+                            
+                            game.questions = questions;
+                            
+                            Scores.find({match_id: gameid, user_id: userid},function(err, result){
+                                if (!err) {
+                                   if(result[0])
+                                    game.userScore = result[0].score;
+                                    return res.status(200).json(game);   
+                                }
+                            })
+                            
+                        });
+                
+                }
+                })
+
+
+
+            } else {
+                return res.status(500).json(err);
+            }
+        });
+
 };
 
 
@@ -111,7 +153,7 @@ api.item = function(req, res) {
 
 
 //     item.find({competitionid: req.body.competitionid}, function(err,standings) {
-        
+
 //         if (standings) {
 //             standings.forEach(function(standing) {
 //                 standing.visiblein = req.body.visiblein;
