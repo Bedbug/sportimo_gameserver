@@ -47,7 +47,7 @@ module.exports = {
                             "eventStatusId": 4,
                             "period": 2,
                             "time": {},
-                            "isActive": false,
+                            "isActive": true,
                             "defendingXZeroTeamId": null,
                             "name": "Final"
                         },

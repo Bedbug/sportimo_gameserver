@@ -9,6 +9,7 @@
 var Sports = require('./sports-settings');
 var StatsHelper = require('./stats-handler');
 var moment = require('moment');
+var log = require('winston');
 var _ = require('lodash'),
     StatMods = require('../../models/stats-mod');
 
@@ -23,11 +24,12 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 });
 
 
-var matchModule = function (match, MatchTimers, PubChannel, log) {
+var matchModule = function (match, PubChannel) {
     
     var HookedMatch = {}; // = match;
+    var tick = null;    // an internal timer that looks for wildcards to resolve.
 
-    HookedMatch.MODERATION_SERVICES = [];
+    HookedMatch.moderationServices = [];
 
     // Holds the interval that counts time
     // HookedMatch.Time_interval = null;
@@ -62,6 +64,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
      **  -------------
      */
 
+    
     /*  SetModerationService
         Here we set the moderation service for the game. "service" is the object of the corresponding
         service. 
@@ -73,16 +76,14 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             "interval": 500 
         } 
     */
-
-    
-    HookedMatch.AddModerationService = function (service, res) {
+    HookedMatch.AddModerationService = function (service) {
 
         // Check if service of same type already exists 
         if (_.findWhere(HookedMatch.moderation, {
                 type: service.type
             })) {
-            log("Service already active", "core");
-            return res.send("Service type already active. Please remove the old one first.");
+            log.info("Service already active");
+            return new Error("Service type already active. Please remove the old one first.");
         } else {
             HookedMatch.moderation.push(service);
             HookedMatch.StartService(service);
@@ -94,13 +95,12 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         _.merge(newService, service);
 
-        HookedMatch.MODERATION_SERVICES.push(newService);
+        HookedMatch.moderationServices.push(newService);
 
-        // init the service by passing this as a context reference for internal communication (sending events)
-        //HookedMatch.MODERATION_SERVICES[HookedMatch.MODERATION_SERVICES.length - 1].init(this);
+        // init the service by passing this.data as a context reference for internal communication (sending events)
         newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {
             
-            // Register this match module to the events emitted by the new service, but first filter only those relative to its match id. 
+            // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             newService.emitter.on('matchEvent', function(matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id) 
                     HookedMatch.AddEventCore(matchEvent);
@@ -121,7 +121,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     });
 
 
-    HookedMatch.removeSegment = function (data, res) {
+    HookedMatch.removeSegment = function (data) {
 
         this.data.timeline.splice(data.index, 1);
 
@@ -129,11 +129,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         this.data.markModified('timeline');
         this.data.save();
-
-        res.status(200).send(HookedMatch);
+        
+        return HookedMatch;
     }
 
-    HookedMatch.updateTimes = function (data, res) {
+    HookedMatch.updateTimes = function (data) {
         console.log(data);
         // make checks
         if (this.data.timeline[data.index].start != data.data.start) {
@@ -156,7 +156,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
             this.data.save();
         }
 
-        res.status(200).send(HookedMatch);
+        return HookedMatch;
     }
 
     /*  AdvanceSegment
@@ -164,11 +164,11 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         Depending on setting, here will determine if a timer should begin counting aand hold the
         game's time.
     */
-    HookedMatch.AdvanceSegment = function (event, res) {
+    HookedMatch.AdvanceSegment = function (event) {
 
         HookedMatch.AdvanceSegmentCore(event);
 
-        return res.status(200).send(HookedMatch);
+        return HookedMatch;
     }
     
     // This is the core used by both the module API and the rss-feed service.
@@ -186,83 +186,12 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         });
         this.data.timeline[this.data.state].start = moment().utc().format();
 
-        //  Does it have initial time?
-        // if (HookedMatch.sport.segments[this.data.state].initialTime)
-        //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
-
-        //     if (HookedMatch.sport.segments[this.data.state].initialTime)
-        //     this.data.time = HookedMatch.sport.segments[this.data.state].initialTime;
-        // else
-        //     this.data.time = "";
-
-        // HookedMatch.Match_timer = "";
-
-        this.addTimeHooks();
-
         this.data.markModified('timeline');
         this.data.save();
     };
 
 
 
-    HookedMatch.addTimeHooks = function () {
-
-        // In Case match State is erroneous
-        if (this.data.state > this.data.timeline.length - 1)
-            this.data.state = this.data.timeline.length - 1;
-
-        //  Should this segment be timed?
-        if (HookedMatch.sport.segments[this.data.state].timed) {
-            if (HookedMatch.sport.segments[HookedMatch.data.state]) {
-                var now = moment().utc();
-                var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
-                var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
-                var d = moment.duration(ms);
-
-
-                HookedMatch.Match_timer = HookedMatch.sport.segments[this.data.state].timed ? d.format("mm:ss", {
-                    trim: false
-                }) : "";
-                HookedMatch.data.time = (HookedMatch.sport.segments[this.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-
-                if (!HookedMatch.sport.time_dependant) { //  Is Time controlled?
-                    MatchTimers[this.data.match_id] = setInterval(function () {
-                        var now = moment().utc();
-                        var then = moment(HookedMatch.data.timeline[HookedMatch.data.state].start);
-                        var ms = moment(now, "DD/MM/YYYY HH:mm:ss").diff(moment(then, "DD/MM/YYYY HH:mm:ss"));
-                        var d = moment.duration(ms);
-                        HookedMatch.Match_timer = d.format("mm:ss", {
-                            trim: false
-                        });
-                        // console.log(d.format("mm"));
-                        //  console.log(now);
-                        //  console.log(then);
-
-                        HookedMatch.data.time = (HookedMatch.sport.segments[HookedMatch.data.state].initialTime || 0) + parseInt(d.add(1, "minute").format("m")) + "";
-
-                    }, 1000);
-                }
-            } else {
-                clearInterval(MatchTimers[this.data.match_id]);
-            }
-        } else {
-            clearInterval(MatchTimers[this.data.match_id]);
-        }
-    }
-
-
-    /*  ToggleTimer
-        Toggles the game's timer state.
-    */
-    HookedMatch.ToggleTimer = function () {
-        if (this.Time_interval) {
-            clearInterval(MatchTimers[this.data.match_id]);
-        } else {
-            MatchTimers[this.data.match_id] = setInterval(function () {
-                HookedMatch.countTime();
-            }, 1000)
-        }
-    }
     HookedMatch.GetCurrentSegment = function () {
         // We assign the name of the segment to the currentSegment var
         return HookedMatch.Sport.segments[HookedMatch.state].name;
@@ -280,7 +209,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         HookedMatch.AddEventCore(event);
         
         // 4. return match to Sender
-        return res.status(200).send(HookedMatch); //HookedMatch
+        return HookedMatch;
 
     };
 
@@ -295,22 +224,22 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         var evtObject = event.data;
 
         // Parses the event based on sport and makes changes in the match instance
-        evtObject.linked_mods = StatsHelper.Parse(event, match, log);
+        evtObject.linked_mods = StatsHelper.Parse(event, match);
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
-            log("Received Timeline event", "info");
+            log.info("Received Timeline event");
             this.data.timeline[this.data.state].events.push(evtObject);
         }
 
         // 2. broadcast event on pub/sub channel
-        log("Pushing event to Redis Pub/Sub channel", "info");
+        log.info("Pushing event to Redis Pub/Sub channel");
         PubChannel.publish("socketServers", JSON.stringify(event));
 
         // 3. save match to db
         if (evtObject.timeline_event) {
             this.data.markModified('timeline');
-            log("Updating database", "info");
+            log.info("Updating database");
         }
 
         StatsHelper.UpsertStat(match.id, {
@@ -325,10 +254,10 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
     /*  RemoveEvent
      
     */
-    HookedMatch.RemoveEvent = function (event, res) {
+    HookedMatch.RemoveEvent = function (event) {
 
         // Parses the event based on sport and makes changes in the match instance
-        StatsHelper.Parse(event, match, log);
+        StatsHelper.Parse(event, match);
 
 
         var eventObj = _.findWhere(this.data.timeline[event.data.state].events, {
@@ -350,7 +279,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         // 3. save match to db
         this.data.markModified('timeline');
-        log("Updating database", "info");
+        log.info("Updating database");
 
         StatsHelper.UpsertStat(match.id, {
             events_sent: 1
@@ -360,17 +289,16 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         this.data.save();
 
         // 4. return match to Sender
-        return HANDLE_EVENT_REMOVAL(event.data, res, this);
-        //        res.status(200).send(this);
+        return HANDLE_EVENT_REMOVAL(event.data, this);
     }
 
     /*  RemoveEvent
      
     */
-    HookedMatch.UpdateEvent = function (event, res) {
+    HookedMatch.UpdateEvent = function (event) {
 
         // Parses the event based on sport and makes changes in the match instance
-        StatsHelper.Parse(event, match, log);
+        StatsHelper.Parse(event, match);
 
         for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
             if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
@@ -384,7 +312,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
         // 3. save match to db
         this.data.markModified('timeline');
-        log("Updating database", "info");
+        log.info("Updating database");
 
         StatsHelper.UpsertStat(match.id, {
             events_sent: 1
@@ -394,10 +322,13 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
         this.data.save();
 
         // 4. return match to Sender
-        return res.status(200).send();
+        return HookedMatch;
     }
 
-    HookedMatch.addTimeHooks();
+    // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
+    HookedMatch.Terminate = function() {
+        
+    }
 
     return HookedMatch;
 }
@@ -405,7 +336,7 @@ var matchModule = function (match, MatchTimers, PubChannel, log) {
 
 // TODO: [x] Stats update according to the removal of a previous stat modifier 
 // TODO: Add validation after event removal and stats update. There should be a looped process wher each card player after the removed event is validated for win.
-var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
+var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
 
     var finished = linked.linked_mods.length;
 
@@ -439,8 +370,7 @@ var HANDLE_EVENT_REMOVAL = function (linked, res, returnData) {
                 finished--;
 
                 if (finished == 0)
-                    res.status(200).send(returnData);
-
+                    return returnData;
             });
         });
     });

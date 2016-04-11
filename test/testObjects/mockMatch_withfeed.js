@@ -11,10 +11,7 @@
         "destroyOnDelete": true
     },
     "state": 0,
-    "competition": "epl",
-    // "start": {
-    //     "$date": "2016-03-19T01:25:00.000Z"
-    // },
+    "competition": "56f4800fe4b02f2226646297",
     "start": "2016-03-19T13:55:00.000Z",
 	"moderation": [ {
             "type": "rss-feed",

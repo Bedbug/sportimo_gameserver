@@ -46,7 +46,8 @@ var express = require("express"),
     http = require('http'),
     bodyParser = require('body-parser'),
     redis = require('redis'),
-    mongoose = require('mongoose');
+    mongoose = require('mongoose'),
+    winston = require('winston');
 
 
 var TestSuite = {
@@ -160,6 +161,51 @@ app.use(function (req, res, next) {
 app.get('/', function (req, res, next) {
     res.send(200, "The Game Server is running smoothly.");
 });
+
+
+
+/*  Winston Logger Configuration */
+
+var logger = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+logger.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'warn',
+    prettyPrint: true,
+    colorize: 'level'
+});
+
+if (process.env.NODE_ENV == "production") {
+    logger.add(winston.transports.File, {
+        prettyPrint: true,
+        level: 'core',
+        silent: false,
+        colorize: false,
+        timestamp: true,
+        filename: 'debug.log',
+        maxsize: 40000,
+        maxFiles: 10,
+        json: false
+    });
+}
+
 
 
 TestSuite.server = app;

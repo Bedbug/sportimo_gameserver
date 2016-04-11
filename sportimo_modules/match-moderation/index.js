@@ -8,25 +8,16 @@
 
 /*  Libraries   */
 var path = require('path'),
-    fs = require('fs'),
-    needle = require('needle');
-
-var moment = require('moment');
-require("moment-duration-format");
+    fs = require('fs');
 
 var _ = require('lodash');
 var bodyParser = require('body-parser');
-var winston = require('winston');
+var log = require('winston');
 
 
 
 // Sportimo Moderation sub-Modules
 var match_module = require('./lib/match-module.js');
-//var StatsHelper = require('./lib/events-stats-analyzer');
-//var Sports = require('./lib/sports-settings');
-
-/*   Module Variables  */
-var MatchTimers = [];
 
 /*Bootstrap models*/
 var team = null,
@@ -65,7 +56,7 @@ var ModerationModule = {
         });
         team = this.mongoose.models.team;
         scheduled_matches = this.mongoose.models.scheduled_matches;
-        log("Connected to MongoDB", "core");
+        log.info("Connected to MongoDB");
     },
     SetupRedis: function (Pub, Sub, Channel) {
 
@@ -84,23 +75,23 @@ var ModerationModule = {
         }, 30000);
 
         RedisClientPub.on("error", function (err) {
-            log("{''Error'': ''" + err + "''}");
+            log.error("{''Error'': ''" + err + "''}");
         });
 
         RedisClientSub.on("error", function (err) {
-            log("{''Error'': ''" + err + "''}");
+            log.error("{''Error'': ''" + err + "''}");
         });
 
         RedisClientSub.on("subscribe", function (channel, count) {
-            log("Subscribed to Sportimo Events PUB/SUB channel");
+            log.error("Subscribed to Sportimo Events PUB/SUB channel");
         });
 
         RedisClientSub.on("unsubscribe", function (channel, count) {
-            log("Subscribed from Sportimo Events PUB/SUB channel");
+            log.error("Subscribed from Sportimo Events PUB/SUB channel");
         });
 
         RedisClientSub.on("end", function () {
-            log("{Connection ended}");
+            log.error("{Connection ended}");
         });
 
         RedisClientSub.subscribe(Channel);
@@ -109,8 +100,8 @@ var ModerationModule = {
             if (JSON.parse(message).server)
                 return;
 
-            log("[Redis] : Event has come through the channel.", "info");
-            log("[Redis] :" + message, "debug");
+            log.info("[Redis] : Event has come through the channel.");
+            log.debug("[Redis] :" + message);
         });
     },
     SetupAPIRoutes: function (server) {
@@ -129,31 +120,27 @@ var ModerationModule = {
         });
 
 
-        log("Setting up [Manual] moderation routes");
+        log.info("Setting up [Manual] moderation routes");
         var apiPath = path.join(__dirname, 'api');
         fs.readdirSync(apiPath).forEach(function (file) {
-            server.use('/', require(apiPath + '/' + file)(ModerationModule, log));
+            server.use('/', require(apiPath + '/' + file)(ModerationModule));
         });
     },
-    create: function (mongoMatchID, callbackres) {
-        if (!mongoMatchID) {
-            return callbackres.status(404).send("Match ID cannot be empty");
-        }
+    create: function (mongoMatchID) {
+        if (!mongoMatchID) 
+            return new Error("Match ID cannot be empty");
 
         var oldMatch = ModerationModule.GetMatch(mongoMatchID);
         // safeguard for duplicates
         if (oldMatch) {
-            log("Match with the same ID already exists. Hooking.", "info");
+            log.info("Match with the same ID already exists. Hooking.");
 
-            if (callbackres)
-                callbackres.send(oldMatch);
+            return oldMatch;
         } else {
-
-            ModerationModule.LoadMatchFromDB(mongoMatchID, callbackres);
-
+            return ModerationModule.LoadMatchFromDB(mongoMatchID);
         }
     },
-    LoadMatchFromDB: function (matchid, res) {
+    LoadMatchFromDB: function (matchid, cbk) {
      
         if (!this.mock) {
             // remove match in case it already exists
@@ -168,38 +155,29 @@ var ModerationModule = {
                 .populate('home_team')
                 .populate('away_team')
                 .exec(function (err, match) {
-                   
-                    //if (err) return log(err, "error");
-                    if (match) {
-                        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);                                    
-                        ModerationModule.ModeratedMatches.push(hookedMatch);
-
-                        if (res)
-                            res.status(200).send(hookedMatch);
-
-                        log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
-                        return hookedMatch;
-                    } else {
-                        console.log(ModerationModule.count, "info");
-                        res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
-                        return null;
+                    if (err)
+                        return cbk(err);
+                    
+                    if (!match) {
+                        log.info(ModerationModule.count);
+                        return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                     }
+                    
+                    var hookedMatch = new match_module(match, RedisClientPub);                                    
+                    ModerationModule.ModeratedMatches.push(hookedMatch);
+                    log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
+                    return cbk(null, hookedMatch);
                 });
         } else {
             var match = new scheduled_matches(mockMatch);
-            var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
+            var hookedMatch = new match_module(match, RedisClientPub);
             ModerationModule.ModeratedMatches.push(hookedMatch);
-
-            if (res)
-                res.send(hookedMatch);
-
-            log("Found match with ID [" + hookedMatch.id + "]. Hooking on it.", "info");
-            return hookedMatch;
+            log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
+            return cbk(null, hookedMatch);
         }
     },
     GetMatch: function (matchID) {
         var match = _.findWhere(ModerationModule.ModeratedMatches, {id: matchID});
-        // if(match) console.log("We have a match");
         return match;
     }
     //    InjectEvent: function (evnt, res) {
@@ -210,7 +188,7 @@ var ModerationModule = {
 
 }
 
-ModerationModule.GetSchedule = function (res) {
+ModerationModule.GetSchedule = function (cbk) {
     scheduled_matches
         .find({})
         .populate('home_team')
@@ -218,12 +196,11 @@ ModerationModule.GetSchedule = function (res) {
         .exec(function (err, schedule) {
             if (err) 
             {
-                log(err, "error");
-                return res.status(500).json({error: err.message});
+                log.error(err);
+                return  cbk(err);
             }
-            if (schedule) {
-                res.send(schedule);
-            }
+            
+            cbk(null, schedule);
         });
 }
 
@@ -233,7 +210,7 @@ ModerationModule.GetSchedule = function (res) {
 
 var objectAssign = require('object-assign');
 
-ModerationModule.AddScheduleMatch = function (match, res) {
+ModerationModule.AddScheduleMatch = function (match, cbk) {
     var matchTemplate = require('./mocks/empty-match');
     
     matchTemplate = objectAssign(matchTemplate, match);
@@ -244,9 +221,14 @@ ModerationModule.AddScheduleMatch = function (match, res) {
     newMatch.save(function (er, saved) {
      
         if (er)
-            res.sendStatus(500).json({error: er.message});
-      
-        ModerationModule.LoadMatchFromDB(saved._id, res);
+            return cbk(er);
+        ModerationModule.LoadMatchFromDB(saved._id, function(err, match) {
+            if (err)
+                return cbk(err);
+                
+            cbk(null, match);
+        });
+        
     });
 }
 
@@ -254,26 +236,19 @@ ModerationModule.AddScheduleMatch = function (match, res) {
 /**
  * Adds a new match to the schedule.
  */
-ModerationModule.UpdateScheduleMatch = function (match, res) {
-    scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, function (e, r) {
-        if (e)
-            console.log(e);
-        else {
-            res.send(r);
-        }
-        // ModerationModule.LoadMatchFromDB(match._id, res);
-    });
+ModerationModule.UpdateScheduleMatch = function (match, cbk) {
+    scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, cbk);
 }
 
 /**
  * Adds a new match to the schedule.
  */
-ModerationModule.RemoveScheduleMatch = function (id, res) {
+ModerationModule.RemoveScheduleMatch = function (id, cbk) {
     // Delete from database
     ModerationModule.GetMatch(id).data.remove();
     // Remove from list in memory
     _.remove(ModerationModule.ModeratedMatches, { id: id });
-    res.send();
+    cbk();
 }
 
 /* The basic match class.
@@ -322,17 +297,17 @@ function initModule(done) {
             .populate('home_team')
             .populate('away_team')
             .exec(function (err, matches) {
-                if (err) return log(err, "error");
+                if (err) 
+                    return log.error(err);
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
-                        // console.log(match);
-                        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
+                        var hookedMatch = new match_module(match, RedisClientPub);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
-                        log("Found match with ID [" + hookedMatch.id + "]. Creating match instance", "info");
+                        log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
                     })
                 } else {
-                    log("No scheduled matches could be found in the database.");
+                    log.warn("No scheduled matches could be found in the database.");
                 }
 
                 // Callback we are done for whomever needs it
@@ -347,9 +322,9 @@ function initModule(done) {
 
         var match = new scheduled_matches(mockMatch);
 
-        var hookedMatch = new match_module(match, MatchTimers, RedisClientPub, log);
+        var hookedMatch = new match_module(match, RedisClientPub);
         this.ModeratedMatches.push(hookedMatch);
-        log("Mock match created with ID [" + hookedMatch.id + "].", "info");
+        log.info("Mock match created with ID [" + hookedMatch.id + "].");
 
         // Callback we are done for whomever needs it
         if (ModerationModule.callback != null)
@@ -360,52 +335,6 @@ function initModule(done) {
 // A Mock Match object in case we need it for testing
 var mockMatch = require('./mocks/mock-match');
 
-/*  Winston Logger  */
-var logger = new (winston.Logger)({
-    levels: {
-        prompt: 6,
-        debug: 5,
-        info: 4,
-        core: 3,
-        warn: 1,
-        error: 0
-    },
-    colors: {
-        prompt: 'grey',
-        debug: 'blue',
-        info: 'green',
-        core: 'magenta',
-        warn: 'yellow',
-        error: 'red'
-    }
-});
 
-logger.add(winston.transports.Console, {
-    timestamp: true,
-    level: ModerationModule.testing ? 'warn' : (process.env.LOG_LEVEL || 'info'),
-    prettyPrint: true,
-    colorize: 'level'
-});
-
-if (process.env.NODE_ENV == "production") {
-    logger.add(winston.transports.File, {
-        prettyPrint: true,
-        level: 'core',
-        silent: false,
-        colorize: false,
-        timestamp: true,
-        filename: 'debug.log',
-        maxsize: 40000,
-        maxFiles: 10,
-        json: false
-    });
-}
-
-function log(text, level) {
-    if (!ModerationModule.testing)
-        console.log("[Moderation Module] " + text);
-    // var loglevel = level || 'core';
-    // logger.log(loglevel, "[Moderation Module] " + text);
-}
 
 module.exports = ModerationModule;

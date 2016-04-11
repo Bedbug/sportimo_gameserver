@@ -1,6 +1,7 @@
 var _ = require('lodash'),
     StatMods = require('../../models/stats-mod'),
-    moment = require('moment');
+    moment = require('moment'),
+    log = require('winston');
 
 /**
  * Stats Analyzer - is a layered service in between the incomming call from the moderation service
@@ -31,11 +32,10 @@ var linked_stat_mods = [];
 var parsers = {
     e: {},
     soccer: {
-        Add: function (event, match, log) {
+        Add: function (event, match) {
             linked_stat_mods = [];
             CurrentMatch = match;
             StatsMethods.toObject(event);
-            Log = log;
 
             var evtData = event.data;
 
@@ -50,11 +50,10 @@ var parsers = {
             return linked_stat_mods;
 
         },
-        Update: function (event, match, log) {
+        Update: function (event, match) {
             linked_stat_mods = [];
             CurrentMatch = match;
             StatsMethods.toObject(event);
-            Log = log;
 
             var newEvent = event.data;
             var previousEvent = _.find(match.timeline[newEvent.state].events, {
@@ -64,15 +63,14 @@ var parsers = {
 
             this.Delete({
                 data: previousEvent
-            }, match, log);
-            this.Add(event, match, log);
+            }, match);
+            this.Add(event, match);
 
         },
-        Delete: function (event, match, log) {
+        Delete: function (event, match) {
             linked_stat_mods = [];
             CurrentMatch = match;
             StatsMethods.toObject(event);
-            Log = log;
 
             var evtData = event.data;
             
@@ -138,7 +136,7 @@ var StatsMethods = {
                     // console.log(newStatMod);
                     newStatMod.save(function (err) {
                         if (err)
-                            console.log("error: " + err);
+                            log.error(err.message);
                         else {
                             // console.log("pushed: " + newStatMod._id);
 
@@ -174,7 +172,7 @@ var StatsMethods = {
 
                     newStatMod.save(function (err) {
                         if (err)
-                            console.log("error: " + err);
+                            log.error(err);
                         else {
 
                             // console.log("pushed: " + newStatMod._id);
@@ -258,8 +256,8 @@ var StatsMethods = {
 }
 
 var StatsAnalyzer = {
-    Parse: function (event, match, log) {
-        return parsers[match.sport][event.type](event, match, log);
+    Parse: function (event, match) {
+        return parsers[match.sport][event.type](event, match);
     },
     UpsertStat: function (id, stat, stats) {
         if (stats) CurrentMatch = stats;
@@ -269,10 +267,3 @@ var StatsAnalyzer = {
 
 
 module.exports = StatsAnalyzer;
-
-
-
-// log("[Stats Analyzer] "+ match.sport,"info");
-// 			switch(event.type){
-
-// 			}

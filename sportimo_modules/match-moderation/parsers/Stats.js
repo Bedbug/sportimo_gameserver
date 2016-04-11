@@ -64,16 +64,17 @@ Parser.scheduledTask = null;
 // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
 var eventFeedSnapshot = { };
 
-// the parser would like to know the match parserid
+// the parser upon initialization will inquire about the match parserid
 var matchParserId = null;
 
-// ToDo: the parser would like to know all team players and their parserids.
+// the parser upon initialization will inquire about all team players and their parserids.
 var matchPlayersLookup = {};
 
-// ToDo: the parser would like to know the 2 teams (home and away) parserids
+// the parser upon initialization will inquire about the 2 teams (home and away) parserids
 var matchTeamsLookup = {};
 
-
+// the parser upon initialization will inquire about the competition mappings
+var league = null;
             
 var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28,30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
 var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
@@ -94,14 +95,6 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
         
     matchParserId = Parser.matchHandler.parserids[configuration.parserIdName];
     
-    // Schedule match feed event calls
-    if (Parser.matchHandler.start)
-    {
-        Parser.scheduledTask = scheduler.scheduleJob(Parser.matchHandler.start, function()
-        {
-            Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
-        });
-    }
     
     // Set the team ids and parserids mapping
     // var homeTeam = _.cloneDeep(matchContext.home_team);
@@ -132,6 +125,40 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 response['matchType'] = 'away_team';
                 matchTeamsLookup[response.parserids[Parser.Name]] = response;
                 return callback();
+            });
+        },
+        function(callback) {
+            feedServiceContext.LoadCompetition(matchContext.competition, function(error, response) {
+                if (error) 
+                    return callback(error);
+                    
+                league = response;
+                
+                // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
+                GetMatchStatus(league.parserids[Parser.Name], matchParserId, function(err, isActive, startDate) {
+                    if (err)
+                        return callback();
+                    
+                    // If the match has started already, then circumvent startTime
+                    if (isActive) 
+                    {
+                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
+                    }
+                    else
+                    {
+                        // Schedule match feed event calls
+                        var scheduleDate = Parser.matchHandler.start || startDate;
+                        if (scheduleDate)
+                        {
+                            Parser.scheduledTask = scheduler.scheduleJob(scheduleDate, function()
+                            {
+                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
+                            });
+                        }
+                    }
+                    
+                    return callback();
+                });
             });
         },
         function(callback) {
@@ -192,7 +219,7 @@ var GetMatchEvents = function(leagueName, matchId, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature; // &box=true for boxing statistics
     
-    needle.get(url, function(error, response)
+    needle.get(url, { timeout: 50000 }, function(error, response)
     {
         if (error)
             return callback(error);
@@ -201,6 +228,27 @@ var GetMatchEvents = function(leagueName, matchId, callback)
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
             callback(null, events, teams, matchStatus);
+        }
+        catch(err) {
+            return callback(err);
+        }
+    });        
+};
+
+
+var GetMatchStatus = function(leagueName, matchId, callback)
+{
+    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    var url = configuration.urlPrefix + leagueName + "/scores/" + matchId + "?" + signature; 
+    
+    needle.get(url, { timeout: 30000 }, function(error, response)
+    {
+        if (error)
+            return callback(error);
+        try {
+            var status = response.body.apiResults[0].league.season.eventType[0].events[0].startDate[1];
+            var isActive = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus.isActive;
+            callback(null, isActive, status);
         }
         catch(err) {
             return callback(err);
@@ -288,7 +336,7 @@ Parser.TickMatchFeed = function() {
     if (Parser.isPaused == true)
         return;
     
-    var leagueName = Parser.matchHandler.competition;
+    var leagueName = league.parserids[Parser.Name];
     
     GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
         if (error)
@@ -337,8 +385,11 @@ Parser.TickMatchFeed = function() {
         // Game Over?
         if (lastEvent.playEvent.playEventId == 10)
         {
+            // End recurring task
             clearInterval(Parser.recurringTask);
-            Parser.scheduledTask.cancel();
+            // Cancel scheduled task, if existent
+            if (Parser.scheduledTask)
+                Parser.scheduledTask.cancel();
             // Send an event that the match is ended.
             Parser.feedService.EndOfMatch(Parser.matchHandler);
         }

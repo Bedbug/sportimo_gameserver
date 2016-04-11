@@ -1,3 +1,5 @@
+'use strict';
+
 var expect = require('chai').expect,
     request = require('supertest'),
     mitm = require('mitm'),
@@ -32,15 +34,15 @@ var removeEventData = {
 // mockgoose(mongoose);  
 
 
-   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
-   // Set the match start 10  seconds from now
-   mockMatch.start.setMinutes(mockMatch.start.getMinutes() + 1);
+//   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
+//   // Set the match start 10  seconds from now
+//   mockMatch.start.setMinutes(mockMatch.start.getMinutes() + 1);
 
 
 
 /*
 describe('Unit-Test the rss-service and Parser modules', function() {
-    var service = require("../sportimo_modules/match-moderation/services/rss-feed");
+    let service = require("../sportimo_modules/match-moderation/services/rss-feed");
     service.parsername = "Stats";
 
    
@@ -50,23 +52,19 @@ describe('Unit-Test the rss-service and Parser modules', function() {
     afterEach(function() { interceptor.disable() });
    
    
+    let serviceInitialized = false;
+    service.init(mockMatch, function(err, done) {
+        if (err) {
+            console.log(err.message);
+            return;
+        }
+        serviceInitialized = true;
+    });
    
-   service.init(mockMatch, function(err) {
-        it('should have a service started without errors', function(done) {
-            expect(!err).to.be.equal(true);
-            done();
-        });
-   });
    
-   it('should have a service started with a valid parser', function() {
-       //expect(err).to.be.equal(null);
-       expect(service.match_module).to.not.be.equal(null);
-       expect(service.parser).to.not.be.equal(null);
-   });
-   
-    var segmentEventsNumber = 0;
-    var eventsNumber = 0;
-    var endOfMatch = false;
+    let segmentEventsNumber = 0;
+    let eventsNumber = 0;
+    let endOfMatch = false;
     
     service.emitter.on('nextMatchSegment', function(match) {
         segmentEventsNumber ++;
@@ -81,18 +79,30 @@ describe('Unit-Test the rss-service and Parser modules', function() {
         assert(false, 'An error event just came in: ' + error.message);
     });
 
+    var matchResponseEvents = matchResponse.apiResults[0].league.season.eventType[0].events[0].pbp;
+    
     it('the service emitter ended within time', function(done) { 
         var timeout = setTimeout(function() {
             done();
-        }, 120000);
+        }, 60000);
         
         // http request interception: Return ready-made responses for known endpoints
         // see: https://github.com/moll/node-mitm
+        var responseIndex = 1;
         interceptor.on('request', function(req, res) {
             var uri = url.parse(req.url);
             if (req.headers.host == 'api.stats.com') {
                 switch(uri.pathname) {
                 case '/v1/stats/soccer/epl/events/1547146' :
+                    res.statusCode = 200;
+                    res.setHeader('Content-Type', 'application/json');
+                    // Simulate event generation in time:
+                    // Fabricate a progressively increased list of events by following the responseIndex sequence, and send them in the response
+                    let clonedResponse = _.cloneDeep(matchResponse);
+                    clonedResponse.apiResults[0].league.season.eventType[0].events[0].pbp = _.take(matchResponseEvents, responseIndex++);
+                    res.end(JSON.stringify(clonedResponse));
+                    break;
+                case '/v1/stats/soccer/epl/scores/1547146' :
                     res.statusCode = 200;
                     res.setHeader('Content-Type', 'application/json');
                     res.end(JSON.stringify(matchResponse));
@@ -111,6 +121,14 @@ describe('Unit-Test the rss-service and Parser modules', function() {
         });
             
     });
+    
+    it('should have a service started without errors', function() {
+        expect(serviceInitialized).to.be.equal(true);
+    });
+    it('should have a service started with a valid parser', function() {
+    expect(service.parser).to.not.be.equal(null);
+    });
+
         
     it('should emit messages to event subscribers without errors', function() {
         expect(eventsNumber).to.not.be.equal(0);
@@ -295,8 +313,6 @@ describe('Moderation Module', function () {
             //                console.log(service);
             expect(service.parsername).to.be.equal("Stats");
         });
-        
-       
     });
 
 
@@ -417,50 +433,50 @@ describe('Wildcards Module', function () {
 
     //************************************************************
 
-/*
-    describe('Send match series of events', function() {
-        // Set up the mitm module's http request interception
-        var interceptor = null;
-        beforeEach(function() { interceptor = mitm(); });
-        afterEach(function() { interceptor.disable() });
+
+    // describe('Send match series of events', function() {
+    //     // Set up the mitm module's http request interception
+    //     var interceptor = null;
+    //     beforeEach(function() { interceptor = mitm(); });
+    //     afterEach(function() { interceptor.disable() });
         
-        it('the service emitter ended within time', function(done) { 
-            var timeout = setTimeout(function() {
-                done();
-            }, 90000);
+    //     it('the service emitter ended within time', function(done) { 
+    //         var timeout = setTimeout(function() {
+    //             done();
+    //         }, 90000);
             
-            // http request interception: Return ready-made responses for known endpoints
-            // see: https://github.com/moll/node-mitm
-            interceptor.on('request', function(req, res) {
-                var uri = url.parse(req.url);
-                if (req.headers.host == 'api.stats.com') {
-                    switch(uri.pathname) {
-                    case '/v1/stats/soccer/epl/events/1547146' :
-                        res.statusCode = 200;
-                        res.setHeader('Content-Type', 'application/json');
-                        res.end(JSON.stringify(matchResponse));
-                        break;
-                    default :
-                        break;
-                    }
-                }
-                else
-                {
-                    // default behavior
-                    res.statusCode = 404;
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({error: 'Not a known endpoint. Blocking http request.'}));
-                }
-            });
+    //         // http request interception: Return ready-made responses for known endpoints
+    //         // see: https://github.com/moll/node-mitm
+    //         interceptor.on('request', function(req, res) {
+    //             var uri = url.parse(req.url);
+    //             if (req.headers.host == 'api.stats.com') {
+    //                 switch(uri.pathname) {
+    //                 case '/v1/stats/soccer/epl/events/1547146' :
+    //                     res.statusCode = 200;
+    //                     res.setHeader('Content-Type', 'application/json');
+    //                     res.end(JSON.stringify(matchResponse));
+    //                     break;
+    //                 default :
+    //                     break;
+    //                 }
+    //             }
+    //             else
+    //             {
+    //                 // default behavior
+    //                 res.statusCode = 404;
+    //                 res.setHeader('Content-Type', 'application/json');
+    //                 res.end(JSON.stringify({error: 'Not a known endpoint. Blocking http request.'}));
+    //             }
+    //         });
             
             
-        });
+    //     });
         
-        // it('should have added 5 events', function() {
-        //     expect(match.GetCurrentSegment()).to.equal("First Half");
-        // }); 
-    });
-*/
+    //     // it('should have added 5 events', function() {
+    //     //     expect(match.GetCurrentSegment()).to.equal("First Half");
+    //     // }); 
+    // });
+
 
 
     describe('Clean Up', function () {

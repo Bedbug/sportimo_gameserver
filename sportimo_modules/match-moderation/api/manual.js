@@ -1,32 +1,33 @@
 var express = require('express'),
-    router = express.Router();
+    router = express.Router(),
+    log = require('winston');
 
-module.exports = function (ModerationModule, log) {
+module.exports = function (ModerationModule) {
 
 
     router.post('/v1/live/match', function (req, res) {
-        log("[Moderation] Request for matchid [" + req.body.id + "]", "info");
+        log.info("[Moderation] Request for matchid [" + req.body.id + "]");
         ModerationModule.create(req.body.id, res);
     });
 
     router.post('/v1/live/match/time', function (req, res) {
-        log("[Update Segment Time] Request for matchid [" + req.body.id + "]", "info");
+        log.info("[Update Segment Time] Request for matchid [" + req.body.id + "]");
         //        ModerationModule.GetMatch(req.body.id).updateTimes(req.body, res);
     });
 
     router.post('/v1/live/match/time/remove', function (req, res) {
-        log("[Update Segment Time] Request for matchid [" + req.body.id + "]", "info");
+        log.info("[Update Segment Time] Request for matchid [" + req.body.id + "]");
         ModerationModule.GetMatch(req.body.id).removeSegment(req.body, res);
     });
 
     router.post('/v1/live/match/reload', function (req, res) {
-        log("[Reload Match] Request for matchid [" + req.body.id + "]", "info");
+        log.info("[Reload Match] Request for matchid [" + req.body.id + "]");
         ModerationModule.LoadMatchFromDB(req.body.id, res);
     });
 
-    router.put('/v1/live/match', function (req, res) {
-        req.body.last_action_time = moment();
-    });
+    // router.put('/v1/live/match', function (req, res) {
+    //     req.body.last_action_time = moment();
+    // });
     
     router.get('/v1/live/match/:id', function (req, res) {
         return res.send(ModerationModule.GetMatch(req.params.id));
@@ -41,10 +42,10 @@ module.exports = function (ModerationModule, log) {
         var match_id = req.params.id;
         switch (req.body.type) {
             case "Delete":
-                log("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]", "info");
                 try 
                 {
-                    ModerationModule.GetMatch(match_id).RemoveEvent(req.body, res);
+                    log.info("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]");
+                    res.status(200).send( ModerationModule.GetMatch(match_id).RemoveEvent(req.body) );
                 }
                 catch (err)
                 {
@@ -52,10 +53,10 @@ module.exports = function (ModerationModule, log) {
                 }
                 break;
             case "Update":
-                log("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]", "info");
                 try 
                 {
-                    ModerationModule.GetMatch(match_id).UpdateEvent(req.body, res);
+                    log.info("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]");
+                    res.status(200).send( ModerationModule.GetMatch(match_id).UpdateEvent(req.body) );
                 }
                 catch (err)
                 {
@@ -63,10 +64,10 @@ module.exports = function (ModerationModule, log) {
                 }                
                 break;
             case "Add":
-                log("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]", "info");
                 try
                 {
-                    ModerationModule.GetMatch(match_id).AddEvent(req.body, res);
+                    log.info("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]");
+                    res.status(200).send( ModerationModule.GetMatch(match_id).AddEvent(req.body) );
                 }
                 catch (err)
                 {
@@ -75,10 +76,10 @@ module.exports = function (ModerationModule, log) {
                 break;
             case "AdvanceSegment":
                 console.log(req.body);
-                log("Advance Segment Request for matchid [" + match_id + "]", "info");
                 try
                 {
-                    ModerationModule.GetMatch(match_id).AdvanceSegment(req.body, res);
+                    log.info("Advance Segment Request for matchid [" + match_id + "]");
+                    res.status(200).send( ModerationModule.GetMatch(match_id).AdvanceSegment(req.body) );
                 }
                 catch (err)
                 {

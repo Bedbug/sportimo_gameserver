@@ -6,7 +6,6 @@
  * "moderation": [{
 		"type": "rss-feed",
 		"eventid": "15253",
-		"feedurl": "http://feed-somewhere.com?event-id=",
 		"interval": 500,
 		"parsername": "Stats"
 	}]
@@ -56,29 +55,36 @@ util.inherits(MyEmitter, EventEmitter);
 
 feed_service.emitter = new MyEmitter();
 
+feed_service.parser = null;
 
 // Initialize feed and validate response
-feed_service.init = function (matchHandler, done) {
-    if (this.parsername == null)
+feed_service.init = function (matchHandler, cbk) {
+    if (feed_service.parsername == null)
         return "No parser attached to service";
 
-    return parsers[this.parsername].init(matchHandler, this, done);
+    parsers[feed_service.parsername].init(matchHandler, this, function(error) {
+        if (error)
+            return cbk(error);
+            
+        feed_service.parser = parsers[feed_service.parsername];
+        cbk(null, true);
+    });
 };
 
 feed_service.pause = function()
 {
-    if (this.parsername == null)
+    if (feed_service.parsername == null)
         return "No parser attached to service";
 
-    parsers[this.parsername].isPaused = true;    
+    parsers[feed_service.parsername].isPaused = true;    
 };
 
 feed_service.resume = function()
 {
-    if (this.parsername == null)
+    if (feed_service.parsername == null)
         return "No parser attached to service";
 
-    parsers[this.parsername].isPaused = false;    
+    parsers[feed_service.parsername].isPaused = false;    
 };
 
 // Manage match events, simple proxy to match module
@@ -99,7 +105,7 @@ feed_service.EndOfMatch = function(matchInstance) {
     
     // Try disposing all parser objects
     //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
-    this.parsername = null;
+    feed_service.parsername = null;
 };
 
 
@@ -131,5 +137,18 @@ feed_service.LoadTeam = function(teamId, callback)
     });
 };
 
+
+feed_service.LoadCompetition = function(competitionId, callback)
+{
+    if (!mongoose)
+        return callback(null);
+        
+    mongoose.mongoose.models.competitions.findById(competitionId, function(error, data) {
+        if (error)
+            return;
+            
+        return callback(null, data);
+    });
+};
 
 module.exports = feed_service;

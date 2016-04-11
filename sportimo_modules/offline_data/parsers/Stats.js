@@ -84,7 +84,7 @@ Parser.GetPlayerCareerStats = function(leagueName, playerId, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + "?enc=true&careerOnly=true&" + signature;
 
-    needle.get(url, function(error, response)
+    needle.get(url, { timeout: 50000 }, function(error, response)
     {
         if (error)
             return callback(error);
@@ -104,7 +104,7 @@ Parser.GetTeamPlayers = function(leagueName, languageId, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/participants/?" + signature + "&languageId=" + languageId;
 
-    needle.get(url, function(error, response)
+    needle.get(url, { timeout: 60000 }, function(error, response)
     {
         if (error)
             return callback(error);
@@ -123,7 +123,7 @@ Parser.GetLeagueTeams = function(leagueName, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/teams/?" + signature;
 
-    needle.get(url, function(error, response)
+    needle.get(url, { timeout: 60000 }, function(error, response)
     {
         if (error)
             return callback(error);
@@ -142,7 +142,7 @@ Parser.GetLeagueStandings = function(leagueName, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + signature;
 
-    needle.get(url, function(error, response)
+    needle.get(url, { timeout: 60000 }, function(error, response)
     {
         if (error)
             return callback(error);
@@ -163,7 +163,7 @@ Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
     
-    needle.get(url, function(error, response) {
+    needle.get(url, { timeout: 60000 }, function(error, response) {
         if (error)
             return callback(error);
             
