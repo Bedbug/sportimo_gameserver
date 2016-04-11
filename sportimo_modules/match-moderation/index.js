@@ -198,7 +198,7 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        var match = _.findWhere(ModerationModule.ModeratedMatches, {id: matchID});
+        var match = _.find(ModerationModule.ModeratedMatches, {id: matchID});
         // if(match) console.log("We have a match");
         return match;
     }

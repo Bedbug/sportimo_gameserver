@@ -1,7 +1,7 @@
 // Module dependencies.
 var express = require('express'),
 router = express.Router(),
-question = require('../apiObjects/question'),
+question = require('../apiObjects/favQuestion'),
 l=require('../config/lib');
 
 var api = {};
@@ -25,44 +25,9 @@ api.questions = function (req, res) {
 };
 
 
-api.getAllQuestionsByMatch = function (req, res) {
-	var skip=null,limit=10;
-
-	if(req.query.skip!=undefined)
-		skip=req.query.skip;
-
-	if(req.query.limit!=undefined)
-		limit=req.query.limit;
-
-	question.getAllQuestionsByMatch(req.params.matchid,function(err,data){
-		if (err) {
-			res.status(500).json(err);
-		} else {
-			res.status(200).json(data);
-		}
-	}); 
-};
-
-
 // POST
 api.addquestion = function (req, res) {
-	question.addQuestion(req.body.question,function	(err,data){
-		if(err) res.status(500).json(err);
-		else {
-			res.status(201).json(data);
-		}
-	});	
-};
-api.userAnswerQuestion = function (req, res) {
-	question.userAnswerQuestion(req.body,function	(err,data){
-		if(err) res.status(500).json(err);
-		else {
-			res.status(201).json(data);
-		}
-	});	
-};
-api.moderatorAnswerQuestion = function (req, res) {
-	question.moderatorAnswerQuestion(req.body,function	(err,data){
+	question.addQuestion(req.body,function	(err,data){
 		if(err) res.status(500).json(err);
 		else {
 			res.status(201).json(data);
@@ -131,23 +96,16 @@ api.deleteAllQuestions = function (req, res) {
 */
 
 
-router.post('/v1/questions',api.addquestion);
+router.post('/v1/questions/favorites',api.addquestion);
 
-router.route('/v1/questions/:id')
+router.route('/v1/questions/favorites/:id')
 .get(api.question)
 .put(api.editQuestion)
 .delete(api.deleteQuestion);
 
 
-router.route('/v1/questions')
-.get(api.questions)
-.delete(api.deleteAllQuestions);
-
-router.get('/v1/questions/match/:matchid', api.getAllQuestionsByMatch);
-
-router.post('/v1/questions/:qid/user', api.userAnswerQuestion);
-
-router.post('/v1/questions/:qid/moderator', api.moderatorAnswerQuestion);
+router.route('/v1/questions/favorites')
+.get(api.questions);
 
 router.get('/questions/test',function(res,res){
 	return question.test(function (err, data) {

@@ -16,10 +16,11 @@ var redisCreds = {
     secret: '075bc004e0e54a4a738c081bf92bc61d',
     channel: "socketServers"
 };
-var Pub = redis.createClient(redisCreds.port, redisCreds.url);
+var Pub;
+Pub = redis.createClient(redisCreds.port, redisCreds.url);
 Pub.auth(redisCreds.secret, function(err) {
     if (err) {
-        throw err;
+        console.log(err);
     }
 });
 
@@ -36,6 +37,14 @@ api.getAllQuestions = function(skip, limit, cb) {
 
     if (limit != undefined)
         q.limit(limit * 1);
+
+    return q.exec(function(err, questions) {
+        cbf(cb, err, questions);
+    });
+};
+
+api.getAllQuestionsByMatch = function(id, cb) {
+    var q = Question.find({matchid: id});
 
     return q.exec(function(err, questions) {
         cbf(cb, err, questions);
@@ -60,9 +69,40 @@ api.addQuestion = function(question, cb) {
     question = new Question(question);
 
     question.save(function(err) {
+        
+        // Send Event to Redis to be consumed by socket servers
+        Pub.publish("socketServers", JSON.stringify({
+            client: {
+                type: "question_added",
+                room: question.matchid,
+                data: question
+            }
+        }));
+        
+        // Wait 15 seconds the call method to notify client votes
+        setTimeout(function(){
+            informClientsOfAnwswers(question._id)
+        },15000);
+        
         cbf(cb, err, question.toObject());
     });
 };
+
+// This method is called 15" after the question creation in order to inform clients
+// about the number of answers that the other users have given
+var informClientsOfAnwswers = function(id){
+     Question.findOne({ '_id': id }, function(err, question) {
+       if(!err)
+        // Send Event to Redis to be consumed by socket servers
+        Pub.publish("socketServers", JSON.stringify({
+            client: {
+                type: "question_updated",
+                room: question.matchid,
+                data: question
+            }
+        }));
+    });
+} 
 
 api.userAnswerQuestion = function(answer, cb) {
 
@@ -101,7 +141,7 @@ api.editQuestion = function(id, updateData, cb) {
                 question["status"] = updateData["status"];
                 question["correct"] = updateData["correct"];
 
-                // TODO: Give points to all users who answered correctly (update their score and questions_answered_correctly stat)
+                //  Give points to all users who answered correctly (update their score and questions_answered_correctly stat)
                 var pointsToGive = _.find(question.answers, function(o) { return o._id == updateData["correct"]; }).points;
 
                 Answer.find({ questionid: question._id, answerid: updateData["correct"] }, 'userid', function(err, ids) {
@@ -113,12 +153,15 @@ api.editQuestion = function(id, updateData, cb) {
                         function(err, result) {
                             if (err)
                                 console.log(err);
-                            // TODO: Send Socket Event with the changes in the question
+
+                            //  Send Socket Event with the changes in the question
                             Pub.publish("socketServers", JSON.stringify({
                                 client: {
                                     type: "question_answered",
                                     room: question.matchid,
-                                    data: question 
+                                    data: {
+                                        correct: question.correct
+                                    }
                                 }
                             }));
                         });
@@ -126,7 +169,7 @@ api.editQuestion = function(id, updateData, cb) {
                 })
             }
 
-            // TODO: Save status of the card in db
+            //  Save status of the card in db
             return question.save(function(err) {
                 cbf(cb, err, question.toObject());
             }); //eo question.save
@@ -152,8 +195,12 @@ api.editQuestion = function(id, updateData, cb) {
                 question["type"] = updateData["type"];
             }
 
-            if (typeof updateData["photo"] != 'undefined') {
-                question["photo"] = updateData["photo"];
+            if (typeof updateData["img"] != 'undefined') {
+                question["img"] = updateData["img"];
+            }
+            
+             if (typeof updateData["sponsor"] != 'undefined') {
+                question["sponsor"] = updateData["sponsor"];
             }
 
             if (typeof updateData["created"] != 'undefined') {

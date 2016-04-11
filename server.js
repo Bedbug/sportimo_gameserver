@@ -87,16 +87,18 @@ var redisCreds = {
     secret: '075bc004e0e54a4a738c081bf92bc61d',
     channel: "socketServers"
 };
-var PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+var PublishChannel = null;
+PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
 PublishChannel.auth(redisCreds.secret, function (err) {
     if (err) {
-        throw err;
+        console.log(err);
     }
 });
-var SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
+var SubscribeChannel = null;
+SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
 SubscribeChannel.auth(redisCreds.secret, function (err) {
     if (err) {
-        throw err;
+         console.log(err);
     }
     else
     console.log("[Game Server] Redis Connected.")
@@ -118,6 +120,7 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/spor
 // if (process.env.NODE_ENV != "production") {
 
 var liveMatches = require('./sportimo_modules/match-moderation');
+if(PublishChannel && SubscribeChannel)
 liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
 liveMatches.SetupMongoDB(mongoose);
 liveMatches.SetupAPIRoutes(app);

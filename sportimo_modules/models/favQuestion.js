@@ -21,26 +21,21 @@ var mongoose = require('mongoose'),
 var answer = new Schema({
     text: { type: Schema.Types.Mixed },
     img: String,
-    points: Number,
-    answered: {type:Number,default:0}
+    points: Number
 })
 
 var fields = {
+    info: String,
     text: { type: Schema.Types.Mixed },
     answers: [answer],
-    matchid: String,
     type: {type: String},
     img: { type: String },
-    status: Number,
-    correct: ObjectId,
+    status: {type:Number, default: 0},
     sponsor: { type: Schema.Types.Mixed },
-    userAnswer: String,
-    created: { type: Date, default: Date.now }
-    
 };
 
 
 
 var schema = new Schema(fields);
 
-module.exports = mongoose.model('questions', schema);
+module.exports = mongoose.model('favQuestions', schema);
