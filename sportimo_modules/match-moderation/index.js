@@ -40,6 +40,7 @@ var ModerationModule = {
     testing: false,
     callback: null,
     mongoose: null,
+    tickSchedule: null,
     mock: false,
     count: function () {
         return _.size(this.ModeratedMatches);
@@ -184,10 +185,7 @@ var ModerationModule = {
     //    InjectEvent: function (evnt, res) {
     //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);
     //    },
-    
-   
-
-}
+};
 
 ModerationModule.GetSchedule = function (cbk) {
     scheduled_matches
@@ -203,7 +201,7 @@ ModerationModule.GetSchedule = function (cbk) {
             
             cbk(null, schedule);
         });
-}
+};
 
 /**
  * Adds a new match to the schedule.
@@ -231,7 +229,7 @@ ModerationModule.AddScheduleMatch = function (match, cbk) {
         });
         
     });
-}
+};
 
 
 /**
@@ -239,7 +237,7 @@ ModerationModule.AddScheduleMatch = function (match, cbk) {
  */
 ModerationModule.UpdateScheduleMatch = function (match, cbk) {
     scheduled_matches.findOneAndUpdate({ _id: match._id }, match, { upsert: true }, cbk);
-}
+};
 
 /**
  * Adds a new match to the schedule.
@@ -250,43 +248,18 @@ ModerationModule.RemoveScheduleMatch = function (id, cbk) {
     // Remove from list in memory
     _.remove(ModerationModule.ModeratedMatches, { id: id });
     cbk();
-}
+};
 
-/* The basic match class.
-    This is where everything related to the active match happens. The timers,
-    the timeline, reponsibility to sync with database, etc.
-    We pass the mongodb ID so the class can hook to the database for updates.
-*/
-// var Match = function (mongodbID, res) {
-
-//     scheduled_matches
-//         .findOne({
-//             _id: mongodbID
-//         })
-//         .populate('home_team')
-//         .populate('away_team')
-//         .exec(function (err, match) {
-//             if (err) return log(err, "error");
-
-//             if (match) {
-
-//                 if (res) {
-//                     res.send(match);
-//                 }
-//                 match = match_module(match, MatchTimers, RedisClientPub, log);
-//                 ModerationModule.add(match);
-//                 log("Found match with ID [" + match.id + "]. Hooking on it.");
-//                 return match;
-//             } else {
-//                 console.log(ModerationModule.count, "info");
-//                 res.status(404).send("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches");
-//                 return null;
-//             }
-//         });
-
-// }
+// Propagate the tick event to every managed/stored moderated match in this object
+ModerationModule.Tick = function() {
+    _.forEach(ModerationModule.ModeratedMatches, function(match) {
+        match.Tick();    
+    });  
+};
 
 function initModule(done) {
+    this.tickSchedule = setInterval(this.Tick, 1000);
+    
     if (!this.mock) {
         /* We load all scheduled/active matches from DB on server initialization */
         scheduled_matches
@@ -335,7 +308,6 @@ function initModule(done) {
 
 // A Mock Match object in case we need it for testing
 var mockMatch = require('./mocks/mock-match');
-
 
 
 module.exports = ModerationModule;

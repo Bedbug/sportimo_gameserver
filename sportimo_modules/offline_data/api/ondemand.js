@@ -30,86 +30,96 @@ var api = {};
 // POST
 api.UpdateAllTeams = function (req, res) {
 
-// 	if(!req.params.leagueName)
-// 		return res.status(400).json({error: "No 'league' name parameter defined in the request path."});
-		
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
     
-	        
-    // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
-	async.eachSeries(parsers, function(parser, callback) {
-        parser.UpdateTeams(function(error, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate) {
-            if (!error)
+	try
+    {
+        
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.UpdateTeams(function(error, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = { 
+                        error: null,
+                        teamsToAdd: teamsToAdd.length, 
+                        teamsToUpdate: teamsToUpdate.length,
+                        playersToAdd: playersToAdd.length,
+                        playersToUpdate: playersToUpdate.length
+                    };
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
             {
-                response.parsers[parser.Name] = { 
-                    error: null,
-                    teamsToAdd: teamsToAdd.length, 
-                    teamsToUpdate: teamsToUpdate.length,
-                    playersToAdd: playersToAdd.length,
-                    playersToUpdate: playersToUpdate.length
-                };
-
-                callback();
+                response.error = error.message;
+                return res.status(500).json(response);
             }
-            else {
-                winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
-                response.parsers[parser.Name] = {
-                    error: error.message
-                };
-                callback();
-            }
+            else
+                return res.status(200).json(response);
         });
-    }, function done(error) {
-        if (error)
-        {
-            response.error = error.message;
-            return res.status(500).json(response);
-        }
-        else
-            return res.status(200).json(response);
-    });
-            
+    }
+    catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+    }
 };
 
 api.UpdateLeagueStandings = function(req, res) {
-	if(!req.params.leagueId)
+	if(!req.params.competitionId)
 		return res.status(400).json({error: "No 'competition' id parameter defined in the request path."});
 		
 	var leagueId = req.params.competitionId;
-
+		
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
-	        
-    // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
-	async.eachSeries(parsers, function(parser, callback) {
-        parser.UpdateLeagueStandings(leagueId, leagueId, function(error, teamsIncluded) {
-            if (!error)
+    	        
+	try
+	{
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.UpdateLeagueStandings(leagueId, leagueId, function(error, teamsIncluded) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = { 
+                        error: null,
+                        teamsNumber: teamsIncluded
+                    };
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling UpdateLeagueStandings for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
             {
-                response.parsers[parser.Name] = { 
-                    error: null,
-                    teamsNumber: teamsIncluded
-                };
-
-                callback();
+                response.error = error.message;
+                return res.status(500).json(response);
             }
-            else {
-                winston.warn('Error calling UpdateLeagueStandings for parser ' + parser.Name + ': ' + error.message);
-                response.parsers[parser.Name] = {
-                    error: error.message
-                };
-                callback();
-            }
+            else
+                return res.status(200).json(response);
         });
-    }, function done(error) {
-        if (error)
-        {
-            response.error = error.message;
-            return res.status(500).json(response);
-        }
-        else
-            return res.status(200).json(response);
-    });
+	}
+	catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+	}
 };
 
 
@@ -117,35 +127,42 @@ api.UpdateAllStandings = function(req, res) {
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
 	        
-    // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
-	async.eachSeries(parsers, function(parser, callback) {
-        parser.UpdateStandings(function(error, teamsIncluded) {
-            if (!error)
+	try
+	{
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.UpdateStandings(function(error, teamsIncluded) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = { 
+                        error: null,
+                        updatedCompetitions: teamsIncluded
+                    };
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling UpdateAllStandings for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
             {
-                response.parsers[parser.Name] = { 
-                    error: null,
-                    updatedCompetitions: teamsIncluded
-                };
-
-                callback();
+                response.error = error.message;
+                return res.status(500).json(response);
             }
-            else {
-                winston.warn('Error calling UpdateAllStandings for parser ' + parser.Name + ': ' + error.message);
-                response.parsers[parser.Name] = {
-                    error: error.message
-                };
-                callback();
-            }
+            else
+                return res.status(200).json(response);
         });
-    }, function done(error) {
-        if (error)
-        {
-            response.error = error.message;
-            return res.status(500).json(response);
-        }
-        else
-            return res.status(200).json(response);
-    });
+	}
+	catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+	}
 };
 
 
@@ -156,42 +173,48 @@ api.GetCompetitionFixtures = function(req, res)
 	if(!req.params.competitionId)
 	    return res.status(400).json({error: "No 'competition' id parameter defined in the request path."});
 
-	        
-    // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
-	async.eachSeries(parsers, function(parser, callback) {
-        parser.GetCompetitionFixtures(req.params.competitionId, function(error, fixtures) {
-            if (!error)
+	try
+	{
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.GetCompetitionFixtures(req.params.competitionId, function(error, fixtures) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = { 
+                        error: null,
+                        comingFixtures : fixtures
+                    };
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
             {
-                response.parsers[parser.Name] = { 
-                    error: null,
-                    comingFixtures : fixtures
-                };
-
-                callback();
+                response.error = error.message;
+                return res.status(500).json(response);
             }
-            else {
-                winston.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
-                response.parsers[parser.Name] = {
-                    error: error.message
-                };
-                callback();
-            }
+            else
+                return res.status(200).json(response);
         });
-    }, function done(error) {
-        if (error)
-        {
-            response.error = error.message;
-            return res.status(500).json(response);
-        }
-        else
-            return res.status(200).json(response);
-    });
+	}
+	catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+	}
 };
 
 
 api.Welcome = function(req, res)
 {
-    return res.status(200).json({response: 'The offline_data Api is up and running.'});
+    return res.status(200).json({ error: null, response: 'The offline_data Api is up and running.'});
 };
 
 

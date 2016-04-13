@@ -19,11 +19,14 @@
  * 
  * **********************************************************************
  */
+"use strict"
 
 var path = require('path'),
     fs = require('fs'),
-    WildcardCtrl = require("./controllers/wildcard"),
+    //WildcardCtrl = require("./controllers/wildcard"),
     moment = require('moment'),
+    async = require('async'),
+    log = require('winston'),
     _ = require('lodash'),
     bodyParser = require('body-parser');
 
@@ -35,31 +38,33 @@ var DatabaseWildcard;
 /*Main module*/
 var wildcards = {};
 
-/*The list that holds all active cards*/ 
-wildcards.CardsInPlay = [];
-
 /*The database connection*/
 wildcards.db = null;
 
-/*Load models and setup database connection*/
-wildcards.SetupMongoDB = function (dbconenction) {
-    this.db = dbconenction;
+/*The tick handler*/
+wildcards.tickSchedule = null;
+
+
+/************************************
+ * Perform initialization functions */
+wildcards.init = function (dbconnection) {
+    this.db = dbconnection;
+    
     var modelsPath = path.join(__dirname, '../models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });
     
     DatabaseWildcard = this.db.models.wildcard;
-}
 
-/************************************
- * Perform initialization functions */
-wildcards.init = function () {
+    
     if (this.db == null || DatabaseWildcard == null) {
-        console.log("No active database connection found. Aborting.");
+        log.error("No active database connection found. Aborting.");
         return;
     }
 
+    wildcards.tickSchedule = setInterval(wildcards.Tick, 1000);
+    
     /*Get All cards from database with status lower than 2 (not closed)*/
     DatabaseWildcard.find({
         "status": {
@@ -68,35 +73,9 @@ wildcards.init = function () {
     }, function (err, cards) {
         if (err)
             return;
-            
-        /*If there are any, sort them out and handle them*/
-        if (cards.length > 0) {
-            ValidateTempCards(cards);
-        }
     });
 };
 
-/****************************************
- * Validate the supplied list of cards.
- * Handle them according to their status.
- */
-var ValidateTempCards = function (cards) {
-    var idx = 0;
-    cards.forEach(function (card) {
-        idx++;
-
-        setTimeout(function () {
-            validate();
-        }, idx * 200);
-
-        function validate() {
-            /*Create a wildcard controller from the stored database card*/
-            var wildcard = new WildcardCtrl(card);
-        };
-
-
-    });
-};
 
 
 /************************************
@@ -105,26 +84,104 @@ var ValidateTempCards = function (cards) {
 
 // ADD
 wildcards.add = function (wildcard) {
-    wildcards.CardsInPlay.push(wildcard);
-    wildcard.init(this);
-    return wildcard;
-}
-// REMOVE
-// removes wildcard from CardsInplay
-wildcards.remove = function (wildcard) {
-    this.CardsInPlay = _.without(this.CardsInPlay, wildcard);
-}
+    // Store the mongoose model
+    let newCard = new DatabaseWildcard({
+        userid: wildcard.userid,
+        gameid: wildcard.gameid,
+        minute: wildcard.minute,
+        segment: wildcard.segment,
+        duration: wildcard.duration,
+        activates_in: wildcard.activates_in,
+        appear_conditions: wildcard.appear_conditions,
+        win_conditions: {
+            match: wildcard.win_conditions.match,
+            stats: wildcard.win_conditions.stats
+        },
+        points: wildcard.maxpoints,
+        points_step: (wildcard.maxpoints - wildcard.minpoints) / (wildcard.duration / 1000),
+        minpoints: wildcard.minpoints,
+        maxpoints: wildcard.maxpoints,
+        status: 0,
+        linked_event: 0
+    });
+    
+    newCard.save();
+
+    return newCard;
+};
+
 // DELETE
 // removes wildcard from CardsInplay &
 // from the database
 wildcards.delete = function (wildcard_id) {
-    var wildcard = _.find(this.CardsInPlay, {"id":wildcard_id});
-    wildcards.remove(wildcard);
-    wildcard.delete();   
+    this.db.models.wildcards.findById({_id : wildcard_id}, function(error, wildcard) {
+        if (error)
+            return error;
+            
+        wildcard.delete();  
+        return;
+    });
+};
+
+
+// Manage wildcards in time, activate the ones pending activation, terminate the ones pending termination
+wildcards.Tick = function()
+{
+    // Update all wildcards pending to be activated
+    let itsNow = moment.utc();
+    
+    async.parallel([
+        function(callback) {
+            // Update all wildcards that are due for activation
+            // ToDo: Check that the appearance criteria are also met
+            this.db.models.wildcards.update({status: 0, activationTime: { $lt: itsNow } }, { $set: {state: 1} }, {multi: true}, callback);
+        },
+        function(callback) {
+            // Update all wildcards that have terminated without success
+            this.db.models.wildcards.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {state: 2} }, {multi: true}, callback);
+        }
+        ], function(error) {
+            if (error)
+                return;
+    });
+};
+
+// Resolve an incoming match event and see if some wildcards win
+wildcards.ResolveEvent = function(matchEvent)
+{
+    const itsNow = moment.utc();
+    const wildcardsQuery = {
+		state : 'pending',
+		creationTime : {$lt : matchEvent.time},
+		activationTime : {$lt : matchEvent.time},
+		matchid : matchEvent.data.match_id
+	};
+	const orPlayerQuery = [{playerid : null}];
+	if(matchEvent.data.playerid != null){
+		orPlayerQuery.push({playerid: matchEvent.data.players[0]});
+	}
+	// ToDo: matching the team ids, not 'home' or 'away'
+	
+    // 	const orTeamQuery = [{teamid : null}];
+    // 	if(teamid != null){
+    // 		orTeamQuery.push({teamid: teamid});
+    // 	}
+    
+    // ToDo: Get from stats the aggregate stat of the given event
+    
+	wildcardsQuery.win_conditions = {$elemMatch : {$and : [{tag: tag} , {remaining:{$ne:0}}, {$or : orPlayerQuery}, {$or : orTeamQuery}]}};
+    this.db.models.wildcards.find(wildcardsQuery, function(error, wildcardsToWin) {
+        if (error)
+        {
+            log.error("Error while resolving event: " + error.message);
+            return;
+        }
+        
+        _.forEach(wildcardsToWin, function(cardToWin) {
+             
+        });
+    });
 }
-
-// UPDATE
-
 
 
 /************************************
@@ -150,91 +207,7 @@ wildcards.SetupAPIRoutes = function (server) {
     });
 }
 
-//setServerForRoutes: function (app) {
-//    app.use(bodyParser.json());
-//    app.use(bodyParser.urlencoded({
-//        extended: true
-//    }));
-//
-//    var thisWildcard = this;
-//
-//    app.use(function (req, res, next) {
-//        res.header("Access-Control-Allow-Origin", "*");
-//        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-//        next();
-//    });
-//
-//    /*
-//     **    API endpoint /insertcard
-//     */
-//    app.post('/api/v1/insertcard', function (req, res) {
-//        var card = Wildcards.Add(req.body.cardid, req.body.userid, req.body.gameid, req.body.minute, req.body.cardtype, req.body.which_half, req.body.questionid);
-//        return res.send(JSON.stringify(card));
-//    });
-//
-//    /*
-//     **    API endpoint /getpoints
-//     */
-//    app.post('/api/v1/getpoints', function (req, res) {
-//
-//        var cardpoints = Wildcards.GetPoints(req.body.cardid, req.body.userid, req.body.gameid, req.body.cardtype, res);
-//        // return res.send(cardpoints);
-//    });
-//
-//    app.post('/api/v1/event', function (req, res) {
-//        var newevent = {
-//            event: 'new_game_event',
-//            data: {
-//                which_half: 0,
-//                minute: 65,
-//                match_id: req.body.data.match_id,
-//                event_id: 6,
-//                event_name: req.body.data.event_name,
-//            }
-//        }
-//
-//        Wildcards.RewardFor(newevent);
-//
-//        return res.send(newevent);
-//    });
-//
-//    app.post('/api/v1/removeEvent', function (req, res) {
-//        /**
-//         * When removing an event:
-//         * 1. Delete the event for the game_events table
-//         * 2. For each game_data card with a linked_event the deleted event:
-//         *      a. set card to activated 0
-//         *      b. remove points on card from math_leaderboard entry
-//         *      c. remove points from user_data entry 
-//         * 3. Validate cards again to set correct timers and points
-//         */
-//        log("Remove Event Request");
-//        var Event = JSON.parse(req.body.data);
-//        // // log(data.event);
-//        var data = {};
-//        // // Used in removing event and finding linked cards
-//        data.eventid = Event.data.id;
-//        // // Used in correcting match leaderboards
-//        data.matchid = Event.data.match_id;
-//
-//        // log(JSON.stringify(data));
-//
-//        needle
-//            .post(databaseURL + RemoveEventPHP, data, options, function (error, response) {
-//                if (!error && response.statusCode == 200) {
-//                    log("Removal succesful - Proceeding to Validation", 'info');
-//                    setTimeout(function () {
-//                        return thisWildcard.Validate(res, data);
-//                    }, 2000);
-//                } else
-//                    return res.send(error, 'error');
-//            });
-//
-//
-//    });
-//
-//}
+
 
 module.exports = wildcards;
 

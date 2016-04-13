@@ -27,14 +27,8 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 var matchModule = function (match, PubChannel) {
     
     var HookedMatch = {}; // = match;
-    var tick = null;    // an internal timer that looks for wildcards to resolve.
-
     HookedMatch.moderationServices = [];
 
-    // Holds the interval that counts time
-    // HookedMatch.Time_interval = null;
-    // Holds the actual running time (i.e. 10m:34s)
-    HookedMatch.Match_timer = "";
 
     // Set ID
     HookedMatch.id = match._id.toString() || 'mockid';
@@ -77,16 +71,16 @@ var matchModule = function (match, PubChannel) {
         } 
     */
     HookedMatch.AddModerationService = function (service) {
-
         // Check if service of same type already exists 
         if (_.findWhere(HookedMatch.moderation, {
                 type: service.type
             })) {
             log.info("Service already active");
-            return new Error("Service type already active. Please remove the old one first.");
+            return { error: new Error("Service type already active. Please remove the old one first.") };
         } else {
             HookedMatch.moderation.push(service);
             HookedMatch.StartService(service);
+            return { error: null };
         }
     };
 
@@ -103,11 +97,15 @@ var matchModule = function (match, PubChannel) {
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             newService.emitter.on('matchEvent', function(matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id) 
-                    HookedMatch.AddEventCore(matchEvent);
+                    HookedMatch.AddEvent(matchEvent);
             });
             newService.emitter.on('nextMatchSegment', function(matchEvent) {
                 if (matchEvent && matchEvent._id == HookedMatch.data.id) 
-                    HookedMatch.AdvanceSegmentCore(matchEvent);
+                    HookedMatch.AdvanceSegment(matchEvent);
+            });
+            newService.emitter.on('endOfMatch', function(matchEvent) {
+                if (matchEvent && matchEvent._id == HookedMatch.data.id) 
+                    HookedMatch.Terminate();
             });
 
         });
@@ -164,15 +162,7 @@ var matchModule = function (match, PubChannel) {
         Depending on setting, here will determine if a timer should begin counting aand hold the
         game's time.
     */
-    HookedMatch.AdvanceSegment = function (event) {
-
-        HookedMatch.AdvanceSegmentCore(event);
-
-        return HookedMatch;
-    }
-    
-    // This is the core used by both the module API and the rss-feed service.
-    HookedMatch.AdvanceSegmentCore = function(event)
+    HookedMatch.AdvanceSegment = function(event)
     {
         // Register the time that the previous segment ended
         this.data.timeline[this.data.state].end = moment().utc().format();
@@ -188,6 +178,8 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
+        
+        return HookedMatch;
     };
 
 
@@ -205,16 +197,8 @@ var matchModule = function (match, PubChannel) {
         the timeline and also broadcast them on the sockets channel to be consumed by
         other instances.
     */
-    HookedMatch.AddEvent = function (event, res) {
-        HookedMatch.AddEventCore(event);
-        
-        // 4. return match to Sender
-        return HookedMatch;
 
-    };
-
-
-    HookedMatch.AddEventCore = function (event)
+    HookedMatch.AddEvent = function (event)
     {
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
@@ -249,6 +233,8 @@ var matchModule = function (match, PubChannel) {
         this.data.markModified('stats');
 
         this.data.save();
+        
+        return HookedMatch;
     };
 
     /*  RemoveEvent
@@ -323,15 +309,22 @@ var matchModule = function (match, PubChannel) {
 
         // 4. return match to Sender
         return HookedMatch;
-    }
+    };
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.Terminate = function() {
         
-    }
+    };
+    
+    // method that is called on a schedule by match-moderation in order to manage wildcards's lifetime (activation, termination)
+    HookedMatch.Tick = function()
+    {
+        // Get all pending cards that should be marked as activated and do so
+        
+    };
 
     return HookedMatch;
-}
+};
 
 
 // TODO: [x] Stats update according to the removal of a previous stat modifier 

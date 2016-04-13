@@ -6,14 +6,29 @@ module.exports = {
     activates_in: 50,
     duration: 90000, // 90"
     timer: 0,
-    text: "Jokovic will get 2 yellow cards",
+    text: "Jokovic will get 2 yellow cards before the end of match",
     appear_conditions: [], // empty - always avalable
     win_conditions: {
-        match: [], // empty - no match conditions 
+        match: [{
+            stat: "segment",
+            target: 4,
+            remaining: 2
+        }], 
         stats: [{
-            id:  "56ebd1add299e8ed04e93df5",
-            "yellow": 2
+            teamid:  "56ebd1add299e8ed04e93df5",
+            playerid: null,
+            stat: "yellow",
+            target: 2,
+            remaining: 1
         }]
+        // ALternatively:
+        // teamid: "56ebd1add299e8ed04e93df5",
+        // playerid: null,
+        // stat: "yellow",
+        // statTarget: 2,
+        // statRemaining: 1,
+        // segmentTarget: 4,
+        // segmentRemaining: 2
     },
     points: 0,
     minpoints: 10,

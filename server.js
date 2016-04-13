@@ -170,6 +170,13 @@ app.use(function (req, res, next) {
     next();
 });
 
+app.use(function (req, res, next) {
+    req.mongoose = mongoose.connection;
+    req.redisPub = Pub;
+    req.redisSub = Sub;
+    next();
+});
+
 app.get('/', function (req, res, next) {
     res.send(200, "The Game Server is running smoothly.");
 });
