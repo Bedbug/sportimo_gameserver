@@ -121,7 +121,7 @@ var matchModule = function (match, PubChannel) {
     });
 
 
-    HookedMatch.removeSegment = function (data) {
+    HookedMatch.removeSegment = function (data, cbk) {
 
         this.data.timeline.splice(data.index, 1);
 
@@ -129,8 +129,8 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
-        
-        return HookedMatch;
+       
+        return cbk(null,HookedMatch);
     }
 
     HookedMatch.updateTimes = function (data) {
