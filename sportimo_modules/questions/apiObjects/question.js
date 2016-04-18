@@ -18,7 +18,7 @@ var redisCreds = {
 };
 var Pub;
 Pub = redis.createClient(redisCreds.port, redisCreds.url);
-Pub.auth(redisCreds.secret, function(err) {
+Pub.auth(redisCreds.secret, function (err) {
     if (err) {
         console.log(err);
     }
@@ -29,7 +29,7 @@ Pub.auth(redisCreds.secret, function(err) {
 */
 
 // ALL
-api.getAllQuestions = function(skip, limit, cb) {
+api.getAllQuestions = function (skip, limit, cb) {
     var q = Question.find();
 
     if (skip != undefined)
@@ -38,29 +38,29 @@ api.getAllQuestions = function(skip, limit, cb) {
     if (limit != undefined)
         q.limit(limit * 1);
 
-    return q.exec(function(err, questions) {
+    return q.exec(function (err, questions) {
         cbf(cb, err, questions);
     });
 };
 
-api.getAllQuestionsByMatch = function(id, cb) {
-    var q = Question.find({matchid: id});
+api.getAllQuestionsByMatch = function (id, cb) {
+    var q = Question.find({ matchid: id });
 
-    return q.exec(function(err, questions) {
+    return q.exec(function (err, questions) {
         cbf(cb, err, questions);
     });
 };
 
 // GET
-api.getQuestion = function(id, cb) {
+api.getQuestion = function (id, cb) {
 
-    Question.findOne({ '_id': id }, function(err, question) {
+    Question.findOne({ '_id': id }, function (err, question) {
         cbf(cb, err, question);
     });
 };
 
 // POST
-api.addQuestion = function(question, cb) {
+api.addQuestion = function (question, cb) {
 
     if (question == 'undefined') {
         cb('No Question Provided. Please provide valid question data.');
@@ -68,60 +68,64 @@ api.addQuestion = function(question, cb) {
 
     question = new Question(question);
 
-    question.save(function(err) {
-        
+    question.save(function (err) {
+
         // Send Event to Redis to be consumed by socket servers
-        Pub.publish("socketServers", JSON.stringify({
-            client: {
-                type: "question_added",
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Question_added",
                 room: question.matchid,
                 data: question
             }
-        }));
-        
+        }
+        ));
+
         // Wait 15 seconds the call method to notify client votes
-        setTimeout(function(){
+        setTimeout(function () {
             informClientsOfAnwswers(question._id)
-        },15000);
-        
+        }, 15000);
+
         cbf(cb, err, question.toObject());
     });
 };
 
 // This method is called 15" after the question creation in order to inform clients
 // about the number of answers that the other users have given
-var informClientsOfAnwswers = function(id){
-     Question.findOne({ '_id': id }, function(err, question) {
-       if(!err)
-        // Send Event to Redis to be consumed by socket servers
-        Pub.publish("socketServers", JSON.stringify({
-            client: {
-                type: "question_updated",
-                room: question.matchid,
-                data: question
+var informClientsOfAnwswers = function (id) {
+    Question.findOne({ '_id': id }, function (err, question) {
+        if (!err)
+            // Send Event to Redis to be consumed by socket servers
+            PubChannel.publish("socketServers", JSON.stringify({
+                sockets: true,
+                payload: {
+                    type: "Question_updated",
+                    room: question.matchid,
+                    data: question
+                }
             }
-        }));
+            ));
     });
-} 
+}
 
-api.userAnswerQuestion = function(answer, cb) {
+api.userAnswerQuestion = function (answer, cb) {
 
     if (answer == 'undefined' || _.isEmpty(answer)) {
         cb('No answer Provided. Please provide valid answer data.');
     }
     else
-        Question.findOne({ '_id': answer.questionid }, function(err, question) {
+        Question.findOne({ '_id': answer.questionid }, function (err, question) {
             if (question.status > 0)
                 cb('Question already answered by moderator.');
             else {
-                _.find(question.answers, function(o) {
+                _.find(question.answers, function (o) {
                     return o._id == answer.answerid;
                 }).answered++;
 
-                question.save(function(err) { });
+                question.save(function (err) { });
 
                 answer = new Answer(answer);
-                answer.save(function(err) {
+                answer.save(function (err) {
                     cbf(cb, err, answer.toObject());
                 });
             }
@@ -131,8 +135,8 @@ api.userAnswerQuestion = function(answer, cb) {
 
 
 // PUT
-api.editQuestion = function(id, updateData, cb) {
-    Question.findById(id, function(err, question) {
+api.editQuestion = function (id, updateData, cb) {
+    Question.findById(id, function (err, question) {
 
         // First check change in status and user privilages
         if (updateData["admin"] == true && question["status"] == 0 && updateData["status"] == 1) {
@@ -142,15 +146,15 @@ api.editQuestion = function(id, updateData, cb) {
                 question["correct"] = updateData["correct"];
 
                 //  Give points to all users who answered correctly (update their score and questions_answered_correctly stat)
-                var pointsToGive = _.find(question.answers, function(o) { return o._id == updateData["correct"]; }).points;
+                var pointsToGive = _.find(question.answers, function (o) { return o._id == updateData["correct"]; }).points;
 
-                Answer.find({ questionid: question._id, answerid: updateData["correct"] }, 'userid', function(err, ids) {
+                Answer.find({ questionid: question._id, answerid: updateData["correct"] }, 'userid', function (err, ids) {
                     var userids = _.map(ids, 'userid');
 
                     Scores.update({ match_id: question.matchid, user_id: { $in: userids } },
                         { $inc: { score: pointsToGive } },
                         { safe: true, new: true, multi: true },
-                        function(err, result) {
+                        function (err, result) {
                             if (err)
                                 console.log(err);
 
@@ -170,7 +174,7 @@ api.editQuestion = function(id, updateData, cb) {
             }
 
             //  Save status of the card in db
-            return question.save(function(err) {
+            return question.save(function (err) {
                 cbf(cb, err, question.toObject());
             }); //eo question.save
 
@@ -198,8 +202,8 @@ api.editQuestion = function(id, updateData, cb) {
             if (typeof updateData["img"] != 'undefined') {
                 question["img"] = updateData["img"];
             }
-            
-             if (typeof updateData["sponsor"] != 'undefined') {
+
+            if (typeof updateData["sponsor"] != 'undefined') {
                 question["sponsor"] = updateData["sponsor"];
             }
 
@@ -208,7 +212,7 @@ api.editQuestion = function(id, updateData, cb) {
             }
 
 
-            return question.save(function(err) {
+            return question.save(function (err) {
                 cbf(cb, err, question.toObject());
             }); //eo question.save
         }
@@ -216,9 +220,9 @@ api.editQuestion = function(id, updateData, cb) {
 };
 
 // DELETE
-api.deleteQuestion = function(id, cb) {
-    return Question.findById(id, function(err, question) {
-        return question.remove(function(err) {
+api.deleteQuestion = function (id, cb) {
+    return Question.findById(id, function (err, question) {
+        return question.remove(function (err) {
             cbf(cb, err, true);
         });
     });
@@ -232,13 +236,13 @@ api.deleteQuestion = function(id, cb) {
 
 
 //TEST
-api.test = function(cb) {
+api.test = function (cb) {
     cbf(cb, false, { result: 'ok' });
 };
 
 
-api.deleteAllQuestions = function(cb) {
-    return Question.remove({}, function(err) {
+api.deleteAllQuestions = function (cb) {
+    return Question.remove({}, function (err) {
         cbf(cb, err, true);
     });
 };
@@ -259,7 +263,7 @@ api.deleteAllQuestions = function(cb) {
  * @return {Function} - Callback
  */
 
-var cbf = function(cb, err, data) {
+var cbf = function (cb, err, data) {
     if (cb && typeof (cb) == 'function') {
         if (err) cb(err);
         else cb(false, data);
