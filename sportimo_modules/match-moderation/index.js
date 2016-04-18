@@ -101,7 +101,7 @@ var ModerationModule = {
                 return;
 
             log.info("[Redis] : Event has come through the channel.");
-            log.debug("[Redis] :" + message);
+            log.info("[Redis] :" + message);
         });
     },
     SetupAPIRoutes: function (server) {

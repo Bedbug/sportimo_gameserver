@@ -7,11 +7,16 @@
  */
 
 var Sports = require('./sports-settings');
-var StatsHelper = require('./stats-handler');
+var StatsHelper = require('./StatsHelper');
 var moment = require('moment');
 var log = require('winston');
 var _ = require('lodash'),
-    StatMods = require('../../models/stats-mod');
+    mongoose = require('mongoose'),
+    StatMods = require('../../models/stats-mod'),
+    matchEvents = require('../../models/matchEvents');
+
+
+
 
 var path = require('path'),
     fs = require('fs');
@@ -25,7 +30,7 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 
 
 var matchModule = function (match, PubChannel) {
-    
+
     var HookedMatch = {}; // = match;
     var tick = null;    // an internal timer that looks for wildcards to resolve.
 
@@ -57,14 +62,14 @@ var matchModule = function (match, PubChannel) {
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
 
-    
+
 
     /*  -------------
      **   Methods
      **  -------------
      */
 
-    
+
     /*  SetModerationService
         Here we set the moderation service for the game. "service" is the object of the corresponding
         service. 
@@ -80,8 +85,8 @@ var matchModule = function (match, PubChannel) {
 
         // Check if service of same type already exists 
         if (_.findWhere(HookedMatch.moderation, {
-                type: service.type
-            })) {
+            type: service.type
+        })) {
             log.info("Service already active");
             return new Error("Service type already active. Please remove the old one first.");
         } else {
@@ -98,15 +103,15 @@ var matchModule = function (match, PubChannel) {
         HookedMatch.moderationServices.push(newService);
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {
-            
+        newService.init(JSON.parse(JSON.stringify(this.data)), function (done) {
+
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
-            newService.emitter.on('matchEvent', function(matchEvent) {
-                if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id) 
+            newService.emitter.on('matchEvent', function (matchEvent) {
+                if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
                     HookedMatch.AddEventCore(matchEvent);
             });
-            newService.emitter.on('nextMatchSegment', function(matchEvent) {
-                if (matchEvent && matchEvent._id == HookedMatch.data.id) 
+            newService.emitter.on('nextMatchSegment', function (matchEvent) {
+                if (matchEvent && matchEvent._id == HookedMatch.data.id)
                     HookedMatch.AdvanceSegmentCore(matchEvent);
             });
 
@@ -129,8 +134,8 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
-       
-        return cbk(null,HookedMatch);
+
+        return cbk(null, HookedMatch);
     }
 
     HookedMatch.updateTimes = function (data) {
@@ -170,10 +175,9 @@ var matchModule = function (match, PubChannel) {
 
         return HookedMatch;
     }
-    
+
     // This is the core used by both the module API and the rss-feed service.
-    HookedMatch.AdvanceSegmentCore = function(event)
-    {
+    HookedMatch.AdvanceSegmentCore = function (event) {
         // Register the time that the previous segment ended
         this.data.timeline[this.data.state].end = moment().utc().format();
         // Advance the state of the match
@@ -206,16 +210,19 @@ var matchModule = function (match, PubChannel) {
         other instances.
     */
     HookedMatch.AddEvent = function (event, res) {
+
+        // Create an ID for the event before pushing it.
+        event.data = new matchEvents(event.data);
+
         HookedMatch.AddEventCore(event);
-        
-        // 4. return match to Sender
-        return HookedMatch;
+
+        // 4. return stored event to Sender
+        return event;
 
     };
 
 
-    HookedMatch.AddEventCore = function (event)
-    {
+    HookedMatch.AddEventCore = function (event) {
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
         //        console.log("When adding event:");
@@ -229,12 +236,36 @@ var matchModule = function (match, PubChannel) {
         // 1. push event in timeline
         if (evtObject.timeline_event) {
             log.info("Received Timeline event");
+
+            // evtObject = new matchEvents(evtObject);
             this.data.timeline[this.data.state].events.push(evtObject);
         }
 
         // 2. broadcast event on pub/sub channel
         log.info("Pushing event to Redis Pub/Sub channel");
-        PubChannel.publish("socketServers", JSON.stringify(event));
+        // PubChannel.publish("socketServers", JSON.stringify(event));
+
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Event_added",
+                room: event.matchid,
+                data: event.data
+            }
+        }
+        ));
+
+        // Inform the system about the stat changes
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Stats_changed",
+                room: event.matchid,
+                data: match.stats
+            }
+        }
+        ));
 
         // 3. save match to db
         if (evtObject.timeline_event) {
@@ -326,8 +357,8 @@ var matchModule = function (match, PubChannel) {
     }
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
-    HookedMatch.Terminate = function() {
-        
+    HookedMatch.Terminate = function () {
+
     }
 
     return HookedMatch;
@@ -348,13 +379,13 @@ var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
             StatMods.where({
-                    match_id: mod.match_id,
-                    stat_for: mod.stat_for,
-                    stat: mod.stat,
-                    created: {
-                        $gt: mod.created
-                    }
-                })
+                match_id: mod.match_id,
+                stat_for: mod.stat_for,
+                stat: mod.stat,
+                created: {
+                    $gt: mod.created
+                }
+            })
                 .setOptions({
                     multi: true
                 })
@@ -363,7 +394,7 @@ var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
                         was: -mod.by,
                         is: -mod.by
                     }
-                }, function (err, doc) {});
+                }, function (err, doc) { });
 
             // 3. Remove the document from the collection
             mod.remove(function (err) {
