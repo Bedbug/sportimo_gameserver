@@ -88,6 +88,7 @@ var redisCreds = {
     secret: '075bc004e0e54a4a738c081bf92bc61d',
     channel: "socketServers"
 };
+
 var PublishChannel = null;
 PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
 PublishChannel.auth(redisCreds.secret, function (err) {
@@ -146,6 +147,7 @@ app.use('/offline_data/', require('./sportimo_modules/offline_data/api/ondemand.
 var leaderboards_module = require('./sportimo_modules/leaderpay');
 
 var questions_module = require('./sportimo_modules/questions');
+
 
 var users_module = require('./sportimo_modules/users');
 

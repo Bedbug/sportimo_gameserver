@@ -5,6 +5,11 @@ question = require('../apiObjects/question'),
 l=require('../config/lib');
 
 var api = {};
+
+// api.redis = function(pub,sub){
+// 	question.redis(pub,sub);	
+// }
+
 // ALL
 api.questions = function (req, res) {
 	var skip=null,limit=10;

@@ -17,17 +17,26 @@ var express = require('express'),
     morgan = require('morgan'),
     bodyParser = require('body-parser'),
     errorhandler = require('errorhandler');
+
     // cors = require('cors');
 
+
+
 var app = null;
+var PubChannel;
+var SubChannel;
+
 
 try {
     app = require('./../../server');
-    module.exports = this;
-
+ 
+    module.exports = function(pub,sub){
+        PubChannel = pub;
+        SubChannel = sub;
+    };
 } catch (ex) {
     // Start server
-    app =  module.exports = exports.app = express.Router();
+    //app =  module.exports = exports.app = express.Router();
     var port = process.env.PORT || 3000;
     app.listen(port, function () {
         console.log('Express server listening on port %d in %s mode', port, app.get('env'));
@@ -76,7 +85,7 @@ fs.readdirSync(routesPath).forEach(function (file) {
 // Bootstrap api
 var apiPath = path.join(__dirname, 'api');
 fs.readdirSync(apiPath).forEach(function (file) {
-    app.use('/', require(apiPath + '/' + file));
+   app.use('/', require(apiPath + '/' + file));
 });
 
 

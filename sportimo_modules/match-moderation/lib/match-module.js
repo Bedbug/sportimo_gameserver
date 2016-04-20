@@ -217,7 +217,7 @@ var matchModule = function (match, PubChannel) {
         HookedMatch.AddEventCore(event);
 
         // 4. return stored event to Sender
-        return event;
+        return event.data;
 
     };
 
@@ -328,32 +328,70 @@ var matchModule = function (match, PubChannel) {
     */
     HookedMatch.UpdateEvent = function (event) {
 
-        // Parses the event based on sport and makes changes in the match instance
-        StatsHelper.Parse(event, match);
-
-        for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
-            if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
-                this.data.timeline[event.data.state].events[i] = event.data;
-                break;
-            }
+        // console.log(event.data._id);
+        //  console.log(this.data.timeline[event.data.state]);
+      var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function(o){
+          return o._id == event.data._id;
+        }); 
+        
+        // We have an update to players
+        if(eventToUpdate.players.length < event.data.players.length){
+          event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id],event.data.stats,[event.data.players[0].name], this.data, eventToUpdate.linked_mods);
+           eventToUpdate.players = event.data.players; 
         }
+        
+        
+        
+        // // Parses the event based on sport and makes changes in the match instance
+        // StatsHelper.Parse(event, match);
+
+        // for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
+        //     if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
+        //         this.data.timeline[event.data.state].events[i] = event.data;
+        //         break;
+        //     }
+        // }
 
         // Broadcast the remove event so others can consume it.
-        PubChannel.publish("socketServers", JSON.stringify(event));
+        // 2. broadcast event on pub/sub channel
+        log.info("Pushing event to Redis Pub/Sub channel");
+        // PubChannel.publish("socketServers", JSON.stringify(event));
+
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Event_updated",
+                room: eventToUpdate.matchid,
+                data: eventToUpdate
+            }
+        }
+        ));
+
+        // Inform the system about the stat changes
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Stats_changed",
+                room: event.matchid,
+                data: match.stats
+            }
+        }
+        ));
 
         // 3. save match to db
         this.data.markModified('timeline');
         log.info("Updating database");
 
-        StatsHelper.UpsertStat(match.id, {
-            events_sent: 1
-        }, this.data);
+        // StatsHelper.UpsertStat(match.id, {
+        //     events_sent: 1
+        // }, this.data);
         this.data.markModified('stats');
 
         this.data.save();
 
         // 4. return match to Sender
-        return HookedMatch;
+        return eventToUpdate;
     }
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.

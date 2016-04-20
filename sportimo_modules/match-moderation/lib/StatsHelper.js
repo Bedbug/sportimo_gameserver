@@ -268,6 +268,13 @@ var StatsAnalyzer = {
     UpsertStat: function (id, stat, stats) {
         if (stats) CurrentMatch = stats;
         StatsMethods.UpsertStat([id], stat, [null]);
+    },
+    UpdateEventStat: function(ids, stats, names, match, linked_mods){
+        if(match) CurrentMatch = match;
+        linked_stat_mods = linked_mods;
+        StatsMethods.UpsertStat(ids, stats, names);
+        
+        return linked_stat_mods;
     }
 }
 

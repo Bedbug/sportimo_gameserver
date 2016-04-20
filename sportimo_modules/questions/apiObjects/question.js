@@ -16,6 +16,7 @@ var redisCreds = {
     secret: '075bc004e0e54a4a738c081bf92bc61d',
     channel: "socketServers"
 };
+
 var Pub;
 Pub = redis.createClient(redisCreds.port, redisCreds.url);
 Pub.auth(redisCreds.secret, function (err) {
@@ -69,7 +70,6 @@ api.addQuestion = function (question, cb) {
     question = new Question(question);
 
     question.save(function (err) {
-
         // Send Event to Redis to be consumed by socket servers
         PubChannel.publish("socketServers", JSON.stringify({
             sockets: true,
@@ -160,11 +160,14 @@ api.editQuestion = function (id, updateData, cb) {
 
                             //  Send Socket Event with the changes in the question
                             Pub.publish("socketServers", JSON.stringify({
-                                client: {
+                                sockets:true,
+                                payload: {
                                     type: "question_answered",
                                     room: question.matchid,
                                     data: {
-                                        correct: question.correct
+                                        qid:  question._id,
+                                        correct: question.correct,
+                                        points: pointsToGive
                                     }
                                 }
                             }));
