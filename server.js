@@ -122,7 +122,7 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/spor
 
 var liveMatches = require('./sportimo_modules/match-moderation');
 if(PublishChannel && SubscribeChannel)
-liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
+    liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
 liveMatches.SetupMongoDB(mongoose);
 liveMatches.SetupAPIRoutes(app);
 liveMatches.init(TestSuite.done);
@@ -130,10 +130,10 @@ TestSuite.moderation = liveMatches;
 // }
 
 var wildcards = require('./sportimo_modules/wildcards');
-//wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
-wildcards.SetupMongoDB(mongoose);
+    //wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
+    //wildcards.SetupMongoDB(mongoose);
 wildcards.SetupAPIRoutes(app);
-wildcards.init();
+wildcards.init(mongoose);
 TestSuite.wildcards = wildcards;
 
 
@@ -172,8 +172,8 @@ app.use(function (req, res, next) {
 
 app.use(function (req, res, next) {
     req.mongoose = mongoose.connection;
-    req.redisPub = Pub;
-    req.redisSub = Sub;
+    req.redisPub = PublishChannel;
+    req.redisSub = SubscribeChannel;
     next();
 });
 
@@ -206,7 +206,7 @@ var logger = new (winston.Logger)({
 
 logger.add(winston.transports.Console, {
     timestamp: true,
-    level: process.env.LOG_LEVEL || 'warn',
+    level: process.env.LOG_LEVEL || 'debug',
     prettyPrint: true,
     colorize: 'level'
 });

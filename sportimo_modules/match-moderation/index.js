@@ -40,7 +40,6 @@ var ModerationModule = {
     testing: false,
     callback: null,
     mongoose: null,
-    tickSchedule: null,
     mock: false,
     count: function () {
         return _.size(this.ModeratedMatches);
@@ -250,16 +249,8 @@ ModerationModule.RemoveScheduleMatch = function (id, cbk) {
     cbk();
 };
 
-// Propagate the tick event to every managed/stored moderated match in this object
-ModerationModule.Tick = function() {
-    _.forEach(ModerationModule.ModeratedMatches, function(match) {
-        match.Tick();    
-    });  
-};
 
 function initModule(done) {
-    this.tickSchedule = setInterval(this.Tick, 1000);
-    
     if (!this.mock) {
         /* We load all scheduled/active matches from DB on server initialization */
         scheduled_matches

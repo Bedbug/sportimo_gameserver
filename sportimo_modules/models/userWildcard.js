@@ -1,4 +1,4 @@
-// wildcard is a definition that the moderator (manual or automatic) creates, to be played by users. It is not related with wildcards in play, this is handled by the userWildcard model.
+// userWildcard is a wildcard definition after it has been played by a user, hence it is a wildcard instance in play.
 
 'use strict';
 
@@ -7,10 +7,12 @@ var mongoose = require('mongoose'),
     ObjectId = Schema.ObjectId,
     moment = require('moment');
 
-if (mongoose.models.wildcardDefinition)
-    module.exports = mongoose.models.wildcard;
+if (mongoose.models.userWildcard)
+    module.exports = mongoose.models.userWildcard;
 else {
-    var wildcardDefinition = new mongoose.Schema({
+    var userWildcard = new mongoose.Schema({
+        userid: String,
+        pointsAwarded: Number,
         matchid: String,
         text: String,
         // Trigger specifications
@@ -20,22 +22,23 @@ else {
         duration: Number,
         appearConditions: [Schema.Types.Mixed],
         winConditions: [Schema.Types.Mixed],
-        terminationConditions: [Schema.Types.Mixed],
         // Awarded points specs
         points: Number,
         pointStep: Number,
         minPoints: Number,
         maxPoints: Number,
         // States and state times
-        maxUserInstances: Number,   // maximum number of times a user may play this card
         creationTime: Date,
         activationTime: Date,
         terminationTime: Date,
+        wonTime: Date,
         status: 0,  // 0: pending activation, 1: active, 2: terminated (dead)
+        linkedDefinitionId: String, // the id of the referenced wildcard definition (if any)
+        linkedEvent: 0
     });
     
     
-    wildcardDefinition.pre('save', function(next){
+    userWildcard.pre('save', function(next){
         let now = moment.utc();
     
         if (this.status == 0)   // auto-set times only if this is a new instance
@@ -51,5 +54,5 @@ else {
         next();
     });
     
-    module.exports = mongoose.model("wildcardDefinitions", wildcardDefinition);
+    module.exports = mongoose.model("userWildcards", userWildcard);
 }

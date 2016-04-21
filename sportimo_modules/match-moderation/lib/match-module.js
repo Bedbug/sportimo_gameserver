@@ -70,29 +70,28 @@ var matchModule = function (match, PubChannel) {
             "interval": 500 
         } 
     */
-    HookedMatch.AddModerationService = function (service) {
+    HookedMatch.AddModerationService = function (service, callback) {
         // Check if service of same type already exists 
-        if (_.findWhere(HookedMatch.moderation, {
+        if (_.findWhere(HookedMatch.moderationServices, {
                 type: service.type
             })) {
             log.info("Service already active");
-            return { error: new Error("Service type already active. Please remove the old one first.") };
+            return callback(new Error("Service type already active. Please remove the old one first."));
         } else {
-            HookedMatch.moderation.push(service);
-            HookedMatch.StartService(service);
-            return { error: null };
+            //HookedMatch.moderationServices.push(service);
+            return HookedMatch.StartService(service, callback);
         }
     };
 
-    HookedMatch.StartService = function (service) {
+    HookedMatch.StartService = function (service, callback) {
         var newService = services[service.type];
 
         _.merge(newService, service);
 
-        HookedMatch.moderationServices.push(newService);
-
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(JSON.parse(JSON.stringify(this.data)), function(done) {
+        newService.init(JSON.parse(JSON.stringify(this.data)), function(error, done) {
+            if (error)
+                return callback(error);
             
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             newService.emitter.on('matchEvent', function(matchEvent) {
@@ -108,13 +107,43 @@ var matchModule = function (match, PubChannel) {
                     HookedMatch.Terminate();
             });
 
+            HookedMatch.moderationServices.push(newService);
+            callback(null, newService);
         });
+    };
+    
+    HookedMatch.PauseService = function (service, callback) {
+        // Check if service of same type already exists 
+        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+                type: service.type
+            });
+        if (!serviceTypeFound)
+            return callback(new Error("Service type does not exist. Please add it first."));
+        serviceTypeFound.pause();
+        callback(null, serviceTypeFound);
+    };
+    
+    
+    HookedMatch.ResumeService = function (service, callback) {
+        // Check if service of same type already exists 
+        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+                type: service.type
+            });
+        if (!serviceTypeFound)
+            return callback(new Error("Service type does not exist. Please add it first."));
+        serviceTypeFound.resume();
+        callback(null, serviceTypeFound);
+    };    
+    
+    
+    HookedMatch.GetServices = function() {
+        return HookedMatch.moderationServices;
     };
 
 
     // Set services for the first time
-    HookedMatch.moderation = match.moderation;
-    HookedMatch.moderation.forEach(function (service) {
+    HookedMatch.moderationServices = match.moderation;
+    HookedMatch.moderationServices.forEach(function (service) {
         HookedMatch.StartService(service);
     });
 
@@ -313,13 +342,6 @@ var matchModule = function (match, PubChannel) {
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.Terminate = function() {
-        
-    };
-    
-    // method that is called on a schedule by match-moderation in order to manage wildcards's lifetime (activation, termination)
-    HookedMatch.Tick = function()
-    {
-        // Get all pending cards that should be marked as activated and do so
         
     };
 
