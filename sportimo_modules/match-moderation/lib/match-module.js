@@ -7,11 +7,16 @@
  */
 
 var Sports = require('./sports-settings');
-var StatsHelper = require('./stats-handler');
+var StatsHelper = require('./StatsHelper');
 var moment = require('moment');
 var log = require('winston');
 var _ = require('lodash'),
-    StatMods = require('../../models/stats-mod');
+    mongoose = require('mongoose'),
+    StatMods = require('../../models/stats-mod'),
+    matchEvents = require('../../models/matchEvents');
+
+
+
 
 var path = require('path'),
     fs = require('fs');
@@ -25,7 +30,7 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 
 
 var matchModule = function (match, PubChannel) {
-    
+
     var HookedMatch = {}; // = match;
     HookedMatch.moderationServices = [];
 
@@ -51,14 +56,14 @@ var matchModule = function (match, PubChannel) {
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
 
-    
+
 
     /*  -------------
      **   Methods
      **  -------------
      */
 
-    
+
     /*  SetModerationService
         Here we set the moderation service for the game. "service" is the object of the corresponding
         service. 
@@ -156,8 +161,8 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
-       
-        return cbk(null,HookedMatch);
+
+        return cbk(null, HookedMatch);
     }
 
     HookedMatch.updateTimes = function (data) {
@@ -229,6 +234,8 @@ var matchModule = function (match, PubChannel) {
 
     HookedMatch.AddEvent = function (event)
     {
+        event.data = new matchEvents(event.data);
+
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
         //        console.log("When adding event:");
@@ -242,12 +249,36 @@ var matchModule = function (match, PubChannel) {
         // 1. push event in timeline
         if (evtObject.timeline_event) {
             log.info("Received Timeline event");
+
+            // evtObject = new matchEvents(evtObject);
             this.data.timeline[this.data.state].events.push(evtObject);
         }
 
         // 2. broadcast event on pub/sub channel
         log.info("Pushing event to Redis Pub/Sub channel");
-        PubChannel.publish("socketServers", JSON.stringify(event));
+        // PubChannel.publish("socketServers", JSON.stringify(event));
+
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Event_added",
+                room: event.match_id,
+                data: event.data
+            }
+        }
+        ));
+
+        // Inform the system about the stat changes
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Stats_changed",
+                room: event.matchid,
+                data: match.stats
+            }
+        }
+        ));
 
         // 3. save match to db
         if (evtObject.timeline_event) {
@@ -312,26 +343,64 @@ var matchModule = function (match, PubChannel) {
     */
     HookedMatch.UpdateEvent = function (event) {
 
-        // Parses the event based on sport and makes changes in the match instance
-        StatsHelper.Parse(event, match);
-
-        for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
-            if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
-                this.data.timeline[event.data.state].events[i] = event.data;
-                break;
-            }
+        // console.log(event.data._id);
+        //  console.log(this.data.timeline[event.data.state]);
+      var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function(o){
+          return o._id == event.data._id;
+        }); 
+        
+        // We have an update to players
+        if(eventToUpdate.players.length < event.data.players.length){
+          event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id],event.data.stats,[event.data.players[0].name], this.data, eventToUpdate.linked_mods);
+           eventToUpdate.players = event.data.players; 
         }
+        
+        
+        
+        // // Parses the event based on sport and makes changes in the match instance
+        // StatsHelper.Parse(event, match);
+
+        // for (var i = 0; i < this.data.timeline[event.data.state].events.length; i++) {
+        //     if (this.data.timeline[event.data.state].events[i].id == event.data.id && this.data.timeline[event.data.state].events[i].match_id == event.match_id) {
+        //         this.data.timeline[event.data.state].events[i] = event.data;
+        //         break;
+        //     }
+        // }
 
         // Broadcast the remove event so others can consume it.
-        PubChannel.publish("socketServers", JSON.stringify(event));
+        // 2. broadcast event on pub/sub channel
+        log.info("Pushing event to Redis Pub/Sub channel");
+        // PubChannel.publish("socketServers", JSON.stringify(event));
+
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Event_updated",
+                room: eventToUpdate.match_id,
+                data: eventToUpdate
+            }
+        }
+        ));
+
+        // Inform the system about the stat changes
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Stats_changed",
+                room: event.matchid,
+                data: match.stats
+            }
+        }
+        ));
 
         // 3. save match to db
         this.data.markModified('timeline');
         log.info("Updating database");
 
-        StatsHelper.UpsertStat(match.id, {
-            events_sent: 1
-        }, this.data);
+        // StatsHelper.UpsertStat(match.id, {
+        //     events_sent: 1
+        // }, this.data);
         this.data.markModified('stats');
 
         this.data.save();
@@ -363,13 +432,13 @@ var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
             StatMods.where({
-                    match_id: mod.match_id,
-                    stat_for: mod.stat_for,
-                    stat: mod.stat,
-                    created: {
-                        $gt: mod.created
-                    }
-                })
+                match_id: mod.match_id,
+                stat_for: mod.stat_for,
+                stat: mod.stat,
+                created: {
+                    $gt: mod.created
+                }
+            })
                 .setOptions({
                     multi: true
                 })
@@ -378,7 +447,7 @@ var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
                         was: -mod.by,
                         is: -mod.by
                     }
-                }, function (err, doc) {});
+                }, function (err, doc) { });
 
             // 3. Remove the document from the collection
             mod.remove(function (err) {
