@@ -250,7 +250,7 @@ var matchModule = function (match, PubChannel) {
             sockets: true,
             payload: {
                 type: "Event_added",
-                room: event.matchid,
+                room: event.match_id,
                 data: event.data
             }
         }
@@ -362,7 +362,7 @@ var matchModule = function (match, PubChannel) {
             sockets: true,
             payload: {
                 type: "Event_updated",
-                room: eventToUpdate.matchid,
+                room: eventToUpdate.match_id,
                 data: eventToUpdate
             }
         }
