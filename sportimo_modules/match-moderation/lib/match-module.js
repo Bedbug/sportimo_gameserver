@@ -36,7 +36,7 @@ var matchModule = function (match, PubChannel) {
 
     // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
     HookedMatch.wildcards = require('../../wildcards');
-    HookedMatch.wildcards.init(mongoConnection.mongoose);
+    HookedMatch.wildcards.init(mongoConnection.mongoose, PubChannel);
     // Set ID
     HookedMatch.id = match._id.toString() || 'mockid';
 

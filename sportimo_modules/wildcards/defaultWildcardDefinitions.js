@@ -15,8 +15,8 @@ var defaultWildcardDefinitions = [
         id: "1",
         matchid: "[[matchid]]",
         text: {"en": "Any player of any team will geta red card in the next 5 minutes" },
-        activationLatency: 30, // 30 seconds
-        duration: 30000, // 5"
+        activationLatency: 30000, // 30 seconds
+        duration: 300000, // 5"
         appearConditions: [], // empty - always avalable
         winConditions: [
             {
@@ -38,8 +38,8 @@ var defaultWildcardDefinitions = [
         id: "2",
         matchid: "[[matchid]]",
         text: {"en": "Any player of any team will get a yellow card in the next 5 minutes" },
-        activationLatency: 30, // 30 seconds
-        duration: 30000, // 5"
+        activationLatency: 30000, // 30 seconds
+        duration: 300000, // 5"
         appearConditions: [], // empty - always avalable
         winConditions: [
             {
@@ -61,8 +61,8 @@ var defaultWildcardDefinitions = [
         id: "3",
         matchid: "[[matchid]]",
         text: {"en": "Any player of any team will kick a corner in the next 5 minutes" },
-        activationLatency: 30, // 30 seconds
-        duration: 30000, // 5"
+        activationLatency: 30000, // 30 seconds
+        duration: 300000, // 5"
         appearConditions: [], // empty - always avalable
         winConditions: [
             {
@@ -84,8 +84,8 @@ var defaultWildcardDefinitions = [
         id: "4",
         matchid: "[[matchid]]",
         text: {"en": "Any player of any team will be in an offside position in the next 5 minutes" },
-        activationLatency: 30, // 30 seconds
-        duration: 30000, // 5"
+        activationLatency: 30000, // 30 seconds
+        duration: 300000, // 5"
         appearConditions: [], // empty - always avalable
         winConditions: [
             {

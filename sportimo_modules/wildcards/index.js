@@ -338,6 +338,7 @@ wildcards.addUserInstance = function (matchId, wildcard, callback) {
     
         let itsNow = moment.utc();
         let isDefaultDefinition = _.indexOf(["1", "2", "3", "4"], wildcard.wildcardDefinitionId) != -1;
+        let creationMoment = moment.utc(wildcard.creationTime);
         
         // Store the mongoose model
         let newCard = null;
@@ -352,11 +353,13 @@ wildcards.addUserInstance = function (matchId, wildcard, callback) {
                 activationLatency: wildcardDefinition.activationLatency,
                 appearConditions: wildcardDefinition.appearConditions,
                 winConditions: wildcardDefinition.winConditions,
+                pointsAwarded: 0,
                 pointStep: (wildcardDefinition.maxPoints - wildcardDefinition.minPoints) / (wildcardDefinition.duration / 1000),
                 minPoints: wildcardDefinition.minPoints,
                 maxPoints: wildcardDefinition.maxPoints,
                 creationTime: wildcard.creationTime,
-                activationTime: isDefaultDefinition ? wildcard.creationTime : null,
+                activationTime: isDefaultDefinition ? creationMoment.add(wildcardDefinition.activationLatency, 'ms') : wildcardDefinition.activationTime,
+                terminationTime: isDefaultDefinition ? creationMoment.add(wildcardDefinition.activationLatency, 'ms').add(wildcard.duration, 'ms') : wildcardDefinition.terminationTime,
                 status: wildcardDefinition.status,
                 linkedEvent: 0
             });
@@ -406,22 +409,42 @@ wildcards.Tick = function()
         },
         function(callback) {
             // Update all wildcards that have terminated without success
-            return db.models.wildcardDefinitions.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {status: 2} }, {multi: true}, function(error, lostCards) {
+            return db.models.wildcardDefinitions.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {status: 2} }, {multi: true}, callback);
+        },
+        function(callback) {
+            let lostCards = null;
+            db.models.userWildcards.find({ status: 1, activationTime: { $lt: itsNow },  $or: [{terminationTime: null}, {terminationTime: { $lt: itsNow}} ] }, function(error, data) {
                 if (error)
                     return callback(error);
+                _.forEach(data, function(card) {
+                    card.status = 2;
                     
-                _.forEach(lostCards, function(lostCard) {
-				    // Send an event through Redis pu/sub:
-				    log.debug('Detected a lost wildcard: ' + lostCard);
-                    redisPublish.publish("socketServers", JSON.stringify({
-                        sockets: true,
-                        payload: {
-                            type: "Card_lost",
-                            client: lostCard.userid,
-                            room: lostCard.matchid,
-                            data: lostCard
-                        }
-                    }));                    
+                });
+                lostCards = data;
+                if (!lostCards || lostCards.length == 0)
+                    return callback();
+                
+                // Update all user wildcards that have terminated without success
+                db.models.userWildcards.update(
+                    { status: 1, activationTime: { $lt: itsNow },  $or: [{terminationTime: null}, {terminationTime: { $lt: itsNow}} ] },
+                    { $set: {status: 2} }, {multi: true}, 
+                    function(error) {
+                    if (error)
+                        return callback(error);   
+                        
+                    _.forEach(lostCards, function(lostCard) {
+    				    // Send an event through Redis pu/sub:
+    				    log.debug('Detected a lost wildcard: ' + lostCard);
+                        redisPublish.publish("socketServers", JSON.stringify({
+                            sockets: true,
+                            payload: {
+                                type: "Card_lost",
+                                client: lostCard.userid,
+                                room: lostCard.matchid,
+                                data: lostCard
+                            }
+                        }));                    
+                    });
                 });
             });
         }
