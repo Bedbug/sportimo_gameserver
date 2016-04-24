@@ -263,14 +263,14 @@ function initModule(done) {
             .populate('away_team')
             .exec(function (err, matches) {
                 if (err) 
-                    return log.error(err);
+                    return ModerationModule.callback ? ModerationModule.callback(err) : log.error(err);
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
                         var hookedMatch = new match_module(match, RedisClientPub);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
-                    })
+                    });
                 } else {
                     log.warn("No scheduled matches could be found in the database.");
                 }
@@ -278,7 +278,7 @@ function initModule(done) {
                 // Callback we are done for whomever needs it
                 if (ModerationModule.callback != null)
                     ModerationModule.callback();
-
+                    
             });
 
 

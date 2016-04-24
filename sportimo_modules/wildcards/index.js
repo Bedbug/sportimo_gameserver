@@ -24,6 +24,7 @@
 
 var path = require('path'),
     fs = require('fs'),
+    express = require('express'),
     moment = require('moment'),
     async = require('async'),
     log = require('winston'),
@@ -41,31 +42,39 @@ var DatabaseWildcard;
 var wildcards = {};
 
 /*The database connection*/
-wildcards.db = null;
+var db = null;
+
+/*The redis pub/sub chanel for publishing*/
+var redisPublish = null;
 
 /*The tick handler*/
-wildcards.tickSchedule = null;
+var tickSchedule = null;
 
 
 /************************************
  * Perform initialization functions */
-wildcards.init = function (dbconnection) {
-    wildcards.db = dbconnection;
+wildcards.init = function (dbconnection, redisPublishChannel) {
+    if (!db)
+    {
+        db = dbconnection;
+        DatabaseWildcard = db.models.userWildcards;
+    }
     
-    var modelsPath = path.join(__dirname, '../models');
-    fs.readdirSync(modelsPath).forEach(function (file) {
-        require(modelsPath + '/' + file);
-    });
+    if (!redisPublish)
+        redisPublish = redisPublishChannel;
     
-    DatabaseWildcard = wildcards.db.models.userWildcards;
-
+    // var modelsPath = path.join(__dirname, '../models');
+    // fs.readdirSync(modelsPath).forEach(function (file) {
+    //     require(modelsPath + '/' + file);
+    // });
     
-    if (wildcards.db == null || DatabaseWildcard == null) {
+    if (db == null || DatabaseWildcard == null) {
         log.error("No active database connection found. Aborting.");
         return new Error('No active database connection found. Aborting.');
     }
-
-    wildcards.tickSchedule = setInterval(wildcards.Tick, 1000);
+    
+    if (!tickSchedule)
+        tickSchedule = setInterval(wildcards.Tick, 1000);
     
     /*Get All cards from database with status lower than 2 (not closed)*/
     // DatabaseWildcard.find({
@@ -84,7 +93,7 @@ wildcards.init = function (dbconnection) {
  *          Widlcards API           *
  ***********************************/
 wildcards.getTemplates = function(callback) {
-    return wildcards.db.models.wildcardTemplates.find({}, callback);
+    return db.models.wildcardTemplates.find({}, callback);
 };
 
 
@@ -94,7 +103,7 @@ wildcards.upsertTemplate = function(template, callback) {
     {
         if (template._id)
         {
-            processedTemplate = wildcards.db.models.wildcardTemplates.findById(template._id);
+            processedTemplate = db.models.wildcardTemplates.findById(template._id);
             processedTemplate.text = template.text;
             processedTemplate.timeToActivate = template.timeToActivate;
             processedTemplate.duration = template.duration;
@@ -107,7 +116,7 @@ wildcards.upsertTemplate = function(template, callback) {
         }
         else
         {
-            processedTemplate = new wildcards.db.models.wildcardTemplates();
+            processedTemplate = new db.models.wildcardTemplates();
             processedTemplate.text = template.text;
             processedTemplate.timeToActivate = template.timeToActivate;
             processedTemplate.duration = template.duration;
@@ -136,7 +145,7 @@ wildcards.getDefinitions = function(state, callback) {
         state = 1; // get active ones
     }
         
-    wildcards.db.models.wildcardDefinitions.find({state: state}, function(error, data) {
+    db.models.wildcardDefinitions.find({state: state}, function(error, data) {
         if (error)
             return callback(error);
         // merge data with default definitions
@@ -158,7 +167,7 @@ wildcards.upsertDefinition = function(wildcard, callback) {
             
         if (wildcard._id)
         {
-            processedDefinition = wildcards.db.models.wildcardDefinitions.findById(wildcard._id);
+            processedDefinition = db.models.wildcardDefinitions.findById(wildcard._id);
             processedDefinition.text = wildcard.text;
             processedDefinition.timeToActivate = wildcard.timeToActivate;
             processedDefinition.duration = wildcard.duration;
@@ -171,11 +180,11 @@ wildcards.upsertDefinition = function(wildcard, callback) {
         }
         else
         {
-            let existingDefinition = wildcards.db.models.wildcardDefinitions.findById(wildcard._id);
+            let existingDefinition = db.models.wildcardDefinitions.findById(wildcard._id);
             if (existingDefinition.state > 0)
                 return callback(new Error('bad request: cannot modify a wildcard definition that is not in the pending activation state'));
                 
-            processedDefinition = new wildcards.db.models.wildcardDefinition({
+            processedDefinition = new db.models.wildcardDefinition({
                 text: wildcard.text,
                 timeToActivate: wildcard.timeToActivate,
                 duration: wildcard.duration,
@@ -262,14 +271,14 @@ wildcards.validateUserInstance = function(matchId, userWildcard, callback) {
     
     async.parallel([
         function(cbk) {
-            wildcards.db.models.users.findById(userWildcard.userid, function(error, data) {
+            db.models.users.findById(userWildcard.userid, function(error, data) {
                 if (error)
                     return cbk(error);
                 cbk(null, data);
             });
         },
         function(cbk) {
-            wildcards.db.models.wildcardDefinitions.findById(userWildcard.wildcardDefinitionId, function(error, data) {
+            db.models.wildcardDefinitions.findById(userWildcard.wildcardDefinitionId, function(error, data) {
                 if (error && !referencedDefinition)
                     return cbk(false);
                 
@@ -328,6 +337,7 @@ wildcards.addUserInstance = function (matchId, wildcard, callback) {
         }
     
         let itsNow = moment.utc();
+        let isDefaultDefinition = _.indexOf(["1", "2", "3", "4"], wildcard.wildcardDefinitionId) != -1;
         
         // Store the mongoose model
         let newCard = null;
@@ -346,6 +356,7 @@ wildcards.addUserInstance = function (matchId, wildcard, callback) {
                 minPoints: wildcardDefinition.minPoints,
                 maxPoints: wildcardDefinition.maxPoints,
                 creationTime: wildcard.creationTime,
+                activationTime: isDefaultDefinition ? wildcard.creationTime : null,
                 status: wildcardDefinition.status,
                 linkedEvent: 0
             });
@@ -365,7 +376,7 @@ wildcards.addUserInstance = function (matchId, wildcard, callback) {
 // removes wildcard from CardsInplay &
 // from the database
 wildcards.deleteUserInstance = function (wildcard_id, callback) {
-    wildcards.db.models.wildcards.findById({_id : wildcard_id}, function(error, wildcard) {
+    db.models.wildcards.findById({_id : wildcard_id}, function(error, wildcard) {
         if (error)
             return callback(error);
             
@@ -381,7 +392,7 @@ wildcards.Tick = function()
     // Update all wildcards pending to be activated
     let itsNow = moment.utc();
     
-    if (!wildcards.db)
+    if (!db)
     {
         log.warn('Wildcards module is not yet connected to Mongo store. Aborting Tick.');
         return;
@@ -391,11 +402,28 @@ wildcards.Tick = function()
         function(callback) {
             // Update all wildcards that are due for activation
             // ToDo: Check that the appearance criteria are also met
-            return wildcards.db.models.wildcardDefinitions.update({status: 0, activationTime: { $lt: itsNow } }, { $set: {state: 1} }, {multi: true}, callback);
+            return db.models.wildcardDefinitions.update({status: 0, activationTime: { $lt: itsNow } }, { $set: {status: 1} }, {multi: true}, callback);
         },
         function(callback) {
             // Update all wildcards that have terminated without success
-            return wildcards.db.models.wildcardDefinitions.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {state: 2} }, {multi: true}, callback);
+            return db.models.wildcardDefinitions.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {status: 2} }, {multi: true}, function(error, lostCards) {
+                if (error)
+                    return callback(error);
+                    
+                _.forEach(lostCards, function(lostCard) {
+				    // Send an event through Redis pu/sub:
+				    log.debug('Detected a lost wildcard: ' + lostCard);
+                    redisPublish.publish("socketServers", JSON.stringify({
+                        sockets: true,
+                        payload: {
+                            type: "Card_lost",
+                            client: lostCard.userid,
+                            room: lostCard.matchid,
+                            data: lostCard
+                        }
+                    }));                    
+                });
+            });
         }
         ], function(error) {
             if (error)
@@ -404,7 +432,7 @@ wildcards.Tick = function()
 };
 
 // Resolve an incoming match event and see if some matching wildcards win
-wildcards.ResolveEvent = function(matchEvent, outerCallback)
+wildcards.ResolveEvent = function(matchEvent)
 {
     
     const eventSplit = function(compositeEvent)
@@ -431,53 +459,68 @@ wildcards.ResolveEvent = function(matchEvent, outerCallback)
         return events;
     };
         
-	const wildCardsHandle = function(mongoWildcards){
+	const wildCardsHandle = function(mongoWildcards, event, cbk){
 		mongoWildcards.forEach(function(wildcard){
-			wildcard.win_conditions.forEach(function(condition){
-				if(wildcard.state!=0){
-					return;
+			wildcard.winConditions.forEach(function(condition){
+				if(wildcard.status!=1){
+					return cbk();
 				}
-				if(condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.team == null || condition.teamid == event.team)){
+				if(condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)){
 					condition.remaining -= event.incr;
 					if(condition.remaining <= 0){
 						condition.remaining = 0;
-						checkIfWins(wildcard);
+						if (checkIfWins(wildcard)) {
+						    wildcard.save();
+						    // Send an event through Redis pu/sub:
+						    log.debug("Detected a winning wildcard: " + wildcard);
+                            redisPublish.publish("socketServers", JSON.stringify({
+                                sockets: true,
+                                payload: {
+                                    type: "Card_won",
+                                    client: wildcard.userid,
+                                    room: event.matchid,
+                                    data: wildcard
+                                }
+                            }));
+						}
 					}
 				}
 			});
 		});
-		updateWildcards(mongoWildcards);
+		//return updateWildcards(mongoWildcards, cbk);
 	};
 
 	const checkIfWins = function(wildcard){
-		const conditions = wildcard.conditions;
+		const conditions = wildcard.winConditions;
 		for(let i=0;  i< conditions.length; i++){
 			let condition = conditions[i];
 			if(condition.remaining > 0){
-				return;
+				return false;
 			}
 		}
-		wildcard.state = 2; // terminated
+		wildcard.status = 2; // terminated
 		wildcard.terminationTime = itsNow;
 		wildcard.wonTime = itsNow;
 		const startInt = (new Date(wildcard.activationTime)).getTime();
 		const endInt = itsNow;
 		// Award points
-		wildcard.winPoints = wildcard.maxpoints - Math.round(wildcard.points_step * (endInt - startInt));
+		wildcard.pointsAwarded = wildcard.maxPoints - Math.round(wildcard.pointStep * (endInt - startInt));
+		
+		return true;
 	};
 
-	const updateWildcards = function(mongoWildcards){
-		console.log('updating mongoWildcards: ', mongoWildcards);
-		if(mongoWildcards.length==0){
-			return;
-		}
-		wildcards.db.collection('userWildcards').save(mongoWildcards, function(){});
-		const batch = wildcards.db.collection('userWildcards').initializeUnorderedBulkOp();
-		mongoWildcards.forEach(function(o){
-			batch.find({_id:o._id}).updateOne(o)
-		});
-		batch.execute(function(){});
-	};
+// 	const updateWildcards = function(mongoWildcards, cbk){
+// 		console.log('updating mongoWildcards: ', mongoWildcards);
+// 		if(mongoWildcards.length==0){
+// 			return cbk();
+// 		}
+// 		db.collection('userWildcards').save(mongoWildcards, function(){});
+// 		const batch = db.collection('userWildcards').initializeUnorderedBulkOp();
+// 		mongoWildcards.forEach(function(o){
+// 			batch.find({_id:o._id}).updateOne(o)
+// 		});
+// 		return batch.execute(function(){}, cbk);
+// 	};
 	
 	
     // Split stats property in matchEvent.data into individual transformed simpler event objects and loop the resolution logic over each one
@@ -485,42 +528,50 @@ wildcards.ResolveEvent = function(matchEvent, outerCallback)
     const itsNow = moment.utc();
     
     async.each(individualEvents, function(event, callback) {
-    
-        const wildcardsQuery = {
-    		state : 0,
-    		creationTime : {$lt : event.time},
-    		activationTime : {$lt : event.time},
-    		matchid : event.match_id
-    	};
-    	const orPlayerQuery = [{playerid : null}];
-    	if(event.playerid != null){
-    		orPlayerQuery.push({playerid: event.playerid});
-    	}
-    	
-    	// ToDo: matching the team ids, not 'home' or 'away'
-    	
-    	const orTeamQuery = [{teamid : null}];
-    	if(event.team != null){
-    		orTeamQuery.push({teamid: event.team});
-    	}
-        
-    	wildcardsQuery.win_conditions = {$elemMatch : {$and : [{stat: event.stat} , {remaining:{$ne:0}}, {$or : orPlayerQuery}, {$or : orTeamQuery}]}};
-        let mongoWildcards;
-        wildcards.db.models.userWildcards.find(wildcardsQuery, function(error, data) {
-            if (error)
-            {
-                log.error("Error while resolving event: " + error.message);
-                return callback(error);
-            }
+        try{
+            const wildcardsQuery = {
+        		status : 1,
+        		creationTime : {$lt : event.time || itsNow},
+        		//{$or: [{ wildcardDefinitionId: {$in : ["1", "2", "3", "4"]}}, { activationTime : {$lt : event.time || itsNow}}]}, //activationTime : {$lt : event.time || itsNow},
+        		matchid : event.matchid
+        	};
+        	const orPlayerQuery = [{playerid : null}];
+        	if(event.playerid != null){
+        		orPlayerQuery.push({playerid: event.playerid});
+        	}
+        	
+        	// ToDo: matching the team ids, not 'home' or 'away'
+        	
+        	const orTeamQuery = [{teamid : null}];
+        	if(event.team != null){
+        		orTeamQuery.push({teamid: event.team});
+        	}
             
-            mongoWildcards = data;
-            wildCardsHandle(mongoWildcards);
-        });
+        	wildcardsQuery.winConditions = {$elemMatch : {$and : [{stat: event.stat} , {remaining:{$ne:0}}, {$or : orPlayerQuery}, {$or : orTeamQuery}]}};
+            let mongoWildcards;
+            db.models.userWildcards.find(wildcardsQuery, function(error, data) {
+                if (error)
+                {
+                    log.error("Error while resolving event: " + error.message);
+                    return callback(error);
+                }
+                
+                mongoWildcards = data;
+                return wildCardsHandle(mongoWildcards, event, callback);
+            });
+        }
+        catch(error) 
+        {
+            log.error("Error while resolving event: " + error.message);
+            return callback(error);
+        }
     }, function(error) {
         if (error)
-            return outerCallback(error);
+        {
+            log.error(error);
+        }
         
-        outerCallback(null);
+        return;
     });
     
 };
@@ -531,150 +582,43 @@ wildcards.ResolveEvent = function(matchEvent, outerCallback)
 /************************************
  *           Routes                  *
  ************************************/
-wildcards.SetupAPIRoutes = function (server) {
-    // Load up the Rest-API routes
-    server.use(bodyParser.json());
-    server.use(bodyParser.urlencoded({
-        extended: true
-    }));
-    server.use(function (req, res, next) {
-        res.header("Access-Control-Allow-Origin", "*");
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-        next();
-    });
 
-    // Loading wildcard schemas
-    var apiPath = path.join(__dirname, 'api');
-    fs.readdirSync(apiPath).forEach(function (file) {
-        server.use('/', require(apiPath + '/' + file)(wildcards));
+var app = null;
+
+try {
+    let testServer = require('./../../server');
+    app = testServer.server;
+    //module.exports = this;
+} catch (ex) {
+    // Start server
+    app =  module.exports = exports.app = express.Router();
+    var port = process.env.PORT || 8081;
+    app.listen(port, function () {
+        console.log('Express server listening on port %d in %s mode', port, app.get('env'));
     });
 }
+
+app.use(function (req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    next();
+});
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
+
+// Loading wildcard API routes
+var apiPath = path.join(__dirname, 'api');
+fs.readdirSync(apiPath).forEach(function (file) {
+    app.use('/', require(apiPath + '/' + file)(wildcards));
+});
 
 
 
 module.exports = wildcards;
 
-//function ValidateCards() {
-//    log("Cards Validation Request");
-//    var indx = 0;
-//
-//    playedActiveCards.forEach(function (card) {
-//        indx++;
-//
-//        var timeout = setTimeout(function () {
-//            validate();
-//
-//        }, indx * 200);
-//            
-//        // function check(){
-//        //     log("in:"+indx);
-//        // }
-//            
-//        function validate() {
-//            
-//            // log("Creating card");
-//            var newWildcard = new WildCard(card.cardid, card.userid, card.gameid, card.minute, card.cardtype, card.which_half, card.questionid);
-//            newWildcard.attributes.saved = true;
-//        
-//            // Get event
-//            var cardEvent = TypeCard(card.cardtype);
-//        
-//            // Get Card's range
-//            var cardRange = {
-//                starts: moment.utc(card.created).add(20, 's'),
-//                ends: moment.utc(card.created).add(newWildcard.defaults.destroy_timer).add(20, 's')
-//            }
-//         
-//            // First check if it is not active
-//            if (card.activated == 0) {
-//                log("Card has not activate yet in DB", 'debug');
-//                var diff = moment.utc().diff(moment(card.created));
-//                if (diff < newWildcard.defaults.delay_timer) {
-//                    log("Corrected: card will be active in: " + ((newWildcard.defaults.delay_timer - diff) / 1000));
-//                    // We found a card wich is not active but not enough time has passed to activate it. We init it and set the correct activation timer
-//                    newWildcard.init(newWildcard.defaults.delay_timer - diff);
-//                    PlayedCards.push(newWildcard);
-//                    // We do't need to do anything else
-//                    return;
-//                }
-//                log("Result: But it should.", 'debug');
-//            }
-// 
-//            // We must check if the card was won something in its time range.
-//            // Loop through all the latest events and see if there is a corresponding event in the time range
-//            log("Looping through game evets", 'debug');
-//            var matchEvents = _.where(lastGameEvents, { match_id: card.gameid });
-//            matchEvents.forEach(function (event) {
-//
-//                if (newWildcard.attributes.activated == 2) return;
-//
-//                if (event.event_description == cardEvent && (moment.utc(event.created) > cardRange.starts && moment.utc(event.created) < cardRange.ends)) {
-//                    log("Result: We found an event in the card's time range", "debug");
-//                    log(JSON.stringify(event), "debug"); 
-//                    // So, the card has finished
-//                    newWildcard.attributes.activated = 2;
-//                    
-//                    // Set the correct timer 
-//                    var millisecondsPassed = Math.round(moment.utc(event.created).diff(cardRange.starts) / 1000) * 1000;
-//
-//                    // log("ms: " + millisecondsPassed);
-//                    newWildcard.defaults.destroy_timer = 300000 - millisecondsPassed;
-//
-//                    // log("The new timer: " + newWildcard.defaults.destroy_timer);
-//                    // Count Points
-//                    newWildcard.attributes.countpoints -= Math.floor(millisecondsPassed / newWildcard.defaults.points_step) * newWildcard.pointIncrement;
-//                    newWildcard.attributes.points = Math.round(newWildcard.attributes.countpoints + newWildcard.attributes.minpoints);
-//                    // log(newWildcard.attributes.points);
-//                
-//                    // Sync the timer that is used in the client for compatibility
-//                    newWildcard.attributes.timer = newWildcard.defaults.destroy_timer / 1000;
-//                    
-//                    // And now win it
-//                    newWildcard.win(event.id);
-//                    newWildcard.save();
-//
-//                }
-//            });
-//        
-//            // We don't need to preceed further is the card has won already
-//            if (newWildcard.attributes.activated == 2) return;
-//
-//            log("Result: No event found", "warn");
-//        
-//            // Now we check to see if the card has finished without winning anything
-//            log("Check if the card has finished", "warn");
-//
-//            if (moment.utc() > cardRange.ends) {
-//                newWildcard.attributes.activated = 2;
-//                newWildcard.attributes.points = 0;
-//                newWildcard.attributes.timer = 0;
-//                newWildcard.save();
-//                // No need to clear(). Card was not pushed in anything and timers have not started
-//                log("Result: It has finished.", "warn");
-//                return;
-//            }
-//         
-//            // Now let's finish it. If we've reached this point, it means that card has not won but it has time left on the timer.
-//            // Lets calculate how much that is and send it on its way.
-//            log("Set data for active card", "warn"); 
-//            // has been activated but not finished
-//            newWildcard.attributes.activated = 1;
-//          
-//            // Set the correct timer 
-//            var millisecondsPassed = Math.round(moment.utc().diff(cardRange.starts) / 1000) * 1000;
-//            log(moment.utc().format() + " | " + cardRange.starts.format(), "warn");
-//            // log("ms: " + millisecondsPassed);
-//            newWildcard.defaults.destroy_timer = 300000 - millisecondsPassed;
-//            // log("The new timer: " + newWildcard.defaults.destroy_timer);
-//            // Sync the timer that is used in the client for compatibility
-//            newWildcard.attributes.timer = newWildcard.defaults.destroy_timer / 1000;
 //            // Count Points
 //            newWildcard.attributes.countpoints -= Math.floor(millisecondsPassed / newWildcard.defaults.points_step) * newWildcard.pointIncrement;
 //            newWildcard.attributes.points = Math.round(newWildcard.attributes.countpoints + newWildcard.attributes.minpoints);
-//            PlayedCards.push(newWildcard);
-//            newWildcard.activate();
-//
-//        }
-//    })
-//}

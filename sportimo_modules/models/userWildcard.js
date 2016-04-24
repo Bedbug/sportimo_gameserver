@@ -12,6 +12,10 @@ if (mongoose.models.userWildcards)
 else {
     var userWildcard = new mongoose.Schema({
         userid: String,
+        wildcardDefinitionId: {
+            type: String,
+            ref: 'wildcardDefinitions'
+        },
         pointsAwarded: Number,
         matchid: String,
         text: Schema.Types.Mixed,
