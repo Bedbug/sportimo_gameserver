@@ -7,14 +7,14 @@ var mongoose = require('mongoose'),
     ObjectId = Schema.ObjectId,
     moment = require('moment');
 
-if (mongoose.models.userWildcard)
-    module.exports = mongoose.models.userWildcard;
+if (mongoose.models.userWildcards)
+    module.exports = mongoose.models.userWildcards;
 else {
     var userWildcard = new mongoose.Schema({
         userid: String,
         pointsAwarded: Number,
         matchid: String,
-        text: String,
+        text: Schema.Types.Mixed,
         // Trigger specifications
         minute: Number,
         segment: Number,
@@ -22,8 +22,6 @@ else {
         duration: Number,
         appearConditions: [Schema.Types.Mixed],
         winConditions: [Schema.Types.Mixed],
-        // Awarded points specs
-        points: Number,
         pointStep: Number,
         minPoints: Number,
         maxPoints: Number,

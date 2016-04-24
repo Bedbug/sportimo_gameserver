@@ -62,7 +62,7 @@ wildcards.init = function (dbconnection) {
     
     if (wildcards.db == null || DatabaseWildcard == null) {
         log.error("No active database connection found. Aborting.");
-        return;
+        return new Error('No active database connection found. Aborting.');
     }
 
     wildcards.tickSchedule = setInterval(wildcards.Tick, 1000);
@@ -224,53 +224,141 @@ wildcards.validateDefinition = function(wildcardDefinition) {
 *
 * Validation Rules:
 * ----------------
+* the userWildcard has to include a matchId to a scheduled_match instance
+* this scheduled_match instance should be existent and active
 * the userWildcard has to include a reference to a wildcard definition (wildcardDefinitionId)
 * this definition should be existing and active in the wildcardDefinitions collection
 * the userWildcard has to include the userid of the respective user
-* the userWildcard has to include the timestamp of the actual time that the card has been played
-* this timestamp should be in utc time, earlier than now, and later that the wildcard definition activation time
+* this user has to be existent and valid
+* the userWildcard has to include the creationTime (timestamp) of the actual time that the card has been played
+* this timestamp should be in utc time, earlier than now, later than the wildcard definition's activation time
 * the user should not have played the same wildcard (wildcardDefinitionId) more than the maxUserInstances (if null ignore this rule)
 */
-wildcards.validateUserInstance = function(userWildcard) {
-    return true;
+wildcards.validateUserInstance = function(matchId, userWildcard, callback) {
+    if (!userWildcard.wildcardDefinitionId)
+        return callback(false);
+        
+    if (!userWildcard.matchid)
+        return callback(false);
+    
+    if (userWildcard.matchid != matchId)
+        return callback(false);
+        
+    if (!userWildcard.userid)
+        return callback(false);
+        
+    let itsNow = moment.utc();
+        
+    if (!userWildcard.creationTime || userWildcard > itsNow)
+        return callback(false);
+        
+    // search for the referenced wildcardDefinitionId in the defaultDefinitions first, then to the mongo collection
+    let referencedDefinition = null;
+    
+    _.forEach(defaultDefinitions, function(def) {
+        if (def.id == userWildcard.wildcardDefinitionId)
+            referencedDefinition = def;
+    });
+    
+    async.parallel([
+        function(cbk) {
+            wildcards.db.models.users.findById(userWildcard.userid, function(error, data) {
+                if (error)
+                    return cbk(error);
+                cbk(null, data);
+            });
+        },
+        function(cbk) {
+            wildcards.db.models.wildcardDefinitions.findById(userWildcard.wildcardDefinitionId, function(error, data) {
+                if (error && !referencedDefinition)
+                    return cbk(false);
+                
+                if (data) {
+                    referencedDefinition = data;
+                    
+                    // Found referenced definition, keep validating
+                    if (!referencedDefinition.matchid || matchId != referencedDefinition.matchid)
+                        return cbk(false);
+                        
+                    if (data.status != 1)
+                        return cbk(false);
+                        
+                    if (userWildcard.creationTime < data.activationTime)
+                        return cbk(false);
+                }
+                
+                cbk(null, referencedDefinition);
+            });
+        }
+        ], function(error, results) {
+            if (error)
+                return callback(false);
+                
+            let user = results[0];
+            // ToDo in the future: consider testing if the user is active and not banned.
+                
+            referencedDefinition = results[1];
+                
+            if (!referencedDefinition)
+                return callback(false);
+                
+            if (!referencedDefinition.status || referencedDefinition.status != 1)
+                return callback(false);
+                
+            return callback(true, referencedDefinition);
+        });
 };
 
 
-// ADD
-wildcards.addUserInstance = function (wildcard, callback) {
+// Add a user played wildcard, after first validating it against fraud, latency and inconsistency
+    // {
+    //     "wildcardDefinitionId": "",
+    //     "userId": "",
+    //     "matchid": "",
+    //     "creationTime": "",
+    // }
+
+wildcards.addUserInstance = function (matchId, wildcard, callback) {
     // First of all, validate this card
-    if (!wildcards.validateUserInstance(wildcard))
-        return callback(new Error('Bad request: validation error in request body for this user wildcard.'));
-        
-    let itsNow = moment.utc();
-    // Store the mongoose model
-    let newCard = null;
-    try
+    wildcards.validateUserInstance(matchId, wildcard, function(validationOutcome, wildcardDefinition)
     {
-        newCard = new DatabaseWildcard({
-            userid: wildcard.userid,
-            matchid: wildcard.gameid,
-            minute: wildcard.minute,
-            segment: wildcard.segment,
-            duration: wildcard.duration,
-            activationLatency: wildcard.activationLatency,
-            appearConditions: wildcard.appearConditions,
-            winConditions: wildcard.winConditions,
-            pointStep: (wildcard.maxPoints - wildcard.minPoints) / (wildcard.duration / 1000),
-            minPoints: wildcard.minPoints,
-            maxPoints: wildcard.maxPoints,
-            creationTime: itsNow,
-            status: 0,
-            linkedEvent: 0
-        });
-    }
-    catch(error)
-    {
-        return callback(error);
-    }
+        if (!validationOutcome)
+        {
+            return callback(null, new Error('Bad request: validation error in request body for this user wildcard.'));
+        }
     
-    let result = newCard.save();
-    callback(null, result);
+        let itsNow = moment.utc();
+        
+        // Store the mongoose model
+        let newCard = null;
+        try
+        {
+            newCard = new DatabaseWildcard({
+                userid: wildcard.userid,
+                matchid: wildcard.matchid,
+                minute: wildcard.minute,
+                segment: wildcard.segment,
+                duration: wildcardDefinition.duration,
+                activationLatency: wildcardDefinition.activationLatency,
+                appearConditions: wildcardDefinition.appearConditions,
+                winConditions: wildcardDefinition.winConditions,
+                pointStep: (wildcardDefinition.maxPoints - wildcardDefinition.minPoints) / (wildcardDefinition.duration / 1000),
+                minPoints: wildcardDefinition.minPoints,
+                maxPoints: wildcardDefinition.maxPoints,
+                creationTime: wildcard.creationTime,
+                status: wildcardDefinition.status,
+                linkedEvent: 0
+            });
+            
+            let result = newCard.save();
+            callback(null, null, newCard);
+        }
+        catch(error)
+        {
+            return callback(error);
+        }
+        
+    });
 };
 
 // DELETE
@@ -318,49 +406,6 @@ wildcards.Tick = function()
 // Resolve an incoming match event and see if some matching wildcards win
 wildcards.ResolveEvent = function(matchEvent, outerCallback)
 {
-    // Split stats property in matchEvent.data into individual transformed simpler event objects and loop the resolution logic over each one
-    let individualEvents = eventSplit(matchEvent);
-    const itsNow = moment.utc();
-    
-    async.each(individualEvents, function(event, callback) {
-    
-        const wildcardsQuery = {
-    		state : 0,
-    		creationTime : {$lt : event.time},
-    		activationTime : {$lt : event.time},
-    		matchid : event.match_id
-    	};
-    	const orPlayerQuery = [{playerid : null}];
-    	if(event.playerid != null){
-    		orPlayerQuery.push({playerid: event.playerid});
-    	}
-    	
-    	// ToDo: matching the team ids, not 'home' or 'away'
-    	
-    	const orTeamQuery = [{teamid : null}];
-    	if(event.team != null){
-    		orTeamQuery.push({teamid: event.team});
-    	}
-        
-    	wildcardsQuery.win_conditions = {$elemMatch : {$and : [{stat: event.stat} , {remaining:{$ne:0}}, {$or : orPlayerQuery}, {$or : orTeamQuery}]}};
-        let mongoWildcards;
-        wildcards.db.models.userWildcards.find(wildcardsQuery, function(error, data) {
-            if (error)
-            {
-                log.error("Error while resolving event: " + error.message);
-                return callback(error);
-            }
-            
-            mongoWildcards = data;
-            wildCardsHandle(mongoWildcards);
-        });
-    }, function(error) {
-        if (error)
-            return outerCallback(error);
-        
-        outerCallback(null);
-    });
-    
     
     const eventSplit = function(compositeEvent)
     {
@@ -433,7 +478,51 @@ wildcards.ResolveEvent = function(matchEvent, outerCallback)
 		});
 		batch.execute(function(){});
 	};
-
+	
+	
+    // Split stats property in matchEvent.data into individual transformed simpler event objects and loop the resolution logic over each one
+    let individualEvents = eventSplit(matchEvent);
+    const itsNow = moment.utc();
+    
+    async.each(individualEvents, function(event, callback) {
+    
+        const wildcardsQuery = {
+    		state : 0,
+    		creationTime : {$lt : event.time},
+    		activationTime : {$lt : event.time},
+    		matchid : event.match_id
+    	};
+    	const orPlayerQuery = [{playerid : null}];
+    	if(event.playerid != null){
+    		orPlayerQuery.push({playerid: event.playerid});
+    	}
+    	
+    	// ToDo: matching the team ids, not 'home' or 'away'
+    	
+    	const orTeamQuery = [{teamid : null}];
+    	if(event.team != null){
+    		orTeamQuery.push({teamid: event.team});
+    	}
+        
+    	wildcardsQuery.win_conditions = {$elemMatch : {$and : [{stat: event.stat} , {remaining:{$ne:0}}, {$or : orPlayerQuery}, {$or : orTeamQuery}]}};
+        let mongoWildcards;
+        wildcards.db.models.userWildcards.find(wildcardsQuery, function(error, data) {
+            if (error)
+            {
+                log.error("Error while resolving event: " + error.message);
+                return callback(error);
+            }
+            
+            mongoWildcards = data;
+            wildCardsHandle(mongoWildcards);
+        });
+    }, function(error) {
+        if (error)
+            return outerCallback(error);
+        
+        outerCallback(null);
+    });
+    
 };
 
 

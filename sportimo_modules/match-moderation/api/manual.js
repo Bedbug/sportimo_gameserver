@@ -91,7 +91,7 @@ module.exports = function(ModerationModule) {
                 }
                 break;
             default:
-                break;
+                res.status(500).json({ error: "Event type should be one of 'Add, 'Update', 'Delete', 'AdvanceSegment'" });
         }
 
 

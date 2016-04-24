@@ -18,7 +18,7 @@ else {
     var wildcardTemplate = new mongoose.Schema({
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
         // Trigger specifications
-        timeToActivate: Number, // seconds between the wildcard's creation and activation
+        activationLatency: Number, // seconds between the wildcard's creation and activation
         duration: Number,   // seconds between the wildcard's activation and termination
         conditionsToAppear: [Schema.Types.Mixed], // the wildcard will appear (start its lifetime in a pending state 0) when all the conditionsToAppear are met.
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met

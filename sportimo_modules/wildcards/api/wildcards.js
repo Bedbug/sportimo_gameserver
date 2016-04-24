@@ -1,5 +1,6 @@
 var express = require('express'),
-    router = express.Router();
+    router = express.Router(),
+    log = require('winston');
 
 
 module.exports = function (wildcardModule) {
@@ -41,7 +42,7 @@ module.exports = function (wildcardModule) {
     });
 
 
-    // Get existing definition wildcards for a specific matchId (to populate the cards rollerdex)
+    // Get existing definition wildcards for a specific matchId (to populate the cards rolodex)
     // Used by both the dashboard and the clients
     router.get('/v1/wildcards/:matchId/definitions', function(req, res) {
         try
@@ -94,11 +95,12 @@ module.exports = function (wildcardModule) {
     router.post('/v1/wildcards/:matchId/users', function (req, res) {
         try
         {
-            wildcardModule.addUserInstance(req.body, function(error, validationError, data) {
+            wildcardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
                 if (error)
-                    return res.status(500).json({ error: error.message, data: data });
+                    return res.status(500).json({ error: error.message });
                 if (validationError)
-                    return res.status(400).json({ error: validationError.message, data: data });
+                    return res.status(400).json({ error: validationError.message });
+                log.debug(data);
                 return res.status(200).json({ error: null });
             });
             

@@ -11,7 +11,7 @@ var StatsHelper = require('./StatsHelper');
 var moment = require('moment');
 var log = require('winston');
 var _ = require('lodash'),
-    mongoose = require('mongoose'),
+    mongoConnection = require('../config/db.js'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents');
 
@@ -34,7 +34,9 @@ var matchModule = function (match, PubChannel) {
     var HookedMatch = {}; // = match;
     HookedMatch.moderationServices = [];
 
-
+    // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
+    HookedMatch.wildcards = require('../../wildcards');
+    HookedMatch.wildcards.init(mongoConnection.mongoose);
     // Set ID
     HookedMatch.id = match._id.toString() || 'mockid';
 
@@ -279,8 +281,11 @@ var matchModule = function (match, PubChannel) {
             }
         }
         ));
+        
+        // 3. send event to wildcards module for wildcard resolution
+        HookedMatch.wildcards.ResolveEvent(event);
 
-        // 3. save match to db
+        // 4. save match to db
         if (evtObject.timeline_event) {
             this.data.markModified('timeline');
             log.info("Updating database");

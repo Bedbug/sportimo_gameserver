@@ -7,12 +7,12 @@ var mongoose = require('mongoose'),
     ObjectId = Schema.ObjectId,
     moment = require('moment');
 
-if (mongoose.models.wildcardDefinition)
-    module.exports = mongoose.models.wildcard;
+if (mongoose.models.wildcardDefinitions)
+    module.exports = mongoose.models.wildcardDefinitions;
 else {
     var wildcardDefinition = new mongoose.Schema({
         matchid: String,
-        text: String,
+        text: Schema.Types.Mixed,
         // Trigger specifications
         minute: Number,
         segment: Number,

@@ -130,12 +130,12 @@ liveMatches.init(TestSuite.done);
 TestSuite.moderation = liveMatches;
 // }
 
-var wildcards = require('./sportimo_modules/wildcards');
+//var wildcards = require('./sportimo_modules/wildcards');
     //wildcards.setRedisPubSub(redisCreds.url, redisCreds.port, redisCreds.secret);
     //wildcards.SetupMongoDB(mongoose);
-wildcards.SetupAPIRoutes(app);
-wildcards.init(mongoose);
-TestSuite.wildcards = wildcards;
+// wildcards.SetupAPIRoutes(app);
+// wildcards.init(mongoose);
+// TestSuite.wildcards = wildcards;
 
 
 app.use('/offline_data/', require('./sportimo_modules/offline_data/api/ondemand.js'));
