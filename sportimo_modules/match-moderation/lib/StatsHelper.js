@@ -104,7 +104,7 @@ var StatsMethods = {
         parsers.e.team_name = event.data.team; //event.data.team ? event.data.team : null;
         if (event.data.players[0]) {
             parsers.e.player_id = event.data.players[0].id; //event.data.players[0] ? event.data.players[0].id : null;
-            parsers.e.player_name = event.data.players[0].name; //event.data.players[0] ? event.data.players[0].name : null;
+            parsers.e.player_name = event.data.players[0].name.en; //event.data.players[0] ? event.data.players[0].name : null;
         }
     },
     UpsertStat: function (ids, stats, names) {
