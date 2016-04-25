@@ -20,7 +20,7 @@ api.tags = function(req, res) {
         limit = req.query.limit;
 
     var q = player.find();
-    q.select('name pic');
+    q.select('name pic teamId');
     q.exec(function(err, players) {
         players.forEach(function(player) {
             player = player.toObject();
