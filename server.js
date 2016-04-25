@@ -228,6 +228,17 @@ if (process.env.NODE_ENV == "production") {
 }
 
 
+// Central Error Handling for all Express router endpoints: for Express this should be the last middleware declared:
+// See http://expressjs.com/en/guide/error-handling.html
+app.use(function(error, request, response, next) {
+    logger.error('Error: %s \nStack: %s', error.message, error.stack);
+    return response.status(500).json({
+        error: {
+            message: error.message,
+            stack: error.stack
+        }
+    });
+});
 
 TestSuite.server = app;
 

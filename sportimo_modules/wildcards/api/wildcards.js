@@ -9,72 +9,44 @@ module.exports = function (wildcardModule) {
     // Get existing template wildcards
     // Used by the dashboard
     router.get('/v1/wildcards/templates', function(req, res) {
-        try
-        {
-            wildcardModule.getTemplates(function(error, data) {
-                if (error)
-                    res.status(400).json({ error: error });
-                res.status(200).json({ error: null, data: data });
-            });
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+        wildcardModule.getTemplates(function(error, data) {
+            if (error)
+                res.status(400).json({ error: error });
+            res.status(200).json({ error: null, data: data });
+        });
     });
     
     
     // upsert existing template wildcards
     // Used by the dashboard
     router.post('/v1/wildcards/templates', function(req, res) {
-        try
-        {
-            wildcardModule.upsertTemplate(req.body, function(error, data) {
-                if (error)
-                    res.status(400).send(error.message);
-                res.status(200).json({ error: null, data: data });                
-            });
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+         wildcardModule.upsertTemplate(req.body, function(error, data) {
+            if (error)
+                res.status(400).send(error.message);
+            res.status(200).json({ error: null, data: data });                
+        });
     });
 
 
     // Get existing definition wildcards for a specific matchId (to populate the cards rolodex)
     // Used by both the dashboard and the clients
     router.get('/v1/wildcards/:matchId/definitions', function(req, res) {
-        try
-        {
-            wildcardModule.getDefinitions(function(error, data) {
-                if (error)
-                    res.status(400).json( { error: error });
-                res.status(200).json({ error: null, data: data });
-            });
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+        wildcardModule.getDefinitions(function(error, data) {
+            if (error)
+                res.status(400).json( { error: error });
+            res.status(200).json({ error: null, data: data });
+        });
     });
     
     
     // upsert existing definition wildcards for a specific matchId
     // Used by the dashboard
     router.post('/v1/wildcards/:matchId/definitions', function(req, res) {
-        try
-        {
-            wildcardModule.upsertDefinition(req.body, function(error, data) {
-                if (error)
-                    res.status(400).json({ error: error });
-                res.status(200).json({error: null, data: data});                
-            });
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+        wildcardModule.upsertDefinition(req.body, function(error, data) {
+            if (error)
+                res.status(400).json({ error: error });
+            res.status(200).json({error: null, data: data});                
+        });
     });
 
     /**
@@ -93,22 +65,14 @@ module.exports = function (wildcardModule) {
      Used by clients
      */
     router.post('/v1/wildcards/:matchId/users', function (req, res) {
-        try
-        {
-            wildcardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
-                if (error)
-                    return res.status(500).json({ error: error.message });
-                if (validationError)
-                    return res.status(400).json({ error: validationError.message });
-                log.debug(data);
-                return res.status(200).json({ error: null });
-            });
-            
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+        wildcardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
+            if (error)
+                return res.status(500).json({ error: error.message });
+            if (validationError)
+                return res.status(400).json({ error: validationError.message });
+            log.debug(data);
+            return res.status(200).json({ error: null });
+        });
     });
     
     
@@ -118,18 +82,11 @@ module.exports = function (wildcardModule) {
      * other functionality.
      */
     router.delete('/v1/wildcards/:matchId/users', function (req, res) {
-        try
-        {
-            wildcardModule.deleteUserInstance(req.body.id, function(error, data) {
-                if (error)
-                    return res.status(500).json({ error: error.message });
-                return res.status(200).json({ error: null, data: data });
-            });
-        }
-        catch(error)
-        {
-            return res.status(500).json({ error: error.message });
-        }
+        wildcardModule.deleteUserInstance(req.body.id, function(error, data) {
+            if (error)
+                return res.status(500).json({ error: error.message });
+            return res.status(200).json({ error: null, data: data });
+        });
     });
 
 

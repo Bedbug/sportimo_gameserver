@@ -54,41 +54,21 @@ module.exports = function(ModerationModule) {
         var match_id = req.params.id;
         switch (req.body.type) {
             case "Delete":
-                try {
                     log.info("[moderation-service] Remove Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).RemoveEvent(req.body));
-                }
-                catch (err) {
-                    res.status(500).json({ error: err.message });
-                }
                 break;
             case "Update":
-                try {
                     log.info("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).UpdateEvent(req.body));
-                }
-                catch (err) {
-                    res.status(500).json({ error: err.message });
-                }
                 break;
             case "Add":
-                try {
                     log.info("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).AddEvent(req.body));
-                }
-                catch (err) {
-                    res.status(500).json({ error: err.message });
-                }
                 break;
             case "AdvanceSegment":
                 console.log(req.body);
-                try {
                     log.info("Advance Segment Request for matchid [" + match_id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).AdvanceSegment(req.body));
-                }
-                catch (err) {
-                    res.status(500).json({ error: err.message });
-                }
                 break;
             default:
                 res.status(500).json({ error: "Event type should be one of 'Add, 'Update', 'Delete', 'AdvanceSegment'" });
