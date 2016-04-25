@@ -232,12 +232,17 @@ if (process.env.NODE_ENV == "production") {
 // See http://expressjs.com/en/guide/error-handling.html
 app.use(function(error, request, response, next) {
     logger.error('Error: %s \nStack: %s', error.message, error.stack);
+    
+    // In Development environment return the exact error message and stack:
     return response.status(500).json({
         error: {
             message: error.message,
             stack: error.stack
         }
     });
+    
+    // In Production environment, return a generic error message:
+    //return response.status(500).json({error: 'Oops! The service is experiencing some unexpected issues. Please try again later.'});
 });
 
 TestSuite.server = app;
