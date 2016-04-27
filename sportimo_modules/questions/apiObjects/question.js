@@ -10,18 +10,21 @@ var mongoose = require('mongoose'),
     l = require('../config/lib');
 
 // Initialize and connect to the Redis datastore
-var redisCreds = {
-    url: 'clingfish.redistogo.com',
-    port: 9307,
-    secret: '075bc004e0e54a4a738c081bf92bc61d',
-    channel: "socketServers"
-};
+// var redisCreds = {
+//     url: 'clingfish.redistogo.com',
+//     port: 9307,
+//     secret: '075bc004e0e54a4a738c081bf92bc61d',
+//     channel: "socketServers"
+// };
+
+var redisCreds = require('../../../config/redisConfig');
+
 
 var Pub;
 Pub = redis.createClient(redisCreds.port, redisCreds.url);
 Pub.auth(redisCreds.secret, function (err) {
     if (err) {
-        console.log(err);
+        console.log("[Questions_Module]: "+err);
     }
 });
 

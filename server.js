@@ -61,8 +61,8 @@ var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
 var port = (process.env.PORT || 3030)
 app.listen(port, function () {
-         console.log("[Game Server] Server listening on port %d in %s mode", port, app.get('env'));
-    });
+    console.log("[Game Server] Server listening on port %d in %s mode", port, app.get('env'));
+});
 
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
@@ -82,12 +82,14 @@ function onCrossDomainHandler(req, res) {
 
 
 // Initialize and connect to the Redis datastore
-var redisCreds = {
-    url: 'clingfish.redistogo.com',
-    port: 9307,
-    secret: '075bc004e0e54a4a738c081bf92bc61d',
-    channel: "socketServers"
-};
+// var redisCreds = {
+//     url: 'clingfish.redistogo.com',
+//     port: 9307,
+//     secret: '075bc004e0e54a4a738c081bf92bc61d',
+//     channel: "socketServers"
+// };
+
+var redisCreds = require('./config/redisConfig');
 
 var PublishChannel = null;
 PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
@@ -100,29 +102,39 @@ var SubscribeChannel = null;
 SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
 SubscribeChannel.auth(redisCreds.secret, function (err) {
     if (err) {
-         console.log(err);
+        console.log(err);
     }
     else
-    console.log("[Game Server] Redis Connected.")
+        console.log("[Game Server] Redis Authenticated.")
+});
+
+PublishChannel.on("error", function (err) {
+    log.error("{''Error'': ''" + err + "''}");
+    console.error(err.stack);
+});
+
+SubscribeChannel.on("error", function (err) {
+    log.error("{''Error'': ''" + err + "''}");
+    console.error(err.stack);
 });
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
-    mongoose.connect(mongoConnection, function (err, res) {
-  if(err){
-    console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);
-  }else{
-    console.log("[Game Server] MongoDB Connected.")
-  }
+mongoose.connect(mongoConnection, function (err, res) {
+    if (err) {
+        console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);
+    } else {
+        console.log("[Game Server] MongoDB Connected.")
+    }
 });
 
 /* Modules */
 // if (process.env.NODE_ENV != "production") {
 
 var liveMatches = require('./sportimo_modules/match-moderation');
-if(PublishChannel && SubscribeChannel)
+if (PublishChannel && SubscribeChannel)
     liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
 liveMatches.SetupMongoDB(mongoose);
 liveMatches.SetupAPIRoutes(app);
@@ -165,6 +177,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({
     extended: true
 }));
+
 app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
