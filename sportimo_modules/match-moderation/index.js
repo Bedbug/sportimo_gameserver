@@ -36,6 +36,17 @@ var RedisClientSub;
  * of active matches schedule.
  */
 var ModerationModule = {
+    // MatchTimers: {
+    //     Timers: {},
+    //     get: function (id){
+    //         var timer = Timers[id];
+    //         if(!timer) {
+    //             Timers[id] = null;
+    //             timer = Timers[id];
+    //         }
+    //         return timer;
+    //     }
+    // },
     ModeratedMatches: [],
     testing: false,
     callback: null,
@@ -75,7 +86,9 @@ var ModerationModule = {
         }, 30000);
 
         RedisClientPub.on("error", function (err) {
-            log.error("{''Error'': ''" + err + "''}");
+            console.log("{''Error'': ''" + err + "''}");
+
+            console.error(err.stack);
         });
 
         RedisClientSub.on("error", function (err) {
@@ -83,11 +96,11 @@ var ModerationModule = {
         });
 
         RedisClientSub.on("subscribe", function (channel, count) {
-            log.error("Subscribed to Sportimo Events PUB/SUB channel");
+            console.log("[Game Server] Subscribed to Sportimo Events PUB/SUB channel");
         });
 
         RedisClientSub.on("unsubscribe", function (channel, count) {
-            log.error("Subscribed from Sportimo Events PUB/SUB channel");
+            log.info("[Game Server] Unsubscribed from Sportimo Events PUB/SUB channel");
         });
 
         RedisClientSub.on("end", function () {
@@ -100,8 +113,8 @@ var ModerationModule = {
             if (JSON.parse(message).server)
                 return;
 
-            log.info("[Redis] : Event has come through the channel.");
-            log.info("[Redis] :" + message);
+            // log.info("[Redis] : Event has come through the channel.");
+            // log.info("[Redis] :" + message);
         });
     },
     SetupAPIRoutes: function (server) {
@@ -111,11 +124,11 @@ var ModerationModule = {
             extended: true
         }));
         server.use(function (req, res, next) {
-       
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
-    next();
+
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
+            res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+            next();
 
         });
 
@@ -127,7 +140,7 @@ var ModerationModule = {
         });
     },
     create: function (mongoMatchID) {
-        if (!mongoMatchID) 
+        if (!mongoMatchID)
             return new Error("Match ID cannot be empty");
 
         var oldMatch = ModerationModule.GetMatch(mongoMatchID);
@@ -141,13 +154,13 @@ var ModerationModule = {
         }
     },
     LoadMatchFromDB: function (matchid, cbk) {
-     
+
         if (!this.mock) {
             // remove match in case it already exists
             _.remove(ModerationModule.ModeratedMatches, {
                 id: matchid
             });
-            
+
             scheduled_matches
                 .findOne({
                     _id: matchid
@@ -157,13 +170,13 @@ var ModerationModule = {
                 .exec(function (err, match) {
                     if (err)
                         return cbk(err);
-                    
+
                     if (!match) {
                         log.info(ModerationModule.count);
                         return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                     }
-                    
-                    var hookedMatch = new match_module(match, RedisClientPub);                                    
+
+                    var hookedMatch = new match_module(match, RedisClientPub);
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
                     return cbk(null, hookedMatch);
@@ -177,7 +190,7 @@ var ModerationModule = {
         }
     },
     GetMatch: function (matchID) {
-        var match = _.find(ModerationModule.ModeratedMatches, {id: matchID});
+        var match = _.find(ModerationModule.ModeratedMatches, { id: matchID });
         // if(match) console.log("We have a match");
         return match;
     }
@@ -192,12 +205,11 @@ ModerationModule.GetSchedule = function (cbk) {
         .populate('home_team')
         .populate('away_team')
         .exec(function (err, schedule) {
-            if (err) 
-            {
+            if (err) {
                 log.error(err);
-                return  cbk(err);
+                return cbk(err);
             }
-            
+
             cbk(null, schedule);
         });
 };
@@ -210,23 +222,23 @@ var objectAssign = require('object-assign');
 
 ModerationModule.AddScheduleMatch = function (match, cbk) {
     var matchTemplate = require('./mocks/empty-match');
-    
+
     matchTemplate = objectAssign(matchTemplate, match);
-    
+
     var newMatch = new scheduled_matches(matchTemplate);
-    
-    
+
+
     newMatch.save(function (er, saved) {
-     
+
         if (er)
             return cbk(er);
-        ModerationModule.LoadMatchFromDB(saved._id, function(err, match) {
+        ModerationModule.LoadMatchFromDB(saved._id, function (err, match) {
             if (err)
                 return cbk(err);
-                
+
             cbk(null, match);
         });
-        
+
     });
 };
 
@@ -262,7 +274,7 @@ function initModule(done) {
             .populate('home_team')
             .populate('away_team')
             .exec(function (err, matches) {
-                if (err) 
+                if (err)
                     return ModerationModule.callback ? ModerationModule.callback(err) : log.error(err);
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
@@ -278,7 +290,7 @@ function initModule(done) {
                 // Callback we are done for whomever needs it
                 if (ModerationModule.callback != null)
                     ModerationModule.callback();
-                    
+
             });
 
 

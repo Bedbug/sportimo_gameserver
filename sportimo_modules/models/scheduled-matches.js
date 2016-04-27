@@ -33,7 +33,11 @@ else {
   
   var segment = new mongoose.Schema({
     start: Date,
+    // The time in sport time that this segment starts e.g. 46' for second half
+    sport_start_time: Number,
     end: Date,
+    // time duration that the segment was on hold
+    break_duration: Number,
     events: [matchEvent]
   });
 

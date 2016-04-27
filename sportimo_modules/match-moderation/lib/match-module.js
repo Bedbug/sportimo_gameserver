@@ -28,11 +28,20 @@ fs.readdirSync(servicesPath).forEach(function (file) {
     services[path.basename(file, ".js")] = require(servicesPath + '/' + file);
 });
 
+var Timers = {
+    Timeout: null,
+    matchTimer: null,
+    clear: function(){
+        clearTimeout(Timers.Timeout);
+        clearInterval(Timers.matchTimer);
+    }
+};
 
 var matchModule = function (match, PubChannel) {
 
     var HookedMatch = {}; // = match;
     HookedMatch.moderationServices = [];
+   
 
     // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
     HookedMatch.wildcards = require('../../wildcards');
@@ -80,8 +89,8 @@ var matchModule = function (match, PubChannel) {
     HookedMatch.AddModerationService = function (service, callback) {
         // Check if service of same type already exists 
         if (_.findWhere(HookedMatch.moderationServices, {
-                type: service.type
-            })) {
+            type: service.type
+        })) {
             log.info("Service already active");
             return callback(new Error("Service type already active. Please remove the old one first."));
         } else {
@@ -96,21 +105,21 @@ var matchModule = function (match, PubChannel) {
         _.merge(newService, service);
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(JSON.parse(JSON.stringify(this.data)), function(error, done) {
+        newService.init(JSON.parse(JSON.stringify(this.data)), function (error, done) {
             if (error)
                 return callback(error);
-            
+
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
-            newService.emitter.on('matchEvent', function(matchEvent) {
-                if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id) 
+            newService.emitter.on('matchEvent', function (matchEvent) {
+                if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
                     HookedMatch.AddEvent(matchEvent);
             });
-            newService.emitter.on('nextMatchSegment', function(matchEvent) {
-                if (matchEvent && matchEvent._id == HookedMatch.data.id) 
+            newService.emitter.on('nextMatchSegment', function (matchEvent) {
+                if (matchEvent && matchEvent._id == HookedMatch.data.id)
                     HookedMatch.AdvanceSegment(matchEvent);
             });
-            newService.emitter.on('endOfMatch', function(matchEvent) {
-                if (matchEvent && matchEvent._id == HookedMatch.data.id) 
+            newService.emitter.on('endOfMatch', function (matchEvent) {
+                if (matchEvent && matchEvent._id == HookedMatch.data.id)
                     HookedMatch.Terminate();
             });
 
@@ -118,32 +127,32 @@ var matchModule = function (match, PubChannel) {
             callback(null, newService);
         });
     };
-    
+
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
         var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
-                type: service.type
-            });
+            type: service.type
+        });
         if (!serviceTypeFound)
             return callback(new Error("Service type does not exist. Please add it first."));
         serviceTypeFound.pause();
         callback(null, serviceTypeFound);
     };
-    
-    
+
+
     HookedMatch.ResumeService = function (service, callback) {
         // Check if service of same type already exists 
         var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
-                type: service.type
-            });
+            type: service.type
+        });
         if (!serviceTypeFound)
             return callback(new Error("Service type does not exist. Please add it first."));
         serviceTypeFound.resume();
         callback(null, serviceTypeFound);
-    };    
-    
-    
-    HookedMatch.GetServices = function() {
+    };
+
+
+    HookedMatch.GetServices = function () {
         return HookedMatch.moderationServices;
     };
 
@@ -163,12 +172,15 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
-
+        
+     
+        startMatchTimer();
+        
         return cbk(null, HookedMatch);
     }
 
     HookedMatch.updateTimes = function (data) {
-        console.log(data);
+        // console.log(data);
         // make checks
         if (this.data.timeline[data.index].start != data.data.start) {
             this.data.timeline[data.index].start = data.data.start;
@@ -195,30 +207,79 @@ var matchModule = function (match, PubChannel) {
 
     /*  AdvanceSegment
         The advance state method is called when we want to advance to the next segment of the game.
-        Depending on setting, here will determine if a timer should begin counting aand hold the
+        Depending on setting, here will determine if a timer should begin counting and hold the
         game's time.
     */
-    HookedMatch.AdvanceSegment = function(event)
-    {
+    HookedMatch.AdvanceSegment = function (event) {
         // Register the time that the previous segment ended
         this.data.timeline[this.data.state].end = moment().utc().format();
         // Advance the state of the match
         this.data.state++;
+
+        // console.log(this.sport.segments[this.data.state]);
         // Register the time that the current segment starts
         this.data.timeline.push({
-            "start": null,
-            "end": null,
-            "events": []
+            start: null,
+            sport_start_time: this.sport.segments[this.data.state].initialTime ? this.sport.segments[this.data.state].initialTime : 0,
+            end: null,
+            break_time: 0,
+            events: []
         });
+
         this.data.timeline[this.data.state].start = moment().utc().format();
 
-        this.data.markModified('timeline');
-        this.data.save();
+        // this.data.markModified('timeline');
+        this.data.save().then(function (result) {
+        });
         
+
+        // Check if we should initiate a match timer to change the main TIME property.
+        startMatchTimer();
+
         return HookedMatch;
     };
 
+    startMatchTimer();
 
+    function startMatchTimer() {
+        
+        Timers.clear();
+        
+        if (!HookedMatch.sport.segments[HookedMatch.data.state].timed){console.log("No need to be timed."); return;}
+        
+        console.log("Start Match Timer for Match [ID: " + HookedMatch.id + "] ");
+        var segment = HookedMatch.data.timeline[HookedMatch.data.state];
+
+        var segmentStart = segment.start;
+        var secondsToMinuteTick = 60 - moment.duration(moment().diff(moment(segment.start))).seconds();
+
+        // Set the TIME property
+        HookedMatch.data.time = calculatedMatchTimeFor();
+        HookedMatch.data.save().then(function () { console.log("[MatchModule] Match [ID: " + HookedMatch.id + "] has reached " + HookedMatch.data.time + "'"); });
+        
+        Timers.Timeout = setTimeout(function () {
+            HookedMatch.data.time = calculatedMatchTimeFor();
+            HookedMatch.data.save().then(function () { console.log("[MatchModule] Match [ID: " + HookedMatch.id + "] has reached " + HookedMatch.data.time + "'"); });
+
+            Timers.matchTimer = setInterval(function () {
+                HookedMatch.data.time = calculatedMatchTimeFor();
+                HookedMatch.data.save().then(function () { console.log("[MatchModule] Match [ID: " + HookedMatch.id + "] has reached " + HookedMatch.data.time + "'"); });
+                //TODO: Methods called every minute the game concludes one minute. Send Event for example.
+            }, 60000)
+        }, secondsToMinuteTick * 1000);
+    }
+
+   
+
+    function calculatedMatchTimeFor() {
+        var segment = HookedMatch.data.timeline[HookedMatch.data.state];
+        var intitial = HookedMatch.sport.segments[HookedMatch.data.state].initialTime;
+        var duration = moment.duration(moment().diff(moment(segment.start))).subtract(segment.break_time, 'seconds').asMinutes();//.add(1, 'minute');//.add(1, 'minute');//.subtract(segment.break_time, 'seconds');
+        return Math.ceil(intitial + duration);
+    }
+
+
+    // TODO: Create a method that will stop timer and add the duration to the Break_Time property of the segment
 
     HookedMatch.GetCurrentSegment = function () {
         // We assign the name of the segment to the currentSegment var
@@ -234,8 +295,7 @@ var matchModule = function (match, PubChannel) {
         other instances.
     */
 
-    HookedMatch.AddEvent = function (event)
-    {
+    HookedMatch.AddEvent = function (event) {
         event.data = new matchEvents(event.data);
 
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
@@ -281,7 +341,7 @@ var matchModule = function (match, PubChannel) {
             }
         }
         ));
-        
+
         // 3. send event to wildcards module for wildcard resolution
         HookedMatch.wildcards.ResolveEvent(event);
 
@@ -298,7 +358,7 @@ var matchModule = function (match, PubChannel) {
         this.data.markModified('stats');
 
         this.data.save();
-        
+
         return HookedMatch;
     };
 
@@ -350,18 +410,18 @@ var matchModule = function (match, PubChannel) {
 
         // console.log(event.data._id);
         //  console.log(this.data.timeline[event.data.state]);
-      var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function(o){
-          return o._id == event.data._id;
-        }); 
-        
+        var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
+            return o._id == event.data._id;
+        });
+
         // We have an update to players
-        if(eventToUpdate.players.length < event.data.players.length){
-          event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id],event.data.stats,[event.data.players[0].name], this.data, eventToUpdate.linked_mods);
-           eventToUpdate.players = event.data.players; 
+        if (eventToUpdate.players.length < event.data.players.length) {
+            event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
+            eventToUpdate.players = event.data.players;
         }
-        
-        
-        
+
+
+
         // // Parses the event based on sport and makes changes in the match instance
         // StatsHelper.Parse(event, match);
 
@@ -415,8 +475,8 @@ var matchModule = function (match, PubChannel) {
     };
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
-    HookedMatch.Terminate = function() {
-        
+    HookedMatch.Terminate = function () {
+
     };
 
     return HookedMatch;
