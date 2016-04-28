@@ -5,7 +5,7 @@
  * e.g. 
  * "moderation": [{
 		"type": "rss-feed",
-		"eventid": "15253",
+		"parserid": "15253",
 		"interval": 500,
 		"parsername": "Stats"
 	}]

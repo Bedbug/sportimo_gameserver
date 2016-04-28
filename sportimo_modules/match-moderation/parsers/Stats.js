@@ -90,10 +90,10 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
     Parser.feedService = feedServiceContext;
     
     // if the feedService has some eventid for the stats match id, bind it here
-    if (feedServiceContext.eventid)
+    if (feedServiceContext.parserid)
     {
         Parser.matchHandler.parserids = {};
-        Parser.matchHandler.parserids[configuration.parserIdName] = feedServiceContext.eventid;
+        Parser.matchHandler.parserids[configuration.parserIdName] = feedServiceContext.parserid;
     }
     
     // fill in the matchParserId var
