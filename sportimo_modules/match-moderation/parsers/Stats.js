@@ -89,20 +89,13 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
     Parser.matchHandler = matchContext;
     Parser.feedService = feedServiceContext;
     
-    // if the feedService has some eventid for the stats match id, bind it here
-    if (feedServiceContext.parserid)
-    {
-        Parser.matchHandler.parserids = {};
-        Parser.matchHandler.parserids[configuration.parserIdName] = feedServiceContext.parserid;
-    }
-    
+
     // fill in the matchParserId var
+    matchParserId = Parser.feedService.parserid || Parser.matchHandler.parserids[configuration.parserIdName];
    
-   if(!feedServiceContext.parserid)
-    if (!Parser.matchHandler.parserids || !Parser.matchHandler.parserids[configuration.parserIdName] || !Parser.matchHandler.competition)
+    if (!matchParserId || !Parser.matchHandler.competition)
         return cbk(new Error('Invalid or absent match parserids'));
         
-    matchParserId = Parser.feedService.parserid || Parser.matchHandler.parserids[configuration.parserIdName];
     
     
     // Set the team ids and parserids mapping
@@ -122,6 +115,8 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     return callback(error);
                     
                 response['matchType'] = 'home_team';
+                if (!response.parserids)
+                    return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
                 matchTeamsLookup[response.parserids[Parser.Name]] = response;
                 return callback();
             });
@@ -132,6 +127,8 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     return callback(error);
                     
                 response['matchType'] = 'away_team';
+                if (!response.parserids)
+                    return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
                 matchTeamsLookup[response.parserids[Parser.Name]] = response;
                 return callback();
             });
@@ -146,7 +143,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
                 GetMatchStatus(league.parserids[Parser.Name], matchParserId, function(err, isActive, startDate) {
                     if (err)
-                        return callback();
+                        return callback(err);
                     
                     // If the match has started already, then circumvent startTime
                     if (isActive) 
@@ -179,7 +176,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 //     return callback();
                     
                 _.forEach(response, function(item) {
-                    if (item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
+                    if (item.parserids && item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
                         matchPlayersLookup[item.parserids[Parser.Name]] = item;
                 });
                 
@@ -195,7 +192,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 //     return callback();
                     
                 _.forEach(response, function(item) {
-                    if (item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
+                    if (item.parserids && item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
                         matchPlayersLookup[item.parserids[Parser.Name]] = item;
                 });
                 
@@ -208,7 +205,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 return cbk(error);
             }
             
-            cbk();
+            cbk(null);
         });
 };
 

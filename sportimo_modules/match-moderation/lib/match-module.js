@@ -23,9 +23,11 @@ var path = require('path'),
 
 /*Bootstrap service*/
 var services = [];
+var serviceTypes = {};
+
 var servicesPath = path.join(__dirname, '../services');
 fs.readdirSync(servicesPath).forEach(function (file) {
-    services[path.basename(file, ".js")] = require(servicesPath + '/' + file);
+    serviceTypes[path.basename(file, ".js")] = require(servicesPath + '/' + file);
 });
 
 var Timers = {
@@ -109,15 +111,27 @@ var matchModule = function (match, PubChannel) {
     };
 
     HookedMatch.StartService = function (service, callback) {
-        var newService = services[service.type];
+        var newService = serviceTypes[service.type];
 
-        _.merge(newService, service);
+        //_.merge(newService, service);
+        if (service.parsername)
+            newService.parsername = service.parsername;
+        if (service.parserid)
+            newService.parserid = service.parserid;
+        if (service.type)
+            newService.type = service.type;
+        if (service.interval)
+            newService.interval = service.interval;
+        if (service.active)
+            newService.active = service.active;
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(JSON.parse(JSON.stringify(this.data)), function (error, initService) {
+        newService.init(this.data, function (error, initService) {
             if (error)
-                return callback(error);
-
+            {
+                    return callback(error);
+            }
+                
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             newService.emitter.on('matchEvent', function (matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
@@ -133,8 +147,7 @@ var matchModule = function (match, PubChannel) {
             });
 
             services.push(initService);
-            if (callback)
-                callback(null, newService);
+            callback(null, newService);
         });
     };
 
@@ -197,7 +210,12 @@ var matchModule = function (match, PubChannel) {
     // Set services for the first time
     //HookedMatch.moderationServices = match.moderation;
     match.moderation.forEach(function (service) {
-        HookedMatch.StartService(service);
+        HookedMatch.StartService(service, function(error) {
+            if (error)
+            {
+                log.error("Error initializing the service " + service.type ? service.type : "Unknown" + ": " + error.message);
+            }
+        });
     });
 
 

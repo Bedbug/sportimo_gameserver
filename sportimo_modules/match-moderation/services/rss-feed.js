@@ -18,7 +18,8 @@ var path = require('path'),
     fs = require('fs'),
     mongoose = require('../config/db.js'),
     EventEmitter = require('events'),
-    util = require('util');
+    util = require('util'),
+    log = require('winston');
 
 var parsers = {};
 
@@ -60,15 +61,23 @@ feed_service.parser = null;
 // Initialize feed and validate response
 feed_service.init = function (matchHandler, cbk) {
     if (feed_service.parsername == null)
-        return "No parser attached to service";
+        return cbk(new Error("No parser attached to service"));
 
-    parsers[feed_service.parsername].init(matchHandler, this, function(error) {
-        if (error)
-            return cbk(error);
-            
-        feed_service.parser = parsers[feed_service.parsername];
-        cbk(null, feed_service);
-    });
+    try
+    {
+        parsers[feed_service.parsername].init(matchHandler, this, function(error) {
+            if (error)
+                return cbk(error);
+                
+            feed_service.parser = parsers[feed_service.parsername];
+            return cbk(null, feed_service);
+        });
+    }
+    catch(error)
+    {
+        log.error("Error while initializing feed_service module for match %s : %s", matchHandler.id, error.message);
+        return cbk(error);
+    }
 };
 
 feed_service.pause = function()
@@ -114,13 +123,14 @@ feed_service.LoadPlayers = function(teamId, callback)
 {
     if (!mongoose)
         return callback(null);
-        
-    mongoose.mongoose.models.players.find({teamId: teamId}, function(error, data) {
-        if (error)
-            return;
-            
-        return callback(null, data);
-    });
+    try
+    {    
+        return mongoose.mongoose.models.players.find({teamId: teamId}, callback);
+    }
+    catch(error) {
+        log.error("Error while loading players from Mongo: %s", error.message);
+        return callback(error);
+    }
 };
 
 
@@ -128,13 +138,14 @@ feed_service.LoadTeam = function(teamId, callback)
 {
     if (!mongoose)
         return callback(null);
-        
-    mongoose.mongoose.models.teams.findById(teamId, function(error, data) {
-        if (error)
-            return;
-            
-        return callback(null, data);
-    });
+    try
+    {
+        return mongoose.mongoose.models.teams.findById(teamId, callback);
+    }
+    catch(error) {
+        log.error("Error while loading team from Mongo: %s", error.message);
+        return callback(error);
+    }
 };
 
 
@@ -142,13 +153,14 @@ feed_service.LoadCompetition = function(competitionId, callback)
 {
     if (!mongoose)
         return callback(null);
-        
-    mongoose.mongoose.models.competitions.findById(competitionId, function(error, data) {
-        if (error)
-            return;
-            
-        return callback(null, data);
-    });
+    
+    try {
+        return mongoose.mongoose.models.competitions.findById(competitionId, callback);
+    }
+    catch(error) {
+        log.error("Error while loading competition from Mongo: %s", error.message);
+        return callback(error);
+    }
 };
 
 module.exports = feed_service;
