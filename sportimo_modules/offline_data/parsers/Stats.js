@@ -679,10 +679,12 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                         home_score: 0,
                         away_score: 0,
                         time: null,
+                        parserids: {},
                         start: fixture.startDate[1].full,
                         state: 0
                     };
                     
+                    schedule.parserids["Stats"] = fixture.eventId;
                     return schedule;                    
                 }
                 catch(err) {
