@@ -7,7 +7,7 @@ var mongoose = require('mongoose'),
 if (mongoose.models.scheduled_matches)
   module.exports = mongoose.models.scheduled_matches;
 else {
-  
+
   var matchEvent = new mongoose.Schema({
     id: Number,
     match_id: String,
@@ -30,7 +30,7 @@ else {
       }
     ]
   });
-  
+
   var segment = new mongoose.Schema({
     start: Date,
     // The time in sport time that this segment starts e.g. 46' for second half
@@ -40,6 +40,13 @@ else {
     break_duration: Number,
     events: [matchEvent]
   });
+
+  var moderationService = new mongoose.Schema({
+    type: String,
+    parserid: String,
+    parsername: String,
+    status: Boolean
+  })
 
   var match_schema = new mongoose.Schema({
     sport: String,
@@ -67,7 +74,8 @@ else {
     stats: mongoose.Schema.Types.Mixed,
     timeline: [segment],
     settings: mongoose.Schema.Types.Mixed,
-    moderation: [mongoose.Schema.Types.Mixed]
+    moderation: [moderationService],
+    parserids: mongoose.Schema.Types.Mixed
   }, {
       collection: 'scheduled_matches',
       minimize: false

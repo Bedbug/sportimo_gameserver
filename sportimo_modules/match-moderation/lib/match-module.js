@@ -31,7 +31,7 @@ fs.readdirSync(servicesPath).forEach(function (file) {
 var Timers = {
     Timeout: null,
     matchTimer: null,
-    clear: function(){
+    clear: function () {
         clearTimeout(Timers.Timeout);
         clearInterval(Timers.matchTimer);
     }
@@ -41,7 +41,7 @@ var matchModule = function (match, PubChannel) {
 
     var HookedMatch = {}; // = match;
     HookedMatch.moderationServices = [];
-   
+
 
     // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
     HookedMatch.wildcards = require('../../wildcards');
@@ -135,6 +135,14 @@ var matchModule = function (match, PubChannel) {
         });
         if (!serviceTypeFound)
             return callback(new Error("Service type does not exist. Please add it first."));
+
+        // Update status in MongoDB
+        var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
+        if (serviceData) {
+            serviceData.status = "paused";
+            HookedMatch.data.save();
+        }
+
         serviceTypeFound.pause();
         callback(null, serviceTypeFound);
     };
@@ -147,6 +155,14 @@ var matchModule = function (match, PubChannel) {
         });
         if (!serviceTypeFound)
             return callback(new Error("Service type does not exist. Please add it first."));
+
+        // Update status in MongoDB
+        var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
+        if (serviceData) {
+            serviceData.status = "active";
+            HookedMatch.data.save();
+        }
+
         serviceTypeFound.resume();
         callback(null, serviceTypeFound);
     };
@@ -172,10 +188,10 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('timeline');
         this.data.save();
-        
-     
+
+
         startMatchTimer();
-        
+
         return cbk(null, HookedMatch);
     }
 
@@ -231,7 +247,7 @@ var matchModule = function (match, PubChannel) {
         // this.data.markModified('timeline');
         this.data.save().then(function (result) {
         });
-        
+
 
         // Check if we should initiate a match timer to change the main TIME property.
         startMatchTimer();
@@ -242,11 +258,11 @@ var matchModule = function (match, PubChannel) {
     startMatchTimer();
 
     function startMatchTimer() {
-        
+
         Timers.clear();
-        
-        if (!HookedMatch.sport.segments[HookedMatch.data.state].timed){console.log("No need to be timed."); return;}
-        
+
+        if (!HookedMatch.sport.segments[HookedMatch.data.state].timed) { console.log("No need to be timed."); return; }
+
         console.log("Start Match Timer for Match [ID: " + HookedMatch.id + "] ");
         var segment = HookedMatch.data.timeline[HookedMatch.data.state];
 
@@ -256,7 +272,7 @@ var matchModule = function (match, PubChannel) {
         // Set the TIME property
         HookedMatch.data.time = calculatedMatchTimeFor();
         HookedMatch.data.save().then(function () { console.log("[MatchModule] Match [ID: " + HookedMatch.id + "] has reached " + HookedMatch.data.time + "'"); });
-        
+
         Timers.Timeout = setTimeout(function () {
             HookedMatch.data.time = calculatedMatchTimeFor();
             HookedMatch.data.save().then(function () { console.log("[MatchModule] Match [ID: " + HookedMatch.id + "] has reached " + HookedMatch.data.time + "'"); });
@@ -269,7 +285,7 @@ var matchModule = function (match, PubChannel) {
         }, secondsToMinuteTick * 1000);
     }
 
-   
+
 
     function calculatedMatchTimeFor() {
         var segment = HookedMatch.data.timeline[HookedMatch.data.state];

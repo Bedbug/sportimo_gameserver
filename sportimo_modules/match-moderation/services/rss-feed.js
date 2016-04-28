@@ -56,7 +56,7 @@ util.inherits(MyEmitter, EventEmitter);
 feed_service.emitter = new MyEmitter();
 
 feed_service.parser = null;
-
+ 
 // Initialize feed and validate response
 feed_service.init = function (matchHandler, cbk) {
     if (feed_service.parsername == null)
