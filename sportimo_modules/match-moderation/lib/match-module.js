@@ -88,13 +88,14 @@ var matchModule = function (match, PubChannel) {
     */
     HookedMatch.AddModerationService = function (service, callback) {
         // Check if service of same type already exists 
-        if (_.findWhere(HookedMatch.moderationServices, {
+        if (_.find(HookedMatch.moderationServices, {
             type: service.type
         })) {
             log.info("Service already active");
             return callback(new Error("Service type already active. Please remove the old one first."));
         } else {
-            //HookedMatch.moderationServices.push(service);
+            HookedMatch.data.moderation.push(service);
+            HookedMatch.data.save();
             return HookedMatch.StartService(service, callback);
         }
     };
@@ -124,13 +125,15 @@ var matchModule = function (match, PubChannel) {
             });
 
             HookedMatch.moderationServices.push(newService);
+            
+            if(callback)
             callback(null, newService);
         });
     };
 
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+        var serviceTypeFound = _.find(HookedMatch.moderationServices, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -139,7 +142,7 @@ var matchModule = function (match, PubChannel) {
         // Update status in MongoDB
         var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
         if (serviceData) {
-            serviceData.status = "paused";
+            serviceData.active = false;
             HookedMatch.data.save();
         }
 
@@ -150,7 +153,7 @@ var matchModule = function (match, PubChannel) {
 
     HookedMatch.ResumeService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+        var serviceTypeFound = _.find(HookedMatch.moderationServices, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -159,7 +162,7 @@ var matchModule = function (match, PubChannel) {
         // Update status in MongoDB
         var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
         if (serviceData) {
-            serviceData.status = "active";
+            serviceData.active = true;
             HookedMatch.data.save();
         }
 
@@ -387,7 +390,7 @@ var matchModule = function (match, PubChannel) {
         StatsHelper.Parse(event, match);
 
 
-        var eventObj = _.findWhere(this.data.timeline[event.data.state].events, {
+        var eventObj = _.find(this.data.timeline[event.data.state].events, {
             id: event.data.id,
             match_id: event.data.match_id
         });

@@ -17,14 +17,18 @@ var UserSchema = new Schema({
         type: String,
         required: true
     },
+    email: {
+        type: String,
+        required: true
+    },
     picture: String,
     inbox: [{
-        type:String,
+        type: String,
         ref: 'messages'
     }],
     unread: Number,
     pushToken: String,
-    country: String,
+    country: { type: String, required: true },
     admin: Boolean
 
 }, {
@@ -35,15 +39,15 @@ var UserSchema = new Schema({
         }
     });
 
-UserSchema.pre('save', function(next) {
+UserSchema.pre('save', function (next) {
     var user = this;
     console.log(user);
     if (this.isModified('password') || this.isNew) {
-        bcrypt.genSalt(10, function(err, salt) {
+        bcrypt.genSalt(10, function (err, salt) {
             if (err) {
                 return next(err);
             }
-            bcrypt.hash(user.password, salt, function(err, hash) {
+            bcrypt.hash(user.password, salt, function (err, hash) {
                 if (err) {
                     return next(err);
                 }
@@ -56,8 +60,8 @@ UserSchema.pre('save', function(next) {
     }
 });
 
-UserSchema.methods.comparePassword = function(passw, cb) {
-    bcrypt.compare(passw, this.password, function(err, isMatch) {
+UserSchema.methods.comparePassword = function (passw, cb) {
+    bcrypt.compare(passw, this.password, function (err, isMatch) {
         if (err) {
             return cb(err);
         }

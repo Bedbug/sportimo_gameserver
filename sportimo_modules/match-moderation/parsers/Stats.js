@@ -90,10 +90,12 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
     Parser.feedService = feedServiceContext;
     
     // fill in the matchParserId var
+   
+   if(!feedServiceContext.parserid)
     if (!Parser.matchHandler.parserids || !Parser.matchHandler.parserids[configuration.parserIdName] || !Parser.matchHandler.competition)
         return cbk(new Error('Invalid or absent match parserids'));
         
-    matchParserId = Parser.matchHandler.parserids[configuration.parserIdName];
+    matchParserId = Parser.feedService.parserid || Parser.matchHandler.parserids[configuration.parserIdName];
     
     
     // Set the team ids and parserids mapping

@@ -109,12 +109,12 @@ SubscribeChannel.auth(redisCreds.secret, function (err) {
 });
 
 PublishChannel.on("error", function (err) {
-    log.error("{''Error'': ''" + err + "''}");
+    console.error("{''Error'': ''" + err + "''}");
     console.error(err.stack);
 });
 
 SubscribeChannel.on("error", function (err) {
-    log.error("{''Error'': ''" + err + "''}");
+    console.error("{''Error'': ''" + err + "''}");
     console.error(err.stack);
 });
 

@@ -38,7 +38,7 @@ var feed_service = {};
 feed_service.type = "rss-feed";
 
 // The id of the corresponding event(match)
-feed_service.eventid = "";
+feed_service.parserid = "";
 
 // The interval that the module will request an update
 feed_service.interval = 1;

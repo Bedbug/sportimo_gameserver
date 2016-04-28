@@ -41,11 +41,12 @@ else {
     events: [matchEvent]
   });
 
+
   var moderationService = new mongoose.Schema({
     type: String,
     parserid: String,
     parsername: String,
-    status: Boolean
+    active: Boolean
   })
 
   var match_schema = new mongoose.Schema({
