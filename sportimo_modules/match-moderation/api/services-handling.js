@@ -32,8 +32,8 @@ module.exports = function (ModerationModule) {
     router.put('/v1/moderation/:id/service/pause', function (req, res) {
         var match_id = req.params.id;
         ModerationModule.GetMatch(match_id).PauseService(req.body, function(error, result) {
-            if (result.error != null)
-                return res.status(500).json({ error: result.error });
+            if (error != null)
+                return res.status(500).json({ error: error.message });
         
             return res.status(200).send();
         });
@@ -43,8 +43,8 @@ module.exports = function (ModerationModule) {
     router.put('/v1/moderation/:id/service/resume', function (req, res) {
         var match_id = req.params.id;
         ModerationModule.GetMatch(match_id).ResumeService(req.body, function(error, result) {
-            if (result.error != null)
-                return res.status(500).json({ error: result.error });
+            if (error != null)
+                return res.status(500).json({ error: error });
             
             return res.status(200).send();
         });
