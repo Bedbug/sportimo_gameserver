@@ -40,7 +40,7 @@ var Timers = {
 var matchModule = function (match, PubChannel) {
 
     var HookedMatch = {}; // = match;
-    HookedMatch.moderationServices = [];
+    //HookedMatch.moderationServices = [];
 
 
     // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
@@ -88,14 +88,18 @@ var matchModule = function (match, PubChannel) {
     */
     HookedMatch.AddModerationService = function (service, callback) {
         // Check if service of same type already exists 
-        if (_.findWhere(HookedMatch.moderationServices, {
+        if (_.findWhere(services, {
             type: service.type
         })) {
             log.info("Service already active");
             return callback(new Error("Service type already active. Please remove the old one first."));
         } else {
-            //HookedMatch.moderationServices.push(service);
-            return HookedMatch.StartService(service, callback);
+            HookedMatch.StartService(service, function(error, newService) {
+                if (error)
+                    return callback(error);
+                
+                callback(null, getServiceDTO(newService));
+            });
         }
     };
 
@@ -105,7 +109,7 @@ var matchModule = function (match, PubChannel) {
         _.merge(newService, service);
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(JSON.parse(JSON.stringify(this.data)), function (error, done) {
+        newService.init(JSON.parse(JSON.stringify(this.data)), function (error, initService) {
             if (error)
                 return callback(error);
 
@@ -123,14 +127,14 @@ var matchModule = function (match, PubChannel) {
                     HookedMatch.Terminate();
             });
 
-            HookedMatch.moderationServices.push(newService);
+            services.push(initService);
             callback(null, newService);
         });
     };
 
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+        var serviceTypeFound = _.findWhere(services, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -144,13 +148,13 @@ var matchModule = function (match, PubChannel) {
         }
 
         serviceTypeFound.pause();
-        callback(null, serviceTypeFound);
+        callback(null, getServiceDTO(serviceTypeFound));
     };
 
 
     HookedMatch.ResumeService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.findWhere(HookedMatch.moderationServices, {
+        var serviceTypeFound = _.findWhere(services, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -164,18 +168,30 @@ var matchModule = function (match, PubChannel) {
         }
 
         serviceTypeFound.resume();
-        callback(null, serviceTypeFound);
+        callback(null, getServiceDTO(serviceTypeFound));
     };
 
 
     HookedMatch.GetServices = function () {
-        return HookedMatch.moderationServices;
+        return _.map(services, function(service) {
+            return getServiceDTO(service);  
+        });
     };
 
 
+    // Return a strip down version of a service, only the information needed in API endpoints to know
+    var getServiceDTO = function(service)
+    {
+        return {
+            type: service.type,
+            eventid: service.eventid,
+            interval: service.interval
+        };
+    }
+
     // Set services for the first time
-    HookedMatch.moderationServices = match.moderation;
-    HookedMatch.moderationServices.forEach(function (service) {
+    //HookedMatch.moderationServices = match.moderation;
+    match.moderation.forEach(function (service) {
         HookedMatch.StartService(service);
     });
 

@@ -67,7 +67,7 @@ feed_service.init = function (matchHandler, cbk) {
             return cbk(error);
             
         feed_service.parser = parsers[feed_service.parsername];
-        cbk(null, true);
+        cbk(null, feed_service);
     });
 };
 
