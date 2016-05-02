@@ -96,6 +96,14 @@ feed_service.resume = function()
     parsers[feed_service.parsername].isPaused = false;    
 };
 
+feed_service.isActive = function()
+{
+    if (!feed_service.parsername || !parsers.length > 0 || !parsers[feed_service.parsername])
+        return false;
+    else
+        return parsers[feed_service.parsername].isPaused;
+}
+
 // Manage match events, simple proxy to match module
 feed_service.AddEvent = function(event) {
 

@@ -3,6 +3,7 @@ var needle = require("needle");
 var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
+var moment = require('moment');
 
 // Settings for the development environment
 
@@ -10,7 +11,8 @@ var _ = require('lodash');
 var languageMapping = {
     "ar": "10", // arabic
     "en": "1", // english
-    "yi": "28" // yiddish (hebrew)
+    "yi": "28", // yiddish (hebrew)
+    "ru": "16"
     
     // Add all required language mappings here from Stats.com
 };
@@ -96,7 +98,8 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
     if (!matchParserId || !Parser.matchHandler.competition)
         return cbk(new Error('Invalid or absent match parserids'));
         
-    
+    if (Parser.feedService.active)
+        Parser.isPaused = Parser.feedService.active;
     
     // Set the team ids and parserids mapping
     // var homeTeam = _.cloneDeep(matchContext.home_team);
@@ -145,18 +148,22 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     if (err)
                         return callback(err);
                     
+                    var scheduleDate = Parser.matchHandler.start || startDate;  
+                    if (!scheduleDate)
+                        return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
+                    var formattedScheduleDate = moment.utc(scheduleDate);
+                    formattedScheduleDate.subtract(300, 'seconds');
                     // If the match has started already, then circumvent startTime
-                    if (isActive) 
+                    if (formattedScheduleDate < moment.utc() || isActive) 
                     {
                         Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
                     }
                     else
                     {
                         // Schedule match feed event calls
-                        var scheduleDate = Parser.matchHandler.start || startDate;
                         if (scheduleDate)
                         {
-                            Parser.scheduledTask = scheduler.scheduleJob(scheduleDate, function()
+                            Parser.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
                             {
                                 Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
                             });
@@ -276,15 +283,13 @@ var TranslateMatchEvent = function(parserEvent)
         {
             id : matchPlayersLookup[parserEvent.defensivePlayer.playerId].id,
             name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
-            team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId,
-            $$hashKey : ''
+            team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId
         } : null;
     var offensivePlayer = parserEvent.offensivePlayer  && matchPlayersLookup[parserEvent.offensivePlayer.playerId] ? 
         {
             id : matchPlayersLookup[parserEvent.offensivePlayer.playerId].id,
             name : matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
-            team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId,
-            $$hashKey : ''
+            team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
         } : null;
     
     var translatedEvent = {
@@ -293,7 +298,7 @@ var TranslateMatchEvent = function(parserEvent)
         data: {
             id: parserEvent.sequenceNumber,
             status: 'active',
-            state: parserEvent.period - 1,
+            state: parserEvent.period,
             sender: configuration.parserIdName,
             time: parserEvent.time.minutes,
             timeline_event: true,
