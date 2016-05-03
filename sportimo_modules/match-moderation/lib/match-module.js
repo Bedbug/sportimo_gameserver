@@ -45,9 +45,6 @@ var matchModule = function (match, PubChannel) {
     //HookedMatch.moderationServices = [];
 
 
-    // establishing a link with wildcards module, where match events should propagate in order to resolve played match wildcards
-    HookedMatch.wildcards = require('../../wildcards');
-    HookedMatch.wildcards.init(mongoConnection.mongoose, PubChannel);
     // Set ID
     HookedMatch.id = match._id.toString() || 'mockid';
 
@@ -69,6 +66,9 @@ var matchModule = function (match, PubChannel) {
     // Setting the game_type ('soccer','basket') and its settings (game segments, duration, etc)
     HookedMatch.sport = Sports[match.sport];
 
+    // establishing a link with gamecards module, where match events should propagate in order to resolve played match wildcards
+    HookedMatch.gamecards = require('../../gamecards');
+    HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, match);
 
 
     /*  -------------
@@ -203,7 +203,8 @@ var matchModule = function (match, PubChannel) {
         return {
             type: service.type,
             eventid: service.eventid,
-            interval: service.interval
+            interval: service.interval,
+            active: service.isActive
         };
     }
 
@@ -380,7 +381,7 @@ var matchModule = function (match, PubChannel) {
             sockets: true,
             payload: {
                 type: "Event_added",
-                room: event.match_id,
+                room: event.data.match_id.toString(),
                 data: event.data
             }
         }
@@ -391,14 +392,14 @@ var matchModule = function (match, PubChannel) {
             sockets: true,
             payload: {
                 type: "Stats_changed",
-                room: event.matchid,
+                room: event.data.match_id.toString(),
                 data: match.stats
             }
         }
         ));
 
         // 3. send event to wildcards module for wildcard resolution
-        HookedMatch.wildcards.ResolveEvent(event);
+        HookedMatch.gamecards.ResolveEvent(event);
 
         // 4. save match to db
         if (evtObject.timeline_event) {
@@ -412,9 +413,14 @@ var matchModule = function (match, PubChannel) {
 
         this.data.markModified('stats');
 
-        this.data.save();
+        this.data.save(function(err, done) {
+            if (err)
+                return log.error(err.message);
+                
+            return HookedMatch;
+        });
 
-        return HookedMatch;
+        
     };
 
     /*  RemoveEvent

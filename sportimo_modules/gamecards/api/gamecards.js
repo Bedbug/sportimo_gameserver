@@ -3,13 +3,13 @@ var express = require('express'),
     log = require('winston');
 
 
-module.exports = function (wildcardModule) {
+module.exports = function (gamecardModule) {
 
 
-    // Get existing template wildcards
+    // Get existing template gamecards
     // Used by the dashboard
-    router.get('/v1/wildcards/templates', function(req, res) {
-        wildcardModule.getTemplates(function(error, data) {
+    router.get('/v1/gamecards/templates', function(req, res) {
+        gamecardModule.getTemplates(function(error, data) {
             if (error)
                 res.status(400).json({ error: error });
             res.status(200).json({ error: null, data: data });
@@ -17,10 +17,10 @@ module.exports = function (wildcardModule) {
     });
     
     
-    // upsert existing template wildcards
+    // upsert existing template gamecards
     // Used by the dashboard
-    router.post('/v1/wildcards/templates', function(req, res) {
-         wildcardModule.upsertTemplate(req.body, function(error, data) {
+    router.post('/v1/gamecards/templates', function(req, res) {
+         gamecardModule.upsertTemplate(req.body, function(error, data) {
             if (error)
                 res.status(400).send(error.message);
             res.status(200).json({ error: null, data: data });                
@@ -28,10 +28,10 @@ module.exports = function (wildcardModule) {
     });
 
 
-    // Get existing definition wildcards for a specific matchId (to populate the cards rolodex)
+    // Get existing definition gamecards for a specific matchId
     // Used by both the dashboard and the clients
-    router.get('/v1/wildcards/:matchId/definitions', function(req, res) {
-        wildcardModule.getDefinitions(function(error, data) {
+    router.get('/v1/gamecards/:matchId/definitions', function(req, res) {
+        gamecardModule.getDefinitions(function(error, data) {
             if (error)
                 res.status(400).json( { error: error });
             res.status(200).json({ error: null, data: data });
@@ -39,20 +39,33 @@ module.exports = function (wildcardModule) {
     });
     
     
-    // upsert existing definition wildcards for a specific matchId
+    // upsert existing definition gamecards for a specific matchId
     // Used by the dashboard
-    router.post('/v1/wildcards/:matchId/definitions', function(req, res) {
-        wildcardModule.upsertDefinition(req.body, function(error, data) {
+    router.post('/v1/gamecards/:matchId/definitions', function(req, res) {
+        gamecardModule.upsertDefinition(req.body, function(error, data) {
             if (error)
                 res.status(400).json({ error: error });
             res.status(200).json({error: null, data: data});                
         });
     });
+    
+    /**
+     * GET user gamecards
+     * used by clients to populate their gamecard rolodex.
+     */
+    router.get('/v1/gamecards/:matchId/user/:userId', function (req, res) {
+        gamecardModule.getUserInstances(req.params.matchId, req.params.userId, function(error, data) {
+            if (error)
+                return res.status(500).json({ error: error.message });
+            log.debug(data);
+            return res.status(200).json({ error: null });
+        });
+    });
 
     /**
      * ADD
-     * Adds a new wildcard. Data for the wildcard are incorporated
-     * in the post body. Look in /models/wildcard.js for more info.
+     * Adds a new gamecard. Data for the gamecard are incorporated
+     * in the post body. Look in /models/gamecards.js for more info.
      * 
      * Post body sample:
      * {
@@ -64,8 +77,8 @@ module.exports = function (wildcardModule) {
      
      Used by clients
      */
-    router.post('/v1/wildcards/:matchId/users', function (req, res) {
-        wildcardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
+    router.post('/v1/gamecards/:matchId/users', function (req, res) {
+        gamecardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
             if (error)
                 return res.status(500).json({ error: error.message });
             if (validationError)
@@ -81,8 +94,8 @@ module.exports = function (wildcardModule) {
      * Delete function is only available for unit testing. No real
      * other functionality.
      */
-    router.delete('/v1/wildcards/:matchId/users', function (req, res) {
-        wildcardModule.deleteUserInstance(req.body.id, function(error, data) {
+    router.delete('/v1/gamecards/:matchId/users', function (req, res) {
+        gamecardModule.deleteUserInstance(req.body.id, function(error, data) {
             if (error)
                 return res.status(500).json({ error: error.message });
             return res.status(200).json({ error: null, data: data });

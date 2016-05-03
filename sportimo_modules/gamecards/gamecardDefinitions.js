@@ -10,7 +10,7 @@ var mongoose = require("mongoose"),
     ObjectId = mongoose.Schema.ObjectId;
 
 
-var defaultWildcardDefinitions = [
+var gamecardDefinitions = [
     {
         id: "1",
         matchid: "[[matchid]]",

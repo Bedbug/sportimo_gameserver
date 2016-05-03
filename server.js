@@ -126,7 +126,7 @@ mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
         console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);
     } else {
-        console.log("[Game Server] MongoDB Connected.")
+        console.log("[Game Server] MongoDB Connected.");
     }
 });
 

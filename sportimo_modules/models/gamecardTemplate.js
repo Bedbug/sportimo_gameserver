@@ -12,22 +12,31 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema,
     ObjectId = Schema.ObjectId;
 
-if (mongoose.models.wildcardTemplate)
-    module.exports = mongoose.models.wildcardTemplate;
+if (mongoose.models.gamecardTemplates)
+    module.exports = mongoose.models.gamecardTemplates;
 else {
-    var wildcardTemplate = new mongoose.Schema({
+    var optionTemplate = new mongoose.Schema({
+       optionId: String,
+       winConditions: [Schema.Types.Mixed],
+       terminationConditions: [Schema.Types.Mixed]
+    }, { _id : false });
+
+    
+    var gamecardTemplate = new mongoose.Schema({
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
         // Trigger specifications
         activationLatency: Number, // seconds between the wildcard's creation and activation
         duration: Number,   // seconds between the wildcard's activation and termination
-        conditionsToAppear: [Schema.Types.Mixed], // the wildcard will appear (start its lifetime in a pending state 0) when all the conditionsToAppear are met.
+        appearConditions: [Schema.Types.Mixed], // the wildcard will appear (start its lifetime in a pending state 0) when all the conditionsToAppear are met.
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met
         terminationConditions: [Schema.Types.Mixed], // the wildcard is terminated when any of the terminationConditions is met, or the duration is over (if not null).
+        options: [optionTemplate],
         // Awarded points specs
-        pointStep: Number,
-        minPoints: Number,
-        maxPoints: Number
+        pointsPerMinute: Number,
+        startPoints: Number,
+        endPoints: Number,
+        cardType: { type: String, enum: ['Instant', 'Overall']},
     });
     
-    module.exports = mongoose.model("wildcardTemplates", wildcardTemplate);
+    module.exports = mongoose.model("gamecardTemplates", gamecardTemplate);
 }

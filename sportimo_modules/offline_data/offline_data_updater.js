@@ -1,8 +1,6 @@
 var path = require('path'),
     fs = require('fs');
-    //mongoose = require('../config/db.js'),
-    //_ = require('lodash');
-    
+
 var http = require('http'),
     express = require('express');
 
