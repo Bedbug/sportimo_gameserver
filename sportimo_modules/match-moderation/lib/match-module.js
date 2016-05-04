@@ -288,7 +288,21 @@ var matchModule = function (match, PubChannel) {
         this.data.save().then(function (result) {
         });
 
-
+        // Update gamecards module of the segment change. Create an event out of this
+        const segmentEvent = {
+            data: {
+                id: null,
+                sender: null,
+                matchid: HookedMatch.id,
+                team: null,
+                players: null,
+                segment: 1,
+                state: HookedMatch.data.state,
+                timeline_event: false
+            }
+        };
+        HookedMatch.gamecards.ResolveEvent(segmentEvent);
+        
         // Check if we should initiate a match timer to change the main TIME property.
         startMatchTimer();
 
