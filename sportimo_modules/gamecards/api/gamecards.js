@@ -58,7 +58,7 @@ module.exports = function (gamecardModule) {
             if (error)
                 return res.status(500).json({ error: error.message });
             log.debug(data);
-            return res.status(200).json({ error: null });
+            return res.status(200).json({ error: null, data: data });
         });
     });
 

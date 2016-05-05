@@ -287,7 +287,7 @@ gamecards.createDefinitionFromTemplate = function(template, match) {
         endPoints: template.endPoints,
         pointsPerMinute: template.pointsPerMinute,
         maxUserInstances: template.maxUserInstances,
-        isVisible: template.isVisible || false,
+        isVisible: template.isVisible || true,
         cardType: template.cardType,
         status: 1
     });  
@@ -299,11 +299,11 @@ gamecards.createDefinitionFromTemplate = function(template, match) {
 
 
 // Select all gamecardDefinitions, and filter for those that have remainingUserInstances in their userGamecards counterparts null or > 0
-gamecards.getUserInstances = function(matchId, userId, callback)
+gamecards.getUserInstances = function(matchId, userId, cbk)
 {
     async.waterfall([
         function(callback) {
-            db.models.gamecardDefinitions.find({isVisible: true, status: {$ne: 2}}, function(error, definitions) {
+            db.models.gamecardDefinitions.find({matchid: matchId, isVisible: true, status: {$ne: 2}}, function(error, definitions) {
                 if (error)
                     return callback(error);
                 callback(null, definitions);
@@ -311,21 +311,42 @@ gamecards.getUserInstances = function(matchId, userId, callback)
         },
         function(definitions, callback) {
             // from the definitions, filter out those that the user has played maxUserInstances
-            db.models.userGamecards.find({matchid: matchId, userid: userId, maxUserInstances: {$ne: null}}, function(error, userCards) {
+            db.models.userGamecards.find({matchid: matchId, userid: userId}, function(error, userCards) {
                 if (error)
                     return callback(error);
-                
-                let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
-                _.forEach(instancesPerDefinition, function(instancePerDefinition) {
-                    log.debug(instancePerDefinition);
+                    
+                let definitionsLookup = {};
+                _.forEach(definitions, function(definition) {
+                    if (!definitionsLookup[definition.id])
+                        definitionsLookup[definition.id] = definition;
                 });
-                callback(null, definitions);
+                
+                // from the definitions, remove those that have as usercards eual or more instances than maxUserInstances
+                let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
+                let definitionIdsToDrop = [];
+                _.forEach(instancesPerDefinition, function(instancePerDefinition) {
+                    if (instancePerDefinition.length > 0)
+                    {
+                        let key = instancePerDefinition[0].gamecardDefinitionId;
+                        if (definitionsLookup[key] && definitionsLookup[key].maxUserInstances && instancePerDefinition.length >= definitionsLookup[key].maxUserInstances)
+                            definitionIdsToDrop.push(key);
+                        //log.info(instancePerDefinition.length);
+                    }
+                });
+                
+                let userGamecardDefinitions = [];
+                userGamecardDefinitions = _.dropWhile(definitions, function(definition) {
+                    return _.indexOf(definitionIdsToDrop, definition.id) != -1;
+                });
+                callback(null, userGamecardDefinitions);
             });
         }
-        ], function(error) {
-        
+        ], function(error, definitions) {
+            if (error)
+                return cbk(error);
+                
+            cbk(null, definitions);
     });
-    
 };
 
 /* 
@@ -486,7 +507,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
-                status: gamecardDefinition.status || 1
+                status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 1)
             });
 
             if (gamecardDefinition.options && gamecard.optionId)
@@ -579,6 +600,10 @@ gamecards.Tick = function()
         //     // Update all wildcards that have terminated without success
         //     //return db.models.gamecardDefinitions.update({status: 1, terminationTime: { $lt: itsNow } }, { $set: {status: 2} }, {multi: true}, callback);
         // },
+        function(callback) {
+            // Update all user gamecards that have passed from their pending state into activation
+            return db.models.userGamecards.update({status: 0, cardType: "Instant", activationTime: { $lt: itsNow } }, { $set: {status: 1} }, {multi: true}, callback);
+        },
         function(callback) {
             // Find all instant gameCards that terminate, and decide if they have won or lost
 
