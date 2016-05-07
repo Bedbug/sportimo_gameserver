@@ -299,9 +299,9 @@ var TranslateMatchEvent = function(parserEvent)
             id: parserEvent.sequenceNumber,
             status: 'active',
             type: parserEvent.playEvent.name,
-            state: parserEvent.period,
+            state: parserEvent.period == 2 ? 3 : parserEvent.period, // ToDo: replace with a translatePeriod method
             sender: configuration.parserIdName,
-            time: parserEvent.time.minutes,
+            time: parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: true,
             team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
             match_id: Parser.matchHandler._id,
