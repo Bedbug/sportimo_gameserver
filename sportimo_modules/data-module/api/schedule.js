@@ -3,10 +3,11 @@ var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
     item = mongoose.models.scheduled_matches,
+    competition = mongoose.models.competitions,
     api = {};
 
 
-api.items = function(req, res) {
+api.items = function (req, res) {
 
     var skip = null, limit = null;
     //  publishDate: { $gt: req.body.minDate, $lt: req.body.maxDate }, type: req.body.type, tags: { "$regex": req.body.tags, "$options": "i" }
@@ -15,14 +16,14 @@ api.items = function(req, res) {
 
 
     var q = item.find({ $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
-    
-    q.populate('home_team','name logo')
-        .populate('away_team','name logo')
-        .populate('competition','name logo');
-        
+
+    q.populate('home_team', 'name logo')
+        .populate('away_team', 'name logo')
+        .populate('competition', 'name logo');
+
     q.select('home_team home_score away_team away_score competition time state start');
 
-    q.exec(function(err, items) {
+    q.exec(function (err, items) {
 
         return res.send(items);
     });
@@ -31,7 +32,7 @@ api.items = function(req, res) {
 
 
 // ALL
-api.itemsSearch = function(req, res) {
+api.itemsSearch = function (req, res) {
     var skip = null, limit = null;
     //  publishDate: { $gt: req.body.minDate, $lt: req.body.maxDate }, type: req.body.type, tags: { "$regex": req.body.tags, "$options": "i" }
     var queries = {};
@@ -61,14 +62,14 @@ api.itemsSearch = function(req, res) {
         .populate('home_team')
         .populate('away_team')
         .populate('competition');
-        
+
     q.select('home_team home_score away_team away_score competition time state start');
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);
 
-   
-    q.exec(function(err, items) {
+
+    q.exec(function (err, items) {
 
         return res.send(items);
     });
@@ -76,35 +77,46 @@ api.itemsSearch = function(req, res) {
 };
 
 // POST
-api.additem = function(req, res) {
+api.additem = function (req, res) {
 
     if (req.body == 'undefined') {
         return res.status(500).json('No item Provided. Please provide valid team data.');
     }
 
-    var newItem = new item(req.body);
+    if (req.body.competition == null)
+        return res.status(500).json('No competition Provided. Please provide valid competition ID.');
 
-    return newItem.save(function(err, data) {
-        if (!err) {
-            return res.status(200).json(data);
-        } else {
-            return res.status(500).json(err);
-        }
-    });
+    competition.findById(req.body.competition).then(function (competition) {
+        
+        console.log(competition);
+        
+        var newItem = new item(req.body);
+        newItem.visiblein = competition.visiblein;
+        
+        return newItem.save(function (err, data) {
+            if (!err) {
+                return res.status(200).json(data);
+            } else {
+                return res.status(500).json(err);
+            }
+        });
+    })
+
+
 
 };
 
-api.updateVisibility = function(req, res) {
+api.updateVisibility = function (req, res) {
 
     console.log(req.body.competitionid);
 
 
-    item.find({ competition: req.body.competitionid }, function(err, matches) {
+    item.find({ competition: req.body.competitionid }, function (err, matches) {
 
         if (matches) {
-            matches.forEach(function(match) {
+            matches.forEach(function (match) {
                 match.visiblein = req.body.visiblein;
-                match.save(function(err, data) {
+                match.save(function (err, data) {
                     if (err) {
                         res.status(500).json(data);
                         return;
@@ -122,9 +134,9 @@ api.updateVisibility = function(req, res) {
 };
 
 // GET
-api.item = function(req, res) {
+api.item = function (req, res) {
     var id = req.params.id;
-    item.findById(id, function(err, returnedItem) {
+    item.findById(id, function (err, returnedItem) {
         if (!err) {
             return res.status(200).json(returnedItem);
         } else {
@@ -134,10 +146,10 @@ api.item = function(req, res) {
 };
 
 // PUT
-api.edititem = function(req, res) {
+api.edititem = function (req, res) {
     var id = req.params.id;
     var updateData = req.body;
-    item.findById(id, function(err, returnedItem) {
+    item.findById(id, function (err, returnedItem) {
 
         if (updateData === undefined || returnedItem === undefined) {
             return res.status(500).json("Error: Data is not correct.");
@@ -150,7 +162,7 @@ api.edititem = function(req, res) {
         returnedItemart.publication = updateData.publication;
         // art.markModified('tags');
 
-        return returnedItem.save(function(err, data) {
+        return returnedItem.save(function (err, data) {
             if (!err) {
                 return res.status(200).json(data);
             } else {
@@ -163,15 +175,15 @@ api.edititem = function(req, res) {
 };
 
 // DELETE
-api.deleteitem = function(req, res) {
+api.deleteitem = function (req, res) {
     var id = req.params.id;
-     item.find({ _id:id }).remove( function(err, data) {
-            if (!err) {
-                return res.status(200).json(data);
-            } else {
-                return res.status(500).json(err);
-            }
-        } );    
+    item.find({ _id: id }).remove(function (err, data) {
+        if (!err) {
+            return res.status(200).json(data);
+        } else {
+            return res.status(500).json(err);
+        }
+    });
 };
 
 
