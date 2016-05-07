@@ -298,6 +298,7 @@ var TranslateMatchEvent = function(parserEvent)
         data: {
             id: parserEvent.sequenceNumber,
             status: 'active',
+            type: parserEvent.playEvent.name,
             state: parserEvent.period,
             sender: configuration.parserIdName,
             time: parserEvent.time.minutes,
