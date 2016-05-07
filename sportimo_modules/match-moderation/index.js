@@ -173,26 +173,40 @@ var ModerationModule = {
 
                     if (!match) {
                         log.info(ModerationModule.count);
-                        return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
+                        if (cbk)
+                            return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
+                        else
+                            return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"))
                     }
 
                     var hookedMatch = new match_module(match, RedisClientPub);
+
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
+
                     return cbk(null, hookedMatch);
+
                 });
         } else {
             var match = new scheduled_matches(mockMatch);
             var hookedMatch = new match_module(match, RedisClientPub);
             ModerationModule.ModeratedMatches.push(hookedMatch);
             log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
-            return cbk(null, hookedMatch);
+
+            return hookedMatch;
         }
     },
-    GetMatch: function (matchID) {
+    GetMatch: function (matchID, cbk) {
         var match = _.find(ModerationModule.ModeratedMatches, { id: matchID });
-        // if(match) console.log("We have a match");
-        return match;
+
+        if (match) {
+            if (cbk)
+                cbk(null, match);
+            else
+                return match;
+        } else {
+            ModerationModule.LoadMatchFromDB(matchID, cbk);
+        }
     }
     //    InjectEvent: function (evnt, res) {
     //        ModerationModule.GetMatch(evnt.id).AddEvent(evnt.data, res);

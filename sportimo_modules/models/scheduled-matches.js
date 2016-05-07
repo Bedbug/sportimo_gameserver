@@ -50,7 +50,7 @@ else {
   })
 
   var match_schema = new mongoose.Schema({
-    sport: String,
+    sport: {type:String, default:'soccer'},
     home_team: {
       type: String,
       ref: 'teams'
@@ -71,8 +71,8 @@ else {
     away_score: {type:Number, default:0},
     match_date: Date,
     time: String,
-    state: Number,
-    stats: mongoose.Schema.Types.Mixed,
+    state: {type:Number, default:0},
+    stats: [mongoose.Schema.Types.Mixed],
     timeline: [segment],
     settings: mongoose.Schema.Types.Mixed,
     moderation: [moderationService],

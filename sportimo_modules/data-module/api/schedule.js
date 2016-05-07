@@ -165,7 +165,13 @@ api.edititem = function(req, res) {
 // DELETE
 api.deleteitem = function(req, res) {
     var id = req.params.id;
-
+     item.find({ _id:id }).remove( function(err, data) {
+            if (!err) {
+                return res.status(200).json(data);
+            } else {
+                return res.status(500).json(err);
+            }
+        } );    
 };
 
 

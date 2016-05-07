@@ -42,7 +42,10 @@ module.exports = function(ModerationModule) {
     // });
 
     router.get('/v1/live/match/:id', function(req, res) {
-        return res.send(ModerationModule.GetMatch(req.params.id));
+        ModerationModule.GetMatch(req.params.id, function(err,match){
+            if(!err)
+             return res.send(match);
+        })
     });
 
     // Set up manual Moderation Routes
