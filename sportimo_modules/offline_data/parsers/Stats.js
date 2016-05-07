@@ -272,6 +272,7 @@ Parser.UpdateTeams = function(callback)
                                     var newTeam = new mongoDb.teams(); 
                                     //newTeam.name_en = player.team.displayName;
                                     newTeam.name = { "en" : player.team.displayName };
+                                    newTeam.short_name = player.team.abbreviation;
                                     newTeam.logo = null;
                                     //newTeam.league = leagueName;
                                     newTeam.created = creationDate;
@@ -290,6 +291,7 @@ Parser.UpdateTeams = function(callback)
                                     if (!oldTeam.name)
                                         oldTeam.name = {};
                                     oldTeam.name["en"] = player.team.displayName;
+                                    oldTeam.short_name = player.team.abbreviation;
                                     oldTeam.logo = null;
                                     //oldTeam.league = leagueName;
                                     if (!oldTeam.parserids)
@@ -664,16 +666,6 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                         sport: 'soccer',
                         home_team: existingTeamIds[homeTeam.teamId] ? existingTeamIds[homeTeam.teamId].id : null,
                         away_team: existingTeamIds[awayTeam.teamId] ? existingTeamIds[awayTeam.teamId].id : null,
-                        color: {
-                            home_team: { 
-                                primary: homeTeam.teamColors.primary,
-                                secondary: homeTeam.teamColors.shorts
-                            },
-                            away_team: { 
-                                primary: awayTeam.teamColors.primary,
-                                secondary: awayTeam.teamColors.shorts
-                            }
-                        },
                         competitionId: competition.id,
                         competitionName: competition.name,
                         home_score: 0,
