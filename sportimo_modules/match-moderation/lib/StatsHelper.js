@@ -38,7 +38,8 @@ var parsers = {
             StatsMethods.toObject(event);
 
             var evtData = event.data;
-
+                       
+            
             // Filter based on different sport based event types
             switch (evtData.type) {
                 default:
@@ -112,7 +113,6 @@ var StatsMethods = {
         var idscount = 0;
         // For each id that needs updating
         _.forEach(ids, function (id) {
-
 
             //First check if stat id exists
             var statIndex = _.findIndex(CurrentMatch.stats, {

@@ -410,9 +410,19 @@ var matchModule = function (match, PubChannel) {
 
         var evtObject = event.data;
 
+
+
         // Parses the event based on sport and makes changes in the match instance
-        if (event.data.stats != null && event.data.stats.length > 0)
+        if (event.data.stats != null) {
             evtObject.linked_mods = StatsHelper.Parse(event, match);
+            //Detour process in case of 'Goal'
+            if (evtObject.stats.Goal) {
+                if (evtObject.team == "home_team")
+                    HookedMatch.data.home_score++;
+                else
+                    HookedMatch.data.away_score++;
+            }
+        }
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
@@ -451,7 +461,7 @@ var matchModule = function (match, PubChannel) {
 
         StatsHelper.UpsertStat("system", {
             events_sent: 1
-        }, this.data,"system");
+        }, this.data, "system");
 
         this.data.markModified('stats');
 
