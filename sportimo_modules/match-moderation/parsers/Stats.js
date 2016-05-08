@@ -301,7 +301,7 @@ var TranslateMatchEvent = function(parserEvent)
             type: parserEvent.playEvent.name,
             state: parserEvent.period == 2 ? 3 : parserEvent.period, // ToDo: replace with a translatePeriod method
             sender: configuration.parserIdName,
-            time: parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
+            time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: true,
             team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
             match_id: Parser.matchHandler._id,
@@ -345,9 +345,6 @@ Parser.TickMatchFeed = function() {
         return;
     }
     
-    if (Parser.isPaused == true)
-        return;
-    
     var leagueName = league.parserids[Parser.Name];
     
     GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
@@ -373,21 +370,24 @@ Parser.TickMatchFeed = function() {
         if (eventsDiff.length == 0)
             return;
             
-        // Translate all events in eventsDiff and send them to feedService
-        _.forEach(eventsDiff, function(event)
+        if (Parser.isPaused != true)
         {
-            // First try parsing a normal event
-           var translatedEvent = TranslateMatchEvent(event);
-           if (translatedEvent)
-                Parser.feedService.AddEvent(translatedEvent);
-            else
+            // Translate all events in eventsDiff and send them to feedService
+            _.forEach(eventsDiff, function(event)
             {
-                // Then try to parse a match segment advancing event
-                var translatedMatchSegment = TranslateMatchSegment(event);
-                if (translatedMatchSegment)
-                    Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
-            }
-        });
+                // First try parsing a normal event
+               var translatedEvent = TranslateMatchEvent(event);
+               if (translatedEvent)
+                    Parser.feedService.AddEvent(translatedEvent);
+                else
+                {
+                    // Then try to parse a match segment advancing event
+                    var translatedMatchSegment = TranslateMatchSegment(event);
+                    if (translatedMatchSegment)
+                        Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                }
+            });
+        }
             
         var lastEvent = _.findLast(events, function(n)
         {
