@@ -127,11 +127,10 @@ var matchModule = function (match, PubChannel) {
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
         newService.init(this.data, function (error, initService) {
-            if (error)
-            {
-                    return callback(error);
+            if (error) {
+                return callback(error);
             }
-                
+
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             newService.emitter.on('matchEvent', function (matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
@@ -211,9 +210,8 @@ var matchModule = function (match, PubChannel) {
     // Set services for the first time
     //HookedMatch.moderationServices = match.moderation;
     match.moderation.forEach(function (service) {
-        HookedMatch.StartService(service, function(error) {
-            if (error)
-            {
+        HookedMatch.StartService(service, function (error) {
+            if (error) {
                 log.error("Error initializing the service " + service.type ? service.type : "Unknown" + ": " + error.message);
             }
         });
@@ -268,24 +266,43 @@ var matchModule = function (match, PubChannel) {
     */
     HookedMatch.AdvanceSegment = function (event) {
         // Register the time that the previous segment ended
-        this.data.timeline[this.data.state].end = moment().utc().format();
+        HookedMatch.data.timeline[HookedMatch.data.state].end = moment().utc().format();
+
+        // This previous segment is timed. We should send a segment end timeline event first.
+        if (HookedMatch.sport.segments[HookedMatch.data.state].timed) {
+            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name + " Ends");
+            var endEvent = {
+                type: "Add",
+                match_id: HookedMatch.id,
+                data: {
+                    match_id: HookedMatch.id,
+                    type: HookedMatch.sport.segments[HookedMatch.data.state].name + " Ends",
+                    time: HookedMatch.data.time,
+                    state: HookedMatch.data.state,
+                    timeline_event: true
+                }
+            };
+            HookedMatch.AddEvent(endEvent);
+        }
+
+
         // Advance the state of the match
-        this.data.state++;
+        HookedMatch.data.state++;
 
         // console.log(this.sport.segments[this.data.state]);
         // Register the time that the current segment starts
-        this.data.timeline.push({
+        HookedMatch.data.timeline.push({
             start: null,
-            sport_start_time: this.sport.segments[this.data.state].initialTime ? this.sport.segments[this.data.state].initialTime : 0,
+            sport_start_time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime ? HookedMatch.sport.segments[HookedMatch.data.state].initialTime : 0,
             end: null,
             break_time: 0,
             events: []
         });
 
-        this.data.timeline[this.data.state].start = moment().utc().format();
+        HookedMatch.data.timeline[HookedMatch.data.state].start = moment().utc().format();
 
         // this.data.markModified('timeline');
-        this.data.save().then(function (result) {
+        HookedMatch.data.save().then(function (result) {
         });
 
         // Update gamecards module of the segment change. Create an event out of this
@@ -302,7 +319,24 @@ var matchModule = function (match, PubChannel) {
             }
         };
         HookedMatch.gamecards.ResolveEvent(segmentEvent);
-        
+
+        // This new segment is timed. We should send a segment start timeline event.
+        if (HookedMatch.sport.segments[HookedMatch.data.state].timed) {
+            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name + " Starts");
+            var startEvent = {
+                type: "Add",
+                match_id: HookedMatch.id,
+                data: {
+                    match_id: HookedMatch.id,
+                    type: HookedMatch.sport.segments[HookedMatch.data.state].name + " Starts",
+                    time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime,
+                    state: HookedMatch.data.state,
+                    timeline_event: true
+                }
+            };
+            HookedMatch.AddEvent(startEvent);
+        }
+
         // Check if we should initiate a match timer to change the main TIME property.
         startMatchTimer();
 
@@ -376,12 +410,14 @@ var matchModule = function (match, PubChannel) {
         var evtObject = event.data;
 
         // Parses the event based on sport and makes changes in the match instance
-        evtObject.linked_mods = StatsHelper.Parse(event, match);
+        if (event.data.stats != null && event.data.stats.length > 0)
+            evtObject.linked_mods = StatsHelper.Parse(event, match);
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
             log.info("Received Timeline event");
-
+            if (evtObject.type)
+                evtObject.type = cleanSafe(evtObject.type);
             // evtObject = new matchEvents(evtObject);
             this.data.timeline[this.data.state].events.push(evtObject);
         }
@@ -390,6 +426,8 @@ var matchModule = function (match, PubChannel) {
         log.info("Pushing event to Redis Pub/Sub channel");
         // PubChannel.publish("socketServers", JSON.stringify(event));
 
+
+
         // Inform Clients for the new event to draw
         PubChannel.publish("socketServers", JSON.stringify({
             sockets: true,
@@ -397,17 +435,6 @@ var matchModule = function (match, PubChannel) {
                 type: "Event_added",
                 room: event.data.match_id.toString(),
                 data: event.data
-            }
-        }
-        ));
-
-        // Inform the system about the stat changes
-        PubChannel.publish("socketServers", JSON.stringify({
-            sockets: true,
-            payload: {
-                type: "Stats_changed",
-                room: event.data.match_id.toString(),
-                data: match.stats
             }
         }
         ));
@@ -421,20 +448,31 @@ var matchModule = function (match, PubChannel) {
             log.info("Updating database");
         }
 
-        StatsHelper.UpsertStat(match.id, {
+        StatsHelper.UpsertStat("system", {
             events_sent: 1
-        }, this.data);
+        }, this.data,"system");
 
         this.data.markModified('stats');
 
-        this.data.save(function(err, done) {
+        // Inform the system about the stat changes
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Stats_changed",
+                room: event.data.match_id.toString(),
+                data: match.stats
+            }
+        }
+        ));
+
+        this.data.save(function (err, done) {
             if (err)
                 return log.error(err.message);
-                
+
             return HookedMatch;
         });
 
-        
+
     };
 
     /*  RemoveEvent
@@ -467,9 +505,9 @@ var matchModule = function (match, PubChannel) {
         this.data.markModified('timeline');
         log.info("Updating database");
 
-        StatsHelper.UpsertStat(match.id, {
+        StatsHelper.UpsertStat("system", {
             events_sent: 1
-        }, this.data);
+        }, this.data, "system");
         this.data.markModified('stats');
 
         this.data.save();
@@ -600,5 +638,10 @@ var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
     });
 
 };
+
+function cleanSafe(str) {
+    // remove spaces
+    return str.replace(/ /g, '_');
+}
 
 module.exports = matchModule;

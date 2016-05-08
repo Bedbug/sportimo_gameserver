@@ -14,7 +14,7 @@ var _ = require('lodash'),
  * cr:	corner
  * ofs:	offside
  * fc:	fouls commited
- * g:	goal
+ * Goal: goal
  * 
  */
 
@@ -262,12 +262,12 @@ var StatsMethods = {
 }
 
 var StatsAnalyzer = {
-    Parse: function (event, match) {
+    Parse: function (event, match) {        
         return parsers[match.sport][event.type](event, match);
     },
-    UpsertStat: function (id, stat, stats) {
+    UpsertStat: function (id, stat, stats,name) {
         if (stats) CurrentMatch = stats;
-        StatsMethods.UpsertStat([id], stat, [null]);
+        StatsMethods.UpsertStat([id], stat, [name]);
     },
     UpdateEventStat: function(ids, stats, names, match, linked_mods){
         if(match) CurrentMatch = match;
