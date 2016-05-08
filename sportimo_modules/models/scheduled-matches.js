@@ -28,7 +28,8 @@ else {
         type: String,
         ref: 'statsMod'
       }
-    ]
+    ],
+    created: { type: Date, default: Date.now }
   });
 
   var segment = new mongoose.Schema({
@@ -70,7 +71,7 @@ else {
     home_score: {type:Number, default:0},
     away_score: {type:Number, default:0},
     match_date: Date,
-    time: String,
+    time: {type:Number, default:0},
     state: {type:Number, default:0},
     stats: [mongoose.Schema.Types.Mixed],
     timeline: [segment],
