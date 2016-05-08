@@ -156,7 +156,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
                     if (formattedScheduleDate < moment.utc() && isActive) 
                     {
-                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
+                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, Parser.feedService.interval || configuration.eventsInterval);
                     }
                     else
                     {
@@ -165,7 +165,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         {
                             Parser.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
                             {
-                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
+                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, Parser.feedService.interval || configuration.eventsInterval);
                             });
                         }
                     }
