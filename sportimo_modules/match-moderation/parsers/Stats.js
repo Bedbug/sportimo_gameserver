@@ -99,7 +99,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
         return cbk(new Error('Invalid or absent match parserids'));
         
     if (Parser.feedService.active)
-        Parser.isPaused = Parser.feedService.active;
+        Parser.isPaused = !Parser.feedService.active;
     
     // Set the team ids and parserids mapping
     // var homeTeam = _.cloneDeep(matchContext.home_team);

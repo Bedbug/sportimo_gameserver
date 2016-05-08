@@ -112,7 +112,8 @@ var matchModule = function (match, PubChannel) {
 
     HookedMatch.StartService = function (service, callback) {
         var newService = serviceTypes[service.type];
-
+    
+        newService = _.cloneDeep(newService);
         //_.merge(newService, service);
         if (service.parsername)
             newService.parsername = service.parsername;
@@ -201,9 +202,9 @@ var matchModule = function (match, PubChannel) {
     var getServiceDTO = function (service) {
         return {
             type: service.type,
-            eventid: service.eventid,
+            parserid: service.parserid,
             interval: service.interval,
-            active: service.isActive
+            active: service.isActive()
         };
     }
 

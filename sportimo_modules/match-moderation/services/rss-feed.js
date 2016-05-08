@@ -63,6 +63,8 @@ feed_service.init = function (matchHandler, cbk) {
     if (feed_service.parsername == null)
         return cbk(new Error("No parser attached to service"));
 
+    log.info("Initializing rss-feed service for match id " + matchHandler.id);
+
     try
     {
         parsers[feed_service.parsername].init(matchHandler, this, function(error) {
