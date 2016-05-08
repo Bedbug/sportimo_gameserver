@@ -153,8 +153,8 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
                     var formattedScheduleDate = moment.utc(scheduleDate);
                     formattedScheduleDate.subtract(300, 'seconds');
-                    // If the match has started already, then circumvent startTime
-                    if (formattedScheduleDate < moment.utc() || isActive) 
+                    // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
+                    if (formattedScheduleDate < moment.utc() && isActive) 
                     {
                         Parser.recurringTask = setInterval(Parser.TickMatchFeed, configuration.eventsInterval);
                     }
@@ -395,7 +395,7 @@ Parser.TickMatchFeed = function() {
         });
         
         // Game Over?
-        if (lastEvent.playEvent.playEventId == 10)
+        if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus == "Final"))
         {
             // End recurring task
             clearInterval(Parser.recurringTask);
