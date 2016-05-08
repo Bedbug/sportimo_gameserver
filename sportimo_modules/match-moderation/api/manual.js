@@ -69,7 +69,7 @@ module.exports = function(ModerationModule) {
                     res.status(200).send(ModerationModule.GetMatch(match_id).AddEvent(req.body));
                 break;
             case "AdvanceSegment":
-                console.log(req.body);
+                //console.log(req.body);
                     log.info("Advance Segment Request for matchid [" + match_id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).AdvanceSegment(req.body));
                 break;
