@@ -125,6 +125,8 @@ var matchModule = function (match, PubChannel) {
             newService.interval = service.interval;
         if (service.active)
             newService.active = service.active;
+        if (service.parsed_eventids)
+            newService.parsed_eventids = service.parsed_eventids;
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
         newService.init(this.data, function (error, initService) {
@@ -602,7 +604,8 @@ var matchModule = function (match, PubChannel) {
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.Terminate = function () {
-
+        HookedMatch.data.completed = true;
+        HookedMatch.data.save();
     };
 
     return HookedMatch;

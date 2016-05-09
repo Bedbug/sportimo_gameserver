@@ -15,9 +15,10 @@
     "start": "2016-03-19T13:55:00.000Z",
 	"moderation": [ {
             "type": "rss-feed",
-            "eventid": "15253",
+            "parserid": "15253",
             "interval": 500,
-            "parsername": "Stats"
+            "parsername": "Stats",
+            "parsed_eventids": ["3", "5", "7"]
         }],
     "parserids": { "Stats" : 1547146 },
     "timeline": [

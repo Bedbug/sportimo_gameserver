@@ -281,9 +281,8 @@ function initModule(done) {
         /* We load all scheduled/active matches from DB on server initialization */
         scheduled_matches
             .find({
-                state: {
-                    $gt: -1
-                }
+                state: { $gt: -1 },
+                completed: { $ne: true }
             })
             .populate('home_team')
             .populate('away_team')

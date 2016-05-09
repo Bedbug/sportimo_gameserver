@@ -33,17 +33,21 @@ var removeEventData = {
 // var mockgoose = require('mockgoose');
 // mockgoose(mongoose);  
 
-
-//   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
-//   // Set the match start 10  seconds from now
-//   mockMatch.start.setMinutes(mockMatch.start.getMinutes() + 1);
-
-
-
 /*
+   mockMatch.start = new Date(); //Date.parse(mockMatch.start);
+//   // Set the match start 10  seconds from now
+   mockMatch.start.setMinutes(mockMatch.start.getMinutes() + 1);
+
+
+
+
 describe('Unit-Test the rss-service and Parser modules', function() {
     let service = require("../sportimo_modules/match-moderation/services/rss-feed");
     service.parsername = "Stats";
+    service.type = "rss-feed";
+    service.active = mockMatch.moderation[0].active || true;
+    service.parsed_eventids = mockMatch.moderation[0].parsed_eventids || [];
+    service.parserid = mockMatch.moderation[0].parserid;
 
    
     // Set up the mitm module's http request interception

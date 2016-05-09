@@ -151,6 +151,14 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     var scheduleDate = Parser.matchHandler.start || startDate;  
                     if (!scheduleDate)
                         return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
+                        
+                    if (Parser.feedService.parsed_eventids  && Parser.feedService.parsed_eventids.length > 0)
+                    {
+                        _.forEach(Parser.feedService.parsed_eventids, function(eventid) {
+                            eventFeedSnapshot[eventid] = true;
+                        });
+                    }   
+                        
                     var formattedScheduleDate = moment.utc(scheduleDate);
                     formattedScheduleDate.subtract(300, 'seconds');
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
@@ -294,7 +302,7 @@ var TranslateMatchEvent = function(parserEvent)
     
     var translatedEvent = {
         type: 'Add',
-        time: parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
+        time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
         data: {
             id: parserEvent.sequenceNumber,
             status: 'active',
@@ -369,6 +377,8 @@ Parser.TickMatchFeed = function() {
         // Nothing to add
         if (eventsDiff.length == 0)
             return;
+            
+        Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, eventsDiff.toArray());
             
         if (Parser.isPaused != true)
         {

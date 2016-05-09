@@ -47,6 +47,7 @@ else {
     type: String,
     parserid: String,
     parsername: String,
+    parsed_eventids: [String],
     active: Boolean
   })
 
@@ -73,6 +74,7 @@ else {
     match_date: Date,
     time: {type:Number, default:0},
     state: {type:Number, default:0},
+    completed: {type: Boolean, default: false},
     stats: [mongoose.Schema.Types.Mixed],
     timeline: [segment],
     settings: mongoose.Schema.Types.Mixed,
