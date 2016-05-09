@@ -400,7 +400,7 @@ var matchModule = function (match, PubChannel) {
         other instances.
     */
 
-    HookedMatch.AddEvent = function (event) {
+    HookedMatch.AddEvent = function (event, cbk) {
         event.data = new matchEvents(event.data);
 
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
@@ -479,7 +479,9 @@ var matchModule = function (match, PubChannel) {
         this.data.save(function (err, done) {
             if (err)
                 return log.error(err.message);
-
+            if(cbk)
+                cbk(null,evtObject);
+                
             return HookedMatch;
         });
 
