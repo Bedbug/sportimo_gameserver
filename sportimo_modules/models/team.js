@@ -9,7 +9,9 @@ if (mongoose.models.teams)
 else {
     var team = {
         name: { type: Schema.Types.Mixed },
-        short_name: { type: String },
+        // No need for short_name property. The abbreviation should be a key 'short' in the 'name' object property
+        // that will hold the short name value.
+        // short_name: { type: String },
         logo: { type: String },
         color: { type: String },
         parserids: {  type: Schema.Types.Mixed },
