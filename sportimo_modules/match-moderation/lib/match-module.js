@@ -234,7 +234,7 @@ var matchModule = function (match, PubChannel) {
         return cbk(null, HookedMatch);
     }
 
-    HookedMatch.updateTimes = function (data) {
+    HookedMatch.updateTimes = function (data,cbk) {
         // console.log(data);
         // make checks
         if (this.data.timeline[data.index].start != data.data.start) {
@@ -257,7 +257,7 @@ var matchModule = function (match, PubChannel) {
             this.data.save();
         }
 
-        return HookedMatch;
+       return cbk(null, HookedMatch);
     }
 
     /*  AdvanceSegment

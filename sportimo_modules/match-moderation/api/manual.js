@@ -12,7 +12,12 @@ module.exports = function(ModerationModule) {
 
     router.post('/v1/live/match/time', function(req, res) {
         log.info("[Update Segment Time] Request for matchid [" + req.body.id + "]");
-        //        ModerationModule.GetMatch(req.body.id).updateTimes(req.body, res);
+        ModerationModule.GetMatch(req.body.id).updateTimes(req.body, function(err, result) {
+            if (!err)
+                res.send(result);
+            else
+                res.sendStatus(500).send(err);
+        });
     });
 
     router.post('/v1/live/match/time/remove', function(req, res) {
