@@ -48,7 +48,8 @@ else {
     parserid: String,
     parsername: String,
     parsed_eventids: [String],
-    active: Boolean
+    active: Boolean,
+    interval: Number
   })
 
   var match_schema = new mongoose.Schema({

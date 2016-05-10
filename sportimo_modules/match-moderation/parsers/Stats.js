@@ -161,10 +161,15 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         
                     var formattedScheduleDate = moment.utc(scheduleDate);
                     formattedScheduleDate.subtract(300, 'seconds');
+                    
+                    var interval = Parser.feedService.interval || configuration.eventsInterval;
+                    if (interval < 1000)
+                        interval = 1000;
+                        
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
                     if (formattedScheduleDate < moment.utc() && isActive) 
                     {
-                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, Parser.feedService.interval || configuration.eventsInterval);
+                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, interval);
                     }
                     else
                     {
@@ -173,7 +178,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         {
                             Parser.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
                             {
-                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, Parser.feedService.interval || configuration.eventsInterval);
+                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, interval);
                             });
                         }
                     }
@@ -245,6 +250,8 @@ var GetMatchEvents = function(leagueName, matchId, callback)
         if (error)
             return callback(error);
         try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
             var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
@@ -262,11 +269,13 @@ var GetMatchStatus = function(leagueName, matchId, callback)
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/scores/" + matchId + "?" + signature; 
     
-    needle.get(url, { timeout: 30000 }, function(error, response)
+    needle.get(url, { timeout: 30000, headers: { accept: "application/json" } }, function(error, response)
     {
         if (error)
             return callback(error);
         try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
             var status = response.body.apiResults[0].league.season.eventType[0].events[0].startDate[1];
             var isActive = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus.isActive;
             callback(null, isActive, status);
@@ -377,8 +386,8 @@ Parser.TickMatchFeed = function() {
         // Nothing to add
         if (eventsDiff.length == 0)
             return;
-            
-        Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, eventsDiff.toArray());
+        
+        Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, _.keys(eventFeedSnapshot));
             
         if (Parser.isPaused != true)
         {
@@ -405,7 +414,7 @@ Parser.TickMatchFeed = function() {
         });
         
         // Game Over?
-        if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus == "Final"))
+        if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final"))
         {
             // End recurring task
             clearInterval(Parser.recurringTask);

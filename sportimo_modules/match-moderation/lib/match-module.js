@@ -122,7 +122,7 @@ var matchModule = function (match, PubChannel) {
         if (service.type)
             newService.type = service.type;
         if (service.interval)
-            newService.interval = service.interval;
+            newService.interval = 1000 * service.interval; // convert seconds to milliseconds
         if (service.active)
             newService.active = service.active;
         if (service.parsed_eventids)
@@ -140,11 +140,11 @@ var matchModule = function (match, PubChannel) {
                     HookedMatch.AddEvent(matchEvent);
             });
             newService.emitter.on('nextMatchSegment', function (matchEvent) {
-                if (matchEvent && matchEvent._id == HookedMatch.data.id)
+                if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     HookedMatch.AdvanceSegment(matchEvent);
             });
             newService.emitter.on('endOfMatch', function (matchEvent) {
-                if (matchEvent && matchEvent._id == HookedMatch.data.id)
+                if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     HookedMatch.Terminate();
             });
 
@@ -604,6 +604,7 @@ var matchModule = function (match, PubChannel) {
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.Terminate = function () {
+        Timers.clear();
         HookedMatch.data.completed = true;
         HookedMatch.data.save();
     };

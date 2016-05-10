@@ -60,18 +60,18 @@ feed_service.parser = null;
  
 // Initialize feed and validate response
 feed_service.init = function (matchHandler, cbk) {
-    if (feed_service.parsername == null)
+    if (this.parsername == null)
         return cbk(new Error("No parser attached to service"));
 
     log.info("Initializing rss-feed service for match id " + matchHandler.id);
 
     try
     {
-        parsers[feed_service.parsername].init(matchHandler, this, function(error) {
+        parsers[this.parsername].init(matchHandler, this, function(error) {
             if (error)
                 return cbk(error);
                 
-            feed_service.parser = parsers[feed_service.parsername];
+            feed_service.parser = parsers[this.parsername];
             return cbk(null, feed_service);
         });
     }
@@ -179,7 +179,7 @@ feed_service.SaveParsedEvents = function(matchId, events)
         return;
         
     try {
-        mongoose.mongoose.models.scheduled_matches.update({_id: matchId}, { $set: { 'moderation.parsed_eventids': events} }, {}, function(err, result) {
+        mongoose.mongoose.models.scheduled_matches.findOneAndUpdate({_id: matchId}, { $set: { 'moderation.0.parsed_eventids': events} }, function(err, result) {
             if (err)
             {
                 log.error("Error while saving parser eventIds in match moderation");
