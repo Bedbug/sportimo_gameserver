@@ -11,7 +11,7 @@ var jwtDecode = require('jwt-decode');
 var config = require('./config'); // get our config file
 var User = require('../models/user'); // get our mongoose model
 var Message = require('../models/message'); // get our mongoose model
-
+var UserActivities = require('../models/userActivity'); // get our mongoose model
 
 var app = null;
 var tools = {};
@@ -243,6 +243,21 @@ tools.SendMessageToInbox = function(msgData, callback) {
     });
 
 }
+
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@ 
+// @@   User Activities
+
+apiRoutes.get('/v1/users/activity/:matchid', function(req, res) {
+    UserActivities.find({room:req.params.matchid})
+        .populate('user')
+        // .populate('away_team', 'name logo')
+        .exec(function(err, users) {
+            res.send(users);
+        });
+});
+
+
 
 // apply the routes to our application with the prefix /api
 app.use('/', apiRoutes);
