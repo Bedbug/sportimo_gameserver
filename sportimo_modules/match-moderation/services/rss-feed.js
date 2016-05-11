@@ -19,7 +19,8 @@ var path = require('path'),
     mongoose = require('../config/db.js'),
     EventEmitter = require('events'),
     util = require('util'),
-    log = require('winston');
+    log = require('winston'),
+    _ = require('lodash');
 
 var parsers = {};
 
@@ -62,12 +63,15 @@ feed_service.parser = null;
 feed_service.init = function (matchHandler, cbk) {
     if (this.parsername == null)
         return cbk(new Error("No parser attached to service"));
+    if (!parsers[this.parsername])
+        return cbk(new Error("No parser with the name " + this.parsername + " can be found."));
 
     log.info("Initializing rss-feed service for match id " + matchHandler.id);
 
     try
     {
-        parsers[this.parsername].init(matchHandler, this, function(error) {
+        var selectedParser = _.cloneDeep(parsers[this.parsername]);
+        selectedParser.init(matchHandler, this, function(error) {
             if (error)
                 return cbk(error);
                 
