@@ -112,7 +112,7 @@ var matchModule = function (match, PubChannel) {
 
     HookedMatch.StartService = function (service, callback) {
         var newService = serviceTypes[service.type];
-    
+
         newService = _.cloneDeep(newService);
         //_.merge(newService, service);
         if (service.parsername)
@@ -236,7 +236,7 @@ var matchModule = function (match, PubChannel) {
         return cbk(null, HookedMatch);
     }
 
-    HookedMatch.updateTimes = function (data,cbk) {
+    HookedMatch.updateTimes = function (data, cbk) {
         // console.log(data);
         // make checks
         if (this.data.timeline[data.index].start != data.data.start) {
@@ -259,7 +259,7 @@ var matchModule = function (match, PubChannel) {
             this.data.save();
         }
 
-       return cbk(null, HookedMatch);
+        return cbk(null, HookedMatch);
     }
 
     /*  AdvanceSegment
@@ -294,15 +294,35 @@ var matchModule = function (match, PubChannel) {
 
         // console.log(this.sport.segments[this.data.state]);
         // Register the time that the current segment starts
-        HookedMatch.data.timeline.push({
-            start: null,
+
+        var newSegment = {
+            start: moment().utc().format(),
             sport_start_time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime ? HookedMatch.sport.segments[HookedMatch.data.state].initialTime : 0,
             end: null,
             break_time: 0,
             events: []
-        });
+        }
 
-        HookedMatch.data.timeline[HookedMatch.data.state].start = moment().utc().format();
+        HookedMatch.data.timeline.push(newSegment);
+
+        // Send new segment change to clients
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Advance_Segment",
+                room: HookedMatch.id,
+                data: {
+                    segment: newSegment,
+                    match_id: HookedMatch.id,
+                    info: "The porperty segment should be pushed to the timeline",
+                    sportSegmenInfo: HookedMatch.sport.segments[HookedMatch.data.state],
+                    state: HookedMatch.data.state,
+                    timeline_event: false
+                }
+            }
+        }));
+
 
         // this.data.markModified('timeline');
         HookedMatch.data.save().then(function (result) {
@@ -481,9 +501,9 @@ var matchModule = function (match, PubChannel) {
         this.data.save(function (err, done) {
             if (err)
                 return log.error(err.message);
-            if(cbk)
-                cbk(null,evtObject);
-                
+            if (cbk)
+                cbk(null, evtObject);
+
             return HookedMatch;
         });
 

@@ -220,14 +220,12 @@ apiRoutes.post('/v1/users/messages', function(req, res) {
 
 tools.SendMessageToInbox = function(msgData, callback) {
 
-    //First create the message
+    //First create the message and save the instance in database
     var newMessage = new Message(msgData);
-     newMessage.save(function(err, message) {
-        
+     newMessage.save(function(err, message) {  
         if (err)  callback(err);
         else {         
-            var querry = {};
-            
+            var querry = {};    
             if (msgData.recipients) querry._id = { $in: msgData.recipients };
             // if (msgData.id) querry._id = msgData.id;
 

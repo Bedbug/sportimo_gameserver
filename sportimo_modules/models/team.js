@@ -14,6 +14,7 @@ else {
         // short_name: { type: String },
         logo: { type: String },
         color: { type: String },
+        stats: { type: Schema.Types.Mixed },
         parserids: {  type: Schema.Types.Mixed },
         competitionid: { type: String, ref: 'competitions' },
         created: { type: Date, default: Date.now }

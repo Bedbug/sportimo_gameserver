@@ -8,13 +8,11 @@ if (mongoose.models.players)
     module.exports = mongoose.models.players;
 else {
     var player = {
-        //name_en: { type: String },
         name: { type: Schema.Types.Mixed },
         firstName: { type: Schema.Types.Mixed },
-        //firstName_en: { type: String },
         lastName: { type: Schema.Types.Mixed },
-        //lastName_en: { type: String },
         uniformNumber : { type: String },
+        stats: { type: Schema.Types.Mixed },
         pic: { type: String },
         position: { type: String },
         personalData: { type: Schema.Types.Mixed },
