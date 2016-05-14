@@ -299,6 +299,8 @@ var matchModule = function (match, PubChannel) {
             start: moment().utc().format(),
             sport_start_time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime ? HookedMatch.sport.segments[HookedMatch.data.state].initialTime : 0,
             end: null,
+            timed: HookedMatch.sport.segments[HookedMatch.data.state].timed,
+            name: HookedMatch.sport.segments[HookedMatch.data.state].name,
             break_time: 0,
             events: []
         }
