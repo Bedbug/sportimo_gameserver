@@ -247,10 +247,12 @@ tools.SendMessageToInbox = function(msgData, callback) {
 // @@   User Activities
 
 apiRoutes.get('/v1/users/activity/:matchid', function(req, res) {
+
     UserActivities.find({room:req.params.matchid})
         .populate('user')
         // .populate('away_team', 'name logo')
         .exec(function(err, users) {
+            console.log(req.params.matchid);
             res.send(users);
         });
 });

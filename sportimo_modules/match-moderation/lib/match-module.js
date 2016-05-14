@@ -273,13 +273,13 @@ var matchModule = function (match, PubChannel) {
 
         // This previous segment is timed. We should send a segment end timeline event first.
         if (HookedMatch.sport.segments[HookedMatch.data.state].timed) {
-            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name + " Ends");
+            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name.en + " Ends");
             var endEvent = {
                 type: "Add",
                 match_id: HookedMatch.id,
                 data: {
                     match_id: HookedMatch.id,
-                    type: HookedMatch.sport.segments[HookedMatch.data.state].name + " Ends",
+                    type: HookedMatch.sport.segments[HookedMatch.data.state].name.en + " Ends",
                     time: HookedMatch.data.time,
                     state: HookedMatch.data.state,
                     timeline_event: true
@@ -300,7 +300,7 @@ var matchModule = function (match, PubChannel) {
             sport_start_time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime ? HookedMatch.sport.segments[HookedMatch.data.state].initialTime : 0,
             end: null,
             timed: HookedMatch.sport.segments[HookedMatch.data.state].timed,
-            name: HookedMatch.sport.segments[HookedMatch.data.state].name,
+            name: HookedMatch.sport.segments[HookedMatch.data.state].name.en,
             break_time: 0,
             events: []
         }
@@ -347,13 +347,13 @@ var matchModule = function (match, PubChannel) {
 
         // This new segment is timed. We should send a segment start timeline event.
         if (HookedMatch.sport.segments[HookedMatch.data.state].timed) {
-            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name + " Starts");
+            console.log(HookedMatch.sport.segments[HookedMatch.data.state].name.en + " Starts");
             var startEvent = {
                 type: "Add",
                 match_id: HookedMatch.id,
                 data: {
                     match_id: HookedMatch.id,
-                    type: HookedMatch.sport.segments[HookedMatch.data.state].name + " Starts",
+                    type: HookedMatch.sport.segments[HookedMatch.data.state].name.en + " Starts",
                     time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime,
                     state: HookedMatch.data.state,
                     timeline_event: true

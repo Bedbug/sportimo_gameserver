@@ -6,47 +6,47 @@ module.exports = {
 		max_segments: 5,
 		segments:[
 			{
-				name:			"Pre Game",		// 	Name of segment / There should alwayz be a Pre Game segment
+				name:			{en:"Pre Game"},		// 	Name of segment / There should alwayz be a Pre Game segment
 				timed: 			false			//	Timers advances while in this segment
 			},
 			{
-				name:			"First Half",
+				name:			{en:"First Half"},
 				timed:			true,
 				initialTime:	0				// Timer should start here in this segment
 			},
 			{
-				name:			"Half Time",
+				name:			{en:"Half Time"},
 				timed: 			false
 			},
 			{
-				name: 			"Second Half",
+				name: 			{en:"Second Half"},
 				timed: 			true,
 				initialTime:	45
 			},
 			{
-				name:			"Match Ended",
+				name:			{en:"Match Ended"},
 				timed: 			false
 			},
             {
-				name: 			"Overtime First Half",
+				name: 			{en:"Overtime First Half"},
 				timed: 			true,
 				initialTime:	90
 			},
 			{
-				name:			"Overtime Half Time",
+				name:			{en:"Overtime Half Time"},
 				timed: 			false
 			},
             {
-				name: 			"Overtime Second Half",
+				name: 			{en:"Overtime Second Half"},
 				timed: 			true,
 				initialTime:	115
 			},
 			{
-				name:			"Overtime Ended",
+				name:			{en:"Overtime Ended"},
 				timed: 			false
 			},
 			{
-				name:			"Penalties",
+				name:			{en:"Penalties"},
 				timed: 			false
 			}
             

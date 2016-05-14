@@ -14,6 +14,7 @@ l=require('../config/lib');
 
 // ALL
 api.getAllCompetitions = function (skip,limit,cb) {
+ 
   var q=Competition.find();
   
   if(skip!=undefined)
