@@ -5,8 +5,8 @@ var mongoose = require('mongoose'),
 
 var UserSchema = new Schema({
     name: {
-        type: String,
-        required: true
+        type: String
+        // ,required: true
     },
     username: {
         type: String,
@@ -28,7 +28,7 @@ var UserSchema = new Schema({
     }],
     unread: Number,
     pushToken: String,
-    country: { type: String, required: true },
+    country: { type: String, required: false },
     admin: Boolean
 
 }, {

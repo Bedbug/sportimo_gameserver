@@ -26,7 +26,7 @@ api.teams = function (req, res) {
 
 // POST
 api.addteam = function (req, res) {
-	team.addTeam(req.body.team,function	(err,data){
+	team.addTeam(req.body,function	(err,data){
 		if(err) res.status(500).json(err);
 		else {
 			res.status(201).json(data);

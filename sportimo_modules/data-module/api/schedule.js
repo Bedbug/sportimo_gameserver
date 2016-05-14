@@ -63,7 +63,7 @@ api.itemsSearch = function (req, res) {
         .populate('away_team')
         .populate('competition');
 
-    q.select('home_team home_score away_team away_score competition time state start');
+    q.select('home_team home_score away_team away_score completed competition time state start');
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);
@@ -85,7 +85,15 @@ api.additem = function (req, res) {
 
     if (req.body.competition == null)
         return res.status(500).json('No competition Provided. Please provide valid competition ID.');
-
+    
+    req.body.timeline = [];
+    req.body.timeline.push({
+        timed: false,
+        name: {en:"Pre Game"},
+        start: null,
+        end: null
+    })
+    
     competition.findById(req.body.competition).then(function (competition) {
         
         console.log(competition);

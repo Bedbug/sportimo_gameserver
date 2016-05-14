@@ -24,6 +24,19 @@ api.players = function (req, res) {
 	}); 
 };
 
+
+api.getPlayersByTeam = function (req, res) {
+
+	player.getPlayersByTeam(req.params.teamid, function(err,data){
+		if (err) {
+			res.status(500).json(err);
+		} else {
+			res.status(200).json(data);
+		}
+	}); 
+};
+
+
 // POST
 api.addplayer = function (req, res) {
 	player.addPlayer(req.body.player,function	(err,data){
@@ -101,6 +114,7 @@ router.route('/v1/data/players/:id')
 .put(api.editPlayer)
 .delete(api.deletePlayer);
 
+router.get('/v1/data/players/team/:teamid', api.getPlayersByTeam);
 
 router.route('/v1/data/players')
 .get(api.players);

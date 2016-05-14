@@ -1,8 +1,8 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
-Player = mongoose.models.players,
-api = {},
-l=require('../config/lib');
+  Player = mongoose.models.players,
+  api = {},
+  l = require('../config/lib');
 
 
 
@@ -11,83 +11,70 @@ l=require('../config/lib');
 */
 
 // ALL
-api.getAllPlayers = function (skip,limit,cb) {
-  var q=Player.find();
+api.getAllPlayers = function (skip, limit, cb) {
+  var q = Player.find();
+
+  if (skip != undefined)
+    q.skip(skip * 1);
+
+  if (limit != undefined)
+    q.limit(limit * 1);
+
+  return q.exec(function (err, players) {
+    cbf(cb, err, players);
+  });
+};
+
+api.getPlayersByTeam = function (teamid, cb) {
+  var q = Player.find({ teamId: teamid });
   
-  if(skip!=undefined)
-    q.skip(skip*1);
-
-  if(limit!=undefined)
-    q.limit(limit*1);
-
-  return q.exec(function(err, players) {
-    cbf(cb,err,players);    
+  q.select('name position');
+  
+  return q.exec(function (err, players) {
+    cbf(cb, err, players);
   });
 };
 
 // GET
-api.getPlayer = function (id,cb) {
+api.getPlayer = function (id, cb) {
 
-  Player.findOne({ '_id': id }, function(err, player) {
-    cbf(cb,err,player);
+  var q = Player.findOne({ '_id': id });
+
+  return q.exec(function (err, players) {
+    cbf(cb, err, players);
   });
 };
 
 // POST
-api.addPlayer = function (player,cb) {
+api.addPlayer = function (player, cb) {
 
-  if(player == 'undefined'){
+  if (player == 'undefined') {
     cb('No Player Provided. Please provide valid player data.');
   }
 
   player = new Player(player);
 
   player.save(function (err) {
-    cbf(cb,err,player.toObject());
+    cbf(cb, err, player.toObject());
   });
 };
 
 // PUT
-api.editPlayer = function (id,updateData, cb) {
-  Player.findById(id, function (err, player) {
+api.editPlayer = function (id, updateData, cb) {
+  return Player.findByIdAndUpdate(id, updateData,function (err, player) {
 
-   if(updateData===undefined || player===undefined){
-    return cbf(cb,'Invalid Data. Please Check player and/or updateData fields',null); 
-  }
-  
-  
-    if(typeof updateData["name"] != 'undefined'){
-      player["name"] = updateData["name"];
-    }
-    
-    if(typeof updateData["team"] != 'undefined'){
-      player["team"] = updateData["team"];
-    }
-    
-    if(typeof updateData["pic"] != 'undefined'){
-      player["pic"] = updateData["pic"];
-    }
-    
-    if(typeof updateData["position"] != 'undefined'){
-      player["position"] = updateData["position"];
-    }
-    
-    if(typeof updateData["created"] != 'undefined'){
-      player["created"] = updateData["created"];
-    }
-    
+ cbf(cb, err, player.toObject());
 
-  return player.save(function (err) {
-    cbf(cb,err,player.toObject()); 
-    }); //eo player.save
+
+    
   });// eo player.find
 };
 
 // DELETE
-api.deletePlayer = function (id,cb) {
+api.deletePlayer = function (id, cb) {
   return Player.findById(id).remove().exec(function (err, player) {
-   return cbf(cb,err,true);      
- });
+    return cbf(cb, err, true);
+  });
 };
 
 
@@ -97,14 +84,14 @@ api.deletePlayer = function (id,cb) {
 
 
 //TEST
-api.test=function (cb) {
-  cbf(cb,false,{result:'ok'});
+api.test = function (cb) {
+  cbf(cb, false, { result: 'ok' });
 };
 
 
 api.deleteAllPlayers = function (cb) {
-  return Player.remove({},function (err) {
-    cbf(cb,err,true);      
+  return Player.remove({}, function (err) {
+    cbf(cb, err, true);
   });
 };
 
@@ -123,11 +110,11 @@ api.deleteAllPlayers = function (cb) {
  * @param  {Object} - Data Object
  * @return {Function} - Callback
  */
- 
- var cbf=function(cb,err,data){
-  if(cb && typeof(cb)=='function'){
-    if(err) cb(err);
-    else cb(false,data);
+
+var cbf = function (cb, err, data) {
+  if (cb && typeof (cb) == 'function') {
+    if (err) cb(err);
+    else cb(false, data);
   }
 };
 
