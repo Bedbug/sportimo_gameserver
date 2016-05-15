@@ -78,25 +78,35 @@ Parser.GetSeasonYear = function()
 
 // Stats.com Endpoint invocation Methods
 
-Parser.GetPlayerCareerStats = function(leagueName, playerId, callback)
+// Get player stats. If season is null, then return the career stats, else the stats for the given season.
+Parser.GetPlayerStats = function(leagueName, playerId, season, callback)
 {
+    var isCareer = false;
+    if (!season) {
+        callback = season;
+        isCareer = true;
+    }
+    
     //soccer/epl/stats/players/345879?enc=true&
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + "?enc=true&careerOnly=true&" + signature;
+    var url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + ( isCareer ? "?accept=json&enc=true&careerOnly=true&" : "?accept=json&season=" + season + "&" ) + signature;
 
     needle.get(url, { timeout: 50000 }, function(error, response)
     {
         if (error)
             return callback(error);
         try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
+                
             var playerStats = response.body.apiResults[0].league.players[0].seasons[0].eventType[0].splits[0].playerStats;
-            callback(null, playerStats);
+            return callback(null, playerStats);
         }
         catch(err) {
             return callback(err);
         }
     });
-}
+};
 
 Parser.GetTeamPlayers = function(leagueName, languageId, callback)
 {
@@ -272,7 +282,7 @@ Parser.UpdateTeams = function(callback)
                                     var newTeam = new mongoDb.teams(); 
                                     //newTeam.name_en = player.team.displayName;
                                     newTeam.name = { "en" : player.team.displayName };
-                                    newTeam.short_name = player.team.abbreviation;
+                                    newTeam.name["short"] = player.team.abbreviation;
                                     newTeam.logo = null;
                                     //newTeam.league = leagueName;
                                     newTeam.created = creationDate;
@@ -287,13 +297,12 @@ Parser.UpdateTeams = function(callback)
                                 else
                                 {
                                     var oldTeam = existingTeamsLookup[player.team.teamId];
-                                    //oldTeam.name_en = player.team.displayName;
                                     if (!oldTeam.name)
                                         oldTeam.name = {};
                                     oldTeam.name["en"] = player.team.displayName;
-                                    oldTeam.short_name = player.team.abbreviation;
-                                    oldTeam.logo = null;
-                                    //oldTeam.league = leagueName;
+                                    oldTeam.name["short"] = player.team.abbreviation;
+                                    if (!oldTeam.logo)
+                                        oldTeam.logo = null; // leave this property untouched to what it was
                                     if (!oldTeam.parserids)
                                         oldTeam.parserids = {};
                                     oldTeam.parserids[Parser.Name] = player.team.teamId;
@@ -310,11 +319,8 @@ Parser.UpdateTeams = function(callback)
                                 if (!existingPlayersLookup[player.playerId])
                                 {
                                     var newPlayer = new mongoDb.players();
-                                    //newPlayer.name_en = player.firstName + " " + player.lastName;
                                     newPlayer.name = { "en" : player.firstName + " " + player.lastName };
-                                    //newPlayer.firstName_en = player.firstName;
                                     newPlayer.firstName = { "en" : player.firstName };
-                                    //newPlayer.lastName_en = player.lastName;
                                     newPlayer.lastName = { "en" : player.lastName };
                                     newPlayer.uniformNumber = player.uniform;
                                     newPlayer.position = player.positions[0].name;
@@ -345,7 +351,6 @@ Parser.UpdateTeams = function(callback)
                                     if (!oldPlayer.lastName)
                                         oldPlayer.lastName = {};
                                     //oldPlayer.lastName["en"] = player.lastName;
-                                    oldPlayer.name_en = player.firstName + " " + player.lastName;
                                     if (!oldPlayer.name)
                                         oldPlayer.name = {};
                                     //oldPlayer.name["en"] = player.firstName + " " + player.lastName;
@@ -689,5 +694,112 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
 };
 
 
+Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
+    // Schedule the following cascading callbacks:
+    // 1. Get the team from Mongo by the teamId
+    // 2. Get the linked competition
+    // 3. Get the team's linked players in mongo and build a dictionary of their ids as keys
+    // 4. Call for each player having a valid parserids["Stats"] id, the stats endpoint for the player career stats
+    // 5. Finally, update each player's document and save back in Mongo
+    
+    async.waterfall([
+        function(callback) {
+            return mongoDb.teams.findById(teamId, callback);
+        },
+        function(team, callback) {
+            GetLeagueFromMongo(team.competitionid, function(error, competition) {
+                if (error)
+                    return callback(error);
+                callback(null, team, competition);
+            });
+        },
+        function(team, competition, callback) {
+            mongoDb.players.find({teamId: teamId}, function(error, data) {
+                if (error)
+                    return callback(error);
+                    
+                var playersLookup = {};
+                _.forEach(data, function(player) {
+                     if (player.parserids && player.parserids[Parser.Name] && !playersLookup[player.parserids[Parser.Name]])
+                        playersLookup[player.parserids[Parser.Name]] = player;
+                });
+                
+                callback(null, team, competition, playersLookup);
+            });
+        }
+    ], function(error, team, competition, playersLookup) {
+        if (error)
+            return outerCallback(error);
+            
+
+        var playerStatIds = _.keys(playersLookup);
+        var updatedPlayerStats = 0;
+        
+        async.eachSeries(playerStatIds, function(playerId, innerCallback) {
+            Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, function(innerError, stats) {
+                if (innerError)
+                    //return innerCallback(innerError);
+                    return innerCallback();
+                    
+                var playerDocInstance = playersLookup[playerId];
+                playerDocInstance.stats = {};
+                playerDocInstance.stats["career"] = TranslatePlayerStats(stats);
+                
+                setTimeout(function() {
+                    // Save playerDocInstance document back in Mongo
+                    playerDocInstance.save(innerCallback);
+                    updatedPlayerStats++;
+                }, 1000);
+            });
+        }, function(outerError) {
+            if (outerError)
+                return outerCallback(outerError);
+                
+            outerCallback(null, updatedPlayerStats);
+        });
+
+        //outerCallback(null, results);
+    });
+};
+
+
+var TranslatePlayerStats = function(stats)
+{
+    return {
+        gamesPlayed: stats.gamesPlayed,
+        gamesStarted: stats.gamesStarted,
+        minutesPlayed: stats.minutesPlayed,
+        goalsTotal: stats.goals && stats.goals.total ? stats.goals.total : 0,
+        goalsGameWinning: stats.goals && stats.goals.gameWinning ? stats.goals.gameWinning : 0,
+        goalsOwn: stats.goals && stats.goals.goalsOwn ?  stats.goals.goalsOwn : 0,
+        goalsHeaded: stats.goals && stats.goals.headed ?  stats.goals.headed : 0,
+        goalsKicked: stats.goals && stats.goals.kicked ?  stats.goals.kicked : 0,
+        assistsTotal: stats.assists && stats.assists.total ?  stats.assists.total : 0,
+        assistsGameWinning: stats.assists && stats.assists.gameWinning ?  stats.assists.gameWinning : 0,
+        shots: stats.shots,
+        shotsOnGoal: stats.shotsOnGoal,
+        crosses: stats.crosses,
+        penaltyKicksShots: stats.penaltyKicks && stats.penaltyKicks.shots ? stats.penaltyKicks.shots : 0,
+        penaltyKicksGoals: stats.penaltyKicks && stats.penaltyKicks.goals ? stats.penaltyKicks.goals : 0,
+        foulsCommitted: stats.foulsCommitted,
+        foulsSuffered: stats.foulsSuffered,
+        yellowCards: stats.yellowCards,
+        redCards: stats.redCards,
+        offsides: stats.offsides,
+        cornerKicks: stats.cornerKicks,
+        clears: stats.clears,
+        goalMouthBlocks: stats.goalMouthBlocks,
+        touchesTotal: stats.touches && stats.touches.total ? stats.touches.total : 0,
+        touchesPasses: stats.touches && stats.touches.passes ? stats.touches.passes : 0,
+        touchesInterceptions: stats.touches && stats.touches.interceptions ? stats.touches.interceptions : 0,
+        touchesBlocks: stats.touches && stats.touches.blocks ? stats.touches.blocks : 0,
+        tackles: stats.tackles,
+        attacks: stats.attacks,
+        overtimeShots: stats.overtime && stats.overtime.shots ? stats.overtime.shots : 0,
+        overtimeGoals: stats.overtime && stats.overtime.goals ? stats.overtime.goals : 0,
+        overtimeAssists: stats.overtime && stats.overtime.assists ? stats.overtime.assists : 0,
+        suspensions: stats.suspensions 
+    };
+};
 
 module.exports = Parser;

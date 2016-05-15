@@ -75,6 +75,57 @@ api.UpdateAllTeams = function (req, res) {
     }
 };
 
+
+// POST
+api.UpdateAllPlayerStatsInTeam = function (req, res) {
+	if(!req.params.teamId)
+		return res.status(400).json({error: "No 'teamId' id parameter defined in the request path."});
+		
+	var teamId = req.params.teamId;
+
+    // UpdateTeams for each supported parser
+    var response = { error: null, parsers: {} };
+    
+	try
+    {
+        
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.UpdateTeamPlayersCareerStats(teamId, function(error, playersToUpdate) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = { 
+                        error: null,
+                        playersToUpdate: playersToUpdate
+                    };
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling UpdateAllPlayerStatsInTeam for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
+            {
+                response.error = error.message;
+                return res.status(500).json(response);
+            }
+            else
+                return res.status(200).json(response);
+        });
+    }
+    catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+    }
+};
+
+
 api.UpdateLeagueStandings = function(req, res) {
 	if(!req.params.competitionId)
 		return res.status(400).json({error: "No 'competition' id parameter defined in the request path."});
@@ -225,6 +276,9 @@ router.get('/', api.Welcome);
 
 // update all teams and players in each
 router.post('/teams', api.UpdateAllTeams);
+
+// update all player career stats for all players in teamId
+router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);
 
 // update all competition standings
 router.post('/standings', api.UpdateAllStandings);

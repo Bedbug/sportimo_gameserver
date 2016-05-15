@@ -273,9 +273,25 @@ gamecards.validateDefinition = function(gamecardDefinition) {
 
 
 gamecards.createDefinitionFromTemplate = function(template, match) {
+    
+    let replaceTeamNameLocale = function(teamname, prompt) {
+        var promptKeys = _.keys(prompt);
+        var newPrompt = {};
+        _.forEach(promptKeys, function(key) {
+            newPrompt[key] = prompt[key];
+            if (teamname[key])
+            {
+                newPrompt[key] = _.replace(newPrompt[key], "[[home_team_name]]", teamname[key]);
+                newPrompt[key] = _.replace(newPrompt[key], "[[away_team_name]]", teamname[key]);
+            }
+        });
+        return newPrompt;
+    };
+    
     let newDefinition = new db.models.gamecardDefinitions({
         matchid: match._id.toString(),
         gamecardTemplateId: template.id,
+        creationTime: moment.utc().toDate(),
         text: template.text,
         activationTime: template.activationTime,
         duration: template.duration,
@@ -629,9 +645,9 @@ gamecards.Tick = function()
 					    log.info("Detected a winning gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
+                            client: gamecard.userid,
                             payload: {
                                 type: "Card_won",
-                                client: gamecard.userid,
                                 room: gamecard.matchid,
                                 data: gamecard
                             }
@@ -646,9 +662,9 @@ gamecards.Tick = function()
 					    log.info("Detected a losing gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
+                            client: gamecard.userid,
                             payload: {
                                 type: "Card_lost",
-                                client: gamecard.userid,
                                 room: gamecard.matchid,
                                 data: gamecard
                             }

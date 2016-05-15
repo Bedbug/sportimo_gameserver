@@ -79,6 +79,21 @@ var matchTeamsLookup = {};
 var league = null;
             
 var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28,30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
+var timelineEvents = {
+    "2": "Yellow",
+    "5": "Corner",
+    "7": "Red",
+    "8": "Foul",
+    "11": "Goal",
+    "14": "Injury",
+    "16": "Offside",
+    "17": "Penalty",
+    "18": "Penalty",
+    "20": "Shot_on_Goal",
+    "22": "Substitution",
+    "28": "Own_Goal"
+};
+
 var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
 
 Parser.Name = configuration.parserIdName;
@@ -309,17 +324,20 @@ var TranslateMatchEvent = function(parserEvent)
             team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
         } : null;
     
+    var isTimelineEvent = timelineEvents[parserEvent.playEvent.playEventId] ? true : false
+    var eventName = isTimelineEvent == true ? timelineEvents[parserEvent.playEvent.playEventId] : parserEvent.playEvent.name;
+    
     var translatedEvent = {
         type: 'Add',
         time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
         data: {
             id: parserEvent.sequenceNumber,
             status: 'active',
-            type: parserEvent.playEvent.name,
+            type: eventName,
             state: parserEvent.period == 2 ? 3 : parserEvent.period, // ToDo: replace with a translatePeriod method
             sender: configuration.parserIdName,
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
-            timeline_event: true,
+            timeline_event: isTimelineEvent,
             team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
             match_id: Parser.matchHandler._id,
             players: [],
@@ -335,7 +353,7 @@ var TranslateMatchEvent = function(parserEvent)
         translatedEvent.data.players.push(offensivePlayer);
     
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
-    translatedEvent.data.stats[parserEvent.playEvent.name] = 1;
+    translatedEvent.data.stats[eventName] = 1;
     
     return translatedEvent;
 };
