@@ -118,6 +118,8 @@ SubscribeChannel.on("error", function (err) {
     console.error(err.stack);
 });
 
+app.PublishChannel = PublishChannel;
+
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
@@ -239,7 +241,6 @@ if (process.env.NODE_ENV == "production") {
         json: false
     });
 }
-
 
 // Central Error Handling for all Express router endpoints: for Express this should be the last middleware declared:
 // See http://expressjs.com/en/guide/error-handling.html

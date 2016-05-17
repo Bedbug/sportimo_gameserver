@@ -20,11 +20,12 @@ var tools = {};
 try {
     app = require('./../../server');
     module.exports = tools;
+    // console.log(app.PublishChannel)
 } catch (ex) {
     // Start server
     app = module.exports = exports.app = express.Router();
     var port = process.env.PORT || 3000;
-    app.listen(port, function() {
+    app.listen(port, function () {
         console.log('Express server listening on port %d in %s mode', port, app.get('env'));
     });
 }
@@ -32,7 +33,7 @@ try {
 app.set('superSecret', config.secret); // secret variable
 
 
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, X-Access-Token");
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
@@ -48,7 +49,7 @@ app.use(bodyParser.json());
 // ================
 // API ROUTES -------------------
 // ================
-app.get('/v1/users/setup', function(req, res) {
+app.get('/v1/users/setup', function (req, res) {
 
     // create a sample user
     var nick = new User({
@@ -59,7 +60,7 @@ app.get('/v1/users/setup', function(req, res) {
     });
 
     // save the sample user
-    nick.save(function(err) {
+    nick.save(function (err) {
         if (err) throw err;
 
         console.log('User saved successfully');
@@ -75,7 +76,7 @@ var apiRoutes = express.Router();
 
 
 // route middleware to verify a token
-var jwtMiddle = function(req, res, next) {
+var jwtMiddle = function (req, res, next) {
 
     // check header or url parameters or post parameters for token
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
@@ -84,7 +85,7 @@ var jwtMiddle = function(req, res, next) {
     if (token) {
 
         // verifies secret and checks exp
-        jsonwebtoken.verify(token, app.get('superSecret'), function(err, decoded) {
+        jsonwebtoken.verify(token, app.get('superSecret'), function (err, decoded) {
             if (err) {
                 return res.json({ success: false, message: 'Failed to authenticate token.' });
             } else {
@@ -107,10 +108,10 @@ var jwtMiddle = function(req, res, next) {
 };
 
 // Route to create a new user (POST /v1/users)
-apiRoutes.post('/v1/users', function(req, res) {
+apiRoutes.post('/v1/users', function (req, res) {
     // save the sample user
     var newUser = new User(req.body);
-    newUser.save(function(err, user) {
+    newUser.save(function (err, user) {
         if (err) res.status(500).send(err);
         else {
             var token = jsonwebtoken.sign(user, app.get('superSecret'), {
@@ -128,12 +129,12 @@ apiRoutes.post('/v1/users', function(req, res) {
 
 
 //Route to authenticate a user (POST /v1/users/authenticate)
-apiRoutes.post('/v1/users/authenticate', function(req, res) {
+apiRoutes.post('/v1/users/authenticate', function (req, res) {
 
     // find the user
     User.findOne({
         username: req.body.username
-    }, function(err, user) {
+    }, function (err, user) {
 
         if (err) throw err;
 
@@ -142,7 +143,7 @@ apiRoutes.post('/v1/users/authenticate', function(req, res) {
         } else if (user) {
 
             // check if password matches
-            user.comparePassword(req.body.password, function(err, isMatch) {
+            user.comparePassword(req.body.password, function (err, isMatch) {
                 if (!isMatch || err) {
                     res.json({ success: false, message: 'Authentication failed. Wrong password.' });
                 } else {
@@ -165,27 +166,27 @@ apiRoutes.post('/v1/users/authenticate', function(req, res) {
 });
 
 // Route to return all users (GET http://localhost:8080/api/users)
-apiRoutes.get('/v1/users', jwtMiddle, function(req, res) {
-    User.find({}, function(err, users) {
+apiRoutes.get('/v1/users', jwtMiddle, function (req, res) {
+    User.find({}, function (err, users) {
         res.json(users);
     });
 });
 
 // Route to return specific user (GET http://localhost:8080/api/users)
-apiRoutes.get('/v1/users/:id', jwtMiddle, function(req, res) {
+apiRoutes.get('/v1/users/:id', jwtMiddle, function (req, res) {
 
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
     var decoded = jwt_decode(token);
-    console.log(decoded);
+    // console.log(decoded);
     if (decoded.admin) {
         // Full user Profile
-        User.findById(req.params.id, function(err, user) {
+        User.findById(req.params.id, function (err, user) {
             res.json(user);
         });
     }
     else {
         // Mini Profile
-        User.findById(req.params.id, function(err, user) {
+        User.findById(req.params.id,'-inbox', function (err, user) {
             res.json(user);
         });
     }
@@ -193,9 +194,9 @@ apiRoutes.get('/v1/users/:id', jwtMiddle, function(req, res) {
 
 
 // Update specific user (PUT /v1/users)
-apiRoutes.put('/v1/users/:id', function(req, res) {
+apiRoutes.put('/v1/users/:id', function (req, res) {
 
-    User.findOneAndUpdate({ _id: req.params.id }, req.body, function(err) {
+    User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
         if (err) {
             res.status(500).send(err);
         } else {
@@ -207,9 +208,9 @@ apiRoutes.put('/v1/users/:id', function(req, res) {
 
 
 //Sends message to routers
-apiRoutes.post('/v1/users/messages', function(req, res) {
+apiRoutes.post('/v1/users/messages', function (req, res) {
 
-    tools.SendMessageToInbox(req.body, function(err, data) {
+    return tools.SendMessageToInbox(req.body, function (err, data) {
         if (!err)
             res.send(data);
         else
@@ -218,22 +219,65 @@ apiRoutes.post('/v1/users/messages', function(req, res) {
 
 });
 
-tools.SendMessageToInbox = function(msgData, callback) {
+//Get user messages
+apiRoutes.get('/v1/users/:id/messages', function (req, res) {
+
+    var q = User.findById(req.params.id);
+    q.populate('inbox','-recipients');
+
+    q.exec(function (err, user) {
+        if (!err) {
+            res.status(200).send(user.inbox);
+            
+            user.unread = 0;
+            user.save(function (err, result) {
+                if(err) console.log(err);
+            });
+        } else
+            res.status(500).send(err);
+    })
+
+
+});
+
+tools.SendMessageToInbox = function (msgData, callback) {
 
     //First create the message and save the instance in database
     var newMessage = new Message(msgData);
-     newMessage.save(function(err, message) {  
-        if (err)  callback(err);
-        else {         
-            var querry = {};    
+
+    // TODO: Maybe we should remove recipients property from model to save wasted space
+    newMessage.save(function (err, message) {
+
+        if (err) callback(err);
+        else {
+            var querry = {};
             if (msgData.recipients) querry._id = { $in: msgData.recipients };
             // if (msgData.id) querry._id = msgData.id;
 
             User.update(querry,
-                { $push: { inbox: message._id}, $inc: { unread: 1 } },
+                { $push: { inbox: message._id }, $inc: { unread: 1 } },
                 { safe: true, new: true, multi: true },
-                function(err, model) {
-                    console.log("err:"+err);
+                function (err, model) {
+
+                    // Send web sockets notice
+                    if (msgData.sockets) {
+                        app.PublishChannel.publish("socketServers", JSON.stringify({
+                            sockets: true,
+                            client: msgData.recipients.length == 1 ? msgData.recipients[0] : null,
+                            clients: msgData.recipients.length > 1 ? msgData.recipients : null,
+                            payload: {
+                                type: "Message",
+                                data: {
+                                    message: { "en": "You have a new message in your inbox." }
+                                }
+                            }
+                        }));
+                    }
+
+                    // TODO: Send Push Notification
+                    // if(msgData.push)
+                    //     Push(msgData);
+
                     callback(err, model);
                 }
             );
@@ -246,13 +290,13 @@ tools.SendMessageToInbox = function(msgData, callback) {
 // @@ 
 // @@   User Activities
 
-apiRoutes.get('/v1/users/activity/:matchid', function(req, res) {
+apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 
-    UserActivities.find({room:req.params.matchid})
+    UserActivities.find({ room: req.params.matchid })
         .populate('user')
         // .populate('away_team', 'name logo')
-        .exec(function(err, users) {
-            console.log(req.params.matchid);
+        .exec(function (err, users) {
+            // console.log(req.params.matchid);
             res.send(users);
         });
 });

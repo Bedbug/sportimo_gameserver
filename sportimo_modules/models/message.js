@@ -1,7 +1,8 @@
 'use strict';
 
 var mongoose = require('mongoose'),
-    Schema = mongoose.Schema;
+    Schema = mongoose.Schema,
+     ObjectId = Schema.ObjectId;
 
 
 if (mongoose.models.messages)
@@ -17,8 +18,9 @@ else {
             ref:'users'
         }],
         img: { type: String },
-        title: { type: String },
-        msg: {type:String},
+        title: {type:mongoose.Schema.Types.Mixed},
+        msg: {type:mongoose.Schema.Types.Mixed, required:true},
+        data: {type:String},
         read: {type:Number},
         created: { type: Date, default: Date.now }
     };

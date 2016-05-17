@@ -26,7 +26,6 @@ var app = null;
 var PubChannel;
 var SubChannel;
 
-
 try {
     app = require('./../../server');
  
