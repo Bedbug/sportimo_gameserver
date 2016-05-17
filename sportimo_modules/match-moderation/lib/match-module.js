@@ -133,15 +133,15 @@ var matchModule = function (match, PubChannel) {
             }
 
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
-            newService.emitter.on('matchEvent', function (matchEvent) {
+            initService.emitter.on('matchEvent', function (matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
                     HookedMatch.AddEvent(matchEvent);
             });
-            newService.emitter.on('nextMatchSegment', function (matchEvent) {
+            initService.emitter.on('nextMatchSegment', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     HookedMatch.AdvanceSegment(matchEvent);
             });
-            newService.emitter.on('endOfMatch', function (matchEvent) {
+            initService.emitter.on('endOfMatch', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     HookedMatch.Terminate();
             });
