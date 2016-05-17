@@ -67,7 +67,9 @@ module.exports = function(ModerationModule) {
                 break;
             case "Update":
                     log.info("[moderation-service] Update Event Request for matchid [" + match_id + "] and event ID [" + req.body.data.id + "]");
-                    res.status(200).send(ModerationModule.GetMatch(match_id).UpdateEvent(req.body));
+                    ModerationModule.GetMatch(match_id).UpdateEvent(req.body, function(err, result){
+                       res.status(200).send(result);
+                   })
                 break;
             case "Add":
                     log.info("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]");
