@@ -55,8 +55,6 @@ var matchModule = function (match, PubChannel) {
     if (HookedMatch.data.timeline.length == 0) {
         HookedMatch.data.state = 0;
         HookedMatch.data.timeline.push({
-            "start": null,
-            "end": null,
             "events": []
         });
         HookedMatch.data.markModified('timeline');
@@ -298,9 +296,8 @@ var matchModule = function (match, PubChannel) {
         var newSegment = {
             start: moment().utc().format(),
             sport_start_time: HookedMatch.sport.segments[HookedMatch.data.state].initialTime ? HookedMatch.sport.segments[HookedMatch.data.state].initialTime : 0,
-            end: null,
             timed: HookedMatch.sport.segments[HookedMatch.data.state].timed,
-            name: HookedMatch.sport.segments[HookedMatch.data.state].name.en,
+            text: HookedMatch.sport.segments[HookedMatch.data.state].name,
             break_time: 0,
             events: []
         }
@@ -425,6 +422,7 @@ var matchModule = function (match, PubChannel) {
     */
 
     HookedMatch.AddEvent = function (event, cbk) {
+        
         event.data = new matchEvents(event.data);
 
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
@@ -556,7 +554,7 @@ var matchModule = function (match, PubChannel) {
     /*  RemoveEvent
      
     */
-    HookedMatch.UpdateEvent = function (event) {
+    HookedMatch.UpdateEvent = function (event, cbk) {
 
         // console.log(event.data._id);
         //  console.log(this.data.timeline[event.data.state]);
@@ -618,10 +616,14 @@ var matchModule = function (match, PubChannel) {
         // }, this.data);
         this.data.markModified('stats');
 
-        this.data.save();
+       this.data.save(function (err, done) {
+            if (err)
+                return log.error(err.message);
+            if (cbk)
+                cbk(null, eventToUpdate);
 
-        // 4. return match to Sender
-        return HookedMatch;
+            return HookedMatch;
+        });
     };
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
