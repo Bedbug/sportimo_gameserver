@@ -89,9 +89,7 @@ api.additem = function (req, res) {
     req.body.timeline = [];
     req.body.timeline.push({
         timed: false,
-        name: {en:"Pre Game"},
-        start: null,
-        end: null
+        text: {en:"Pre Game"}
     })
     
     competition.findById(req.body.competition).then(function (competition) {
