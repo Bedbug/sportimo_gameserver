@@ -263,8 +263,7 @@ tools.SendMessageToInbox = function (msgData, callback) {
                     if (msgData.sockets) {
                         app.PublishChannel.publish("socketServers", JSON.stringify({
                             sockets: true,
-                            client: msgData.recipients.length == 1 ? msgData.recipients[0] : null,
-                            clients: msgData.recipients.length > 1 ? msgData.recipients : null,
+                            clients: msgData.recipients,
                             payload: {
                                 type: "Message",
                                 data: {

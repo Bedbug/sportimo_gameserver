@@ -260,6 +260,19 @@ var matchModule = function (match, PubChannel) {
         return cbk(null, HookedMatch);
     }
 
+    /*  SocketMessage
+        Send a socket message to clients registered in match.
+    */
+    HookedMatch.SocketMessage = function (event) {
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: event
+        }
+        ));
+        
+        return "Done";
+    };
+
     /*  AdvanceSegment
         The advance state method is called when we want to advance to the next segment of the game.
         Depending on setting, here will determine if a timer should begin counting and hold the
@@ -422,7 +435,7 @@ var matchModule = function (match, PubChannel) {
     */
 
     HookedMatch.AddEvent = function (event, cbk) {
-        
+
         event.data = new matchEvents(event.data);
 
         // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
@@ -616,7 +629,7 @@ var matchModule = function (match, PubChannel) {
         // }, this.data);
         this.data.markModified('stats');
 
-       this.data.save(function (err, done) {
+        this.data.save(function (err, done) {
             if (err)
                 return log.error(err.message);
             if (cbk)
