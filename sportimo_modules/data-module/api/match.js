@@ -6,6 +6,7 @@ var express = require('express'),
     Questions = mongoose.models.questions,
     Answers = mongoose.models.answers,
     Scores = mongoose.models.scores,
+    UserGamecards = mongoose.models.userGamecards,
     _ = require('lodash'),
         api = {};
 
@@ -47,16 +48,25 @@ api.item = function(req, res) {
                             game.questions = questions;
                             
                             Scores.find({match_id: gameid, user_id: userid},function(err, result){
-                                if (!err) {
-                                   if(result[0])
+                                if (err) 
+                                    return res.status(500).json(err);
+                                
+                                if(result[0])
                                     game.userScore = result[0].score;
-                                    return res.status(200).json(game);   
-                                }
+                                
+                                UserGamecards.find({ matchid: gameid, userid: userid }, function(cardsError, userCards) {
+                                    if (cardsError)
+                                        return res.status(500).json(cardsError);
+                                    
+                                    if (userCards)
+                                        game.playedCards = userCards;
+                                    return res.status(200).json(game);  
+                                });
                             })
                             
                         });
                 
-                }
+                    }
                 })
 
 
