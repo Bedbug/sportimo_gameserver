@@ -55,7 +55,6 @@ var MyEmitter = function()
 };
 util.inherits(MyEmitter, EventEmitter);
 
-feed_service.emitter = new MyEmitter();
 
 feed_service.parser = null;
  
@@ -76,6 +75,7 @@ feed_service.init = function (matchHandler, cbk) {
                 return cbk(error);
                 
             feed_service.parser = parsers[this.parsername];
+            feed_service.emitter = new MyEmitter();
             return cbk(null, feed_service);
         });
     }

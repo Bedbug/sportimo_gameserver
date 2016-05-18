@@ -326,6 +326,8 @@ var TranslateMatchEvent = function(parserEvent)
     
     var isTimelineEvent = timelineEvents[parserEvent.playEvent.playEventId] ? true : false
     var eventName = isTimelineEvent == true ? timelineEvents[parserEvent.playEvent.playEventId] : parserEvent.playEvent.name;
+    eventName = eventName.replace(/ /g, "_").replace(/-/g,"_"); // global string replacement
+    
     
     var translatedEvent = {
         type: 'Add',

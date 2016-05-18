@@ -147,7 +147,7 @@ var matchModule = function (match, PubChannel) {
             });
 
             services.push(initService);
-            callback(null, newService);
+            callback(null, initService);
         });
     };
 
