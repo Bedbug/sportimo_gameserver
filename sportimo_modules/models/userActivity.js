@@ -23,7 +23,7 @@ var schema = new Schema(fields,
   // Assign a method to create and increment stats
 schema.statics.IncrementStat = function (uid, room, statChange, cb) {
     return mongoose.model('useractivities').findOneAndUpdate({ user: uid, room: room }, { $inc: statChange }, { upsert: true }, function(){
-       return  mongoose.model('userstats').findOneAndUpdate({ user: uid }, { $inc: statChange }, { upsert: true }, cb);
+       return  mongoose.model('users').findOneAndUpdate({ _id: uid }, { stats: { $inc: statChange} }, { upsert: true }, cb);
     });
 }
 
