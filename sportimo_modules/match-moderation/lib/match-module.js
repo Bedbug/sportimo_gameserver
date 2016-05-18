@@ -336,7 +336,7 @@ var matchModule = function (match, PubChannel) {
         }));
 
 
-        // this.data.markModified('timeline');
+        this.data.markModified('timeline');
         HookedMatch.data.save().then(function (result) {
         });
 
@@ -489,10 +489,10 @@ var matchModule = function (match, PubChannel) {
         HookedMatch.gamecards.ResolveEvent(event);
 
         // 4. save match to db
-        if (evtObject.timeline_event) {
+        // if (evtObject.timeline_event) {
             this.data.markModified('timeline');
             log.info("Updating database");
-        }
+        // }
 
         StatsHelper.UpsertStat("system", {
             events_sent: 1
