@@ -126,6 +126,8 @@ gamecards.upsertTemplate = function(template, callback) {
         {
             processedTemplate = db.models.gamecardTemplates.findById(template._id);
             processedTemplate.text = template.text;
+            processedTemplate.title = template.title;
+            processedTemplate.image = template.image;
             processedTemplate.activationLatency = template.activationLatency;
             processedTemplate.duration = template.duration;
             processedTemplate.appearConditions = template.appearConditions;
@@ -141,6 +143,8 @@ gamecards.upsertTemplate = function(template, callback) {
         {
             processedTemplate = new db.models.gamecardTemplates();
             processedTemplate.text = template.text;
+            processedTemplate.title = template.title;
+            processedTemplate.image = template.image;
             processedTemplate.activationLatency = template.activationLatency;
             processedTemplate.duration = template.duration;
             processedTemplate.appearConditions = template.appearConditions;
@@ -194,6 +198,8 @@ gamecards.upsertDefinition = function(gamecard, callback) {
         if (gamecard._id)
         {
             processedDefinition = db.models.gamecardDefinitions.findById(gamecard._id);
+            processedDefinition.title = gamecard.title;
+            processedDefinition.image = gamecard.image;
             processedDefinition.text = gamecard.text;
             processedDefinition.activationTime = gamecard.activationTime;
             processedDefinition.duration = gamecard.duration;
@@ -217,6 +223,8 @@ gamecards.upsertDefinition = function(gamecard, callback) {
             processedDefinition = new db.models.gamecardDefinitions({
                 matchid: gamecard.matchid,
                 text: gamecard.text,
+                title: gamecard.title,
+                image: gamecard.image,
                 activationTime: gamecard.activationTime,
                 duration: gamecard.duration,
                 appearConditions: gamecard.appearConditions,
@@ -249,9 +257,9 @@ gamecards.upsertDefinition = function(gamecard, callback) {
 gamecards.validateDefinition = function(gamecardDefinition) {
     let itsNow = moment.utc();
     
-    if (gamecardDefinition.creationTime && moment.utc(gamecardDefinition).creationTime >= itsNow)
+    if (gamecardDefinition.creationTime && moment.utc(gamecardDefinition.creationTime) >= itsNow)
         return false;
-    if (gamecardDefinition.activationTime && moment.utc(gamecardDefinition).activationTime <= itsNow)
+    if (gamecardDefinition.activationTime && moment.utc(gamecardDefinition.activationTime) <= itsNow)
         return false;
     if (gamecardDefinition.terminationTime)
         return false;
@@ -293,6 +301,8 @@ gamecards.createDefinitionFromTemplate = function(template, match) {
         gamecardTemplateId: template.id,
         creationTime: moment.utc().toDate(),
         text: template.text,
+        title: template.title,
+        image: template.image,
         activationTime: template.activationTime,
         duration: template.duration,
         appearConditions: template.appearConditions,
@@ -370,15 +380,16 @@ gamecards.getUserInstances = function(matchId, userId, cbk)
 *
 * Validation Rules:
 * ----------------
-* the userWildcard has to include a matchId to a scheduled_match instance
+* the userGamecard has to include a matchId to a scheduled_match instance
 * this scheduled_match instance should be existent and active
-* the userWildcard has to include a reference to a gamecard definition (wildcardDefinitionId)
-* this definition should be existing and active in the wildcardDefinitions collection
-* the userWildcard has to include the userid of the respective user
+* the userGamecard has to include a reference to a gamecard definition (wildcardDefinitionId)
+* this definition should be existing and active in the gamecardDefinitions collection
+* the userGamecard has to include the userid of the respective user
 * this user has to be existent and valid
-* the userWildcard has to include the creationTime (timestamp) of the actual time that the card has been played
+* the userGamecard has to include the creationTime (timestamp) of the actual time that the card has been played
 * this timestamp should be in utc time, earlier than now, later than the gamecard definition's activation time
-* the user should not have played the same gamecard (wildcardDefinitionId) more than the maxUserInstances (if null ignore this rule)
+* the userGamecard is not played before the start of the scheduled match when the card type is Instant
+* the user should not have played the same gamecard (gamecardDefinitionId) more than the maxUserInstances (if null ignore this rule)
 */
 gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
     if (!userGamecard.gamecardDefinitionId)
@@ -457,6 +468,9 @@ gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
             if (error)
                 return callback(false);
                 
+            if (scheduledMatch.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))    
+                return callback(false);
+                
             let user = results[0];
             if (!user)
                 return callback(false);
@@ -518,7 +532,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 endPoints: gamecardDefinition.endPoints || 0,
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
-                creationTime: moment.utc(gamecard.creationTime).toDate(),
+                creationTime: moment.utc().toDate(),
                 //activationTime: gamecardDefinition.activationTime,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
@@ -554,7 +568,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             
             if (newCard.cardType == "Overall" && newCard.pointsPerMinute && scheduledMatch && scheduledMatch.start)
             {
-                // Compute the updated starting time if the match has already started (is live)
+                // Compute the updated starting points (winning points if the card wins) if the match has already started (is live)
                 if (scheduledMatch.state > 0)
                     newCard.startPoints -= Math.round( moment.utc(gamecard.creationTime).subtract(moment.utc(scheduledMatch.start)).get("minute") * newCard.pointsPerMinute );
             }
@@ -591,7 +605,7 @@ gamecards.deleteUserInstance = function (gamecardId, callback) {
 };
 
 
-// Manage wildcards in time, activate the ones pending activation, terminate the ones pending termination
+// Manage gamecards in time, activate the ones pending activation, terminate the ones pending termination
 gamecards.Tick = function()
 {
     // Update all wildcards pending to be activated
@@ -639,6 +653,8 @@ gamecards.Tick = function()
                 if (!data || data.length == 0)
                     return callback(null);
                     
+                let cardsWon = [];
+                
                 _.forEach(data, function(gamecard) {
 					if (gamecards.CheckIfWins(gamecard)) {
 					    // Send an event through Redis puβ/sub:
@@ -652,6 +668,7 @@ gamecards.Tick = function()
                                 data: gamecard
                             }
                         }));
+                        cardsWon.push(gamecard);
 					}
 					else
 					{

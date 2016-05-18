@@ -32,6 +32,8 @@ else {
         optionId: String, // valid only if the definition includdes options.
         pointsAwarded: Number,
         matchid: String,
+        title: Schema.Types.Mixed, // card title
+        image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed,
         // Trigger specifications
         minute: Number,

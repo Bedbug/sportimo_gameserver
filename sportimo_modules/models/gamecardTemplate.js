@@ -23,6 +23,8 @@ else {
 
     
     var gamecardTemplate = new mongoose.Schema({
+        title: Schema.Types.Mixed, // card title
+        image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
         // Trigger specifications
         activationLatency: Number, // seconds between the wildcard's creation and activation
