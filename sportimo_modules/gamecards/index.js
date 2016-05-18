@@ -520,6 +520,8 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 userid: gamecard.userid,
                 gamecardDefinitionId: gamecardDefinition.id,
                 matchid: gamecard.matchid,
+                title: gamecardDefinition.title,
+                image: gamecardDefinition.image,
                 minute: gamecard.minute,
                 segment: gamecard.segment,
                 duration: gamecardDefinition.duration || null,
@@ -539,6 +541,9 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 pointsAwarded: null,
                 status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 1)
             });
+            
+            if (newCard.duration && newCard.duration > 0)
+                newCard.terminationTime = moment.utc().add(newCard.duration, 'ms').add(newCard.activationLatency ? newCard.activationLatency : 0, 'ms').toDate();
 
             if (gamecardDefinition.options && gamecard.optionId)
             {
@@ -563,6 +568,11 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     if (optionsIndex.duration)
                         newCard.duration = optionsIndex.duration;
                     newCard.optionId = optionsIndex.optionId;
+                    
+                    if (optionsIndex.duration && optionsIndex.duration > 0)
+                    {
+                        newCard.terminationTime = moment.utc().add(optionsIndex.duration, 'ms').add(optionsIndex.activationLatency ? optionsIndex.activationLatency : 0, 'ms').toDate();
+                    }
                 }
             }
             
