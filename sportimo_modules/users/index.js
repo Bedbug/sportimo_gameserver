@@ -186,12 +186,20 @@ apiRoutes.get('/v1/users/:id', jwtMiddle, function (req, res) {
     }
     else {
         // Mini Profile
-        User.findById(req.params.id,'-inbox', function (err, user) {
+        User.findById(req.params.id, '-inbox', function (err, user) {
             res.json(user);
         });
     }
 });
 
+// Allowed mini user obejct
+apiRoutes.get('/v1/user/:id', function (req, res) {
+
+    User.findById(req.params.id, '-inbox', function (err, user) {
+        res.json(user);
+    });
+
+});
 
 // Update specific user (PUT /v1/users)
 apiRoutes.put('/v1/users/:id', function (req, res) {
@@ -223,15 +231,15 @@ apiRoutes.post('/v1/users/messages', function (req, res) {
 apiRoutes.get('/v1/users/:id/messages', function (req, res) {
 
     var q = User.findById(req.params.id);
-    q.populate('inbox','-recipients');
+    q.populate('inbox', '-recipients');
 
     q.exec(function (err, user) {
         if (!err) {
             res.status(200).send(user.inbox);
-            
+
             user.unread = 0;
             user.save(function (err, result) {
-                if(err) console.log(err);
+                if (err) console.log(err);
             });
         } else
             res.status(500).send(err);

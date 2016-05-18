@@ -3,6 +3,14 @@ var mongoose = require('mongoose'),
     bcrypt = require("bcryptjs"),
     Schema = mongoose.Schema;
 
+var userStats = new Schema({
+    matchesVisited: { type: Number, default: 0 },
+    matchesPlayed: { type: Number, default: 0 },
+    cardsPlayed: { type: Number, default: 0 },
+    cardsWon: { type: Number, default: 0 },
+    prizesWon: { type: Number, default: 0 }
+})
+
 var UserSchema = new Schema({
     name: {
         type: String
@@ -29,9 +37,10 @@ var UserSchema = new Schema({
     unread: Number,
     pushToken: String,
     country: { type: String, required: false },
-    admin: Boolean
-
+    admin: Boolean,
+    stats: mongoose.Schema.Types.Mixed
 }, {
+     timestamps: { updatedAt: 'lastActive' },
         toObject: {
             virtuals: true
         }, toJSON: {
@@ -68,5 +77,15 @@ UserSchema.methods.comparePassword = function (passw, cb) {
         cb(null, isMatch);
     });
 };
+
+// Assign a method to create and increment stats
+// statChange can be any new value and should follow
+// this format: {'stats.@statToIncr': @valueToIncr}
+
+UserSchema.statics.IncrementStat = function (uid, statChange, cb) {
+  return  mongoose.model('users').findByIdAndUpdate(user.uid, {  $inc: statChange}, { upsert: true }, function (err, result) {
+                        console.log('Stat Updated.');
+                    });
+}
 
 module.exports = mongoose.model('users', UserSchema);
