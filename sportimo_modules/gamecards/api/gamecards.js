@@ -73,14 +73,16 @@ module.exports = function (gamecardModule) {
             "userId": "",
             "creationTime": "",
             
-     }
-     
-     Used by clients
+     * }
+     *
+     * Returns the created userGamecard document
+     *
+     * Used by clients
      */
     router.post('/v1/gamecards/:matchId/users', function (req, res) {
         gamecardModule.addUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
             if (error)
-                return res.status(500).json({ error: error.message });
+                return res.status(500).json({ error: error.message, userGamecard: data });
             if (validationError)
                 return res.status(400).json({ error: validationError.message });
             log.debug(data);
