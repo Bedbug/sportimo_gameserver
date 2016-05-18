@@ -19,12 +19,22 @@ var schema = new Schema(fields,
   {
     timestamps: { updatedAt: 'lastActive' }
   });
-  
-  // Assign a method to create and increment stats
-schema.statics.IncrementStat = function (uid, room, statChange, cb) {
-    return mongoose.model('useractivities').findOneAndUpdate({ user: uid, room: room }, { $inc: statChange }, { upsert: true }, function(){
-       return  mongoose.model('users').findOneAndUpdate({ _id: uid }, { stats: { $inc: statChange} }, { upsert: true }, cb);
+
+// Assign a method to create and increment stats
+schema.statics.IncrementStat = function (uid, room, stat, byvalue, cb) {
+  var statIncr = {};
+  statIncr[stat] = byvalue;
+  return mongoose.model('useractivities').findOneAndUpdate({ user: uid, room: room }, { $inc: statIncr }, { upsert: true }, function () {
+
+    var statsPath = {};
+    statsPath['stats.' + stat] = byvalue;
+
+    return mongoose.model('users').findByIdAndUpdate(user.uid, { $inc: statsPath }, { upsert: true }, function (err, result) {
+      if (err)
+        console.log(err);
     });
+
+  });
 }
 
 

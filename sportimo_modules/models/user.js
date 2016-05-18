@@ -83,7 +83,6 @@ UserSchema.methods.comparePassword = function (passw, cb) {
 // this format: {'stats.@statToIncr': @valueToIncr}
 
 UserSchema.statics.IncrementStat = function (uid, statChange, cb) {
-   
   return  mongoose.model('users').findByIdAndUpdate(user.uid, {  $inc: statChange}, { upsert: true }, function (err, result) {
                         console.log('Stat Updated.');
                     });
