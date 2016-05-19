@@ -642,8 +642,8 @@ var matchModule = function (match, PubChannel) {
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.Terminate = function () {
         Timers.clear();
-        HookedMatch.data.completed = true;
-        HookedMatch.data.save();
+        this.data.completed = true;
+        this.data.save();
     };
 
     return HookedMatch;

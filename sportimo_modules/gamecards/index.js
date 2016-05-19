@@ -392,22 +392,23 @@ gamecards.getUserInstances = function(matchId, userId, cbk)
 * the user should not have played the same gamecard (gamecardDefinitionId) more than the maxUserInstances (if null ignore this rule)
 */
 gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
+    
     if (!userGamecard.gamecardDefinitionId)
-        return callback(false);
+        return callback({ isValid: false, error: "Body is lacking of the gamecardDefinitionId property" });
         
     if (!userGamecard.matchid)
-        return callback(false);
+        return callback({ isValid: false, error: "Body is lacking of the matchid property" });
     
     if (userGamecard.matchid != matchId)
-        return callback(false);
+        return callback({ isValid: false, error: "The matchid in the body is different from the one in the url path" });
         
     if (!userGamecard.userid)
-        return callback(false);
+        return callback({ isValid: false, error: "Body is lacking of the userid property" });
         
     let itsNow = moment.utc();
         
     if (!userGamecard.creationTime || moment.utc(userGamecard.creationTime).isAfter(itsNow))
-        return callback(false);
+        return callback({ isValid: false, error: "Body is lacking of the creationTime property or it is later than NOW in UTC" });
         
     // search for the referenced wildcardDefinitionId in the defaultDefinitions first, then to the mongo collection
     let referencedDefinition = null;
@@ -425,23 +426,23 @@ gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
         function(cbk) {
             db.models.gamecardDefinitions.findById(userGamecard.gamecardDefinitionId, function(error, data) {
                 if (error)
-                    return cbk(false);
+                    return cbk({ isValid: false, error: error.message });
                 
                 if (data) {
                     referencedDefinition = data;
                     
                     // Found referenced definition, keep validating
                     if (!referencedDefinition.matchid || matchId != referencedDefinition.matchid)
-                        return cbk(false);
+                        return cbk({ isValid: false, error: "The referenced gamecardDefinitionId document either does not include a matchid reference or is not related to the matchid in the body" });
                         
                     if (data.status != 1)
-                        return cbk(false);
+                        return cbk({ isValid: false, error: "The referenced gamecardDefinitionId document is not in an active state" });
                         
                     if (data.options && data.options.length > 0 && !userGamecard.optionId)
-                        return cbk(false);
+                        return cbk({ isValid: false, error: "The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body" });
                         
                     if (moment.utc(userGamecard.creationTime).isBefore(moment.utc(referencedDefinition.creationTime)))
-                        return cbk(false);
+                        return cbk({ isValid: false, error: "The creationTime in the body is before the creationTime in the gamecardDefinitionId document" });
                 }
                 
                 cbk(null, referencedDefinition);
@@ -466,28 +467,28 @@ gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
         }
         ], function(error, results) {
             if (error)
-                return callback(false);
-                
-            if (scheduledMatch.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))    
-                return callback(false);
+                return callback({ isValid: false, error: error.message });
                 
             let user = results[0];
             if (!user)
-                return callback(false);
+                return callback({ isValid: false, error: "The userid in the body does not correspond to an existing user" });
             // ToDo in the future: consider testing if the user is active and not banned.
                 
             referencedDefinition = results[1];
                 
             if (!referencedDefinition)
-                return callback(false);
+                return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
+                
+            if (referencedDefinition.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))    
+                return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet (its start time is later than NOW in UTC)" });
                 
             if (!referencedDefinition.status || referencedDefinition.status != 1)
-                return callback(false);
+                return callback({ isValid: false, error: "The gamecardDefinitionId document's status is not in an active state" });
                 
             if (referencedDefinition.maxUserInstances && referencedDefinition.maxUserInstances <= sameInstanceCount)
-                return callback(false);
+                return callback({ isValid: false, error: "The gamecardDefinitionId document's maxUserInstances have been reached already, no more cards of the same type can be played by this user" });
                 
-            return callback(true, referencedDefinition, scheduledMatch);
+            return callback({ isValid: true, error: null }, referencedDefinition, scheduledMatch);
         });
 };
 
@@ -504,9 +505,9 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
     // First of all, validate this card
     gamecards.validateUserInstance(matchId, gamecard, function(validationOutcome, gamecardDefinition, scheduledMatch)
     {
-        if (!validationOutcome)
+        if (!validationOutcome.isValid)
         {
-            return callback(null, new Error('Bad request: validation error in request body for this user gamecard.'));
+            return callback(null, new Error('Bad request, validation error in request body for this user gamecard: ' + validationOutcome.error));
         }
     
         let itsNow = moment.utc();
