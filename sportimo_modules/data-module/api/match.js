@@ -60,7 +60,17 @@ api.item = function(req, res) {
                                     
                                     if (userCards)
                                         game.playedCards = userCards;
-                                    return res.status(200).json(game);  
+                                        
+                                    UserGamecards.aggregate(
+                                        { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
+                                        { $group: {_id: {matchid: "$matchid", userid: "$userid"}, userPoints: {$sum: "$pointsAwarded"}} }, 
+                                        function(aggrError, aggrResult) {
+                                            if (aggrError)
+                                                return res.status(500).json(aggrError);
+                                            game.userScore = aggrResult.length > 0 ? aggrResult[0].userPoints : 0;
+                                            
+                                            return res.status(200).json(game);  
+                                        });
                                 });
                             })
                             
