@@ -6,7 +6,10 @@ var mongoose = require('mongoose'),
 
 
 var fields = {
-    userid: String,
+    userid: {
+            type:String,
+            ref:'users'
+        },
     questionid: String,
     matchid: String,
     answerid: String,

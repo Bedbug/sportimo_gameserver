@@ -282,7 +282,7 @@ Parser.UpdateTeams = function(callback)
                                     var newTeam = new mongoDb.teams(); 
                                     //newTeam.name_en = player.team.displayName;
                                     newTeam.name = { "en" : player.team.displayName };
-                                    newTeam.name["short"] = player.team.abbreviation;
+                                    newTeam.name["abbr"] = player.team.abbreviation;
                                     newTeam.logo = null;
                                     //newTeam.league = leagueName;
                                     newTeam.created = creationDate;
@@ -300,7 +300,7 @@ Parser.UpdateTeams = function(callback)
                                     if (!oldTeam.name)
                                         oldTeam.name = {};
                                     oldTeam.name["en"] = player.team.displayName;
-                                    oldTeam.name["short"] = player.team.abbreviation;
+                                    oldTeam.name["abbr"] = player.team.abbreviation;
                                     if (!oldTeam.logo)
                                         oldTeam.logo = null; // leave this property untouched to what it was
                                     if (!oldTeam.parserids)
