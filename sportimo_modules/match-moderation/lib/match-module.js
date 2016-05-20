@@ -57,7 +57,7 @@ var matchModule = function (match, PubChannel) {
         HookedMatch.data.timeline.push({
             "events": []
         });
-        HookedMatch.data.markModified('timeline');
+        // HookedMatch.data.markModified('timeline');
         HookedMatch.data.save();
     }
 
@@ -225,8 +225,11 @@ var matchModule = function (match, PubChannel) {
 
         HookedMatch.data.state--;
 
-        this.data.markModified('timeline');
-        this.data.save();
+        // this.data.markModified('timeline');
+         this.data.save(function (err, done) {
+            if (err)
+                log.error(err.message);
+         });
 
 
         startMatchTimer();
@@ -243,8 +246,11 @@ var matchModule = function (match, PubChannel) {
             if (this.data.timeline[data.index - 1])
                 this.data.timeline[data.index - 1].end = data.data.start;
 
-            this.data.markModified('timeline');
-            this.data.save();
+            // this.data.markModified('timeline');
+             this.data.save(function (err, done) {
+            if (err)
+                log.error(err.message);
+         });
         }
 
         if (this.data.timeline[data.index].end != data.data.end) {
@@ -253,8 +259,11 @@ var matchModule = function (match, PubChannel) {
             if (this.data.timeline[data.index + 1])
                 this.data.timeline[data.index + 1].start = data.data.end;
 
-            this.data.markModified('timeline');
-            this.data.save();
+            // this.data.markModified('timeline');
+             this.data.save(function (err, done) {
+            if (err)
+                log.error(err.message);
+         });
         }
 
         return cbk(null, HookedMatch);
@@ -336,9 +345,15 @@ var matchModule = function (match, PubChannel) {
         }));
 
 
-        this.data.markModified('timeline');
-        HookedMatch.data.save().then(function (result) {
-        });
+       // this.data.markModified('timeline');
+        
+        HookedMatch.data.save(function(err,result, numaffected){
+            log.info("Updating database - Advance segment");
+            if(err)
+            log.error(err);
+            else
+            log.info("Saved: "+numaffected );
+        })
 
         // Update gamecards module of the segment change. Create an event out of this
         const segmentEvent = {
@@ -490,8 +505,8 @@ var matchModule = function (match, PubChannel) {
 
         // 4. save match to db
         // if (evtObject.timeline_event) {
-            this.data.markModified('timeline');
-            log.info("Updating database");
+            // this.data.markModified('timeline');
+            // log.info("Updating database");
         // }
 
         StatsHelper.UpsertStat("system", {
@@ -550,15 +565,18 @@ var matchModule = function (match, PubChannel) {
         PubChannel.publish("socketServers", JSON.stringify(event));
 
         // 3. save match to db
-        this.data.markModified('timeline');
-        log.info("Updating database");
+        // this.data.markModified('timeline');
+       
 
         StatsHelper.UpsertStat("system", {
             events_sent: 1
         }, this.data, "system");
         this.data.markModified('stats');
 
-        this.data.save();
+        this.data.save(function (err, done) {
+            if (err)
+                log.error(err.message);
+        });
 
         // 4. return match to Sender
         return HANDLE_EVENT_REMOVAL(event.data, this);
@@ -621,7 +639,7 @@ var matchModule = function (match, PubChannel) {
         ));
 
         // 3. save match to db
-        this.data.markModified('timeline');
+        // this.data.markModified('timeline');
         log.info("Updating database");
 
         // StatsHelper.UpsertStat(match.id, {
@@ -643,7 +661,10 @@ var matchModule = function (match, PubChannel) {
     HookedMatch.Terminate = function () {
         Timers.clear();
         this.data.completed = true;
-        this.data.save();
+         this.data.save(function (err, done) {
+            if (err)
+                 log.error(err.message);
+         });
     };
 
     return HookedMatch;
