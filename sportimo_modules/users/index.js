@@ -115,7 +115,7 @@ apiRoutes.post('/v1/users', function (req, res) {
         if (err) res.status(500).send(err);
         else {
             var token = jsonwebtoken.sign(user, app.get('superSecret'), {
-                expiresInMinutes: 1440 // expires in 24 hours
+                expiresIn: 1440 * 60 // expires in 24 hours
             });
             user = user.toObject();
             user.token = token;
