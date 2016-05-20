@@ -73,7 +73,7 @@ else {
 //         "L",
 //         "W"
 //     ],
-//     "nextmatch": [
+//     "nextmatch":
 //         {
 //             "home": "56e81b7c30345c282c01b2d1",
 //             "away": "56e81b7c30345c282c01b2d1",
@@ -81,8 +81,8 @@ else {
 //             "homescore": 0,
 //             "awayscore": 0
 //         }
-//     ],
-//     "lastmatch": [
+//     ,
+//     "lastmatch": 
 //         {
 //             "home": "56e81b7c30345c282c01b2d1",
 //             "away": "56e81b7c30345c282c01b2d1",
@@ -90,7 +90,7 @@ else {
 //             "homescore": 0,
 //             "awayscore": 0
 //         }
-//     ],
+//     ,
 //     "standing": {
 //         "rank": 1,
 //         "teamName": {
