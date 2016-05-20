@@ -27,8 +27,16 @@ api.getAllTeams = function (skip,limit,cb) {
 
 // GET
 api.getTeam = function (id,cb) {
-
-  Team.findOne({ '_id': id }, function(err, team) {
+  var q = Team.findById(id);
+  
+  q.populate('nextmatch.home','name logo');
+  q.populate('nextmatch.away','name logo');
+  q.populate('lastmatch.home','name logo');
+  q.populate('lastmatch.away','name logo');
+  q.populate('topscorer','name uniformNumber pic stats lastActiveSeason')
+  
+  
+  q.exec(function(err, team) {
     cbf(cb,err,team);
   });
 };
