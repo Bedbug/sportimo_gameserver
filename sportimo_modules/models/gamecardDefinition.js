@@ -29,7 +29,6 @@ else {
         title: Schema.Types.Mixed, // card title
         image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed,
-        primaryAssociatedEvent: String,
         // Trigger specifications
         activationLatency: Number,
         duration: Number,  // instant gamecards only;

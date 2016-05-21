@@ -24,8 +24,8 @@ var statsComConfigDevelopment = {
     // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
     supportedLanguages : ["en", "ar", "ru"],
     urlPrefix : "http://api.stats.com/v1/stats/soccer/",
-    apiKey : "83839j82xy3mty4bf6459rnt",
-    apiSecret : "VqmfcMTdQe",
+    apiKey : "mct9w8ws4fbpvj5w66se4tns",//"83839j82xy3mty4bf6459rnt",
+    apiSecret : "53U7SH6N5x", //"VqmfcMTdQe",
     parserIdName : "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
@@ -34,8 +34,8 @@ var statsComConfigProduction = {
     // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
     supportedLanguages : ["en"],
     urlPrefix : "http://api.stats.com/v1/stats/soccer/",
-    apiKey : "83839j82xy3mty4bf6459rnt",
-    apiSecret : "VqmfcMTdQe",
+    apiKey : "mct9w8ws4fbpvj5w66se4tns",//"83839j82xy3mty4bf6459rnt",
+    apiSecret : "53U7SH6N5x", //"VqmfcMTdQe",
     parserIdName : "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
@@ -282,7 +282,7 @@ Parser.UpdateTeams = function(callback)
                                     var newTeam = new mongoDb.teams(); 
                                     //newTeam.name_en = player.team.displayName;
                                     newTeam.name = { "en" : player.team.displayName };
-                                    newTeam.name["abbr"] = player.team.abbreviation;
+                                    newTeam.name["short"] = player.team.abbreviation;
                                     newTeam.logo = null;
                                     //newTeam.league = leagueName;
                                     newTeam.created = creationDate;
@@ -300,7 +300,7 @@ Parser.UpdateTeams = function(callback)
                                     if (!oldTeam.name)
                                         oldTeam.name = {};
                                     oldTeam.name["en"] = player.team.displayName;
-                                    oldTeam.name["abbr"] = player.team.abbreviation;
+                                    oldTeam.name["short"] = player.team.abbreviation;
                                     if (!oldTeam.logo)
                                         oldTeam.logo = null; // leave this property untouched to what it was
                                     if (!oldTeam.parserids)

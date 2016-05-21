@@ -86,7 +86,7 @@ module.exports = function (gamecardModule) {
             if (validationError)
                 return res.status(400).json({ error: validationError.message });
             log.debug(data);
-            return res.status(200).json({ error: null });
+            return res.status(200).json({ error: null, userGamecard: data });
         });
     });
     
