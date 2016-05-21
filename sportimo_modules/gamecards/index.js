@@ -408,7 +408,7 @@ gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
     let itsNow = moment.utc();
         
     if (!userGamecard.creationTime || moment.utc(userGamecard.creationTime).isAfter(itsNow))
-        return callback({ isValid: false, error: "Body is lacking of the creationTime property or it is later than NOW in UTC" });
+        return callback({ isValid: false, error: "Body is lacking of the creationTime property or it is later than NOW " + itsNow.format() + " in UTC" });
         
     // search for the referenced wildcardDefinitionId in the defaultDefinitions first, then to the mongo collection
     let referencedDefinition = null;
