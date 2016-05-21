@@ -1,6 +1,7 @@
 var express = require('express'),
     router = express.Router(),
-    log = require('winston');
+    log = require('winston'),
+    moment = require('moment');
 
 
 module.exports = function (gamecardModule) {
@@ -84,7 +85,10 @@ module.exports = function (gamecardModule) {
             if (error)
                 return res.status(500).json({ error: error.message, userGamecard: data });
             if (validationError)
-                return res.status(400).json({ error: validationError.message });
+            {
+                var itsNow = moment.utc();
+                return res.status(400).json({ error: validationError.message, responseTimeUtc: itsNow });
+            }
             log.debug(data);
             return res.status(200).json({ error: null, userGamecard: data });
         });
