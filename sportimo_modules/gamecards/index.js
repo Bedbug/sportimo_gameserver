@@ -676,7 +676,7 @@ var TranslateUserGamecard = function(userGamecard)
     if (userGamecard.startPoints)
         retValue.startPoints = userGamecard.startPoints;
     if (userGamecard.endPoints)
-        retValue = userGamecard.endPoints;
+        retValue.endPoints = userGamecard.endPoints;
     if (userGamecard.pointsPerMinute)
         retValue.pointsPerMinute = userGamecard.pointsPerMinute;
     
