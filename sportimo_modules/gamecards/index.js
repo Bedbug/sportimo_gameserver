@@ -305,6 +305,7 @@ gamecards.createDefinitionFromTemplate = function(template, match) {
         image: template.image,
         activationTime: template.activationTime,
         duration: template.duration,
+        activationLatency: template.activationLatency,
         appearConditions: template.appearConditions,
         winConditions: template.winConditions,
         terminationConditions: template.terminationConditions,
@@ -408,7 +409,8 @@ gamecards.validateUserInstance = function(matchId, userGamecard, callback) {
     let itsNow = moment.utc();
         
     if (!userGamecard.creationTime || moment.utc(userGamecard.creationTime).isAfter(itsNow))
-        return callback({ isValid: false, error: "Body is lacking of the creationTime property or it is later than NOW " + itsNow.format() + " in UTC" });
+        log.warn("Body is lacking of the creationTime property or it is later than NOW " + itsNow.format() + " in UTC");
+        //return callback({ isValid: false, error: "Body is lacking of the creationTime property or it is later than NOW " + itsNow.format() + " in UTC" });
         
     // search for the referenced wildcardDefinitionId in the defaultDefinitions first, then to the mongo collection
     let referencedDefinition = null;
@@ -587,7 +589,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             newCard.save(function(error) {
                 if (error)
                     return callback(error);
-                callback(null, null, newCard);
+                callback(null, null, TranslateUserGamecard(newCard));
             });
         }
         catch(error)
@@ -597,6 +599,91 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
         
     });
 };
+
+
+// First get the userGamecard from mongo and assert that it exists and that its status is 1.
+// Then, update it accordingly
+gamecards.updateUserInstance = function(userGamecardId, options, callback) {
+    db.models.userGamecards.findById(userGamecardId, function(error, gamecard) {
+        if (error)
+            return callback(error);
+            
+        if (!gamecard)
+            return callback(null, "userGamecardId is not found");
+            
+        if (options.doubleTime && gamecard.cardType == 'Overall')
+            return callback(null, "Cannot add double time in an Overall card");
+            
+        // ToDo: Validate against maximum number of allowed double card extensions in the match.
+        
+        if (options.doublePoints)
+        {
+            if (gamecard.cardType == "Instant")
+            {
+                gamecard.startPoints = gamecard.startPoints * 2;
+                gamecard.endPoints = gamecard.endPoints * 2;
+            }
+            else
+                gamecard.startPoints = gamecard.startPoints * 2;
+        }
+        if (options.doubleTime)
+        {
+            if (gamecard.duration)
+            {
+                if (gamecard.terminationTime)
+                    gamecard.terminationTime = moment.utc(gamecard.terminationTime).add(gamecard.duration, 'ms').toDate();
+                gamecard.duration = gamecard.duration * 2;
+            }
+        }
+        
+        gamecard.save(function(err) {
+            if (err)
+                return callback(err);
+                
+            callback(null, null, TranslateUserGamecard(gamecard)); 
+        });
+    });
+};
+
+
+var TranslateUserGamecard = function(userGamecard)
+{
+    let retValue = {
+        userid: userGamecard.userid,
+        matchid: userGamecard.matchid,
+        gamecardDefinitionId: userGamecard.gamecardDefinitionId,
+        title: userGamecard.title,
+        image: userGamecard.image,
+        text: userGamecard.text,
+        cardType: userGamecard.cardType,
+        status: userGamecard.status
+    };
+    
+    if (userGamecard.startPoints)
+        retValue.startPoints = userGamecard.startPoints;
+    if (userGamecard.endPoints)
+        retValue = userGamecard.endPoints;
+    if (userGamecard.pointsPerMinute)
+        retValue.pointsPerMinute = userGamecard.pointsPerMinute;
+    
+    if (userGamecard.activationLatency)
+        retValue.activationLatency = userGamecard.activationLatency;
+    if (userGamecard.pointsAwarded)
+        retValue.pointsAwarded = userGamecard.pointsAwarded;
+    if (userGamecard.duration)
+        retValue.duration = userGamecard.duration;
+    if (userGamecard.maxUserInstances)
+        retValue.maxUserInstances = userGamecard.maxUserInstances;
+    if (userGamecard.activationTime)
+        retValue.activationTime = userGamecard.activationTime;
+    if (userGamecard.terminationTime)
+        retValue.terminationTime = userGamecard.terminationTime;
+    if (userGamecard.wonTime)
+        retValue.wonTime = userGamecard.wonTime;
+        
+    return retValue;
+}
+
 
 // DELETE
 // removes gamecard from CardsInplay &

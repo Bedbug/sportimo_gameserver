@@ -95,6 +95,22 @@ module.exports = function (gamecardModule) {
     });
     
     
+    
+    router.put('/v1/gamecards/:userGamecardId', function (req, res) {
+        gamecardModule.updateUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
+            if (error)
+                return res.status(500).json({ error: error.message, userGamecard: data });
+            if (validationError)
+            {
+                var itsNow = moment.utc();
+                return res.status(403).json({ error: validationError.message, responseTimeUtc: itsNow });
+            }
+            log.debug(data);
+            return res.status(200).json({ error: null, userGamecard: data });
+        });
+    });
+    
+    
     /**
      * DELETE
      * Delete function is only available for unit testing. No real
