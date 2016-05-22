@@ -12,8 +12,8 @@ module.exports = function (gamecardModule) {
     router.get('/v1/gamecards/templates', function(req, res) {
         gamecardModule.getTemplates(function(error, data) {
             if (error)
-                res.status(400).json({ error: error });
-            res.status(200).json({ error: null, data: data });
+                res.status(400).json(error);
+            res.status(200).json(data);
         });
     });
     
@@ -39,14 +39,23 @@ module.exports = function (gamecardModule) {
         });
     });
     
+    // Get existing definition gamecards for a specific matchId
+    // Used only by the dashboard. Removes complex response for easier mapping.
+    router.get('/v1/gamecards/:matchId/matchdefinitions', function(req, res) {
+        gamecardModule.getMatchDefinitions(req.params.matchId, function(error, data) {
+            if (error)
+                res.status(400).json(error);
+            res.status(200).json(data);
+        });
+    });
     
     // upsert existing definition gamecards for a specific matchId
-    // Used by the dashboard
-    router.post('/v1/gamecards/:matchId/definitions', function(req, res) {
+    // Used by the dashboard. Changed for easier Restangular actions on the API
+    router.post('/v1/gamecards/:matchId/matchdefinitions', function(req, res) {
         gamecardModule.upsertDefinition(req.body, function(error, data) {
             if (error)
-                res.status(400).json({ error: error });
-            res.status(200).json({error: null, data: data});                
+                res.status(400).json(error);
+            res.status(200).json(data);                
         });
     });
     
