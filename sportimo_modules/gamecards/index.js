@@ -187,6 +187,16 @@ gamecards.getDefinitions = function(state, callback) {
     });
 };
 
+// Added a new method because the old one returned only active ones and there was no sign of match id filtering
+gamecards.getMatchDefinitions = function(mid, callback) {   
+        
+    db.models.gamecardDefinitions.find({matchid: mid}, function(error, data) {
+        if (error)
+            return callback(error);
+        callback(null, data);
+    });
+};
+
 
 gamecards.upsertDefinition = function(gamecard, callback) {
     let processedDefinition = null;
