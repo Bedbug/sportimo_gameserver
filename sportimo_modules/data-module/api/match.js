@@ -10,7 +10,6 @@ var express = require('express'),
     _ = require('lodash'),
         api = {};
         
-var gamecards = require('../../gamecards/index.js');
 
 
 // GET
@@ -64,7 +63,7 @@ api.item = function(req, res) {
                                     {
                                         // Translate each userGamecard document into a filtered DTO version
                                         game.playedCards = _.map(userCards, function(userCard) {
-                                            return gamecards.TranslateUserGamecard(userCard);  
+                                            return TranslateUserGamecard(userCard);  
                                         });
                                     }
                                         
@@ -96,7 +95,47 @@ api.item = function(req, res) {
 };
 
 
-
+var TranslateUserGamecard = function(userGamecard)
+{
+    var retValue = {
+        userid: userGamecard.userid,
+        matchid: userGamecard.matchid,
+        gamecardDefinitionId: userGamecard.gamecardDefinitionId,
+        title: userGamecard.title,
+        image: userGamecard.image,
+        text: userGamecard.text,
+        cardType: userGamecard.cardType,
+        status: userGamecard.status
+    };
+    
+    if (userGamecard.startPoints)
+        retValue.startPoints = userGamecard.startPoints;
+    if (userGamecard.endPoints)
+        retValue.endPoints = userGamecard.endPoints;
+    if (userGamecard.pointsPerMinute)
+        retValue.pointsPerMinute = userGamecard.pointsPerMinute;
+    
+    if (userGamecard.activationLatency)
+        retValue.activationLatency = userGamecard.activationLatency;
+    if (userGamecard.pointsAwarded)
+        retValue.pointsAwarded = userGamecard.pointsAwarded;
+    if (userGamecard.duration)
+        retValue.duration = userGamecard.duration;
+    if (userGamecard.optionId)
+        retValue.optionId = userGamecard.optionId;
+    if (userGamecard.maxUserInstances)
+        retValue.maxUserInstances = userGamecard.maxUserInstances;
+    if (userGamecard.creationTime)
+        retValue.creationTime = userGamecard.creationTime;
+    if (userGamecard.activationTime)
+        retValue.activationTime = userGamecard.activationTime;
+    if (userGamecard.terminationTime)
+        retValue.terminationTime = userGamecard.terminationTime;
+    if (userGamecard.wonTime)
+        retValue.wonTime = userGamecard.wonTime;
+        
+    return retValue;
+};
 
 // api.items = function(req, res) {
 
