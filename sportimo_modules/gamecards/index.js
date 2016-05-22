@@ -583,7 +583,11 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             {
                 // Compute the updated starting points (winning points if the card wins) if the match has already started (is live)
                 if (scheduledMatch.state > 0)
-                    newCard.startPoints -= Math.round( moment.utc(gamecard.creationTime).subtract(moment.utc(scheduledMatch.start)).get("minute") * newCard.pointsPerMinute );
+                {
+                    let timeDiff = itsNow.subtract(moment.utc(scheduledMatch.start.toISOString()));   
+                    let minutesSinceMatchStart = timeDiff.get('minutes');
+                    newCard.startPoints -= Math.round( minutesSinceMatchStart * newCard.pointsPerMinute );
+                }
             }
             
             newCard.save(function(error) {
