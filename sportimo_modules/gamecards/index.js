@@ -603,7 +603,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             newCard.save(function(error) {
                 if (error)
                     return callback(error);
-                callback(null, null, TranslateUserGamecard(newCard));
+                callback(null, null, gamecards.TranslateUserGamecard(newCard));
             });
         }
         catch(error)
@@ -630,7 +630,7 @@ gamecards.updateUserInstance = function(userGamecardId, options, callback) {
             
         // ToDo: Validate against maximum number of allowed double card extensions in the match.
         
-        if (options.doublePoints)
+        if (options.doublePoints && options.doublePoints == true)
         {
             if (gamecard.cardType == "Instant")
             {
@@ -640,7 +640,7 @@ gamecards.updateUserInstance = function(userGamecardId, options, callback) {
             else
                 gamecard.startPoints = gamecard.startPoints * 2;
         }
-        if (options.doubleTime)
+        if (options.doubleTime && options.doubleTime == true)
         {
             if (gamecard.duration)
             {
@@ -654,13 +654,13 @@ gamecards.updateUserInstance = function(userGamecardId, options, callback) {
             if (err)
                 return callback(err);
                 
-            callback(null, null, TranslateUserGamecard(gamecard)); 
+            callback(null, null, gamecards.TranslateUserGamecard(gamecard)); 
         });
     });
 };
 
 
-var TranslateUserGamecard = function(userGamecard)
+gamecards.TranslateUserGamecard = function(userGamecard)
 {
     let retValue = {
         userid: userGamecard.userid,
@@ -686,8 +686,12 @@ var TranslateUserGamecard = function(userGamecard)
         retValue.pointsAwarded = userGamecard.pointsAwarded;
     if (userGamecard.duration)
         retValue.duration = userGamecard.duration;
+    if (userGamecard.optionId)
+        retValue.optionId = userGamecard.optionId;
     if (userGamecard.maxUserInstances)
         retValue.maxUserInstances = userGamecard.maxUserInstances;
+    if (userGamecard.creationTime)
+        retValue.creationTime = userGamecard.creationTime;
     if (userGamecard.activationTime)
         retValue.activationTime = userGamecard.activationTime;
     if (userGamecard.terminationTime)
@@ -696,7 +700,7 @@ var TranslateUserGamecard = function(userGamecard)
         retValue.wonTime = userGamecard.wonTime;
         
     return retValue;
-}
+};
 
 
 // DELETE
@@ -777,7 +781,7 @@ gamecards.Tick = function()
                             payload: {
                                 type: "Card_won",
                                 room: gamecard.matchid,
-                                data: gamecard
+                                data: gamecards.TranslateUserGamecard(gamecard)
                             }
                         }));
                         cardsWon.push(gamecard);
@@ -795,7 +799,7 @@ gamecards.Tick = function()
                             payload: {
                                 type: "Card_lost",
                                 room: gamecard.matchid,
-                                data: gamecard
+                                data: gamecards.TranslateUserGamecard(gamecard)
                             }
                         }));
 					}
@@ -890,7 +894,7 @@ gamecards.ResolveEvent = function(matchEvent)
                                     type: "Card_won",
                                     client: gamecard.userid,
                                     room: event.matchid,
-                                    data: gamecard
+                                    data: gamecards.TranslateUserGamecard(gamecard)
                                 }
                             }));
 						}
@@ -919,7 +923,7 @@ gamecards.ResolveEvent = function(matchEvent)
                                     type: "Card_won",
                                     client: gamecard.userid,
                                     room: event.matchid,
-                                    data: gamecard
+                                    data: gamecards.TranslateUserGamecard(gamecard)
                                 }
                             }));
 						}
@@ -936,7 +940,7 @@ gamecards.ResolveEvent = function(matchEvent)
                                     type: "Card_lost",
                                     client: gamecard.userid,
                                     room: event.matchid,
-                                    data: gamecard
+                                    data: gamecards.TranslateUserGamecard(gamecard)
                                 }
                             }));
 						}

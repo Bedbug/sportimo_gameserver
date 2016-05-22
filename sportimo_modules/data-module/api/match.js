@@ -9,6 +9,8 @@ var express = require('express'),
     UserGamecards = mongoose.models.userGamecards,
     _ = require('lodash'),
         api = {};
+        
+var gamecards = require('../../gamecards/index.js');
 
 
 // GET
@@ -59,7 +61,12 @@ api.item = function(req, res) {
                                         return res.status(500).json(cardsError);
                                     
                                     if (userCards)
-                                        game.playedCards = userCards;
+                                    {
+                                        // Translate each userGamecard document into a filtered DTO version
+                                        game.playedCards = _.map(userCards, function(userCard) {
+                                            return gamecards.TranslateUserGamecard(userCard);  
+                                        });
+                                    }
                                         
                                     UserGamecards.aggregate(
                                         { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
