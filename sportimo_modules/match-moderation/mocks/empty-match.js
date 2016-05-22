@@ -12,7 +12,13 @@
     "stats": [],
     "timeline": [],
     "settings": {
-        "destroyOnDelete": true
+        "destroyOnDelete": true,
+        "gameCards":{
+            "instant":6,
+            "overall":4,
+            "specials":4
+        },
+        "hashtag":"[[match_hashtag]]"
     },
     "state": 0
 }
