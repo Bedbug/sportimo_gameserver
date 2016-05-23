@@ -562,7 +562,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
                 creationTime: moment.utc().toDate(),
-                //activationTime: gamecardDefinition.activationTime,    // let the schema pre-save handle these times
+                activationTime: gamecardDefinition.activationTime,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
@@ -677,6 +677,7 @@ gamecards.updateUserInstance = function(userGamecardId, options, callback) {
 gamecards.TranslateUserGamecard = function(userGamecard)
 {
     let retValue = {
+        id: userGamecard.id,
         userid: userGamecard.userid,
         matchid: userGamecard.matchid,
         gamecardDefinitionId: userGamecard.gamecardDefinitionId,
