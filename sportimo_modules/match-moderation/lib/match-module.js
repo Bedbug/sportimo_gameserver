@@ -594,7 +594,7 @@ var matchModule = function (match, PubChannel) {
         });
 
         // We have an update to players
-        if (eventToUpdate.players.length < event.data.players.length) {
+        if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
             event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
             eventToUpdate.players = event.data.players;
         }
