@@ -355,7 +355,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         text: template.text,
         title: template.title,
         image: template.image,
-        activationTime: template.activationTime,
+        //activationTime: template.activationTime,
         duration: template.duration,
         activationLatency: template.activationLatency,
         appearConditions: template.appearConditions,
@@ -585,7 +585,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
                 creationTime: itsNow.toDate(),
-                activationTime: !gamecardDefinition.activationTime ? itsNow.toDate() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
+                activationTime: !gamecardDefinition.activationTime ? itsNow.add(gamecardDefinition.activationLatency ? gamecardDefinition.activationLatency : 0, 'ms').toDate() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
@@ -856,7 +856,8 @@ gamecards.CheckIfWins = function (gamecard) {
 
     }
     gamecard.status = 2; // terminated
-    gamecard.terminationTime = itsNow.toDate();
+    if (!gamecard.terminationTime)
+        gamecard.terminationTime = itsNow.toDate();
     gamecard.wonTime = itsNow.toDate();
     // Award points
     if (gamecard.cardType == "Instant") {
