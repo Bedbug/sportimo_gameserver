@@ -59,6 +59,14 @@ module.exports = function (gamecardModule) {
         });
     });
     
+     router.put('/v1/gamecards/:matchId/matchdefinitions/:cardid', function(req, res) {
+        gamecardModule.upsertDefinition(req.body, function(error, data) {
+            if (error)
+                res.status(400).json(error);
+            res.status(200).json(data);                
+        });
+    });
+    
     /**
      * GET user gamecards
      * used by clients to populate their gamecard rolodex.
