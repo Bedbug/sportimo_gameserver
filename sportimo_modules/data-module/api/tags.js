@@ -9,7 +9,7 @@ var express = require('express'),
     tags = [];
 
 // ALL
-api.tags = function(req, res) {
+api.tags = function (req, res) {
     var skip = null, limit = null;
     tags = [];
 
@@ -21,8 +21,8 @@ api.tags = function(req, res) {
 
     var q = player.find();
     q.select('name pic teamId');
-    q.exec(function(err, players) {
-        players.forEach(function(player) {
+    q.exec(function (err, players) {
+        players.forEach(function (player) {
             player = player.toObject();
             player.type = "Player";
             tags.push(player);
@@ -30,8 +30,8 @@ api.tags = function(req, res) {
 
         var t = team.find();
         t.select('name logo');
-        t.exec(function(err, teams) {
-            teams.forEach(function(team) {
+        t.exec(function (err, teams) {
+            teams.forEach(function (team) {
                 team = team.toObject();
                 team.type = "Team";
                 tags.push(team);
@@ -41,11 +41,11 @@ api.tags = function(req, res) {
             m.select('home_team away_team')
             m.populate('home_team').populate('away_team');
 
-            m.exec(function(err, matches) {
-                matches.forEach(function(match) {
+            m.exec(function (err, matches) {
+                matches.forEach(function (match) {
                     if (match.home_team) {
-                        var matchTag = {name:{en:""}};
-                        matchTag.name.en= match.home_team.name.en + " - " + match.away_team.name.en;
+                        var matchTag = { name: { en: "" } };
+                        matchTag.name.en = match.home_team.name.en + " - " + match.away_team.name.en;
                         matchTag._id = match._id;
                         matchTag.type = "Event";
                         tags.push(matchTag);
@@ -59,12 +59,61 @@ api.tags = function(req, res) {
     });
 
 };
+
+api.matchtags = function (req, res) {
+    var mid = req.params.matchid;
+    var matchTags = [];
+
+    var m = match.findById(mid);
+
+
+
+    m.select('home_team away_team')
+    m.populate('home_team', 'name logo').populate('away_team', 'name logo');
+
+    m.exec(function (err, match) {
+
+        // First create the match tag
+        if (match.home_team) {
+            var matchTag = { name: { en: "" } };
+            matchTag.name.en = match.home_team.name.en + " - " + match.away_team.name.en;
+            matchTag._id = match._id;
+            matchTag.type = "Event";
+            matchTags.push(matchTag);
+        }
+
+        // Now let's push the two team tags
+        var home = match.home_team.toObject();
+        home.type = "Team";
+        matchTags.push(home);
+        var away = match.away_team.toObject();
+        away.type = "Team";
+        matchTags.push(away);
+
+        // And now let's finish it with each team players
+        var q = player.find({ teamId: { $in: [match.home_team._id, match.away_team._id] } });
+        q.select('name pic teamId');
+        q.exec(function (err, players) {
+            players.forEach(function (player) {
+                player = player.toObject();
+                player.type = "Player";
+                matchTags.push(player);
+            });
+
+            return res.send(matchTags);
+        });
+
+
+    })
+
+
+};
 /*
 =====================  ROUTES  =====================
 */
 
-router.route('/v1/data/tags')
-    .get(api.tags);
+router.get('/v1/data/tags', api.tags);
+router.get('/v1/data/tags/:matchid/match', api.matchtags);
 
 
 module.exports = router;
