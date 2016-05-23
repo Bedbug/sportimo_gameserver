@@ -275,16 +275,16 @@ gamecards.validateDefinition = function(gamecardDefinition) {
         return false;
     if (gamecardDefinition.wonTime)
         return false;
-    if (!gamecardDefinition.winConditions || gamecardDefinition.winConditions.length == 0)
-        return false;
-    if (gamecardDefinition.startPoints < gamecardDefinition.endPoints)
-        return false;
-    if (gamecardDefinition.maxUserInstances && gamecardDefinition.maxUserInstances <= 0)
-        return false;
-    if (!gamecardDefinition.duration)
-        return false;
-    if (gamecardDefinition.activationLatency && gamecardDefinition.activationLatency < 0)
-        return false;
+    // if (!gamecardDefinition.winConditions || gamecardDefinition.winConditions.length == 0)
+    //     return false;
+    // if (gamecardDefinition.startPoints < gamecardDefinition.endPoints)
+    //     return false;
+    // if (gamecardDefinition.maxUserInstances && gamecardDefinition.maxUserInstances <= 0)
+    //     return false;
+    // if (!gamecardDefinition.duration)
+    //     return false;
+    // if (gamecardDefinition.activationLatency && gamecardDefinition.activationLatency < 0)
+    //     return false;
         
     return true;
 };
