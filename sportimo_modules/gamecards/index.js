@@ -862,7 +862,7 @@ gamecards.CheckIfWins = function (gamecard) {
     const endInt = itsNow;
     // Award points
     if (gamecard.cardType == "Instant")
-        gamecard.pointsAwarded = gamecard.startPoints - Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.subtract(startInt).get('millisecond') / gamecard.duration));
+        gamecard.pointsAwarded = gamecard.startPoints - Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.diff(startInt, 'milliseconds', true) / gamecard.duration));
     else
         gamecard.pointsAwarded = gamecard.startPoints;
     return true;
