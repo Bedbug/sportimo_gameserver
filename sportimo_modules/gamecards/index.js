@@ -858,11 +858,12 @@ gamecards.CheckIfWins = function (gamecard) {
     gamecard.status = 2; // terminated
     gamecard.terminationTime = itsNow.toDate();
     gamecard.wonTime = itsNow.toDate();
-    const startInt = moment.utc(gamecard.activationTime);
-    const endInt = itsNow;
     // Award points
-    if (gamecard.cardType == "Instant")
-        gamecard.pointsAwarded = gamecard.startPoints - Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.diff(startInt, 'milliseconds', true) / gamecard.duration));
+    if (gamecard.cardType == "Instant") {
+        let startInt = moment.utc(gamecard.activationTime);
+        let endInt = itsNow;
+        gamecard.pointsAwarded = gamecard.startPoints + Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.diff(startInt, 'milliseconds', true) / gamecard.duration));
+    }
     else
         gamecard.pointsAwarded = gamecard.startPoints;
     return true;
