@@ -197,6 +197,20 @@ gamecards.getMatchDefinitions = function(mid, callback) {
     });
 };
 
+// Aris: Added a new method to update match definitions in order to proceed
+gamecards.updateMatchDefinition = function(gamecard, callback){
+    if(gamecard._id){
+        db.models.gamecardDefinitions.findByIdAndUpdate(gamecard._id, gamecard, function(err, result){
+            if(!err)
+             return callback(null,result);
+             else
+              return callback(err);
+        })
+    }else{
+          return callback('bad request: The body does not contain a gamecard ID.');
+    }
+}
+
 
 gamecards.upsertDefinition = function(gamecard, callback) {
     let processedDefinition = null;
