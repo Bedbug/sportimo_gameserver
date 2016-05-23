@@ -584,8 +584,8 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 endPoints: gamecardDefinition.endPoints || 0,
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
-                creationTime: moment.utc().toDate(),
-                activationTime: gamecardDefinition.activationTime,    // let the schema pre-save handle these times
+                creationTime: itsNow.toDate(),
+                activationTime: !gamecardDefinition.activationTime ? itsNow.toDate() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
