@@ -52,7 +52,7 @@ module.exports = function (gamecardModule) {
     // upsert existing definition gamecards for a specific matchId
     // Used by the dashboard. Changed for easier Restangular actions on the API
     router.post('/v1/gamecards/:matchId/matchdefinitions', function(req, res) {
-        gamecardModule.upsertDefinition(req.body, function(error, data) {
+        gamecardModule.addMatchDefinition(req.body, function(error, data) {
             if (error)
                 res.status(400).json(error);
             res.status(200).json(data);                
@@ -64,6 +64,16 @@ module.exports = function (gamecardModule) {
             if (error)
                 res.status(400).json(error);
             res.status(200).json(data);                
+        });
+    });
+    
+
+     // Delete method to remove gamecard match definitions
+    router.delete('/v1/gamecards/:matchId/matchdefinitions/:cardid', function (req, res) {
+        gamecardModule.deleteMatchDefinition(req.params.cardid, function(error, data) {
+            if (error)
+                return res.status(500).json(error);
+            return res.status(200).json(data);
         });
     });
     
