@@ -111,6 +111,11 @@ gamecards.init = function (dbconnection, redisPublishChannel, match) {
 /************************************
  *          Gamecards API           *
  ***********************************/
+
+gamecards.testAwardsHandling = function (callback) {
+    gamecards.HandleUserCardRewards('56debc2fa5eb8c080bdb261d', '5743492e9d0372fc007b3e15', 150, callback);
+}
+
 gamecards.getTemplates = function (callback) {
     return db.models.gamecardTemplates.find({}, callback);
 };
@@ -195,8 +200,8 @@ gamecards.deleteMatchDefinition = function (gamecardId, callback) {
     db.models.gamecardDefinitions.findByIdAndRemove(gamecardId, function (error, result) {
         if (error)
             return callback(error);
-            
-       return callback(null, result);
+
+        return callback(null, result);
     });
 };
 
@@ -227,6 +232,18 @@ gamecards.addMatchDefinition = function (gamecard, callback) {
         if (error)
             return callback(error);
         callback(null, newDef);
+        
+        redisPublish.publish("socketServers", JSON.stringify({
+                            sockets: true,
+                            payload: {
+                                type: "Message",
+                                room: gamecard.matchid,
+                                data: {
+                                    icon: "gamecard",
+                                    message: { "en": "A new game card has been created for your enjoyment." }
+                                }
+                            }
+                        }));
     });
 }
 
@@ -635,6 +652,11 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             newCard.save(function (error) {
                 if (error)
                     return callback(error);
+                    
+                    db.models.useractivities.SetMatchPlayed(newCard.userid, newCard.matchid);
+                    // Register user activity - 'PlayedCard'
+                    db.models.useractivities.IncrementStat(newCard.userid, newCard.matchid, 'cardsPlayed', 1);
+                    
                 callback(null, null, gamecards.TranslateUserGamecard(newCard));
             });
         }
@@ -802,7 +824,7 @@ gamecards.Tick = function () {
                         log.info("Detected a winning gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
-                            client: gamecard.userid,
+                            clients: [gamecard.userid],
                             payload: {
                                 type: "Card_won",
                                 room: gamecard.matchid,
@@ -810,6 +832,8 @@ gamecards.Tick = function () {
                             }
                         }));
                         cardsWon.push(gamecard);
+
+
                     }
                     else {
                         gamecard.terminationTime = moment.utc().toDate();
@@ -819,7 +843,7 @@ gamecards.Tick = function () {
                         log.info("Detected a losing gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
-                            client: gamecard.userid,
+                            clients: [gamecard.userid],
                             payload: {
                                 type: "Card_lost",
                                 room: gamecard.matchid,
@@ -840,6 +864,28 @@ gamecards.Tick = function () {
             return;
     });
 };
+
+gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
+
+    // Reward Points
+    return db.models.scores.AddPoints(uid, mid, pointsToGive, function (err, result) {
+        if (err)
+            log.error(err);
+        else {
+            // Reward stats
+            db.models.useractivities.IncrementStat(uid, mid, 'cardsWon', 1, function (err, result) {
+                if (err)
+                    log.error(err);
+                    
+                    if(callback)
+                    return callback(null,'Done');
+            });
+        }
+    });
+
+    // TODO: Reward Achievements
+}
+
 
 gamecards.CheckIfWins = function (gamecard) {
     const itsNow = moment.utc();
@@ -867,6 +913,10 @@ gamecards.CheckIfWins = function (gamecard) {
     }
     else
         gamecard.pointsAwarded = gamecard.startPoints;
+
+    // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
+    gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.pointsAwarded);
+
     return true;
 };
 
@@ -913,6 +963,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                             log.debug("Detected a winning gamecard: " + gamecard);
                             redisPublish.publish("socketServers", JSON.stringify({
                                 sockets: true,
+                                 clients: [gamecard.userid],
                                 payload: {
                                     type: "Card_won",
                                     client: gamecard.userid,
@@ -942,6 +993,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                             log.debug("Detected a winning gamecard: " + gamecard);
                             redisPublish.publish("socketServers", JSON.stringify({
                                 sockets: true,
+                                clients: [gamecard.userid],
                                 payload: {
                                     type: "Card_won",
                                     client: gamecard.userid,
@@ -958,6 +1010,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                             log.debug("Detected a losing gamecard: " + gamecard);
                             redisPublish.publish("socketServers", JSON.stringify({
                                 sockets: true,
+                                clients: [gamecard.userid],
                                 payload: {
                                     type: "Card_lost",
                                     client: gamecard.userid,

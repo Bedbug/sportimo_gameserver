@@ -50,7 +50,7 @@ var UserSchema = new Schema({
     country: { type: String, required: false },
     admin: Boolean,
     stats: mongoose.Schema.Types.Mixed,
-    level: Number,
+    level: { type: Number, default: 0 },
     achievements: [achievement],
     favoriteteams: [String]
 }, {
@@ -128,7 +128,7 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
                 achievement.has = achievement.total;
                 achievement.completed = true;
             }
-         
+
             //TODO: Should calculate level and return achievement object to clients
             cb(null, "Success. Achievement completed.", achievement);
         }
