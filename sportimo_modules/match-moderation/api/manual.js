@@ -82,6 +82,11 @@ module.exports = function(ModerationModule) {
                     log.info("Advance Segment Request for matchid [" + match_id + "]");
                     res.status(200).send(ModerationModule.GetMatch(match_id).AdvanceSegment(req.body));
                 break;
+                 case "Terminate":
+                //console.log(req.body);
+                    log.info("Terminate Request for matchid [" + match_id + "]");
+                    res.status(200).send(ModerationModule.GetMatch(match_id).Terminate());
+                break;
                 case "SocketMessage":
                 //console.log(req.body);
                     log.info("Socket Message send for matchid [" + match_id + "]");
