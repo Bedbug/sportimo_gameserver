@@ -487,8 +487,9 @@ var matchModule = function (match, PubChannel) {
         log.info("Pushing event to Redis Pub/Sub channel");
         // PubChannel.publish("socketServers", JSON.stringify(event));
 
-
-
+        // Add 'created' property in the socket event data for easier sorting on clients 
+        event.data.created = moment().utc();
+        
         // Inform Clients for the new event to draw
         PubChannel.publish("socketServers", JSON.stringify({
             sockets: true,
