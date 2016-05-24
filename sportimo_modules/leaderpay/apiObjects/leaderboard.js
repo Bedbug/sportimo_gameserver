@@ -2,7 +2,7 @@
 var mongoose = require('mongoose'),
     Score = mongoose.models.scores,
     api = {},
-    l = require('../config/lib');
+    _ = require('lodash');
 
 
 
@@ -40,6 +40,47 @@ api.getLeaderboard = function(conditions, skip, limit, cb) {
     return q.exec(function(err, leaderboard) {
         cbf(cb, err, leaderboard);
     });
+};
+
+api.getLeaderboardWithRank = function(req, skip, limit, cb) {
+
+    var leader_conditions = parseConditons(req.body);
+    var uid = req.params.uid;
+    var rank = 1;
+    var q = Score.aggregate({
+        $match: leader_conditions
+    });
+
+    q.group({
+        _id: "$user_id",
+        score: { $sum: "$score" },
+        name: { $first: '$user_name' },
+        pic: { $first: '$pic' },
+        country: { $first: '$country' }
+    });
+
+
+    if (skip != undefined)
+        q.skip(skip * 1);
+
+    if (limit != undefined)
+        q.limit(limit * 1);
+
+    q.sort({ score: -1 });
+    
+    q.exec (function(err, leaderboard) {
+       var user = _.find(leaderboard,{_id:uid});
+       var rank = _.size(_.find(leaderboard,function(o){
+           return o.score > user.score;
+       }));
+       
+       if(rank)
+       user.rank = rank + 1;
+       
+       return cbf(cb, err,{user:user,leaderboad:leaderboard});
+    })
+    
+   
 };
 
 
