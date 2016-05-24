@@ -11,10 +11,9 @@ var mongoose = require('mongoose'),
 */
 
 // ALL
-api.getLeaderboard = function(conditions, skip, limit, cb) {
+api.getLeaderboard = function (conditions, skip, limit, cb) {
 
     var leader_conditions = parseConditons(conditions);
-    console.log(leader_conditions);
 
     var q = Score.aggregate({
         $match: leader_conditions
@@ -37,12 +36,12 @@ api.getLeaderboard = function(conditions, skip, limit, cb) {
 
     q.sort({ score: -1 });
 
-    return q.exec(function(err, leaderboard) {
+    return q.exec(function (err, leaderboard) {
         cbf(cb, err, leaderboard);
     });
 };
 
-api.getLeaderboardWithRank = function(req, skip, limit, cb) {
+api.getLeaderboardWithRank = function (req, skip, limit, cb) {
 
     var leader_conditions = parseConditons(req.body);
     var uid = req.params.uid;
@@ -67,40 +66,53 @@ api.getLeaderboardWithRank = function(req, skip, limit, cb) {
         q.limit(limit * 1);
 
     q.sort({ score: -1 });
-    
-    q.exec (function(err, leaderboard) {
-       var user = _.find(leaderboard,{_id:uid});
-       var rank = _.size(_.find(leaderboard,function(o){
-           return o.score > user.score;
-       }));
-       
-       if(rank)
-       user.rank = rank + 1;
-       
-       return cbf(cb, err,{user:user,leaderboad:leaderboard});
+
+    q.exec(function (err, leaderboard) {
+        var user = _.find(leaderboard, { _id: uid });
+        var rank = _.size(_.find(leaderboard, function (o) {
+            return o.score > user.score;
+        }));
+
+        if (rank)
+            user.rank = rank + 1;
+
+        return cbf(cb, err, { user: user, leaderboad: leaderboard });
     })
-    
-   
+
+
 };
 
 
 function parseConditons(conditions) {
-    var parsed_conditions = {};
-
+    
     // Conditions is not a Pool Room
-    if (conditions.conditions)
-        return conditions.conditions;
-
+    if (conditions.conditions) {
+        var conditions = conditions.conditions;
+        if (conditions.created) {
+            if (conditions.created.$gt)
+                conditions.created.$gt = new Date(conditions.created.$gt);
+            if (conditions.created.$gte)
+                conditions.created.$gte = new Date(conditions.created.$gte);
+            if (conditions.created.$lte)
+                conditions.created.$lte = new Date(conditions.created.$lte);
+            if (conditions.created.$lt)
+                conditions.created.$lt = new Date(conditions.created.$lt);
+        }
+        return conditions;
+    }
+    
+    var parsed_conditions = {};
+    
     if (conditions.gameid)
-        parsed_conditions.match_id = conditions.gameid;
+        parsed_conditions.game_id = conditions.gameid;
     else {
         parsed_conditions.created = {};
         if (conditions.starts)
-            parsed_conditions.created.$gte = conditions.starts;
+            parsed_conditions.created.$gte = new Date(conditions.starts);
         if (conditions.ends)
-            parsed_conditions.created.$lte = conditions.ends;
+            parsed_conditions.created.$lte = new Date(conditions.ends);
     }
-    if (conditions.country.length>0 && conditions.country[0] != "All" )
+    if (conditions.country.length > 0 && conditions.country[0] != "All")
         parsed_conditions.country = { "$in": conditions.country };
 
     return parsed_conditions;
@@ -119,7 +131,7 @@ function parseConditons(conditions) {
  * @return {Function} - Callback
  */
 
-var cbf = function(cb, err, data) {
+var cbf = function (cb, err, data) {
     if (cb && typeof (cb) == 'function') {
         if (err) cb(err);
         else cb(false, data);

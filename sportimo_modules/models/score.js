@@ -11,10 +11,14 @@ var fields = {
     game_id: { type: String },
     score: { type: Number, default: 0 },
     country: { type: String },
-    created: { type: Date, default: Date.now }
+    created: { type: Date, default: Date.now },
+    lastActive: Date
 };
 
-var scoreSchema = new Schema(fields);
+var scoreSchema = new Schema(fields,
+  {
+    timestamps: { updatedAt: 'lastActive', createdAt: 'created' }
+  });
 
 scoreSchema.statics.AddPoints = function (uid, room, points, cb) {
 

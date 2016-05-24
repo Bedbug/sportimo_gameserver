@@ -47,12 +47,13 @@ api.team = function (req, res) {
 };
 api.teamFull = function (req, res) {
 	var id = req.params.id;
-	team.getTeamFull(id,function(err,data){
+	return team.getTeamFull(id,function(err,data){
 		if (err) {
-			res.status(404).json(err);
+			return res.status(404).json(err);
 		} else {
 			res.status(200).json(data);
 		}
+		 
 	}); 
 };
 
