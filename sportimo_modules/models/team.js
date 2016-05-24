@@ -5,9 +5,9 @@ var mongoose = require('mongoose'),
 
 
 var eventstat = new Schema({
-    home: { type: String, ref: 'teams' },
-    away: { type: String, ref: 'teams' },
-    eventdate: { type: Date},
+    home_team: { type: String, ref: 'teams' },
+    away_team: { type: String, ref: 'teams' },
+    start: { type: Date},
     homescore: 0,
     awayscore: 0,
 });

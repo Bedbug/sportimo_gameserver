@@ -29,10 +29,10 @@ api.getAllTeams = function (skip,limit,cb) {
 api.getTeam = function (id,cb) {
   var q = Team.findById(id);
   
-  q.populate('nextmatch.home','name logo');
-  q.populate('nextmatch.away','name logo');
-  q.populate('lastmatch.home','name logo');
-  q.populate('lastmatch.away','name logo');
+  q.populate('nextmatch.home_team','name logo');
+  q.populate('nextmatch.away_team','name logo');
+  q.populate('lastmatch.home_team','name logo');
+  q.populate('lastmatch.away_team','name logo');
   q.populate('topscorer','name uniformNumber pic stats lastActiveSeason')
   
   
