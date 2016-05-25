@@ -860,11 +860,7 @@ gamecards.Tick = function () {
                         log.info("Detected a winning gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
-<<<<<<< HEAD
-                            clients: gamecard.userid,
-=======
                             clients: [gamecard.userid],
->>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
                             payload: {
                                 type: "Card_won",
                                 client: gamecard.userid,
@@ -906,16 +902,11 @@ gamecards.Tick = function () {
     });
 };
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
 gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
 
     // Reward Points
     return db.models.scores.AddPoints(uid, mid, pointsToGive, function (err, result) {
         if (err)
-<<<<<<< HEAD
         {
             log.error(err);
             return callback(err);
@@ -930,30 +921,13 @@ gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
                 
             return callback(null,'Done');
         });
-=======
-            log.error(err);
-        else {
-            // Reward stats
-            db.models.useractivities.IncrementStat(uid, mid, 'cardsWon', 1, function (err, result) {
-                if (err)
-                    log.error(err);
-                    
-                    if(callback)
-                    return callback(null,'Done');
-            });
-        }
->>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
     });
 
     // TODO: Reward Achievements
 }
 
 
-<<<<<<< HEAD
 gamecards.CheckIfWins = function (gamecard, isCardTermination) {
-=======
-gamecards.CheckIfWins = function (gamecard) {
->>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
     const itsNow = moment.utc();
     let conditions = gamecard.winConditions;
     // All winConditions have to be met to win the card
