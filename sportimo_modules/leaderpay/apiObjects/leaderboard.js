@@ -45,7 +45,7 @@ api.getLeaderboardWithRank = function (req, skip, limit, cb) {
 
     var leader_conditions = parseConditons(req.body);
     var uid = req.params.uid;
-    var rank = 1;
+
     var q = Score.aggregate({
         $match: leader_conditions
     });
@@ -67,15 +67,18 @@ api.getLeaderboardWithRank = function (req, skip, limit, cb) {
 
     q.sort({ score: -1 });
 
+    var rank;
+    var user;
     q.exec(function (err, leaderboard) {
-        var user = _.find(leaderboard, { _id: uid });
-        var rank = _.size(_.find(leaderboard, function (o) {
-            return o.score > user.score;
+
+        user = _.find(leaderboard, { _id: uid });
+        rank = _.size(_.filter(leaderboard, function (o) {
+            if (o._id != user._id && o.score > user.score)
+                return true;
+            else
+                return false;
         }));
-
-        if (rank)
-            user.rank = rank + 1;
-
+        user.rank = rank + 1;
         return cbf(cb, err, { user: user, leaderboad: leaderboard });
     })
 
@@ -84,7 +87,7 @@ api.getLeaderboardWithRank = function (req, skip, limit, cb) {
 
 
 function parseConditons(conditions) {
-    
+
     // Conditions is not a Pool Room
     if (conditions.conditions) {
         var conditions = conditions.conditions;
@@ -100,9 +103,9 @@ function parseConditons(conditions) {
         }
         return conditions;
     }
-    
+
     var parsed_conditions = {};
-    
+
     if (conditions.gameid)
         parsed_conditions.game_id = conditions.gameid;
     else {
