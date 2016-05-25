@@ -179,7 +179,7 @@ var ModerationModule = {
                             return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"))
                     }
 
-                    var hookedMatch = new match_module(match, RedisClientPub);
+                    var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
@@ -292,7 +292,7 @@ function initModule(done) {
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
-                        var hookedMatch = new match_module(match, RedisClientPub);
+                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
                     });
@@ -312,7 +312,7 @@ function initModule(done) {
 
         var match = new scheduled_matches(mockMatch);
 
-        var hookedMatch = new match_module(match, RedisClientPub);
+        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
         this.ModeratedMatches.push(hookedMatch);
         log.info("Mock match created with ID [" + hookedMatch.id + "].");
 

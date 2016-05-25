@@ -98,6 +98,7 @@ api.item = function(req, res) {
 var TranslateUserGamecard = function(userGamecard)
 {
     var retValue = {
+        id: userGamecard.id,
         userid: userGamecard.userid,
         matchid: userGamecard.matchid,
         gamecardDefinitionId: userGamecard.gamecardDefinitionId,

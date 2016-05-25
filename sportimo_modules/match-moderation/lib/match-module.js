@@ -39,7 +39,7 @@ var Timers = {
     }
 };
 
-var matchModule = function (match, PubChannel) {
+var matchModule = function (match, PubChannel, SubChannel) {
 
     var HookedMatch = {}; // = match;
     //HookedMatch.moderationServices = [];
@@ -66,7 +66,7 @@ var matchModule = function (match, PubChannel) {
 
     // establishing a link with gamecards module, where match events should propagate in order to resolve played match wildcards
     HookedMatch.gamecards = require('../../gamecards');
-    HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, match);
+    HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, SubChannel, match);
 
 
     /*  -------------

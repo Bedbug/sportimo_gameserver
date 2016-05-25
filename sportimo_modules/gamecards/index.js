@@ -42,6 +42,7 @@ var db = null;
 
 /*The redis pub/sub chanel for publishing*/
 var redisPublish = null;
+var redisSubscribe = null;
 
 /*The tick handler*/
 var tickSchedule = null;
@@ -49,7 +50,7 @@ var tickSchedule = null;
 
 /************************************
  * Perform initialization functions */
-gamecards.init = function (dbconnection, redisPublishChannel, match) {
+gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChannel, match) {
     if (!db) {
         db = dbconnection;
         UserGamecard = db.models.userGamecards;
@@ -57,6 +58,41 @@ gamecards.init = function (dbconnection, redisPublishChannel, match) {
 
     if (!redisPublish)
         redisPublish = redisPublishChannel;
+        
+    if (!redisSubscribe)
+    {
+        redisSubscribe = redisSubscribeChannel;
+        
+        redisSubscribe.on("error", function (err) {
+            log.error("{''Error'': ''" + err + "''}");
+        });
+
+        redisSubscribe.on("subscribe", function (channel, count) {
+            console.log("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel");
+        });
+
+        redisSubscribe.on("unsubscribe", function (channel, count) {
+            log.info("[Gamecards] Unsubscribed from Sportimo Events PUB/SUB channel");
+        });
+
+        redisSubscribe.on("end", function () {
+            log.error("[Gamecards] Connection ended");
+        });
+        
+        redisSubscribe.subscribe("socketServers");
+        
+        redisSubscribe.on("message", function (channel, message) {
+            let msg = JSON.parse(message);
+            if (msg.payload && msg.payload.type && (msg.payload.type == 'socket_stats' || msg.payload.type == 'Stats_changed'))
+            {
+                log.info("[Redis] : Event has come through the channel.");
+                log.info("[Redis] :" + JSON.stringify(msg.payload));
+
+            }
+        });
+
+
+    }
 
     if (db == null || UserGamecard == null) {
         log.error("No active database connection found. Aborting.");
@@ -797,14 +833,15 @@ gamecards.Tick = function () {
                 let cardsWon = [];
 
                 _.forEach(data, function (gamecard) {
-                    if (gamecards.CheckIfWins(gamecard)) {
-                        // Send an event through Redis puβ/sub:
+                    if (gamecards.CheckIfWins(gamecard, true)) {
+                        // Send an event through Redis pub/sub:
                         log.info("Detected a winning gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
-                            client: gamecard.userid,
+                            clients: gamecard.userid,
                             payload: {
                                 type: "Card_won",
+                                client: gamecard.userid,
                                 room: gamecard.matchid,
                                 data: gamecards.TranslateUserGamecard(gamecard)
                             }
@@ -819,18 +856,18 @@ gamecards.Tick = function () {
                         log.info("Detected a losing gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
-                            client: gamecard.userid,
+                            clients: [gamecard.userid],
                             payload: {
                                 type: "Card_lost",
+                                client: gamecard.userid,
                                 room: gamecard.matchid,
                                 data: gamecards.TranslateUserGamecard(gamecard)
                             }
                         }));
                     }
-                    gamecard.save(function (err) {
-                        if (err)
-                            return callback(err);
-                    });
+                    if (gamecard.cardType == 'IInstant')
+                        gamecard.cardType = 'Instant';
+                    gamecard.save();
                 });
                 callback(null);
             });
@@ -841,19 +878,48 @@ gamecards.Tick = function () {
     });
 };
 
-gamecards.CheckIfWins = function (gamecard) {
+
+gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
+
+    // Reward Points
+    return db.models.scores.AddPoints(uid, mid, pointsToGive, function (err, result) {
+        if (err)
+        {
+            log.error(err);
+            return callback(err);
+        }
+        // Reward stats
+        db.models.useractivities.IncrementStat(uid, mid, 'cardsWon', 1, function (err, result) {
+            if (err)
+            {
+                log.error(err);
+                return callback(err);
+            }
+                
+            return callback(null,'Done');
+        });
+    });
+
+    // TODO: Reward Achievements
+}
+
+
+gamecards.CheckIfWins = function (gamecard, isCardTermination) {
     const itsNow = moment.utc();
-    const conditions = gamecard.winConditions;
+    let conditions = gamecard.winConditions;
     // All winConditions have to be met to win the card
     for (let i = 0; i < conditions.length; i++) {
         let condition = conditions[i];
-        if (condition.remaining > 0 && condition.conditionNegation == false) {
+        if (isCardTermination == false && (condition.conditionNegation == true || condition.remaining > 0)) {
             return false;
         }
-        if (condition.remaining <= 0 && condition.conditionNegation == true) {
+        if (isCardTermination == true && condition.remaining <= 0 && condition.conditionNegation == true) {
             return false;
         }
-
+        if (isCardTermination == true && condition.remaining > 0 && condition.conditionNegation == false) {
+            return false;
+        }
+        
     }
     gamecard.status = 2; // terminated
     if (!gamecard.terminationTime)
@@ -869,6 +935,36 @@ gamecards.CheckIfWins = function (gamecard) {
         gamecard.pointsAwarded = gamecard.startPoints;
     return true;
 };
+
+
+gamecards.CheckIfLooses = function (gamecard, isCardTermination) {
+    const itsNow = moment.utc();
+    let conditions = gamecard.winConditions;
+    
+    if (gamecard.cardType == 'Overall')
+        return false;
+        
+    // If any winCondition is met then the card is lost
+    let isLost = false;
+    for (let i = 0; i < conditions.length; i++) {
+        let condition = conditions[i];
+        if (isCardTermination == false && condition.conditionNegation == true && condition.remaining == 0) {
+            isLost = true;
+        }
+    }
+    
+    if (!isLost)
+        return false;
+        
+    gamecard.status = 2; // terminated
+    if (!gamecard.terminationTime)
+        gamecard.terminationTime = itsNow.toDate();
+    // Award points
+    gamecard.pointsAwarded = 0;
+    return true;
+};
+
+
 
 
 
@@ -898,33 +994,57 @@ gamecards.ResolveEvent = function (matchEvent) {
     };
 
     const gamecardsWinHandle = function (mongoGamecards, event, cbk) {
-        mongoGamecards.forEach(function (gamecard) {
+        //mongoGamecards.forEach(function (gamecard) {
+        async.each(mongoGamecards, function(gamecard, cbk) {
             if (gamecard.status != 1) {
-                return cbk();
+                async.setImmediate(function() {
+                   return cbk(); 
+                });
+                //return cbk();
             }
             gamecard.winConditions.forEach(function (condition) {
-                if ((condition.conditionNegation == false ? condition.stat == event.stat : condition.stat != event.stat) && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
-                        if (gamecards.CheckIfWins(gamecard)) {
-                            gamecard.save();
-                            // Send an event through Redis pu/sub:
-                            log.debug("Detected a winning gamecard: " + gamecard);
-                            redisPublish.publish("socketServers", JSON.stringify({
-                                sockets: true,
-                                payload: {
-                                    type: "Card_won",
-                                    client: gamecard.userid,
-                                    room: event.matchid,
-                                    data: gamecards.TranslateUserGamecard(gamecard)
-                                }
-                            }));
-                        }
                     }
                 }
-            });
+            });                    
+            if (gamecards.CheckIfWins(gamecard, false)) {
+                // Send an event through Redis pu/sub:
+                log.debug("Detected a winning gamecard: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_won",
+                        client: gamecard.userid,
+                        room: event.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
+            else
+            if (gamecards.CheckIfLooses(gamecard, false)) {
+                log.debug("Detected a losing gamecard: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_lost",
+                        client: gamecard.userid,
+                        room: event.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
+            
+            if (gamecard.cardType == 'IInstant')
+                gamecard.cardType = 'Instant';
+            return gamecard.save(cbk);
         });
+        
+        cbk(null);
     };
 
     const gamecardsTerminationHandle = function (mongoGamecards, event, cbk) {
@@ -933,44 +1053,52 @@ gamecards.ResolveEvent = function (matchEvent) {
                 return cbk();
             }
             gamecard.terminationConditions.forEach(function (condition) {
-                if ((condition.conditionNegation == false ? condition.stat == event.stat : condition.stat != event.stat) && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
-                        if (gamecards.CheckIfWins(gamecard)) {
-                            // Send an event through Redis puβ/sub:
-                            log.debug("Detected a winning gamecard: " + gamecard);
-                            redisPublish.publish("socketServers", JSON.stringify({
-                                sockets: true,
-                                payload: {
-                                    type: "Card_won",
-                                    client: gamecard.userid,
-                                    room: event.matchid,
-                                    data: gamecards.TranslateUserGamecard(gamecard)
-                                }
-                            }));
-                        }
-                        else {
-                            gamecard.terminationTime = moment.utc().toDate;
-                            gamecard.status = 2;
-                            gamecard.pointsAwarded = 0;
-                            // Send an event through Redis pu/sub:
-                            log.debug("Detected a losing gamecard: " + gamecard);
-                            redisPublish.publish("socketServers", JSON.stringify({
-                                sockets: true,
-                                payload: {
-                                    type: "Card_lost",
-                                    client: gamecard.userid,
-                                    room: event.matchid,
-                                    data: gamecards.TranslateUserGamecard(gamecard)
-                                }
-                            }));
-                        }
-                        gamecard.save();
                     }
                 }
             });
+
+            if (gamecards.CheckIfWins(gamecard, true)) {
+                // Send an event through Redis pub/sub:
+                log.debug("Detected a winning gamecard: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_won",
+                        client: gamecard.userid,
+                        room: event.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
+            else {
+                gamecard.terminationTime = moment.utc().toDate;
+                gamecard.status = 2;
+                gamecard.pointsAwarded = 0;
+                // Send an event through Redis pu/sub:
+                log.debug("Detected a losing gamecard: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_lost",
+                        client: gamecard.userid,
+                        room: event.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
+            
+            if (gamecard.cardType == 'IInstant')
+                gamecard.cardType = 'Instant';
+            gamecard.save();            
         });
+        
+        cbk(null);
     };
 
 
@@ -984,9 +1112,9 @@ gamecards.ResolveEvent = function (matchEvent) {
             const gamecardsQuery = {
                 status: 1,
                 creationTime: { $lt: event.time || itsNow },
-                matchid: event.matchid
+                matchid: event.matchid,
             };
-            const orStatLogic = [{ stat: event.stat, conditionNegation: false }, { stat: { $ne: event.stat }, conditionNegation: true }];
+            //const statLogic = [{ stat: event.stat, conditionNegation: false }, { stat: { $ne: event.stat }, conditionNegation: true }];
 
             const orPlayerQuery = [{ playerid: null }];
             if (event.playerid != null) {
@@ -1000,7 +1128,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 orTeamQuery.push({ teamid: event.team });
             }
 
-            gamecardsQuery.winConditions = { $elemMatch: { $and: [{ $or: orStatLogic }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+            gamecardsQuery.winConditions = { $elemMatch: { $and: [ { stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
             let mongoGamecards;
             db.models.userGamecards.find(gamecardsQuery, function (error, data) {
                 if (error) {
@@ -1009,7 +1137,48 @@ gamecards.ResolveEvent = function (matchEvent) {
                 }
 
                 mongoGamecards = data;
-                return gamecardsWinHandle(mongoGamecards, event, callback);
+                gamecardsWinHandle(mongoGamecards, event, function(err) {
+                    if (err)
+                        return callback(error);
+                    
+                    try {
+                        const wildcardsQuery = {
+                            status: 1,
+                            cardType: "Overall",
+                            creationTime: { $lt: event.time || itsNow },
+                            matchid: event.matchid
+                        };
+            
+                        const orPlayerQuery = [{ playerid: null }];
+                        if (event.playerid != null) {
+                            orPlayerQuery.push({ playerid: event.playerid });
+                        }
+            
+                        // ToDo: matching the team ids, not 'home' or 'away'
+            
+                        const orTeamQuery = [{ teamid: null }];
+                        if (event.team != null) {
+                            orTeamQuery.push({ teamid: event.team });
+                        }
+            
+                        wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+                        let mongoGamecards;
+                        db.models.userGamecards.find(wildcardsQuery, function (error, data) {
+                            if (error) {
+                                log.error("Error while resolving event: " + error.message);
+                                return callback(error);
+                            }
+            
+                            mongoGamecards = data;
+                            return gamecardsTerminationHandle(mongoGamecards, event, callback);
+                        });
+                    }
+                    catch (innerError) {
+                        log.error("Error while resolving event: " + innerError.message);
+                        return callback(innerError);
+                    }
+                    
+                });
             });
         }
         catch (error) {
@@ -1027,51 +1196,50 @@ gamecards.ResolveEvent = function (matchEvent) {
 
     // Check for terminationConditions met in userGamecards. 
     // Only overall cards can define terminationConditions, if encountered in instant cards they are ignored.
-    async.each(individualEvents, function (event, callback) {
-        try {
-            const wildcardsQuery = {
-                status: 1,
-                cardType: "Overall",
-                creationTime: { $lt: event.time || itsNow },
-                matchid: event.matchid
-            };
-            const orStatLogic = [{ stat: event.stat, conditionNegation: false }, { stat: { $ne: event.stat }, conditionNegation: true }];
+    // async.each(individualEvents, function (event, callback) {
+    //     try {
+    //         const wildcardsQuery = {
+    //             status: 1,
+    //             cardType: "Overall",
+    //             creationTime: { $lt: event.time || itsNow },
+    //             matchid: event.matchid
+    //         };
 
-            const orPlayerQuery = [{ playerid: null }];
-            if (event.playerid != null) {
-                orPlayerQuery.push({ playerid: event.playerid });
-            }
+    //         const orPlayerQuery = [{ playerid: null }];
+    //         if (event.playerid != null) {
+    //             orPlayerQuery.push({ playerid: event.playerid });
+    //         }
 
-            // ToDo: matching the team ids, not 'home' or 'away'
+    //         // ToDo: matching the team ids, not 'home' or 'away'
 
-            const orTeamQuery = [{ teamid: null }];
-            if (event.team != null) {
-                orTeamQuery.push({ teamid: event.team });
-            }
+    //         const orTeamQuery = [{ teamid: null }];
+    //         if (event.team != null) {
+    //             orTeamQuery.push({ teamid: event.team });
+    //         }
 
-            wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ $or: orStatLogic }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
-            let mongoGamecards;
-            db.models.userGamecards.find(wildcardsQuery, function (error, data) {
-                if (error) {
-                    log.error("Error while resolving event: " + error.message);
-                    return callback(error);
-                }
+    //         wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+    //         let mongoGamecards;
+    //         db.models.userGamecards.find(wildcardsQuery, function (error, data) {
+    //             if (error) {
+    //                 log.error("Error while resolving event: " + error.message);
+    //                 return callback(error);
+    //             }
 
-                mongoGamecards = data;
-                return gamecardsTerminationHandle(mongoGamecards, event, callback);
-            });
-        }
-        catch (error) {
-            log.error("Error while resolving event: " + error.message);
-            return callback(error);
-        }
-    }, function (error) {
-        if (error) {
-            log.error(error);
-        }
+    //             mongoGamecards = data;
+    //             return gamecardsTerminationHandle(mongoGamecards, event, callback);
+    //         });
+    //     }
+    //     catch (error) {
+    //         log.error("Error while resolving event: " + error.message);
+    //         return callback(error);
+    //     }
+    // }, function (error) {
+    //     if (error) {
+    //         log.error(error);
+    //     }
 
-        return;
-    });
+    //     return;
+    // });
 
 };
 
