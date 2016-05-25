@@ -147,6 +147,11 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
 /************************************
  *          Gamecards API           *
  ***********************************/
+
+gamecards.testAwardsHandling = function (callback) {
+    gamecards.HandleUserCardRewards('56debc2fa5eb8c080bdb261d', '5743492e9d0372fc007b3e15', 150, callback);
+}
+
 gamecards.getTemplates = function (callback) {
     return db.models.gamecardTemplates.find({}, callback);
 };
@@ -231,8 +236,8 @@ gamecards.deleteMatchDefinition = function (gamecardId, callback) {
     db.models.gamecardDefinitions.findByIdAndRemove(gamecardId, function (error, result) {
         if (error)
             return callback(error);
-            
-       return callback(null, result);
+
+        return callback(null, result);
     });
 };
 
@@ -263,6 +268,18 @@ gamecards.addMatchDefinition = function (gamecard, callback) {
         if (error)
             return callback(error);
         callback(null, newDef);
+        
+        redisPublish.publish("socketServers", JSON.stringify({
+                            sockets: true,
+                            payload: {
+                                type: "Message",
+                                room: gamecard.matchid,
+                                data: {
+                                    icon: "gamecard",
+                                    message: { "en": "A new game card has been created for your enjoyment." }
+                                }
+                            }
+                        }));
     });
 }
 
@@ -671,6 +688,11 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             newCard.save(function (error) {
                 if (error)
                     return callback(error);
+                    
+                    db.models.useractivities.SetMatchPlayed(newCard.userid, newCard.matchid);
+                    // Register user activity - 'PlayedCard'
+                    db.models.useractivities.IncrementStat(newCard.userid, newCard.matchid, 'cardsPlayed', 1);
+                    
                 callback(null, null, gamecards.TranslateUserGamecard(newCard));
             });
         }
@@ -838,7 +860,11 @@ gamecards.Tick = function () {
                         log.info("Detected a winning gamecard: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
+<<<<<<< HEAD
                             clients: gamecard.userid,
+=======
+                            clients: [gamecard.userid],
+>>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
                             payload: {
                                 type: "Card_won",
                                 client: gamecard.userid,
@@ -847,6 +873,8 @@ gamecards.Tick = function () {
                             }
                         }));
                         cardsWon.push(gamecard);
+
+
                     }
                     else {
                         gamecard.terminationTime = moment.utc().toDate();
@@ -878,12 +906,16 @@ gamecards.Tick = function () {
     });
 };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
 gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
 
     // Reward Points
     return db.models.scores.AddPoints(uid, mid, pointsToGive, function (err, result) {
         if (err)
+<<<<<<< HEAD
         {
             log.error(err);
             return callback(err);
@@ -898,13 +930,30 @@ gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
                 
             return callback(null,'Done');
         });
+=======
+            log.error(err);
+        else {
+            // Reward stats
+            db.models.useractivities.IncrementStat(uid, mid, 'cardsWon', 1, function (err, result) {
+                if (err)
+                    log.error(err);
+                    
+                    if(callback)
+                    return callback(null,'Done');
+            });
+        }
+>>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
     });
 
     // TODO: Reward Achievements
 }
 
 
+<<<<<<< HEAD
 gamecards.CheckIfWins = function (gamecard, isCardTermination) {
+=======
+gamecards.CheckIfWins = function (gamecard) {
+>>>>>>> 278e84cc671cdba59dc2915053c3700dc9b57e5f
     const itsNow = moment.utc();
     let conditions = gamecard.winConditions;
     // All winConditions have to be met to win the card
@@ -933,6 +982,10 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination) {
     }
     else
         gamecard.pointsAwarded = gamecard.startPoints;
+
+    // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
+    gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.pointsAwarded);
+
     return true;
 };
 
@@ -998,7 +1051,7 @@ gamecards.ResolveEvent = function (matchEvent) {
         async.each(mongoGamecards, function(gamecard, cbk) {
             if (gamecard.status != 1) {
                 async.setImmediate(function() {
-                   return cbk(); 
+                   return cbk() 
                 });
                 //return cbk();
             }

@@ -7,6 +7,17 @@ var express = require('express'),
 module.exports = function (gamecardModule) {
 
 
+
+    // Used to test easily award handling on gamecard wins
+    router.get('/v1/gamecards/testawards', function(req, res) {
+        gamecardModule.testAwardsHandling(function(error, data) {
+            if (error)
+                res.status(400).json(error);
+            res.status(200).json(data);
+        });
+    });
+
+
     // Get existing template gamecards
     // Used by the dashboard
     router.get('/v1/gamecards/templates', function(req, res) {
