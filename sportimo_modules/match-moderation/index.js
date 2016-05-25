@@ -183,8 +183,11 @@ var ModerationModule = {
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
-
-                    return cbk(null, hookedMatch);
+                    
+                    if (cbk)
+                        return cbk(null, hookedMatch);
+                    else
+                        return hookedMatch;
 
                 });
         } else {

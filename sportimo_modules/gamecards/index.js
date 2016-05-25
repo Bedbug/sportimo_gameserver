@@ -1030,7 +1030,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 //return cbk();
             }
             gamecard.winConditions.forEach(function (condition) {
-                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.team == null || condition.team == event.team)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
@@ -1071,7 +1071,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             return gamecard.save(cbk);
         });
         
-        cbk(null);
+        cbk(null, mongoGamecards);
     };
 
     const gamecardsTerminationHandle = function (mongoGamecards, event, cbk) {
@@ -1080,7 +1080,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 return cbk();
             }
             gamecard.terminationConditions.forEach(function (condition) {
-                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.team == null || condition.team == event.team)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
@@ -1150,9 +1150,9 @@ gamecards.ResolveEvent = function (matchEvent) {
 
             // ToDo: matching the team ids, not 'home' or 'away'
 
-            const orTeamQuery = [{ teamid: null }];
+            const orTeamQuery = [{ team: null }];
             if (event.team != null) {
-                orTeamQuery.push({ teamid: event.team });
+                orTeamQuery.push({ team: event.team });
             }
 
             gamecardsQuery.winConditions = { $elemMatch: { $and: [ { stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
@@ -1164,11 +1164,17 @@ gamecards.ResolveEvent = function (matchEvent) {
                 }
 
                 mongoGamecards = data;
-                gamecardsWinHandle(mongoGamecards, event, function(err) {
+                gamecardsWinHandle(mongoGamecards, event, function(err, userCards) {
                     if (err)
                         return callback(error);
                     
                     try {
+                        let userCardsLookup = {};
+                        _.forEach(userCards, function(userCard) {
+                            if (!userCardsLookup[userCard.id]) 
+                                userCardsLookup[userCard.id] = userCard;
+                        });
+                        
                         const wildcardsQuery = {
                             status: 1,
                             cardType: "Overall",
@@ -1190,6 +1196,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             
                         wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
                         let mongoGamecards;
+                        
                         db.models.userGamecards.find(wildcardsQuery, function (error, data) {
                             if (error) {
                                 log.error("Error while resolving event: " + error.message);
@@ -1197,7 +1204,16 @@ gamecards.ResolveEvent = function (matchEvent) {
                             }
             
                             mongoGamecards = data;
-                            return gamecardsTerminationHandle(mongoGamecards, event, callback);
+                            _.forEach(mongoGamecards, function(mongoGamecard) {
+                                if (userCardsLookup[mongoGamecard.id])
+                                    mongoGamecard = userCardsLookup[mongoGamecard.id];  // replace with object coming from gamecardsWinHandle
+                            });
+                            
+                            let finalGamecards = _.filter(mongoGamecards, function(gamecard) {
+                               return !(gamecard.wonTime && gamecard.status == 2); 
+                            });
+                            
+                            return gamecardsTerminationHandle(finalGamecards, event, callback);
                         });
                     }
                     catch (innerError) {
