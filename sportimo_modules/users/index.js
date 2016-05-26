@@ -244,6 +244,20 @@ apiRoutes.get('/v1/users/:id/messages', function (req, res) {
         } else
             res.status(500).send(err);
     })
+});
+
+//Get user messages
+apiRoutes.get('/v1/users/:id/unread', function (req, res) {
+
+    var q = User.findById(req.params.id);
+    q.populate('unread');
+
+    q.exec(function (err, unreadCount) {
+        if (!err) {
+            res.status(200).send(unreadCount);
+        } else
+            res.status(500).send(err);
+    })
 
 
 });
