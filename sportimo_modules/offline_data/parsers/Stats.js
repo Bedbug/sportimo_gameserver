@@ -1,3 +1,6 @@
+'use strict';
+
+
 var scheduler = require('node-schedule');
 var needle = require("needle");
 var crypto = require("crypto-js");
@@ -70,7 +73,7 @@ Parser.Name = configuration.parserIdName;
 // Approximate calculation of season Year from current date
 Parser.GetSeasonYear = function()
 {
-    var now = new Date();
+    const now = new Date();
     if (now.getMonth() > 6)
         return now.getFullYear();
     else return now.getFullYear() - 1;
@@ -81,15 +84,37 @@ Parser.GetSeasonYear = function()
 // Get player stats. If season is null, then return the career stats, else the stats for the given season.
 Parser.GetPlayerStats = function(leagueName, playerId, season, callback)
 {
-    var isCareer = false;
+    let isCareer = false;
     if (!season) {
-        callback = season;
         isCareer = true;
     }
     
     //soccer/epl/stats/players/345879?enc=true&
-    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + ( isCareer ? "?accept=json&enc=true&careerOnly=true&" : "?accept=json&season=" + season + "&" ) + signature;
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + ( isCareer ? "?accept=json&enc=true&careerOnly=true&" : "?accept=json&season=" + season + "&" ) + signature;
+
+    needle.get(url, { timeout: 50000 }, function(error, response)
+    {
+        if (error)
+            return callback(error);
+        try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
+                
+            var playerStats = response.body.apiResults[0].league.players[0].seasons[0].eventType[0].splits[0].playerStats;
+            return callback(null, playerStats);
+        }
+        catch(err) {
+            return callback(err);
+        }
+    });
+};
+
+Parser.GetPlayerInTeamStats = function(leagueName, teamId, playerId, callback)
+{
+    //soccer/epl/stats/players/345879?enc=true&
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/stats/players/" + playerId + "/teams/" + teamId + "?accept=json&" + signature;
 
     needle.get(url, { timeout: 50000 }, function(error, response)
     {
@@ -111,8 +136,8 @@ Parser.GetPlayerStats = function(leagueName, playerId, season, callback)
 Parser.GetTeamPlayers = function(leagueName, languageId, callback)
 {
     //soccer/epl/participants/teams/6154?languageId=19
-    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/participants/?" + signature + "&languageId=" + languageId;
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/participants/?" + signature + "&languageId=" + languageId;
 
     needle.get(url, { timeout: 60000 }, function(error, response)
     {
@@ -130,8 +155,8 @@ Parser.GetTeamPlayers = function(leagueName, languageId, callback)
 
 Parser.GetLeagueTeams = function(leagueName, callback)
 {
-    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/teams/?" + signature;
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/teams/?" + signature;
 
     needle.get(url, { timeout: 60000 }, function(error, response)
     {
@@ -149,8 +174,8 @@ Parser.GetLeagueTeams = function(leagueName, callback)
 
 Parser.GetLeagueStandings = function(leagueName, callback)
 {
-    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + signature;
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + signature;
 
     needle.get(url, { timeout: 60000 }, function(error, response)
     {
@@ -170,8 +195,8 @@ Parser.GetLeagueStandings = function(leagueName, callback)
 
 Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
 {
-    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    var url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
     
     needle.get(url, { timeout: 60000 }, function(error, response) {
         if (error)
@@ -201,8 +226,8 @@ Parser.UpdateTeams = function(callback)
         if (err)
             return callback(err);
             
-        var leagueName = competitions[0].parserids[Parser.Name]; 
-        var leagueId = competitions[0].id;
+        const leagueName = competitions[0].parserids[Parser.Name]; 
+        const leagueId = competitions[0].id;
     
         if (!leagueName || !leagueId)
             return callback(new Error('No league name or league Id is defined in call'));
@@ -219,9 +244,9 @@ Parser.UpdateTeams = function(callback)
             if (teamError)
                 return callback(teamError);
             
-            var existingTeamIds = _.map(existingTeams, function(team) { return team.id; });
+            let existingTeamIds = _.map(existingTeams, function(team) { return team.id; });
         
-            var existingTeamsLookup = {};
+            let existingTeamsLookup = {};
             _.forEach(existingTeams, function(team) {
                 if (team.parserids[Parser.Name] && !existingTeamsLookup[team.parserids[Parser.Name]]) 
                     existingTeamsLookup[team.parserids[Parser.Name]] = team;
@@ -231,10 +256,10 @@ Parser.UpdateTeams = function(callback)
         	    if (playerError)
         	        return callback(playerError);
 
-                var languageData = {};
+                let languageData = {};
                 
                 
-                var existingPlayersLookup = {};
+                let existingPlayersLookup = {};
                 _.forEach(existingPlayers, function(player) {
                     if (player.parserids[Parser.Name] && !existingPlayersLookup[player.parserids[Parser.Name]]) 
                         existingPlayersLookup[player.parserids[Parser.Name]] = player;
@@ -261,14 +286,14 @@ Parser.UpdateTeams = function(callback)
                         return callback(error);
                     
                     
-                    var parsedTeams = {};
-                    var parsedPlayers = {};
-                    var teamsToAdd = [];
-                    var teamsToUpdate = [];
-                    var playersToAdd = [];
-                    var playersToUpdate = [];
+                    let parsedTeams = {};
+                    let parsedPlayers = {};
+                    let teamsToAdd = [];
+                    let teamsToUpdate = [];
+                    let playersToAdd = [];
+                    let playersToUpdate = [];
                     
-                    var creationDate = new Date();
+                    let creationDate = new Date();
                     
                     // Scan the english data to get all teams
                     _.forEach(languageData["en"].players, function(player) {
@@ -566,7 +591,7 @@ Parser.UpdateLeagueStandings = function(competitionDocument, leagueId, outerCall
 Parser.UpdateStandings = function(callback)
 {
         
-    var leagueStandingsUpdated = [];
+    let leagueStandingsUpdated = [];
 
     // Get all competitions from Mongo
     mongoDb.competitions.find({}, function(competitionError, leagues) {
@@ -597,7 +622,7 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
     if (!competitionId)
         return outerCallback(new Error('No competition id parameter is included in the request.'));
         
-    var season = Parser.GetSeasonYear();
+    const season = Parser.GetSeasonYear();
     
     // Get competition from Mongo
     // Get teams from Mongo and build the team lookup dictionary
@@ -613,13 +638,13 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                 });
             },
             function(competition, callback) {
-                var parserQuery = 'parserids.' + Parser.Name;
+                let parserQuery = 'parserids.' + Parser.Name;
                 
                 mongoDb.teams.find().ne(parserQuery, null).where('competitionid', competitionId).exec( function(teamError, teams) {
                     if (teamError)
                         return callback(teamError);
                         
-                    var existingTeamIds = {};
+                    let existingTeamIds = {};
                     _.forEach(teams, function(team) {
                         if (team.parserids[Parser.Name] && !existingTeamIds[team.parserids[Parser.Name]]) 
                             existingTeamIds[team.parserids[Parser.Name]] = team;
@@ -629,7 +654,7 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                 });
             },
             function(competition, existingTeamIds, callback) {
-                var statsLeagueId = competition.parserids[Parser.Name];
+                let statsLeagueId = competition.parserids[Parser.Name];
                 
                 Parser.GetLeagueSeasonFixtures(statsLeagueId, season, function(error, fixtures) {
                     if (error)
@@ -642,22 +667,22 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
             if (asyncError)
                 return outerCallback(asyncError);
             
-            var now = new Date();
-            var futureFixtures = _.filter(fixtures, function(fixture) {
+            const now = new Date();
+            let futureFixtures = _.filter(fixtures, function(fixture) {
                 if (!fixture.startDate || fixture.startDate.length < 2)
                     return false;
                 if (fixture.eventStatus.isActive)
                     return false;
                     
-               var startDateString = fixture.startDate[1].full;
-               var startDate = Date.parse(startDateString);
+               const startDateString = fixture.startDate[1].full;
+               const startDate = Date.parse(startDateString);
                
                return startDate > now;
             });
             
             var futureSchedules = _.map(futureFixtures, function(fixture) {
                 try {
-                    var homeTeam, awayTeam;
+                    let homeTeam, awayTeam;
                     if (fixture.teams[0].teamLocationType.teamLocationTypeId == 1)
                         homeTeam = fixture.teams[0];
                     if (fixture.teams[0].teamLocationType.teamLocationTypeId == 2)
@@ -667,7 +692,7 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
                     if (fixture.teams[1].teamLocationType.teamLocationTypeId == 2)
                         awayTeam = fixture.teams[1];
                         
-                    var schedule = {
+                    let schedule = {
                         sport: 'soccer',
                         home_team: existingTeamIds[homeTeam.teamId] ? existingTeamIds[homeTeam.teamId].id : null,
                         away_team: existingTeamIds[awayTeam.teamId] ? existingTeamIds[awayTeam.teamId].id : null,
@@ -694,6 +719,15 @@ Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
 };
 
 
+// Approximate calculation of season Year from current date
+var GetSeasonYear = function()
+{
+    var now = new Date();
+    if (now.getMonth() > 6)
+        return now.getFullYear();
+    else return now.getFullYear() - 1;
+};
+
 Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
     // Schedule the following cascading callbacks:
     // 1. Get the team from Mongo by the teamId
@@ -701,6 +735,8 @@ Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
     // 3. Get the team's linked players in mongo and build a dictionary of their ids as keys
     // 4. Call for each player having a valid parserids["Stats"] id, the stats endpoint for the player career stats
     // 5. Finally, update each player's document and save back in Mongo
+    
+    let seasonYear = GetSeasonYear();
     
     async.waterfall([
         function(callback) {
@@ -718,7 +754,7 @@ Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
                 if (error)
                     return callback(error);
                     
-                var playersLookup = {};
+                let playersLookup = {};
                 _.forEach(data, function(player) {
                      if (player.parserids && player.parserids[Parser.Name] && !playersLookup[player.parserids[Parser.Name]])
                         playersLookup[player.parserids[Parser.Name]] = player;
@@ -732,28 +768,73 @@ Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
             return outerCallback(error);
             
 
-        var playerStatIds = _.keys(playersLookup);
-        var updatedPlayerStats = 0;
+        let playerStatIds = _.keys(playersLookup);
+        let updatedPlayerStats = 0;
         
         async.eachSeries(playerStatIds, function(playerId, innerCallback) {
-            Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, function(innerError, stats) {
-                if (innerError)
-                    //return innerCallback(innerError);
-                    return innerCallback();
-                    
-                var playerDocInstance = playersLookup[playerId];
-                playerDocInstance.stats = {};
-                playerDocInstance.stats["career"] = TranslatePlayerStats(stats);
-                
-                setTimeout(function() {
-                    // Save playerDocInstance document back in Mongo
-                    playerDocInstance.save(innerCallback);
-                    updatedPlayerStats++;
-                }, 1000);
+            async.waterfall([
+                // first waterfall step: get the player's career stats
+                function(callback) {
+                    Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, null, function(statsError, stats) {
+                        if (statsError)
+                            return callback();
+                            
+                        let playerDocInstance = playersLookup[playerId];
+                        if (!playerDocInstance.stats)
+                            playerDocInstance.stats = {};
+                        playerDocInstance.stats["career"] = TranslatePlayerStats(stats);
+                        
+                        // wait for 1 sec, to anticipate the service's throttling
+                        setTimeout(callback, 1000);
+                    });
+                },
+                // second waterfall step: get the player's last season stats
+                function(callback) {
+                    Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, seasonYear, function(statsError, stats) {
+                        if (statsError)
+                            return callback();
+                            
+                        let playerDocInstance = playersLookup[playerId];
+                        playerDocInstance.stats["season"] = TranslatePlayerStats(stats);
+                        
+                        // wait for 1 sec, to anticipate the service's throttling
+                        setTimeout(callback, 1000);
+                    });
+                },                
+                // third waterfall step: get the player's stats while in the team
+                function(callback) {
+                    if (!team.parserids[Parser.Name])
+                        async.setImmediate(function () {
+                            callback(null);
+                        });
+                        
+                    Parser.GetPlayerInTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], playerId, function(statsError, stats) {
+                        if (statsError)
+                            return callback();
+                            
+                        let playerDocInstance = playersLookup[playerId];
+                        playerDocInstance.stats["team"] = TranslatePlayerStats(stats);
+                        
+                        // wait for 1 sec, to anticipate the service's throttling
+                        setTimeout(callback, 1000);
+                    });
+                }                
+                ],
+            function(inneError) {
+                innerCallback();
             });
         }, function(outerError) {
             if (outerError)
                 return outerCallback(outerError);
+                
+            // save all documents in playersLookup
+            //     // Save playerDocInstance document back in Mongo
+            //     playerDocInstance.save(innerCallback);
+            //     updatedPlayerStats++;
+            let allPlayers = _.values(playersLookup);
+            _.forEach(allPlayers, function(onePlayer) {
+                onePlayer.save(); 
+            });
                 
             outerCallback(null, updatedPlayerStats);
         });
