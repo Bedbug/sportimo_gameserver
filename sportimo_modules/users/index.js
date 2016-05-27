@@ -250,11 +250,11 @@ apiRoutes.get('/v1/users/:id/messages', function (req, res) {
 apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 
     var q = User.findById(req.params.id);
-    q.populate('unread');
-
-    q.exec(function (err, unreadCount) {
+    q.select('unread');
+    q.exec(function (err, result) {
+        // console.log(unreadCount);
         if (!err) {
-            res.status(200).send(unreadCount);
+            res.status(200).send({"unread":result.unread});
         } else
             res.status(500).send(err);
     })
