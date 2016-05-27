@@ -10,7 +10,8 @@ var fields = {
     user_name: { type: String },
     game_id: { type: String },
     score: { type: Number, default: 0 },
-    country: { type: String },
+    country: { type: String },   
+    level: { type: Number, default: 0 },
     created: { type: Date, default: Date.now },
     lastActive: Date
 };

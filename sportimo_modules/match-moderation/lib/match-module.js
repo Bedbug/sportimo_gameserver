@@ -486,21 +486,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
         // 2. broadcast event on pub/sub channel
         log.info("Pushing event to Redis Pub/Sub channel");
         // PubChannel.publish("socketServers", JSON.stringify(event));
-
-        // Add 'created' property in the socket event data for easier sorting on clients 
-        event.data.created = moment().utc();
-        
-        // Inform Clients for the new event to draw
-        PubChannel.publish("socketServers", JSON.stringify({
-            sockets: true,
-            payload: {
-                type: "Event_added",
-                room: event.data.match_id.toString(),
-                data: event.data
-            }
-        }
-        ));
-
+            
         // 3. send event to wildcards module for wildcard resolution
         HookedMatch.gamecards.ResolveEvent(event);
 
@@ -515,7 +501,23 @@ var matchModule = function (match, PubChannel, SubChannel) {
         }, this.data, "system");
 
         this.data.markModified('stats');
-
+        
+        
+         // Add 'created' property in the socket event data for easier sorting on clients 
+        event.data = event.data.toObject();
+        event.data.created = moment().utc().format();
+       
+        // Inform Clients for the new event to draw
+        PubChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            payload: {
+                type: "Event_added",
+                room: event.data.match_id.toString(),
+                data: event.data
+            }
+        }
+        ));
+        
         // Inform the system about the stat changes
         PubChannel.publish("socketServers", JSON.stringify({
             sockets: true,
