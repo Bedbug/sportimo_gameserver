@@ -29,6 +29,8 @@ var api = {};
 
 // POST
 api.UpdateAllTeams = function (req, res) {
+	if(!req.params.competitionId)
+		return res.status(400).json({error: "No 'competitionId' id parameter defined in the request path."});
 
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
@@ -38,7 +40,7 @@ api.UpdateAllTeams = function (req, res) {
         
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
     	async.eachSeries(parsers, function(parser, callback) {
-            parser.UpdateTeams(function(error, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate) {
+            parser.UpdateTeams(req.params.competitionId, function(error, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate) {
                 if (!error)
                 {
                     response.parsers[parser.Name] = { 
@@ -275,7 +277,7 @@ api.Welcome = function(req, res)
 router.get('/', api.Welcome);
 
 // update all teams and players in each
-router.post('/teams', api.UpdateAllTeams);
+router.post('/:competitionId/teams', api.UpdateAllTeams);
 
 // update all player career stats for all players in teamId
 router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);

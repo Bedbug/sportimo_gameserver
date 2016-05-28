@@ -207,7 +207,10 @@ Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
             
         try
         {
-            var fixtures = response.body.apiResults[0].league.season.eventType[0].events;
+            let fixtures = [];
+            _.forEach(response.body.apiResults[0].league.season.eventType, function(category) {
+                fixtures = _.concat(fixtures, category.events);
+            });
             callback(null, fixtures);
         }
         catch(err) {
@@ -220,14 +223,14 @@ Parser.GetLeagueSeasonFixtures = function(leagueName, seasonYear, callback)
 
 // Parser methods that other modules may call:
 
-Parser.UpdateTeams = function(callback)
+Parser.UpdateTeams = function(competitionId, callback)
 {
-    mongoDb.competitions.find({}, function(err, competitions) {
+    mongoDb.competitions.findById(competitionId, function(err, competition) {
         if (err)
             return callback(err);
             
-        const leagueName = competitions[0].parserids[Parser.Name]; 
-        const leagueId = competitions[0].id;
+        const leagueName = competition.parserids[Parser.Name]; 
+        const leagueId = competition.id;
     
         if (!leagueName || !leagueId)
             return callback(new Error('No league name or league Id is defined in call'));

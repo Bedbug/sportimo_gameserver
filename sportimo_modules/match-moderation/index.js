@@ -176,7 +176,7 @@ var ModerationModule = {
                         if (cbk)
                             return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                         else
-                            return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"))
+                            return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                     }
 
                     var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
