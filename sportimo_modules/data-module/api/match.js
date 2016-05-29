@@ -69,7 +69,9 @@ api.item = function (req, res) {
                                     
                                     return res.status(200).json(game);  
 
-                                    /** WE SHOULDN'T RECALCULATE SCORES. SCORES SHOULD ALREADY BE ATTRIBUTED TO USERS */
+                                    /** WE SHOULDN'T RECALCULATE SCORES. SCORES SHOULD ALREADY BE ATTRIBUTED TO USERS.
+                                     *  Left Here for future validation purposes
+                                     */
                                     // UserGamecards.aggregate(
                                     //     { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
                                     //     { $group: {_id: {matchid: "$matchid", userid: "$userid"}, userPoints: {$sum: "$pointsAwarded"}} }, 
