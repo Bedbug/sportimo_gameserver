@@ -41,10 +41,10 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
     });
 };
 
-api.getLeaderboardWithRank = function (req, skip, limit, cb) {
+api.getLeaderboardWithRank = function (id, body, cb) {
 
-    var leader_conditions = parseConditons(req.body);
-    var uid = req.params.uid;
+    var leader_conditions = parseConditons(body);
+    var uid = id;
 
     var q = Score.aggregate({
         $match: leader_conditions
@@ -59,26 +59,31 @@ api.getLeaderboardWithRank = function (req, skip, limit, cb) {
     });
 
 
-    if (skip != undefined)
-        q.skip(skip * 1);
+    // if (skip != undefined)
+    //     q.skip(skip * 1);
 
-    if (limit != undefined)
-        q.limit(limit * 1);
+    // if (limit != undefined)
+    //     q.limit(limit * 1);
 
     q.sort({ score: -1 });
 
     var rank;
     var user;
     q.exec(function (err, leaderboard) {
-
+    
+       if(leaderboard.length == 0)
+            return cbf(cb, err, { user: {}, leaderboad: [] });
+    
         user = _.find(leaderboard, { _id: uid });
+        
+        if(user){
         rank = _.size(_.filter(leaderboard, function (o) {
             if (o._id != user._id && o.score > user.score)
                 return true;
             else
                 return false;
         }));
-        user.rank = rank + 1;
+        user.rank = rank + 1;}
         return cbf(cb, err, { user: user, leaderboad: leaderboard });
     })
 

@@ -19,16 +19,6 @@ api.pool = function(req, res) {
  * Returns all pools for a specific game
  */
 api.poolbygameid = function(req, res) {
-
-    // var q = Pool.find({ gameid: req.params.id });
-
-    // q.exec(function(err, pools) {
-    //     if (err) res.satus(500).send(err);
-    //     else
-    //         res.status(200).send(pools);
-    // })
-    
-    
     
     var querry = { gameid: req.params.id, $or: [{ country: { "$size": 0 } }] };
 
@@ -63,14 +53,14 @@ api.poolbygameid = function(req, res) {
 };
 
 /**
- * Returns all pools for a specific game
+ * Returns all timed pools
  */
 api.timedpools = function(req, res) {
 
-    var querry = { gameid: { "$exists": false }, $or: [{ country: { "$size": 0 } }] };
+    var querry = { gameid: { "$exists": false } };
 
     if (req.params.country)
-        querry.$or[1] = { country: req.params.country.toUpperCase() };
+        querry.$or = [{ country: { "$size": 0}}, {country: req.params.country.toUpperCase() }];
 
     var q = Pool.find(querry);
 
@@ -82,6 +72,7 @@ api.timedpools = function(req, res) {
             
             var uniqueArray = ['Season','Week'];
             
+            if(req.params.country)
             _.each(uniqueArray, function(type) {
                 var poolsWithType = _.filter(pools, { roomtype: type});
                 if (_.size(poolsWithType) > 1){
@@ -154,7 +145,7 @@ router.delete('/v1/pools/:id', api.deletePool);
 
 // A pool atatched to a gameid is basicaly attached to the leaderboard
 // of that specific game. It will start and finish during this game's 
-// period and wiiners will be evaluated automaticaly.
+// period and winners will be evaluated automaticaly.
 router.get('/v1/pools/forgame/:id', api.poolbygameid);
 router.get('/v1/pools/forgame/:id/:country', api.poolbygameid);
 
