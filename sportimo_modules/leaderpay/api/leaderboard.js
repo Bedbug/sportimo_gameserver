@@ -111,7 +111,16 @@ api.allPlayersForMatchWithRank = function (req, res) {
 				});
 			}
 
-			var poolData = pools[0];
+			var poolData = {}
+
+			if (!pools[0]){
+				console.log("no pools");
+				poolData.conditions = { game_id: req.params.mid };
+				console.log(poolData);
+			}else{
+				poolData = pools[0];
+				}
+				
 			leaderboard.getLeaderboardWithRank(req.params.uid, poolData, function (err, data) {
 				if (err) {
 					res.status(404).json(err);
@@ -177,7 +186,7 @@ router.post('/v1/leaderboards/:uid/friends/match/:mid/', api.FriendsForMatchWith
 
 api.allSponsored = function (req, res) {
 	// first request season pools
-    var querry = { gameid: {$exists:false},  roomtype: "Custom", $or: [{ country: { "$size": 0 } }] };
+    var querry = { gameid: { $exists: false }, roomtype: "Custom", $or: [{ country: { "$size": 0 } }] };
 
     if (req.params.country)
         querry.$or[1] = { country: req.params.country.toUpperCase() };
@@ -217,7 +226,7 @@ api.matchSponsored = function (req, res) {
 
     var q = Pools.find(querry);
 
-   q.exec(function (err, pools) {
+	q.exec(function (err, pools) {
         if (err) res.satus(500).send(err);
         else {
 
