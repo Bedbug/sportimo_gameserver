@@ -76,7 +76,7 @@ feed_service.init = function (matchHandler, cbk) {
                 
             feed_service.parser = parsers[this.parsername];
             feed_service.emitter = new MyEmitter();
-            return cbk(null, feed_service);
+            return cbk(null, this);
         });
     }
     catch(error)

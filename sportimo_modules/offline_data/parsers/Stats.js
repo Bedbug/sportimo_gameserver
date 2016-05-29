@@ -836,6 +836,7 @@ Parser.UpdateTeamPlayersCareerStats = function(teamId, outerCallback) {
             //     updatedPlayerStats++;
             let allPlayers = _.values(playersLookup);
             _.forEach(allPlayers, function(onePlayer) {
+                onePlayer.markModified('stats');
                 onePlayer.save(); 
             });
                 

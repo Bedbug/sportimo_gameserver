@@ -134,8 +134,8 @@ module.exports = function (gamecardModule) {
     
     
     
-    router.put('/v1/gamecards/:matchId/users', function (req, res) {
-        gamecardModule.updateUserInstance(req.params.matchId, req.body, function(error, validationError, data) {
+    router.put('/v1/gamecards/:userGamecardId/users', function (req, res) {
+        gamecardModule.updateUserInstance(req.params.userGamecardId, req.body, function(error, validationError, data) {
             if (error)
                 return res.status(500).json({ error: error.message, userGamecard: data });
             if (validationError)

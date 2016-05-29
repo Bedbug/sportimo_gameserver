@@ -38,7 +38,7 @@ var statsComConfigProduction = {
     urlPrefix : "http://api.stats.com/v1/stats/soccer/",
     apiKey : "mct9w8ws4fbpvj5w66se4tns",//"83839j82xy3mty4bf6459rnt",
     apiSecret : "53U7SH6N5x", //"VqmfcMTdQe",
-    eventsInterval : 1000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
+    eventsInterval : 3000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
     parserIdName : "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
@@ -94,7 +94,11 @@ var timelineEvents = {
     "28": "Own_Goal"
 };
 
+var penaltyShootOutEvents = [30, 41]; // 30: goal, 41: missed
+
 var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
+
+var penaltiesSegmentStarted = false;
 
 Parser.Name = configuration.parserIdName;
 
@@ -311,18 +315,18 @@ var TranslateMatchEvent = function(parserEvent)
     if (_.indexOf(supportedEventTypes, parserEvent.playEvent.playEventId) == -1)
         return null;
     
-    var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
-        {
-            id : matchPlayersLookup[parserEvent.defensivePlayer.playerId].id,
-            name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
-            team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId
-        } : null;
     var offensivePlayer = parserEvent.offensivePlayer  && matchPlayersLookup[parserEvent.offensivePlayer.playerId] ? 
         {
             id : matchPlayersLookup[parserEvent.offensivePlayer.playerId].id,
             name : matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
             team : matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
         } : null;
+    // var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
+    //     {
+    //         id : matchPlayersLookup[parserEvent.defensivePlayer.playerId].id,
+    //         name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
+    //         team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId
+    //     } : null;
     
     var isTimelineEvent = timelineEvents[parserEvent.playEvent.playEventId] ? true : false
     var eventName = isTimelineEvent == true ? timelineEvents[parserEvent.playEvent.playEventId] : parserEvent.playEvent.name;
@@ -336,7 +340,7 @@ var TranslateMatchEvent = function(parserEvent)
             id: parserEvent.sequenceNumber,
             status: 'active',
             type: eventName,
-            state: parserEvent.period == 2 ? 3 : parserEvent.period, // ToDo: replace with a translatePeriod method
+            state: TranslateMatchPeriod(parserEvent.period, parserEvent.playEvent.playEventId),
             sender: configuration.parserIdName,
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: isTimelineEvent,
@@ -349,10 +353,10 @@ var TranslateMatchEvent = function(parserEvent)
     };
     
     // ToDo: In certain match events, we may want to split the event in two (or three)
-    if (defensivePlayer)
-        translatedEvent.data.players.push(defensivePlayer);
     if (offensivePlayer)
         translatedEvent.data.players.push(offensivePlayer);
+    // if (defensivePlayer)
+    //     translatedEvent.data.players.push(defensivePlayer);
     
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
     translatedEvent.data.stats[eventName] = 1;
@@ -360,6 +364,22 @@ var TranslateMatchEvent = function(parserEvent)
     return translatedEvent;
 };
 
+
+var TranslateMatchPeriod = function(statsPeriod, eventId)
+{
+    switch(statsPeriod)
+    {
+        case 0: return 0;
+        case 1: return 1;
+        case 2: return 3;
+        case 3: return 5;
+        case 4: 
+            if _.indexOf(penaltyShootOutEvents, eventId) > -1
+                return 9;
+            else
+                return 7;
+    }
+}
 
 var TranslateMatchSegment = function(parserEvent)
 {
@@ -392,14 +412,11 @@ Parser.TickMatchFeed = function() {
         }
         
         // Produce the diff with eventFeedSnapshot
-        // var eventsDiff = _.differenceWith(eventFeedSnapshot, events, function(first, second) {
-        //     return first.sequenceNumber == second.sequenceNumber;
-        // });
         var eventsDiff = _.filter(events, function(item) {
-            return !eventFeedSnapshot[item.sequenceNumber];
+            return !eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
         });
         _.forEach(events, function(event) {
-            eventFeedSnapshot[event.sequenceNumber] = true;
+            eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
         });
         //eventFeedSnapshot = events;
         
@@ -415,15 +432,27 @@ Parser.TickMatchFeed = function() {
             _.forEach(eventsDiff, function(event)
             {
                 // First try parsing a normal event
-               var translatedEvent = TranslateMatchEvent(event);
-               if (translatedEvent)
+                var translatedEvent = TranslateMatchEvent(event);
+                if (translatedEvent) {
                     Parser.feedService.AddEvent(translatedEvent);
+                    
+                    // Determine if the Penalties Segment has just started (in this case, advance the segment)
+                    if (translatedEvent.data.state == 9) {
+                        if (!penaltiesSegmentStarted)
+                        {
+                            penaltiesSegmentStarted = true;
+                            Parser.feedService.AdvanceMatchSegment(Parser.matchHandler);
+                        }
+                    }
+                }
                 else
                 {
                     // Then try to parse a match segment advancing event
                     var translatedMatchSegment = TranslateMatchSegment(event);
                     if (translatedMatchSegment)
+                    {
                         Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                    }
                 }
             });
         }
