@@ -374,7 +374,7 @@ var TranslateMatchPeriod = function(statsPeriod, eventId)
         case 2: return 3;
         case 3: return 5;
         case 4: 
-            if _.indexOf(penaltyShootOutEvents, eventId) > -1
+            if (_.indexOf(penaltyShootOutEvents, eventId) > -1)
                 return 9;
             else
                 return 7;
