@@ -8,12 +8,12 @@ var express = require('express'),
     Scores = mongoose.models.scores,
     UserGamecards = mongoose.models.userGamecards,
     _ = require('lodash'),
-        api = {};
-        
+    api = {};
+
 
 
 // GET
-api.item = function(req, res) {
+api.item = function (req, res) {
     var gameid = req.params.gameid;
     var userid = req.params.userid;
 
@@ -28,60 +28,63 @@ api.item = function(req, res) {
         .select('home_team away_team home_score away_score time isTimeCounting stats timeline start state')
         .populate('home_team', 'name logo')
         .populate('away_team', 'name logo')
-        .exec(function(err, match) {
+        .exec(function (err, match) {
             if (!err) {
                 // Assign the data if everything is ok
                 game.matchData = match;
                 // Now lets get the questions for the match
-                Questions.find({ matchid: match._id }, function(err, questions) {
-                    if (!err) {                       
+                Questions.find({ matchid: match._id }, function (err, questions) {
+                    if (!err) {
                         // And the answers
-                        Answers.find({userid:userid, matchid: match._id }, function(err, answers) {                            
+                        Answers.find({ userid: userid, matchid: match._id }, function (err, answers) {
                             // Now that we have both we should marry them 
-                            _.each(questions,function(question){                                
-                                var answer = _.find(answers,function(o){
-                                     return o.questionid == question._id});                                
-                                if(answer){
+                            _.each(questions, function (question) {
+                                var answer = _.find(answers, function (o) {
+                                    return o.questionid == question._id
+                                });
+                                if (answer) {
                                     question.userAnswer = answer.answerid;
                                 }
                             })
-                            
+
                             game.questions = questions;
-                            
-                            Scores.find({match_id: gameid, user_id: userid},function(err, result){
-                                if (err) 
+
+                            Scores.find({ match_id: gameid, user_id: userid }, function (err, result) {
+                                if (err)
                                     return res.status(500).json(err);
-                                
-                                if(result[0])
+
+                                if (result[0])
                                     game.userScore = result[0].score;
-                                
-                                UserGamecards.find({ matchid: gameid, userid: userid }, function(cardsError, userCards) {
+
+                                UserGamecards.find({ matchid: gameid, userid: userid }, function (cardsError, userCards) {
                                     if (cardsError)
                                         return res.status(500).json(cardsError);
-                                    
-                                    if (userCards)
-                                    {
+
+                                    if (userCards) {
                                         // Translate each userGamecard document into a filtered DTO version
-                                        game.playedCards = _.map(userCards, function(userCard) {
-                                            return TranslateUserGamecard(userCard);  
+                                        game.playedCards = _.map(userCards, function (userCard) {
+                                            return TranslateUserGamecard(userCard);
                                         });
                                     }
-                                        
-                                    UserGamecards.aggregate(
-                                        { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
-                                        { $group: {_id: {matchid: "$matchid", userid: "$userid"}, userPoints: {$sum: "$pointsAwarded"}} }, 
-                                        function(aggrError, aggrResult) {
-                                            if (aggrError)
-                                                return res.status(500).json(aggrError);
-                                            game.userScore = aggrResult.length > 0 ? aggrResult[0].userPoints : 0;
-                                            
-                                            return res.status(200).json(game);  
-                                        });
+                                    
+                                    return res.status(200).json(game);  
+
+                                    /** WE SHOULDN'T RECALCULATE SCORES. SCORES SHOULD ALREADY BE ATTRIBUTED TO USERS */
+                                    // UserGamecards.aggregate(
+                                    //     { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
+                                    //     { $group: {_id: {matchid: "$matchid", userid: "$userid"}, userPoints: {$sum: "$pointsAwarded"}} }, 
+                                    //     function(aggrError, aggrResult) {
+                                    //         if (aggrError)
+                                    //             return res.status(500).json(aggrError);
+                                    //         game.userScore = aggrResult.length > 0 ? aggrResult[0].userPoints : 0;
+
+                                    //         return res.status(200).json(game);  
+                                    //     });
                                 });
                             })
-                            
+
                         });
-                
+
                     }
                 })
 
@@ -95,8 +98,7 @@ api.item = function(req, res) {
 };
 
 
-var TranslateUserGamecard = function(userGamecard)
-{
+var TranslateUserGamecard = function (userGamecard) {
     var retValue = {
         id: userGamecard.id,
         userid: userGamecard.userid,
@@ -108,14 +110,14 @@ var TranslateUserGamecard = function(userGamecard)
         cardType: userGamecard.cardType,
         status: userGamecard.status
     };
-    
+
     if (userGamecard.startPoints)
         retValue.startPoints = userGamecard.startPoints;
     if (userGamecard.endPoints)
         retValue.endPoints = userGamecard.endPoints;
     if (userGamecard.pointsPerMinute)
         retValue.pointsPerMinute = userGamecard.pointsPerMinute;
-    
+
     if (userGamecard.activationLatency)
         retValue.activationLatency = userGamecard.activationLatency;
     if (userGamecard.pointsAwarded)
@@ -134,7 +136,7 @@ var TranslateUserGamecard = function(userGamecard)
         retValue.terminationTime = userGamecard.terminationTime;
     if (userGamecard.wonTime)
         retValue.wonTime = userGamecard.wonTime;
-        
+
     return retValue;
 };
 
