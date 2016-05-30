@@ -4,6 +4,7 @@ var express = require('express'),
     mongoose = require('mongoose'),
     item = mongoose.models.scheduled_matches,
     competition = mongoose.models.competitions,
+    defaultMatch = require('../config/empty-match'),
     api = {};
 
 
@@ -95,8 +96,9 @@ api.additem = function (req, res) {
     competition.findById(req.body.competition).then(function (competition) {
         
         console.log(competition);
-        
-        var newItem = new item(req.body);
+        // var defaultData = new defaultMatch();
+        var mergedData = _.merge(defaultMatch, req.body);
+        var newItem = new item(mergedData);
         newItem.visiblein = competition.visiblein;
         
         return newItem.save(function (err, data) {
