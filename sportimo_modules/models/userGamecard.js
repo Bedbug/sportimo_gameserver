@@ -53,6 +53,8 @@ else {
         creationTime: Date,
         activationTime: Date,
         terminationTime: Date,
+        isDoubleTime: { type: Boolean, default: false },
+        isDoublePoints: { type: Boolean, default: false },
         wonTime: Date,
         status: 0,  // 0: pending activation, 1: active, 2: terminated (dead)
     });

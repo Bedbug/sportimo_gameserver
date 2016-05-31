@@ -54,7 +54,7 @@ else {
     gamecardDefinition.pre('save', function(next){
         let now = moment.utc();
     
-        if (this.status == 0)   // auto-set times only if this is a new instance
+        if (this.status == 0 || this.status == 1)   // auto-set times only if this is a new instance
         {
             if (!this.creationTime)
                 this.creationTime = now.toDate();
