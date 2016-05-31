@@ -83,8 +83,8 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
         redisSubscribe.on("message", function (channel, message) {
             let msg = JSON.parse(message);
             if (msg.payload && msg.payload.type && (msg.payload.type == 'socket_stats' || msg.payload.type == 'Stats_changed')) {
-                log.info("[Redis] : Event has come through the channel.");
-                log.info("[Redis] :" + JSON.stringify(msg.payload));
+                // log.info("[Redis] : Event has come through the channel.");
+                // log.info("[Redis] :" + JSON.stringify(msg.payload));
 
             }
         });
@@ -613,7 +613,12 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
         let itsNow = moment.utc();
         let creationMoment = moment.utc(gamecard.creationTime);
-
+        console.log()
+        console.log("Created: "+creationMoment.toISOString());
+        console.log(gamecardDefinition.activationLatency+" | Activated: "+ creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString());
+        console.log(gamecardDefinition.duration+" | Terminated: "+ creationMoment.add(gamecardDefinition.duration, 'ms').toISOString());
+        
+       
         // Store the mongoose model
         let newCard = null;
         try {
@@ -635,16 +640,18 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 endPoints: gamecardDefinition.endPoints || 0,
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
-                creationTime: itsNow.toDate(),
-                activationTime: !gamecardDefinition.activationTime ? itsNow.add(gamecardDefinition.activationLatency ? gamecardDefinition.activationLatency : 0, 'ms').toDate() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
+                creationTime: creationMoment.toISOString(),
+                activationTime: gamecardDefinition.activationTime != null ? creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
+                
+                // ARIS ASKS: WHY IF OVERALL IS ACTIVATED IMMEDIATLY?
                 status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 1)
             });
 
             if (newCard.duration && newCard.duration > 0)
-                newCard.terminationTime = moment.utc().add(newCard.duration, 'ms').add(newCard.activationLatency ? newCard.activationLatency : 0, 'ms').toDate();
+                newCard.terminationTime = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
 
             if (gamecardDefinition.options && gamecard.optionId) {
                 let optionsIndex = _.find(gamecardDefinition.options, function (option) {
@@ -732,7 +739,7 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
             });
         },
         function(validationError, userGamecard, match, callback) {
-            db.models.userGamecards.count({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: { isDoublePoints: true, isDoubleTime: true} }, function(error, count) {
+            db.models.userGamecards.count({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: [{ isDoublePoints: true}, {isDoubleTime: true}] }, function(error, count) {
                 if (error)
                     return callback(error);
                 
