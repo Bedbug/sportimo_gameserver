@@ -13,6 +13,8 @@ var User = require('../models/user'); // get our mongoose model
 var Message = require('../models/message'); // get our mongoose model
 var UserActivities = require('../models/userActivity'); // get our mongoose model
 
+var needle = require('needle');
+
 var app = null;
 var tools = {};
 
@@ -254,7 +256,7 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
     q.exec(function (err, result) {
         // console.log(unreadCount);
         if (!err) {
-            res.status(200).send({"unread":result.unread});
+            res.status(200).send({ "unread": result.unread });
         } else
             res.status(500).send(err);
     })
@@ -294,6 +296,10 @@ tools.SendMessageToInbox = function (msgData, callback) {
                             }
                         }));
                     }
+                    
+                      if (msgData.push && msgData.pushTokens ) {
+                           tools.pushNotifyUser(msgData.pushTokens, msgData.msg, msgData.data, msgData.application);
+                      }
 
                     // TODO: Send Push Notification
                     // if(msgData.push)
@@ -306,6 +312,19 @@ tools.SendMessageToInbox = function (msgData, callback) {
     });
 
 }
+
+
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@ 
+// @@   PushWoosh API
+
+var PushOptions = {
+    api: "https://cp.pushwoosh.com/json/1.3/createMessage",
+    application: "",
+    auth: "RjBCef0fkWWCw0tI8Jw0fvHQbBCGZJUvtE4Z14OlCAeKAWNRk5RHhQnYbqW03ityah2wiPVsA2qzX2Kz7E2l",
+};
+
+
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@ 
@@ -322,6 +341,117 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
         });
 });
 
+/* =========================
+    * -----------------------------------
+    *   PUSH ENDPOINTS
+    * -----------------------------------
+    =========================*/
+
+/**
+ * @api {post} api/tests/push/:token Send  push to Token
+ * @apiName SendPush
+ * @apiGroup Pushes
+ * @apiVersion 0.0.1
+ * @apiParam [String] tokens    The tokens list for the devices to push the message
+ * @apiParam [String] messages  {"language":"message"}
+ * @apiParam [String] data      data payload for the notification
+ *
+ *
+ */
+
+apiRoutes.post('/v1/users/push', function (req, res) {
+    log("Push request received");
+    /*
+    *   NotificationMessage can be multilingual in the form of
+    *   {
+    *      "en": ENGLISH_MESSAGE,
+    *      "ru": RUSIAN_MESSAGE
+    *   }
+    */
+    var PushRequest = {
+        NotificationMessage: req.body.message,
+        NotificationData: req.body.data,
+        tokens: req.body.tokens,
+        application: req.body.application
+    }
+    return tools.pushNotifyUser(PushRequest.tokens, PushRequest.NotificationMessage, PushRequest.NotificationData, PushRequest.application, res);
+    // return res.status(200).send(JSON.stringify(PushRequest));
+});
+
+tools.pushNotifyUser = function (tokens, NotificationMessage, data, application, callerResponse) {
+
+    //console.log("[PUSH] Sending pushes with data: " + JSON.parse(data));
+    
+    // for (var i = 0; i < tokens.length; i++) {
+    //     //console.log(i);
+         console.log("[PUSH] Send push to app: " + (application || PushOptions.application));
+    // }
+
+    var options = {
+        headers: { 'content_type': 'application/json' }
+    }
+
+
+
+    var payload;
+
+    if (data != undefined) {
+        payload =
+        {
+            "request": {
+                "application":  application || PushOptions.application,
+                "auth": PushOptions.auth,
+                "notifications": [
+                    {
+                        "send_date": "now",
+                        "ignore_user_timezone": true,
+                        "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String)? JSON.parse(NotificationMessage): NotificationMessage,
+                        "devices": tokens,
+                        "data": (typeof data === 'string' || data instanceof String)? JSON.parse(data): data,
+
+                    }
+                ]
+            }
+        }
+    }
+    else {
+        payload =
+        {
+            "request": {
+                "application": application || PushOptions.application,
+                "auth": PushOptions.auth,
+                "notifications": [
+                    {
+                        "send_date": "now",
+                        "ignore_user_timezone": true,
+                        "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String)? JSON.parse(NotificationMessage): NotificationMessage,
+                        "devices": tokens
+
+                    }
+                ]
+            }
+        }
+    }
+
+    //);
+
+   return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
+
+        if (!err) {
+             if(callerResponse)
+            return callerResponse.send("[PUSH] Sent push to app: " + (application || PushOptions.application));
+        }
+        else {
+            console.log(err);
+            if(callerResponse)
+            return callerResponse.send(err);
+        }
+        return 'Done';
+        // in this case, if the request takes more than 5 seconds
+        // the callback will return a [Socket closed] error
+    });
+
+}
 
 
 // apply the routes to our application with the prefix /api
