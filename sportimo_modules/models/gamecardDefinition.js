@@ -51,21 +51,22 @@ else {
     });
     
     
-    gamecardDefinition.pre('save', function(next){
-        let now = moment.utc();
     
-        if (this.status == 0 || this.status == 1)   // auto-set times only if this is a new instance
-        {
-            if (!this.creationTime)
-                this.creationTime = now.toDate();
-            if (!this.activationTime)
-                this.activationTime = now.add(this.activationLatency, 'ms').toDate(); // add activates_in seconds
-            if (!this.terminationTime)
-                this.terminationTime = now.add(this.activationLatency, 'ms').add(this.duration, 'ms').toDate();
-        }
+    // gamecardDefinition.pre('save', function(next){
+    //     let now = moment.utc();
+    
+    //     if (this.status == 0 || this.status == 1)   // auto-set times only if this is a new instance
+    //     {
+    //         if (!this.creationTime)
+    //             this.creationTime = now.toDate();
+    //         if (!this.activationTime)
+    //             this.activationTime = now.add(this.activationLatency, 'ms').toDate(); // add activates_in seconds
+    //         if (!this.terminationTime)
+    //             this.terminationTime = now.add(this.activationLatency, 'ms').add(this.duration, 'ms').toDate();
+    //     }
       
-        next();
-    });
+    //     next();
+    // });
     
     module.exports = mongoose.model("gamecardDefinitions", gamecardDefinition);
 }
