@@ -656,9 +656,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
             if (newCard.duration && newCard.duration > 0)
                 newCard.terminationTime = terminated;
-console.log(newCard.terminationTime);
-console.log(newCard.activationTime);
-console.log(newCard.creationTime);
+
             if (gamecardDefinition.options && gamecard.optionId) {
                 let optionsIndex = _.find(gamecardDefinition.options, function (option) {
                     return option.optionId == gamecard.optionId;
@@ -694,8 +692,11 @@ console.log(newCard.creationTime);
                     let minutesSinceMatchStart = timeDiff.get('minutes');
                     
                     // if you need the minutes from the game start, you do:
-                    var minutesPassedSinceFirstHalfStarted = moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();;
-                    // But this is not correct
+                    var minutesPassedSinceFirstHalfStarted = moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
+                    // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
+                    // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
+                    // Since there is a half time period all this time in between would make your calculations off.
+                    
                     newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
