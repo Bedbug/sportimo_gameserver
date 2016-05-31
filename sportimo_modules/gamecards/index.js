@@ -613,11 +613,15 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
         let itsNow = moment.utc();
         let creationMoment = moment.utc(gamecard.creationTime);
-        console.log()
-        console.log("Created: "+creationMoment.toISOString());
-        console.log(gamecardDefinition.activationLatency+" | Activated: "+ creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString());
-        console.log(gamecardDefinition.duration+" | Terminated: "+ creationMoment.add(gamecardDefinition.duration, 'ms').toISOString());
         
+        console.log()
+       
+        var created = creationMoment.toISOString();
+         console.log("Created: "+created);
+       var activated = creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString();
+        console.log("Activated: "+ activated);
+        var terminated = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
+       console.log("Terminated: "+ terminated);
        
         // Store the mongoose model
         let newCard = null;
@@ -640,8 +644,8 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 endPoints: gamecardDefinition.endPoints || 0,
                 optionId: gamecard.optionId || null,
                 cardType: gamecardDefinition.cardType,
-                creationTime: creationMoment.toISOString(),
-                activationTime: gamecardDefinition.activationTime != null ? creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString() : gamecardDefinition.activationTime,    // let the schema pre-save handle these times
+                creationTime: created,
+                activationTime: activated,    // let the schema pre-save handle these times
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
@@ -651,8 +655,10 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             });
 
             if (newCard.duration && newCard.duration > 0)
-                newCard.terminationTime = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
-
+                newCard.terminationTime = terminated;
+console.log(newCard.terminationTime);
+console.log(newCard.activationTime);
+console.log(newCard.creationTime);
             if (gamecardDefinition.options && gamecard.optionId) {
                 let optionsIndex = _.find(gamecardDefinition.options, function (option) {
                     return option.optionId == gamecard.optionId;
@@ -686,6 +692,10 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 if (scheduledMatch.state > 0) {
                     let timeDiff = itsNow.subtract(moment.utc(scheduledMatch.start.toISOString()));
                     let minutesSinceMatchStart = timeDiff.get('minutes');
+                    
+                    // if you need the minutes from the game start, you do:
+                    var minutesPassedSinceFirstHalfStarted = moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();;
+                    // But this is not correct
                     newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
