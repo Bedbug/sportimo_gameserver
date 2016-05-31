@@ -110,6 +110,8 @@ var TranslateUserGamecard = function (userGamecard) {
         image: userGamecard.image,
         text: userGamecard.text,
         cardType: userGamecard.cardType,
+        isDoublePoints: userGamecard.isDoublePoints,
+         isDoubleTime: userGamecard.isDoubleTime,
         status: userGamecard.status
     };
 
