@@ -3,6 +3,7 @@ var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
     article = mongoose.models.articles,
+    moment = require('moment'),
     api = {};
 
 
@@ -105,6 +106,35 @@ api.deleteArticle = function(req, res) {
 
 };
 
+// GET
+api.renderArticle = function (req, res) {
+    var id = req.params.id;
+    var lang = req.params.language || 'en';
+    
+
+   article.findById(id, function (err, data) {
+        if (err) {
+            res.status(404).json(err);
+        } else {
+
+            if (data == null) {
+                data = {};
+                data.publishDate = "";
+                data.name = "";
+                datat.description = "Article not found."
+            } else {
+
+             
+
+            }
+            
+            data.language = lang;
+            data.publishDate = moment(data.publishDate).format('DD-MM-YYYY HH:mm');
+            res.status(200).render('article', data);
+
+        }
+    });
+};
 
 
 /*
@@ -120,5 +150,10 @@ router.route('/v1/data/articles/:id')
     .get(api.article)
     .put(api.editArticle)
     .delete(api.deleteArticle);
+
+router.route('/v1/data/articles/:id/render/:language')
+    .get(api.renderArticle);
+    router.route('/v1/data/articles/:id/render/')
+    .get(api.renderArticle);
 
 module.exports = router;

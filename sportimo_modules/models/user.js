@@ -46,6 +46,7 @@ var UserSchema = new Schema({
         ref: 'messages'
     }],
     unread: Number,
+    socialId: String,
     pushToken: String,
     country: { type: String, required: false },
     admin: Boolean,

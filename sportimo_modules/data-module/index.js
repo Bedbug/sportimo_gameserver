@@ -80,3 +80,5 @@ fs.readdirSync(apiPath).forEach(function (file) {
 });
 
 
+app.set('views', __dirname + '/views')
+app.set('view engine', 'ejs');
