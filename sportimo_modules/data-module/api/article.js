@@ -124,8 +124,8 @@ api.renderArticle = function (req, res) {
                 datat.description = "Article not found."
             } else {
 
-             
-
+             if(!data.publication.title[lang])
+                lang = 'en';
             }
             
             data.language = lang;
