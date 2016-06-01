@@ -35,7 +35,17 @@ module.exports = function (gamecardModule) {
          gamecardModule.upsertTemplate(req.body, function(error, data) {
             if (error)
                 res.status(400).send(error.message);
-            res.status(200).json({ error: null, data: data });                
+            res.status(200).json(data);                
+        });
+    });
+    
+    // upsert existing template gamecards
+    // Used by the dashboard
+    router.put('/v1/gamecards/templates/:defid', function(req, res) {
+         gamecardModule.upsertTemplate(req.body, function(error, data) {
+            if (error)
+                res.status(400).send(error.message);
+            res.status(200).json(data);                
         });
     });
 
