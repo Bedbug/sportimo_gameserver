@@ -9,7 +9,6 @@ if (mongoose.models.scheduled_matches)
 else {
 
   var matchEvent = new mongoose.Schema({
-    id: Number,
     match_id: String,
     type: String,
     stats: mongoose.Schema.Types.Mixed,
@@ -20,6 +19,7 @@ else {
     sender: String,
     time: Number,
     team: String,
+    team_id: String,
     complete: Boolean,
     playerSelected: String,
     players: [mongoose.Schema.Types.Mixed],
