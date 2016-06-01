@@ -159,44 +159,26 @@ gamecards.upsertTemplate = function (template, callback) {
     let processedTemplate = null;
     try {
         if (template._id) {
-            processedTemplate = db.models.gamecardTemplates.findById(template._id);
-            processedTemplate.text = template.text;
-            processedTemplate.title = template.title;
-            processedTemplate.image = template.image;
-            processedTemplate.activationLatency = template.activationLatency;
-            processedTemplate.duration = template.duration;
-            processedTemplate.appearConditions = template.appearConditions;
-            processedTemplate.winConditions = template.winConditions;
-            processedTemplate.terminationConditions = template.terminationConditions;
-            processedTemplate.startPoints = template.startPoints;
-            processedTemplate.endPoints = template.endPoints;
-            processedTemplate.pointsPerMinute = template.pointsPerMinute;
-            processedTemplate.options = template.options;
-            // processedTemplate.cardType cannot be edited
+            db.models.gamecardTemplates.findByIdAndUpdate(template._id, template, { new: true }, function (err, result) {
+                if (err)
+                    return callback(error);
+
+                callback(null, result);
+            });
+
+
         }
         else {
-            processedTemplate = new db.models.gamecardTemplates();
-            processedTemplate.text = template.text;
-            processedTemplate.title = template.title;
-            processedTemplate.image = template.image;
-            processedTemplate.activationLatency = template.activationLatency;
-            processedTemplate.duration = template.duration;
-            processedTemplate.appearConditions = template.appearConditions;
-            processedTemplate.winConditions = template.winConditions;
-            processedTemplate.terminationConditions = template.terminationConditions;
-            processedTemplate.startPoints = template.startPoints;
-            processedTemplate.endPoints = template.endPoints;
-            processedTemplate.pointsPerMinute = template.pointsPerMinute;
-            processedTemplate.options = template.options;
-            processedTemplate.cardType = template.cardType;
+            processedTemplate = new db.models.gamecardTemplates(template);
+            processedTemplate.save(function (error, done) {
+                if (error)
+                    return callback(error);
+
+                callback(null, done);
+            });
         }
 
-        processedTemplate.save(function (error, done) {
-            if (error)
-                return callback(error);
 
-            callback(null, done);
-        });
 
     }
     catch (error) {
@@ -613,16 +595,16 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
         let itsNow = moment.utc();
         let creationMoment = moment.utc(gamecard.creationTime);
-        
+
         console.log()
-       
+
         var created = creationMoment.toISOString();
-         console.log("Created: "+created);
-       var activated = creationMoment.add(gamecardDefinition.activationLatency,'ms').toISOString();
-        console.log("Activated: "+ activated);
+        console.log("Created: " + created);
+        var activated = creationMoment.add(gamecardDefinition.activationLatency, 'ms').toISOString();
+        console.log("Activated: " + activated);
         var terminated = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
-       console.log("Terminated: "+ terminated);
-       
+        console.log("Terminated: " + terminated);
+
         // Store the mongoose model
         let newCard = null;
         try {
@@ -649,7 +631,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
-                
+
                 // ARIS ASKS: WHY IF OVERALL IS ACTIVATED IMMEDIATLY?
                 status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 1)
             });
@@ -690,13 +672,13 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 if (scheduledMatch.state > 0) {
                     let timeDiff = itsNow.subtract(moment.utc(scheduledMatch.start.toISOString()));
                     let minutesSinceMatchStart = timeDiff.get('minutes');
-                    
+
                     // if you need the minutes from the game start, you do:
                     var minutesPassedSinceFirstHalfStarted = moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
                     // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
                     // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
                     // Since there is a half time period all this time in between would make your calculations off.
-                    
+
                     newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
@@ -724,78 +706,77 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 // Then, update it accordingly
 gamecards.updateUserInstance = function (userGamecardId, options, outerCallback) {
     async.waterfall([
-        function(callback) {
+        function (callback) {
             db.models.userGamecards.findById(userGamecardId, function (error, userGamecard) {
                 if (error)
                     return callback(error);
-                    
-            if (!userGamecard)
-                return callback(null, "userGamecardId is not found");
-    
-            if (options.doubleTime && userGamecard.cardType == 'Overall')
-                return callback(null, "Cannot add double time in an Overall card");
-                    
+
+                if (!userGamecard)
+                    return callback(null, "userGamecardId is not found");
+
+                if (options.doubleTime && userGamecard.cardType == 'Overall')
+                    return callback(null, "Cannot add double time in an Overall card");
+
                 callback(null, null, userGamecard);
             });
         },
-        function(validationError, userGamecard, callback) {
-            db.models.scheduled_matches.findById(userGamecard.matchid, function(error, match) {
+        function (validationError, userGamecard, callback) {
+            db.models.scheduled_matches.findById(userGamecard.matchid, function (error, match) {
                 if (error)
                     return callback(error);
-                    
+
                 if (validationError)
                     return callback(null, validationError);
-                    
+
                 callback(null, null, userGamecard, match);
             });
         },
-        function(validationError, userGamecard, match, callback) {
-            db.models.userGamecards.count({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: [{ isDoublePoints: true}, {isDoubleTime: true}] }, function(error, count) {
+        function (validationError, userGamecard, match, callback) {
+            db.models.userGamecards.count({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: [{ isDoublePoints: true }, { isDoubleTime: true }] }, function (error, count) {
                 if (error)
                     return callback(error);
-                
-                if (match.settings && match.settings.gameCards && match.settings.gameCards.specials)
-                {
+
+                if (match.settings && match.settings.gameCards && match.settings.gameCards.specials) {
                     if (count >= match.settings.gameCards.specials)
                         return callback(null, 'This user has played already the allowed number of special Gamecards');
                 }
-                
+
                 callback(null, null, userGamecard, match);
             });
         }
-        ], function(error, validationError, userGamecard, match) {
-            if (error)
-                return outerCallback(error);
-                
-            if (validationError)
-                return outerCallback(null, validationError);
-                
-            if (options.doublePoints && options.doublePoints == true) {
-                if (userGamecard.cardType == "Instant") {
-                    userGamecard.startPoints = userGamecard.startPoints * 2;
-                    userGamecard.endPoints = userGamecard.endPoints * 2;
-                }
-                else
-                    userGamecard.startPoints = userGamecard.startPoints * 2;
-                    
-                userGamecard.isDoublePoints = true;
-            }
-            if (options.doubleTime && options.doubleTime == true) {
-                if (userGamecard.duration) {
-                    if (userGamecard.terminationTime)
-                        userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).add(userGamecard.duration, 'ms').toDate();
-                    userGamecard.duration = userGamecard.duration * 2;
-                    
-                    userGamecard.isDoubleTime = true;
-                }
-            }
+    ], function (error, validationError, userGamecard, match) {
+        if (error)
+            return outerCallback(error);
 
-            userGamecard.save(function (err) {
-                if (err)
-                    return outerCallback(err);
-    
-                outerCallback(null, null, gamecards.TranslateUserGamecard(userGamecard));
-            });
+        if (validationError)
+            return outerCallback(null, validationError);
+
+        if (options.doublePoints && options.doublePoints == true) {
+            if (userGamecard.cardType == "Instant") {
+                userGamecard.startPoints = userGamecard.startPoints * 2;
+                userGamecard.endPoints = userGamecard.endPoints * 2;
+            }
+            else
+                userGamecard.startPoints = userGamecard.startPoints * 2;
+
+            userGamecard.isDoublePoints = true;
+        }
+        if (options.doubleTime && options.doubleTime == true) {
+            if (userGamecard.duration) {
+                if (userGamecard.terminationTime)
+                    userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).add(userGamecard.duration, 'ms').toDate();
+                userGamecard.duration = userGamecard.duration * 2;
+
+                userGamecard.isDoubleTime = true;
+            }
+        }
+
+        userGamecard.save(function (err) {
+            if (err)
+                return outerCallback(err);
+
+            outerCallback(null, null, gamecards.TranslateUserGamecard(userGamecard));
+        });
     });
 };
 
