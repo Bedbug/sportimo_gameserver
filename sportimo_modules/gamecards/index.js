@@ -423,7 +423,54 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     });
 
     // ToDo: replace text placeholders [[home_team_name]], [[away_team_name]], [[player_name]]
-
+    if (newDefinition.winConditions)
+    {
+        _.forEach(newDefinition.winConditions, function(condition) {
+            if (condition.teamid) {
+                condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+            } 
+        });
+        newDefinition.markModified('winConditions');
+    }
+    if (newDefinition.terminationConditions)
+    {
+        _.forEach(newDefinition.terminationConditions, function(condition) {
+            if (condition.teamid) {
+                condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+            } 
+        });
+        newDefinition.markModified('terminationConditions');
+    }
+    if (newDefinition.options)
+    {
+        _.forEach(newDefinition.options, function(option) {
+            if (option.text)
+                option.text = replaceTeamNameLocale(match.home_team.name, option.text);
+                
+            if (option.winConditions)
+            {
+                _.forEach(option.winConditions, function(condition) {
+                    if (condition.teamid) {
+                        condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                        condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                    } 
+                });
+            }
+            if (option.terminationConditions)
+            {
+                _.forEach(option.terminationConditions, function(condition) {
+                    if (condition.teamid) {
+                        condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                        condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                    } 
+                });
+            }
+        });
+    }
+    
+    newDefinition.markModified('options');
     newDefinition.save();
 };
 
@@ -1069,7 +1116,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 id: eventData.id,
                 sender: !eventData.sender ? null : eventData.sender,
                 matchid: eventData.match_id,
-                team: eventData.team,
+                teamid: eventData.team_id,
                 playerid: !eventData.players || eventData.players.length == 0 ? null : eventData.players[0].id,
                 stat: name,
                 incr: eventData.stats[name],
@@ -1093,7 +1140,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 //return cbk();
             }
             gamecard.winConditions.forEach(function (condition) {
-                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.team == null || condition.team == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
@@ -1143,7 +1190,7 @@ gamecards.ResolveEvent = function (matchEvent) {
                 return cbk();
             }
             gamecard.terminationConditions.forEach(function (condition) {
-                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.team == null || condition.team == event.team)) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
@@ -1213,9 +1260,9 @@ gamecards.ResolveEvent = function (matchEvent) {
 
             // ToDo: matching the team ids, not 'home' or 'away'
 
-            const orTeamQuery = [{ team: null }];
-            if (event.team != null) {
-                orTeamQuery.push({ team: event.team });
+            const orTeamQuery = [{ teamid: null }];
+            if (event.teamid != null) {
+                orTeamQuery.push({ teamid: event.teamid });
             }
 
             gamecardsQuery.winConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
@@ -1253,8 +1300,8 @@ gamecards.ResolveEvent = function (matchEvent) {
                         // ToDo: matching the team ids, not 'home' or 'away'
 
                         const orTeamQuery = [{ teamid: null }];
-                        if (event.team != null) {
-                            orTeamQuery.push({ teamid: event.team });
+                        if (event.teamid != null) {
+                            orTeamQuery.push({ teamid: event.teamid });
                         }
 
                         wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
@@ -1299,53 +1346,6 @@ gamecards.ResolveEvent = function (matchEvent) {
         return;
     });
 
-
-    // Check for terminationConditions met in userGamecards. 
-    // Only overall cards can define terminationConditions, if encountered in instant cards they are ignored.
-    // async.each(individualEvents, function (event, callback) {
-    //     try {
-    //         const wildcardsQuery = {
-    //             status: 1,
-    //             cardType: "Overall",
-    //             creationTime: { $lt: event.time || itsNow },
-    //             matchid: event.matchid
-    //         };
-
-    //         const orPlayerQuery = [{ playerid: null }];
-    //         if (event.playerid != null) {
-    //             orPlayerQuery.push({ playerid: event.playerid });
-    //         }
-
-    //         // ToDo: matching the team ids, not 'home' or 'away'
-
-    //         const orTeamQuery = [{ teamid: null }];
-    //         if (event.team != null) {
-    //             orTeamQuery.push({ teamid: event.team });
-    //         }
-
-    //         wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
-    //         let mongoGamecards;
-    //         db.models.userGamecards.find(wildcardsQuery, function (error, data) {
-    //             if (error) {
-    //                 log.error("Error while resolving event: " + error.message);
-    //                 return callback(error);
-    //             }
-
-    //             mongoGamecards = data;
-    //             return gamecardsTerminationHandle(mongoGamecards, event, callback);
-    //         });
-    //     }
-    //     catch (error) {
-    //         log.error("Error while resolving event: " + error.message);
-    //         return callback(error);
-    //     }
-    // }, function (error) {
-    //     if (error) {
-    //         log.error(error);
-    //     }
-
-    //     return;
-    // });
 
 };
 

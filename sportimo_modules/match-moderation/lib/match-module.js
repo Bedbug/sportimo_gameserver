@@ -488,6 +488,13 @@ var matchModule = function (match, PubChannel, SubChannel) {
         // PubChannel.publish("socketServers", JSON.stringify(event));
             
         // 3. send event to wildcards module for wildcard resolution
+        if (!event.data.team_id)
+        {
+            if (event.data.team && event.data.team == 'home_team')
+                event.data.team_id = this.data.home_team.id;
+            if (event.data.team && event.data.team == 'away_team')
+                event.data.team_id = this.data.away_team.id;
+        }
         HookedMatch.gamecards.ResolveEvent(event);
 
         // 4. save match to db
