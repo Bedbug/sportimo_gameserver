@@ -21,6 +21,10 @@ var scoreSchema = new Schema(fields,
     timestamps: { updatedAt: 'lastActive', createdAt: 'created' }
   });
 
+
+scoreSchema.index({ lastActive: -1 });
+scoreSchema.index({ user_id: 1, game_id: 1 });
+
 scoreSchema.statics.AddPoints = function (uid, room, points, cb) {
 
     return mongoose.model('scores').findOneAndUpdate({ game_id: room, user_id: uid },

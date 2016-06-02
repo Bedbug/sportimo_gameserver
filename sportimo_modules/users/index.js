@@ -8,10 +8,12 @@ var mongoose = require('mongoose');
 
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var jwtDecode = require('jwt-decode');
-var config = require('./config'); // get our config file
-var User = require('../models/user'); // get our mongoose model
-var Message = require('../models/message'); // get our mongoose model
-var UserActivities = require('../models/userActivity'); // get our mongoose model
+var config = require('./config'), // get our config file
+    User = mongoose.models.users, // get our mongoose model
+    Message = require('../models/message'), // get our mongoose model
+    UserActivities = mongoose.models.useractivities, // get our mongoose model
+    Scores = mongoose.models.scores,
+    _ = require('lodash');
 
 var needle = require('needle');
 
@@ -269,47 +271,52 @@ tools.SendMessageToInbox = function (msgData, callback) {
     //First create the message and save the instance in database
     var newMessage = new Message(msgData);
 
+    if (msgData.push && msgData.pushTokens) {
+        tools.pushNotifyUser(msgData.pushTokens, msgData.msg, msgData.data, msgData.application);
+    }
+
     // TODO: Maybe we should remove recipients property from model to save wasted space
-    newMessage.save(function (err, message) {
+    if (msgData.message)
+        newMessage.save(function (err, message) {
 
-        if (err) callback(err);
-        else {
-            var querry = {};
-            if (msgData.recipients) querry._id = { $in: msgData.recipients };
-            // if (msgData.id) querry._id = msgData.id;
+            if (err) callback(err);
+            else {
+                var querry = {};
+                if (msgData.recipients) querry._id = { $in: msgData.recipients };
+                // if (msgData.id) querry._id = msgData.id;
 
-            User.update(querry,
-                { $push: { inbox: message._id }, $inc: { unread: 1 } },
-                { safe: true, new: true, multi: true },
-                function (err, model) {
+                User.update(querry,
+                    { $push: { inbox: message._id }, $inc: { unread: 1 } },
+                    { safe: true, new: true, multi: true },
+                    function (err, model) {
 
-                    // Send web sockets notice
-                    if (msgData.sockets) {
-                        app.PublishChannel.publish("socketServers", JSON.stringify({
-                            sockets: true,
-                            clients: msgData.recipients,
-                            payload: {
-                                type: "Message",
-                                data: {
-                                    message: { "en": "You have a new message in your inbox." }
+                        // Send web sockets notice
+                        if (msgData.sockets) {
+                            app.PublishChannel.publish("socketServers", JSON.stringify({
+                                sockets: true,
+                                clients: msgData.recipients,
+                                payload: {
+                                    type: "Message",
+                                    data: {
+                                        message: { "en": "You have a new message in your inbox." }
+                                    }
                                 }
-                            }
-                        }));
+                            }));
+                        }
+
+                        // TODO: Send Push Notification
+                        // if(msgData.push)
+                        //     Push(msgData);
+
+                        callback(err, model);
                     }
-                    
-                      if (msgData.push && msgData.pushTokens ) {
-                           tools.pushNotifyUser(msgData.pushTokens, msgData.msg, msgData.data, msgData.application);
-                      }
+                );
 
-                    // TODO: Send Push Notification
-                    // if(msgData.push)
-                    //     Push(msgData);
 
-                    callback(err, model);
-                }
-            );
-        }
-    });
+
+
+            }
+        });
 
 }
 
@@ -320,7 +327,7 @@ tools.SendMessageToInbox = function (msgData, callback) {
 
 var PushOptions = {
     api: "https://cp.pushwoosh.com/json/1.3/createMessage",
-    application: "",
+    application: "BF7AF-7F9B8",
     auth: "RjBCef0fkWWCw0tI8Jw0fvHQbBCGZJUvtE4Z14OlCAeKAWNRk5RHhQnYbqW03ityah2wiPVsA2qzX2Kz7E2l",
 };
 
@@ -339,6 +346,52 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
             // console.log(req.params.matchid);
             res.send(users);
         });
+});
+
+
+apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
+    var stats = {}
+     User.findById(req.params.uid)
+     .select("username level stats")
+     .exec(function(err,result){
+         console.log(err)
+         
+         if(err)
+         return res.status(500).send(err);
+         
+         stats.user = result;
+          Scores.find({ user_id: req.params.uid, score:{$gt:0}})
+        .limit(5)
+        .sort({ lastActive: -1 })
+        // .populate('away_team', 'name logo')
+        .exec(function (err, scores) {
+             console.log(err)
+              if(err)
+             return res.status(500).send(err);
+             
+            stats.lastmatches = _.map(scores, 'score')
+
+            UserActivities.aggregate({$match:{}},
+                {
+                    $group: {
+                         _id: null,
+                        cardsPlayed: { $sum: "$cardsPlayed" },
+                        cardsWon: { $sum: "$cardsWon" }
+                    }
+                },function(err,result){
+                    if(err)
+                     return res.status(500).send(err);
+                     
+                    stats.all = result[0];
+                    delete stats.all._id;
+                    stats.all.successPercent = (stats.all.cardsWon/ stats.all.cardsPlayed) * 100;
+                    // console.log(result);
+                    
+                    res.status(200).send(stats);
+                });
+        });
+     })
+   
 });
 
 /* =========================
@@ -381,10 +434,10 @@ apiRoutes.post('/v1/users/push', function (req, res) {
 tools.pushNotifyUser = function (tokens, NotificationMessage, data, application, callerResponse) {
 
     //console.log("[PUSH] Sending pushes with data: " + JSON.parse(data));
-    
+
     // for (var i = 0; i < tokens.length; i++) {
     //     //console.log(i);
-         console.log("[PUSH] Send push to app: " + (application || PushOptions.application));
+    console.log("[PUSH] Send push to app: " + (application || PushOptions.application));
     // }
 
     var options = {
@@ -397,54 +450,54 @@ tools.pushNotifyUser = function (tokens, NotificationMessage, data, application,
 
     if (data != undefined) {
         payload =
-        {
-            "request": {
-                "application":  application || PushOptions.application,
-                "auth": PushOptions.auth,
-                "notifications": [
-                    {
-                        "send_date": "now",
-                        "ignore_user_timezone": true,
-                        "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String)? JSON.parse(NotificationMessage): NotificationMessage,
-                        "devices": tokens,
-                        "data": (typeof data === 'string' || data instanceof String)? JSON.parse(data): data,
+            {
+                "request": {
+                    "application": application || PushOptions.application,
+                    "auth": PushOptions.auth,
+                    "notifications": [
+                        {
+                            "send_date": "now",
+                            "ignore_user_timezone": true,
+                            "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String) ? JSON.parse(NotificationMessage) : NotificationMessage,
+                            "devices": tokens,
+                            "data": (typeof data === 'string' || data instanceof String) ? JSON.parse(data) : data,
 
-                    }
-                ]
+                        }
+                    ]
+                }
             }
-        }
     }
     else {
         payload =
-        {
-            "request": {
-                "application": application || PushOptions.application,
-                "auth": PushOptions.auth,
-                "notifications": [
-                    {
-                        "send_date": "now",
-                        "ignore_user_timezone": true,
-                        "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String)? JSON.parse(NotificationMessage): NotificationMessage,
-                        "devices": tokens
+            {
+                "request": {
+                    "application": application || PushOptions.application,
+                    "auth": PushOptions.auth,
+                    "notifications": [
+                        {
+                            "send_date": "now",
+                            "ignore_user_timezone": true,
+                            "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String) ? JSON.parse(NotificationMessage) : NotificationMessage,
+                            "devices": tokens
 
-                    }
-                ]
+                        }
+                    ]
+                }
             }
-        }
     }
 
     //);
 
-   return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
+    return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
 
         if (!err) {
-             if(callerResponse)
-            return callerResponse.send("[PUSH] Sent push to app: " + (application || PushOptions.application));
+            if (callerResponse)
+                return callerResponse.send("[PUSH] Sent push to app: " + (application || PushOptions.application));
         }
         else {
             console.log(err);
-            if(callerResponse)
-            return callerResponse.send(err);
+            if (callerResponse)
+                return callerResponse.send(err);
         }
         return 'Done';
         // in this case, if the request takes more than 5 seconds

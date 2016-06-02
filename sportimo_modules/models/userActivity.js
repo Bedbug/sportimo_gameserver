@@ -21,6 +21,9 @@ var schema = new Schema(fields,
     timestamps: { updatedAt: 'lastActive' }
   });
 
+schema.index({ lastActive: -1 });
+schema.index({ uid: 1, room: 1 });
+
 // Assign a method to create and increment stats
 schema.statics.IncrementStat = function (uid, room, stat, byvalue, cb) {
   var statIncr = {};
