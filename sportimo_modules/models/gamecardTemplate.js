@@ -17,6 +17,7 @@ if (mongoose.models.gamecardTemplates)
 else {
     var optionTemplate = new mongoose.Schema({
        optionId: String,
+       text: Schema.Types.Mixed,
        startPoints: Number,
        endPoints: Number,
        pointsPerMinute: Number,

@@ -161,7 +161,7 @@ gamecards.upsertTemplate = function (template, callback) {
         if (template._id) {
             db.models.gamecardTemplates.findByIdAndUpdate(template._id, template, { new: true }, function (err, result) {
                 if (err)
-                    return callback(error);
+                    return callback(err);
 
                 callback(null, result);
             });
@@ -380,15 +380,22 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         });
         return newPrompt;
     };
+    
+    let creationTime = moment.utc();
+    let activationTime = template.activationLatency ? creationTime.add(template.activationLatency, 'ms') : creationTime;
+    let terminationTime = template.duration ? activationTime.add(template.duration, 'ms') : null;
+    if (template.cardType == 'Instant' && terminationTime == null)
+        terminationTime = activationTime.add(300, 'seconds'); // set default termination time of 5 mins if for some reason the template lacks of a duration
 
     let newDefinition = new db.models.gamecardDefinitions({
         matchid: match._id.toString(),
         gamecardTemplateId: template.id,
-        creationTime: moment.utc().toDate(),
+        creationTime: creationTime.toDate(),
         text: template.text,
         title: template.title,
         image: template.image,
-        //activationTime: template.activationTime,
+        activationTime: activationTime.toDate(),
+        terminationTime: terminationTime ? terminationTime.toDate() : null,
         duration: template.duration,
         activationLatency: template.activationLatency,
         appearConditions: template.appearConditions,
@@ -428,8 +435,10 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     if (newDefinition.options)
     {
         _.forEach(newDefinition.options, function(option) {
-            if (option.text)
+            if (option.text) {
                 option.text = replaceTeamNameLocale(match.home_team.name, option.text);
+                option.markModified('text');
+            }
                 
             if (option.winConditions)
             {
