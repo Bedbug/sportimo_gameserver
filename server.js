@@ -61,7 +61,7 @@ var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
 var port = (process.env.PORT || 3030)
 app.listen(port, function () {
-    console.log("[Game Server] Server 0.9.1 listening on port %d in %s mode", port, app.get('env'));
+    console.log("[Game Server] Server 0.9.2 listening on port %d in %s mode", port, app.get('env'));
 });
 
 
@@ -195,7 +195,7 @@ app.use(function (req, res, next) {
 });
 
 app.get('/', function (req, res, next) {
-    res.send(200, "The Game Server is running smoothly.");
+    res.send(200, "Sportimo main game server v0.9.2 status is live.");
 });
 
 

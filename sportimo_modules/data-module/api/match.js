@@ -33,10 +33,10 @@ api.item = function (req, res) {
                 // Assign the data if everything is ok
                 game.matchData = match;
                 // Now lets get the questions for the match
-                Questions.find({ matchid: match._id }, function (err, questions) {
+                Questions.find({ matchid: gameid }, function (err, questions) {
                     if (!err) {
                         // And the answers
-                        Answers.find({ userid: userid, matchid: match._id }, function (err, answers) {
+                        Answers.find({ userid: userid, matchid: gameid }, function (err, answers) {
                             // Now that we have both we should marry them 
                             _.each(questions, function (question) {
                                 var answer = _.find(answers, function (o) {
@@ -68,20 +68,6 @@ api.item = function (req, res) {
                                     }
                                     
                                     return res.status(200).json(game);  
-
-                                    /** WE SHOULDN'T RECALCULATE SCORES. SCORES SHOULD ALREADY BE ATTRIBUTED TO USERS.
-                                     *  Left Here for future validation purposes
-                                     */
-                                    // UserGamecards.aggregate(
-                                    //     { $match: {matchid: match.id, userid: userid, pointsAwarded: {$gt: 0}} }, 
-                                    //     { $group: {_id: {matchid: "$matchid", userid: "$userid"}, userPoints: {$sum: "$pointsAwarded"}} }, 
-                                    //     function(aggrError, aggrResult) {
-                                    //         if (aggrError)
-                                    //             return res.status(500).json(aggrError);
-                                    //         game.userScore = aggrResult.length > 0 ? aggrResult[0].userPoints : 0;
-
-                                    //         return res.status(200).json(game);  
-                                    //     });
                                 });
                             })
 
