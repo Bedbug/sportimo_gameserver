@@ -39,6 +39,7 @@ else {
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met
         terminationConditions: [Schema.Types.Mixed], // the wildcard is terminated when any of the terminationConditions is met, or the duration is over (if not null).
         options: [optionTemplate],
+        isVisible: {type: Boolean, default: true},
         // Awarded points specs
         pointsPerMinute: Number,
         startPoints: Number,

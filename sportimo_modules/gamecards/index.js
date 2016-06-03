@@ -388,7 +388,8 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     let terminationTime = template.duration ? moment.utc(activationTime).add(template.duration, 'ms') : null;
     if (template.cardType == 'Instant' && !terminationTime)
         terminationTime = activationTime.add(300, 'seconds'); // set default termination time of 5 mins if for some reason the template lacks of a duration
-
+        
+      
     let newDefinition = new db.models.gamecardDefinitions({
         matchid: match._id.toString(),
         gamecardTemplateId: template.id,
@@ -408,7 +409,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         endPoints: template.endPoints,
         pointsPerMinute: template.pointsPerMinute,
         maxUserInstances: template.maxUserInstances,
-        isVisible: template.isVisible || true,
+        isVisible: template.isVisible,
         cardType: template.cardType,
         status: 1
     });
