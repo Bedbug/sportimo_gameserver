@@ -58,7 +58,10 @@ api.getTeamFull = function (id, cb) {
     q.exec(function (err, players) {
       if (team && players)
         team.players = players;
-
+      
+      console.log("-------------------------------------------");
+		console.log(team);
+		console.log("-------------------------------------------");
       cbf(cb, err, team);
     });
 

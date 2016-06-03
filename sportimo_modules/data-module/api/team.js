@@ -48,6 +48,7 @@ api.team = function (req, res) {
 api.teamFull = function (req, res) {
 	var id = req.params.id;
 	return team.getTeamFull(id,function(err,data){
+		
 		if (err) {
 			return res.status(404).json(err);
 		} else {
