@@ -51,17 +51,20 @@ api.getTeamFull = function (id, cb) {
   q.populate('lastmatch.away_team', 'name logo');
   q.populate('topscorer', 'name uniformNumber pic stats')
 
-   q.exec(function (err, team) {
-      var q = mongoose.models.players.find({ teamId: id });
+  q.exec(function (err, team) {
 
-      q.select('name position pic uniformNumber personalData');
-      q.exec(function (err, players) {
+    var q = mongoose.models.players.find({ teamId: id });
+    q.select('name position pic uniformNumber personalData');
+    q.exec(function (err, players) {
+      if (team && players)
         team.players = players;
-        cbf(cb, err, team);
-      });
 
-
+      cbf(cb, err, team);
     });
+
+
+
+  });
 
 };
 
