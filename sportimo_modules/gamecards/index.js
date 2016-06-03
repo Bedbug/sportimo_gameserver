@@ -368,16 +368,18 @@ gamecards.validateDefinition = function (gamecardDefinition) {
 
 gamecards.createDefinitionFromTemplate = function (template, match) {
 
+    // Disabled. Client decides proper substitution of team name. 
     let replaceTeamNameLocale = function (teamname, prompt, placeholder) {
-        var promptKeys = _.keys(prompt);
-        var newPrompt = {};
-        _.forEach(promptKeys, function (key) {
-            newPrompt[key] = prompt[key];
-            if (teamname[key]) {
-                newPrompt[key] = _.replace(newPrompt[key], placeholder, teamname[key]);
-            }
-        });
-        return newPrompt;
+        return teamname;
+        // var promptKeys = _.keys(prompt);
+        // var newPrompt = {};
+        // _.forEach(promptKeys, function (key) {
+        //     newPrompt[key] = prompt[key];
+        //     if (teamname[key]) {
+        //         newPrompt[key] = _.replace(newPrompt[key], placeholder, teamname[key]);
+        //     }
+        // });
+        // return newPrompt;
     };
     
 
