@@ -47,7 +47,8 @@ var express = require("express"),
     bodyParser = require('body-parser'),
     redis = require('redis'),
     mongoose = require('mongoose'),
-    winston = require('winston');
+    winston = require('winston'),
+    settings = require('./models/settings');
 
 
 var TestSuite = {
@@ -260,5 +261,20 @@ app.use(function(error, request, response, next) {
 });
 
 TestSuite.server = app;
+
+
+// ROUTE FOR PLATFORM SETTINGS
+// =============================================================================
+var router = express.Router();              // get an instance of the express Router
+
+router.get('/', function(req, res) {
+    settings.find({},function(err,result){
+            if(result[0])
+            return res.status(200).send(result[0]);
+            else return res.status(200).send(result);
+        })  
+});
+
+app.use('/settings', router);
 
 module.exports = TestSuite;
