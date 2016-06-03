@@ -382,9 +382,9 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     };
     
     let creationTime = moment.utc();
-    let activationTime = template.activationLatency ? creationTime.add(template.activationLatency, 'ms') : creationTime;
-    let terminationTime = template.duration ? activationTime.add(template.duration, 'ms') : null;
-    if (template.cardType == 'Instant' && terminationTime == null)
+    let activationTime = template.activationLatency ? moment.utc(creationTime).add(template.activationLatency, 'ms') : moment.utc(creationTime);
+    let terminationTime = template.duration ? moment.utc(activationTime).add(template.duration, 'ms') : null;
+    if (template.cardType == 'Instant' && !terminationTime)
         terminationTime = activationTime.add(300, 'seconds'); // set default termination time of 5 mins if for some reason the template lacks of a duration
 
     let newDefinition = new db.models.gamecardDefinitions({
@@ -1120,7 +1120,7 @@ gamecards.ResolveEvent = function (matchEvent) {
         return events;
     };
 
-    const gamecardsWinHandle = function (mongoGamecards, event, cbk) {
+    const gamecardsWinHandle = function (mongoGamecards, event, outerCbk) {
         //mongoGamecards.forEach(function (gamecard) {
         async.each(mongoGamecards, function (gamecard, cbk) {
             if (gamecard.status != 1) {
@@ -1169,9 +1169,12 @@ gamecards.ResolveEvent = function (matchEvent) {
             if (gamecard.cardType == 'IInstant')
                 gamecard.cardType = 'Instant';
             return gamecard.save(cbk);
+        }, function(err) {
+            if (err)
+                return outerCbk(err);
+                
+            outerCbk(null, mongoGamecards);   
         });
-
-        cbk(null, mongoGamecards);
     };
 
     const gamecardsTerminationHandle = function (mongoGamecards, event, cbk) {
@@ -1190,7 +1193,7 @@ gamecards.ResolveEvent = function (matchEvent) {
 
             if (gamecards.CheckIfWins(gamecard, true)) {
                 // Send an event through Redis pub/sub:
-                log.debug("Detected a winning gamecard: " + gamecard);
+                log.info("Detected a winning gamecard: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
                     sockets: true,
                     clients: [gamecard.userid],
@@ -1203,11 +1206,11 @@ gamecards.ResolveEvent = function (matchEvent) {
                 }));
             }
             else {
-                gamecard.terminationTime = moment.utc().toDate;
+                gamecard.terminationTime = moment.utc().toDate();
                 gamecard.status = 2;
                 gamecard.pointsAwarded = 0;
                 // Send an event through Redis pu/sub:
-                log.debug("Detected a losing gamecard: " + gamecard);
+                log.info("Detected a losing gamecard: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
                     sockets: true,
                     clients: [gamecard.userid],
@@ -1222,7 +1225,13 @@ gamecards.ResolveEvent = function (matchEvent) {
 
             if (gamecard.cardType == 'IInstant')
                 gamecard.cardType = 'Instant';
-            gamecard.save();
+            gamecard.save(function(err) {
+                if (err)
+                {
+                    log.error(err.message);
+                    //return cbk(err);
+                }
+            });
         });
 
         cbk(null);
