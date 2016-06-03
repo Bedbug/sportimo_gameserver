@@ -370,7 +370,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
 
     // Disabled. Client decides proper substitution of team name. 
     let replaceTeamNameLocale = function (teamname, prompt, placeholder) {
-        return teamname;
+        return prompt;
         // var promptKeys = _.keys(prompt);
         // var newPrompt = {};
         // _.forEach(promptKeys, function (key) {
@@ -846,7 +846,7 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         text: userGamecard.text,
         cardType: userGamecard.cardType,
         isDoubleTime: userGamecard.isDoubleTime,
-        isDoublePoints: userGamecard.isDoubleTime,
+        isDoublePoints: userGamecard.isDoublePoints,
         status: userGamecard.status
     };
 
