@@ -16,7 +16,7 @@ var express = require('express'),
 api.item = function (req, res) {
     var gameid = req.params.gameid;
     var userid = req.params.userid;
-
+console.log(userid);
     var game = {
         userScore: 0,
         questions: [],
@@ -49,7 +49,7 @@ api.item = function (req, res) {
 
                             game.questions = questions;
 
-                            Scores.find({ match_id: gameid, user_id: userid }, function (err, result) {
+                            Scores.find({ game_id: gameid, user_id: userid }, function (err, result) {
                                 if (err)
                                     return res.status(500).json(err);
 
