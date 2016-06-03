@@ -845,6 +845,8 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         image: userGamecard.image,
         text: userGamecard.text,
         cardType: userGamecard.cardType,
+        isDoubleTime: userGamecard.isDoubleTime,
+        isDoublePoints: userGamecard.isDoubleTime,
         status: userGamecard.status
     };
 
