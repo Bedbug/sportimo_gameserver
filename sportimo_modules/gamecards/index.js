@@ -381,7 +381,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         // });
         // return newPrompt;
     };
-    
+
 
     let creationTime = moment.utc();
     let activationTime = template.activationLatency ? moment.utc(creationTime).add(template.activationLatency, 'ms') : moment.utc(creationTime);
@@ -417,8 +417,17 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     if (newDefinition.winConditions) {
         _.forEach(newDefinition.winConditions, function (condition) {
             if (condition.teamid) {
-                condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
-                condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                if (condition.teamid.indexOf("[[home_team_id]]") > -1) {
+                    condition.id = match.home_team.id;
+                    condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                } else if (condition.teamid.indexOf("[[away_team_id]]") > -1) {
+                    condition.id = match.away_team.id;
+                    condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                }
+                else {
+                    condition.id = match._id;
+                    condition.teamid = null;
+                }
             }
         });
         newDefinition.markModified('winConditions');
@@ -426,8 +435,17 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     if (newDefinition.terminationConditions) {
         _.forEach(newDefinition.terminationConditions, function (condition) {
             if (condition.teamid) {
-                condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
-                condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                if (condition.teamid.indexOf("[[home_team_id]]") > -1) {
+                    condition.id = match.home_team.id;
+                    condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                } else if (condition.teamid.indexOf("[[away_team_id]]") > -1) {
+                    condition.id = match.away_team.id;
+                    condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                }
+            }
+            else {
+                condition.id = match._id;
+                condition.teamid = null;
             }
         });
         newDefinition.markModified('terminationConditions');
@@ -435,24 +453,42 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     if (newDefinition.options) {
         _.forEach(newDefinition.options, function (option) {
             if (option.text) {
-                option.text = replaceTeamNameLocale(match.home_team.name, option.text,"[[home_team_name]]");
-                option.text = replaceTeamNameLocale(match.away_team.name, option.text,"[[away_team_name]]");
+                option.text = replaceTeamNameLocale(match.home_team.name, option.text, "[[home_team_name]]");
+                option.text = replaceTeamNameLocale(match.away_team.name, option.text, "[[away_team_name]]");
                 option.markModified('text');
             }
 
             if (option.winConditions) {
                 _.forEach(option.winConditions, function (condition) {
                     if (condition.teamid) {
-                        condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
-                        condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                        if (condition.teamid.indexOf("[[home_team_id]]") > -1) {
+                            condition.id = match.home_team.id;
+                            condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                        } else if (condition.teamid.indexOf("[[away_team_id]]") > -1) {
+                            condition.id = match.away_team.id;
+                            condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                        }
+                    }
+                    else {
+                        condition.id = match._id;
+                        condition.teamid = null;
                     }
                 });
             }
             if (option.terminationConditions) {
                 _.forEach(option.terminationConditions, function (condition) {
                     if (condition.teamid) {
-                        condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
-                        condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                        if (condition.teamid.indexOf("[[home_team_id]]") > -1) {
+                            condition.id = match.home_team.id;
+                            condition.teamid = _.replace(condition.teamid, "[[home_team_id]]", match.home_team.id);
+                        } else if (condition.teamid.indexOf("[[away_team_id]]") > -1) {
+                            condition.id = match.away_team.id;
+                            condition.teamid = _.replace(condition.teamid, "[[away_team_id]]", match.away_team.id);
+                        }
+                    }
+                    else {
+                        condition.id = match._id;
+                        condition.teamid = null;
                     }
                 });
             }
@@ -1057,20 +1093,20 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination) {
 
 gamecards.publishWinToUser = function (gamecard) {
     // Delay publication so to avoid missing the event on sockets
-    console.log("called to win:"+ Date.now());
-    setTimeout(function(){
-        console.log("publish:"+ Date.now());
-         redisPublish.publish("socketServers", JSON.stringify({
-        sockets: true,
-        clients: [gamecard.userid],
-        payload: {
-            type: "Card_won",
-            client: gamecard.userid,
-            room: gamecard.matchid,
-            data: gamecards.TranslateUserGamecard(gamecard)
-        }
-    }));
-    },2000) 
+    console.log("called to win:" + Date.now());
+    setTimeout(function () {
+        console.log("publish:" + Date.now());
+        redisPublish.publish("socketServers", JSON.stringify({
+            sockets: true,
+            clients: [gamecard.userid],
+            payload: {
+                type: "Card_won",
+                client: gamecard.userid,
+                room: gamecard.matchid,
+                data: gamecards.TranslateUserGamecard(gamecard)
+            }
+        }));
+    }, 2000)
 }
 
 

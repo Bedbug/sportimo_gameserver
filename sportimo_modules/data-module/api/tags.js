@@ -74,6 +74,9 @@ api.matchtags = function (req, res) {
     m.exec(function (err, match) {
 
         // First create the match tag
+        if(err || match == null)
+        return res.send(err);
+        
         if (match.home_team) {
             var matchTag = { name: { en: "" } };
             matchTag.name.en = match.home_team.name.en + " - " + match.away_team.name.en;
