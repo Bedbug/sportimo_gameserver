@@ -85,9 +85,11 @@ api.matchtags = function (req, res) {
         // Now let's push the two team tags
         var home = match.home_team.toObject();
         home.type = "Team";
+        home.alias = "home_team";
         matchTags.push(home);
         var away = match.away_team.toObject();
         away.type = "Team";
+        away.alias = "away_team";
         matchTags.push(away);
 
         // And now let's finish it with each team players
