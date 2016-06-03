@@ -28,6 +28,16 @@ module.exports = function (gamecardModule) {
         });
     });
     
+     // Create match definitions from schedule
+    // Used by the dashboard
+    router.get('/v1/gamecards/:mid/createdefs', function(req, res) {
+        gamecardModule.createMatchDefinitions(req.params.mid, function(error, data) {
+            if (error)
+                res.status(400).json(error);
+            res.status(200).json(data);
+        });
+    });
+    
     
     // upsert existing template gamecards
     // Used by the dashboard

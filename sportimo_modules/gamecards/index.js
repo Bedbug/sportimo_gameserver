@@ -154,6 +154,63 @@ gamecards.getTemplates = function (callback) {
     return db.models.gamecardTemplates.find({}, callback);
 };
 
+gamecards.createMatchDefinitions = function (matchid, callback) {
+    // Check if match has gamecardDefinitions written in mongo from the gamecardTemplates and if their appearanceConditions are met, if not, create them.
+    async.waterfall([
+        function (callback) {
+            var q = db.models.scheduled_matches.findById(matchid);
+            q.populate('home_team away_team','name');
+            q.exec(function (error, match) {
+                if (error)
+                    return callback(error);
+                    
+                callback(null, match);
+            });
+        },
+        function (match, callback) {
+            db.models.gamecardTemplates.find({}, function (error, templates) {
+                if (error)
+                    return callback(error);
+                callback(null, templates, match);
+            });
+        },
+        function (templates, match, callback) {
+            db.models.gamecardDefinitions.find({ matchid: match._id }, function (error, definitions) {
+
+                if (error)
+                    return callback(error);
+
+                if (templates == null || templates.length == 0)
+                    return callback(null);
+                //callback(null, definitions);
+                let usedTemplateIds = [];
+                _.forEach(definitions, function (definition) {
+                    if (_.indexOf(usedTemplateIds, definition.gamecardTemplateId))
+                        usedTemplateIds.push(definition.gamecardTemplateId);
+                });
+
+                // Now instantiate all not found templates into new gamecardDefinitions
+                _.forEach(templates, function (template) {
+                    if (_.indexOf(usedTemplateIds, template.id) == -1) {
+                        gamecards.createDefinitionFromTemplate(template, match);
+                    }
+                });
+                
+                callback(null, 'done')
+            });
+        }
+    ], function (error, result) {
+        if (error)
+            log.error('Error while initializing gamecards module: ' + error.message);
+            
+            return callback(error, result);
+    });
+    
+   // callback(null,"Done");
+};
+ 
+
+
 
 gamecards.upsertTemplate = function (template, callback) {
     let processedTemplate = null;
