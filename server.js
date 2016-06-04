@@ -167,6 +167,8 @@ var questions_module = require('./sportimo_modules/questions');
 var users_module = require('./sportimo_modules/users');
 
 var data_module = require('./sportimo_modules/data-module');
+
+var polls_module = require('./sportimo_modules/polls');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;
