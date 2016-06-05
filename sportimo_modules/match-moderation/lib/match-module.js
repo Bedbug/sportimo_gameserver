@@ -671,10 +671,12 @@ var matchModule = function (match, PubChannel, SubChannel) {
     HookedMatch.Terminate = function () {
         Timers.clear();
         this.data.completed = true;
-         this.data.save(function (err, done) {
+        this.data.save(function (err, done) {
             if (err)
                  log.error(err.message);
-         });
+        });
+        HookedMatch.gamecards.TerminateMatch(this.data);
+
     };
 
     return HookedMatch;

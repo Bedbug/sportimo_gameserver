@@ -1558,6 +1558,57 @@ gamecards.ResolveEvent = function (matchEvent) {
 };
 
 
+// the match has ended, now check all activated cards pending resolution, and force resolve them (terminate them either by winning or losing).
+gamecards.TerminateMatch = function(match, callback) {
+    
+    let itsNow = moment.utc();
+    const gamecardsQuery = {
+        status: 1,
+        //cardType: "Overall",
+        creationTime: { $lt: itsNow },
+        matchid: match.id
+    };
+
+    db.models.userGamecards.find(gamecardsQuery, function (error, mongoGamecards) {
+        if (error) {
+            log.error("Error while resolving event: " + error.message);
+            return callback(error);
+        }
+
+        mongoGamecards.forEach(function (gamecard) {
+            if (gamecards.CheckIfWins(gamecard, true)) {
+                // Send an event through Redis pub/sub:
+                log.info("Detected a winning gamecard: " + gamecard);
+            }
+            else {
+                gamecard.terminationTime = moment.utc().toDate();
+                gamecard.status = 2;
+                gamecard.pointsAwarded = 0;
+                // Send an event through Redis pu/sub:
+                log.info("Detected a losing gamecard: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_lost",
+                        client: gamecard.userid,
+                        room: gamecard.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
+    
+           gamecard.save(function (err) {
+                if (err) {
+                    log.error(err.message);
+                }
+            });
+        });
+    });    
+    
+};
+
+
 
 /************************************
  *           Routes                  *
