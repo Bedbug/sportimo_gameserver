@@ -225,12 +225,12 @@ api.GetCompetitionFixtures = function(req, res)
 
 	if(!req.params.competitionId)
 	    return res.status(400).json({error: "No 'competition' id parameter defined in the request path."});
-
+	    
 	try
 	{
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
     	async.eachSeries(parsers, function(parser, callback) {
-            parser.GetCompetitionFixtures(req.params.competitionId, function(error, fixtures) {
+            parser.GetCompetitionFixtures(req.params.competitionId, !req.params.season ? null : req.params.season, function(error, fixtures) {
                 if (!error)
                 {
                     response.parsers[parser.Name] = { 
@@ -289,6 +289,7 @@ router.post('/standings', api.UpdateAllStandings);
 router.post('/standings/:competitionId', api.UpdateLeagueStandings);
 
 // return the future fixtures for the selected competition (id)
+router.get('/fixtures/:competitionId/:season', api.GetCompetitionFixtures);
 router.get('/fixtures/:competitionId', api.GetCompetitionFixtures);
 
 module.exports = router;

@@ -621,11 +621,11 @@ Parser.UpdateStandings = function(callback)
 };
 
 
-Parser.GetCompetitionFixtures = function(competitionId, outerCallback) {
+Parser.GetCompetitionFixtures = function(competitionId, seasonYear, outerCallback) {
     if (!competitionId)
         return outerCallback(new Error('No competition id parameter is included in the request.'));
         
-    const season = Parser.GetSeasonYear();
+    const season = seasonYear || Parser.GetSeasonYear();
     
     // Get competition from Mongo
     // Get teams from Mongo and build the team lookup dictionary
