@@ -658,8 +658,8 @@ Parser.GetCompetitionFixtures = function(competitionId, seasonYear, outerCallbac
             },
             function(competition, existingTeamIds, callback) {
                 let statsLeagueId = competition.parserids[Parser.Name];
-                
-                Parser.GetLeagueSeasonFixtures(statsLeagueId, season, function(error, fixtures) {
+             
+                Parser.GetLeagueSeasonFixtures(statsLeagueId, competition.season || season, function(error, fixtures) {
                     if (error)
                         return callback(error);
                         
