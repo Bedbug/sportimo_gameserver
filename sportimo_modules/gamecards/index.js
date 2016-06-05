@@ -1022,6 +1022,32 @@ gamecards.Tick = function () {
         log.warn('Gamecards module is not yet connected to Mongo store. Aborting Tick.');
         return;
     }
+    
+    // a helper function that returns match total minutes from current match state and minute
+    let getTotalMatchMinutes = function(state, stateMinute)
+    {
+        switch(state)
+        {
+            case 0:
+                return 0;
+            case 1:
+                return stateMinute > 45 ? 45 : stateMinute;
+            case 2:
+                return 45;
+            case 3:
+                return stateMinute > 45 ? 90 : 45 + stateMinute;
+            case 4:
+                return 90;
+            case 5:
+                return stateMinute > 15 ? 105 : 90 + stateMinute;
+            case 6:
+                return 105;
+            case 7:
+                return stateMinute > 15 ? 120 : 105 + stateMinute;
+            default: 
+                return 120;
+        }
+    }
 
     // Check terminationConditions on overall cards
     // Terminate active instant cards if terminationTime is passed
@@ -1126,6 +1152,7 @@ gamecards.Tick = function () {
                         
                         let event = {
                             stat: 'Minute',
+                            statTotal: getTotalMatchMinutes(match.state, match.time),
                             incr: 1
                         };
     
@@ -1314,9 +1341,17 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
         }
         gamecard.terminationConditions.forEach(function (condition) {
             if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
-                condition.remaining -= event.incr;
-                if (condition.remaining <= 0) {
-                    condition.remaining = 0;
+                if (event.statTotal)
+                {
+                    if (event.statTotal >= condition.remaining)
+                        condition.remaining = 0;
+                }
+                else
+                {
+                    condition.remaining -= event.incr;
+                    if (condition.remaining <= 0) {
+                        condition.remaining = 0;
+                    }
                 }
             }
         });
@@ -1342,8 +1377,12 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
                 }
             }));
         }
+        
+        if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
+            gamecard.contributingEventIds.push(event.id);
 
-       gamecard.save(function (err) {
+
+        gamecard.save(function (err) {
             if (err) {
                 log.error(err.message);
             }
@@ -1423,6 +1462,8 @@ gamecards.ResolveEvent = function (matchEvent) {
                         }
                     }));
                 }
+            if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
+                gamecard.contributingEventIds.push(event.id);
 
             return gamecard.save(cbk);
         }, function (err) {

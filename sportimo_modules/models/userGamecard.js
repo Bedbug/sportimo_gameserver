@@ -61,6 +61,8 @@ else {
         isDoublePoints: { type: Boolean, default: false },
         wonTime: Date,
         status: 0,  // 0: pending activation, 1: active, 2: terminated (dead)
+        // finally an array of event ids that have modified this userGamecard document since its instantiation, useful for modifying its state when an event is updated/removed
+        contributingEventIds: [String]
     });
     
     
