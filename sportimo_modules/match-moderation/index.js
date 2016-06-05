@@ -68,6 +68,11 @@ var ModerationModule = {
         team = this.mongoose.models.team;
         scheduled_matches = this.mongoose.models.scheduled_matches;
         log.info("Connected to MongoDB");
+        
+        // Initialize the gamecards module
+        var gamecards = require('../gamecards');
+        gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
+
     },
     SetupRedis: function (Pub, Sub, Channel) {
 

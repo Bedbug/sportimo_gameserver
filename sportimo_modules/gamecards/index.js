@@ -50,7 +50,7 @@ var tickSchedule = null;
 
 /************************************
  * Perform initialization functions */
-gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChannel, match) {
+gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeChannel) {
     if (!db) {
         db = dbconnection;
         UserGamecard = db.models.userGamecards;
@@ -67,7 +67,7 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
         });
 
         redisSubscribe.on("subscribe", function (channel, count) {
-            console.log("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel");
+            log.info("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel");
         });
 
         redisSubscribe.on("unsubscribe", function (channel, count) {
@@ -88,9 +88,11 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
 
             }
         });
-
-
     }
+};
+ 
+gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChannel, match) {
+    gamecards.connect(dbconnection, redisPublishChannel, redisSubscribeChannel);
 
     if (db == null || UserGamecard == null) {
         log.error("No active database connection found. Aborting.");
@@ -1617,12 +1619,11 @@ gamecards.TerminateMatch = function(match, callback) {
 var app = null;
 
 try {
-    let testServer = require('./../../server');
-    app = testServer.server;
-    //module.exports = this;
+    app = require('./../../server');
+    module.exports = this;
 } catch (ex) {
     // Start server
-    app = module.exports = exports.app = express.Router();
+    app =  module.exports = exports.app = express.Router();
     var port = process.env.PORT || 8081;
     app.listen(port, function () {
         console.log('Express server listening on port %d in %s mode', port, app.get('env'));
