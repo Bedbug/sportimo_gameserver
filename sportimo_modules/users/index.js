@@ -13,6 +13,7 @@ var config = require('./config'), // get our config file
     Message = require('../models/message'), // get our mongoose model
     UserActivities = mongoose.models.useractivities, // get our mongoose model
     Scores = mongoose.models.scores,
+    Achievements = mongoose.models.achievements,
     _ = require('lodash');
 
 var needle = require('needle');
@@ -217,7 +218,25 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
     });
 });
 
+//Get user messages
+apiRoutes.get('/v1/users/update/achievements', function (req, res) {
 
+    Achievements.find({}, function (err, achievs) {
+        _.each(achievs, function (achievement) {
+            User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
+
+            });
+        })
+        if (err) {
+            return res.status(500).send(err);
+        } else {
+            return res.send({ success: true });
+        }
+    })
+
+
+
+});
 
 //Sends message to routers
 apiRoutes.post('/v1/users/messages', function (req, res) {
@@ -351,47 +370,47 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     var stats = {}
-     User.findById(req.params.uid)
-     .select("username level stats")
-     .exec(function(err,result){
-         console.log(err)
-         
-         if(err)
-         return res.status(500).send(err);
-         
-         stats.user = result;
-          Scores.find({ user_id: req.params.uid, score:{$gt:0}})
-        .limit(5)
-        .sort({ lastActive: -1 })
-        // .populate('away_team', 'name logo')
-        .exec(function (err, scores) {
-             console.log(err)
-              if(err)
-             return res.status(500).send(err);
-             
-            stats.lastmatches = _.map(scores, 'score')
+    User.findById(req.params.uid)
+        .select("username level stats achievements")
+        .exec(function (err, result) {
+            console.log(err)
 
-            UserActivities.aggregate({$match:{}},
-                {
-                    $group: {
-                         _id: null,
-                        cardsPlayed: { $sum: "$cardsPlayed" },
-                        cardsWon: { $sum: "$cardsWon" }
-                    }
-                },function(err,result){
-                    if(err)
-                     return res.status(500).send(err);
-                     
-                    stats.all = result[0];
-                    delete stats.all._id;
-                    stats.all.successPercent = (stats.all.cardsWon/ stats.all.cardsPlayed) * 100;
-                    // console.log(result);
-                    
-                    res.status(200).send(stats);
+            if (err)
+                return res.status(500).send(err);
+
+            stats.user = result;
+            Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
+                .limit(5)
+                .sort({ lastActive: -1 })
+                // .populate('away_team', 'name logo')
+                .exec(function (err, scores) {
+                    console.log(err)
+                    if (err)
+                        return res.status(500).send(err);
+
+                    stats.lastmatches = _.map(scores, 'score')
+
+                    UserActivities.aggregate({ $match: {} },
+                        {
+                            $group: {
+                                _id: null,
+                                cardsPlayed: { $sum: "$cardsPlayed" },
+                                cardsWon: { $sum: "$cardsWon" }
+                            }
+                        }, function (err, result) {
+                            if (err)
+                                return res.status(500).send(err);
+
+                            stats.all = result[0];
+                            delete stats.all._id;
+                            stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100;
+                            // console.log(result);
+
+                            res.status(200).send(stats);
+                        });
                 });
-        });
-     })
-   
+        })
+
 });
 
 /* =========================
