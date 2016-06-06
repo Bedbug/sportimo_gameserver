@@ -1098,7 +1098,7 @@ gamecards.Tick = function () {
                         gamecard.status = 2;
                         gamecard.pointsAwarded = 0;
                         // Send an event through Redis pu/sub:
-                        log.info("Detected a losing gamecard: " + gamecard);
+                        log.info("Card lost: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
                             clients: [gamecard.userid],
@@ -1119,7 +1119,7 @@ gamecards.Tick = function () {
             // Find all live match time in minutes, and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
             
             let itsNow = moment.utc();
-            db.models.scheduled_matches.find({ isCompleted: {$ne: true}, start: {$lt: itsNow.toDate()} }, function(error, matches) {
+            db.models.scheduled_matches.find({ completed: {$ne: true}, start: {$lt: itsNow.toDate()} }, function(error, matches) {
                 if (error)
                     return callback(error);
                    
@@ -1135,16 +1135,14 @@ gamecards.Tick = function () {
                 
                 async.each(matches, function(match, cbk) {
                     const gamecardsQuery = {
-                        status: 1,
-                        wonTime: null,
                         cardType: "Overall",
                         creationTime: { $lt: itsNow },
                         matchid: match.id
                     };
     
-                    gamecardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: 'Minute' }, { remaining: { $ne: 0 } }] } };
+                    gamecardsQuery.appearConditions = { $elemMatch: { $and: [{ stat: 'Minute' }, { remaining: { $ne: 0 } }] } };
     
-                    db.models.userGamecards.find(gamecardsQuery, function (innerError, mongoGamecards) {
+                    db.models.gamecardDefinitions.find(gamecardsQuery, function (innerError, mongoGamecards) {
                         if (innerError) {
                             log.error("Error while resolving event: " + innerError.message);
                             return cbk(innerError);
@@ -1156,7 +1154,9 @@ gamecards.Tick = function () {
                             incr: 1
                         };
     
-                        return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
+                        // ToDo: Check for appearance conditions, and set accordingly the visible property
+                        //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
+                        cbk();
                     });
                 }, function(eachError) {
                     if (eachError)
@@ -1230,8 +1230,8 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
                 let id2StatItem = _.find(match.stats, {id: id2});
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     return false;
-                let id1Stat = id1StatItem || 0;
-                let id2Stat = id2StatItem || 0;
+                let id1Stat = id1StatItem[condition.stat] || 0;
+                let id2Stat = id2StatItem[condition.stat] || 0;
                 if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
                     return false;
                 if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
@@ -1356,7 +1356,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
             }
         });
 
-        if (gamecards.CheckIfWins(gamecard, true)) {
+        if (gamecards.CheckIfWins(gamecard, true, matchesStats[gamecard.matchid])) {
             // Send an event through Redis pub/sub:
             log.info("Detected a winning gamecard: " + gamecard);
         }
@@ -1365,7 +1365,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
             gamecard.status = 2;
             gamecard.pointsAwarded = 0;
             // Send an event through Redis pu/sub:
-            log.info("Detected a losing gamecard: " + gamecard);
+            log.info("Card lost: " + gamecard);
             redisPublish.publish("socketServers", JSON.stringify({
                 sockets: true,
                 clients: [gamecard.userid],
@@ -1450,7 +1450,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             }
             else
                 if (gamecards.CheckIfLooses(gamecard, false)) {
-                    log.debug("Detected a losing gamecard: " + gamecard);
+                    log.info("Card lost: " + gamecard);
                     redisPublish.publish("socketServers", JSON.stringify({
                         sockets: true,
                         clients: [gamecard.userid],
@@ -1462,10 +1462,14 @@ gamecards.ResolveEvent = function (matchEvent) {
                         }
                     }));
                 }
-            if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
+            if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) == -1)
                 gamecard.contributingEventIds.push(event.id);
 
-            return gamecard.save(cbk);
+            gamecard.save(function(err) {
+                if (err)
+                    return cbk(err);
+                cbk();
+            });
         }, function (err) {
             if (err)
                 return outerCbk(err);
@@ -1628,7 +1632,7 @@ gamecards.TerminateMatch = function(match, callback) {
                 gamecard.status = 2;
                 gamecard.pointsAwarded = 0;
                 // Send an event through Redis pu/sub:
-                log.info("Detected a losing gamecard: " + gamecard);
+                log.info("Card lost: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
                     sockets: true,
                     clients: [gamecard.userid],
