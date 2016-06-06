@@ -22,6 +22,8 @@ var achievement = new Schema({
     completed: Boolean
 });
 
+var Achievements =  mongoose.model('achievements', achievement);
+
 var UserSchema = new Schema({
     name: {
         type: String
@@ -65,7 +67,13 @@ var UserSchema = new Schema({
 
 UserSchema.pre('save', function (next) {
     var user = this;
-
+    
+    if(this.isNew){
+       Achievements.find({},function(err,achievs){
+            this.achievements = achievs;
+        })
+    }
+    
     if (this.isModified('password') || this.isNew) {
         bcrypt.genSalt(10, function (err, salt) {
             if (err) {
@@ -80,6 +88,12 @@ UserSchema.pre('save', function (next) {
             });
         });
     } else {
+        
+        // Calculate achievements level
+        var total = _.sumBy(user.achievements, 'total');
+        var has = _.sumBy(user.achievements, 'has');
+        user.level = has / total;
+        
         return next();
     }
 });
