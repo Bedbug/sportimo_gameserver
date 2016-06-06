@@ -131,7 +131,32 @@ apiRoutes.post('/v1/users', function (req, res) {
     });
 });
 
+//Route to authenticate a user (POST /v1/users/authenticate)
+apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
 
+    // find the user
+    User.findOne({
+        social_id: req.body.social_id
+    }, function (err, user) {
+
+        if (err) throw err;
+
+        if (!user) {
+            res.json({ success: false, message: 'Authentication failed. User not found.' });
+        } else if (user) {
+            user = user.toObject();
+            var token = jsonwebtoken.sign(user, app.get('superSecret'), {
+                expiresIn: 1440 * 60 // expires in 24 hours
+            });
+            user.token = token;
+            user.success = true;
+            // return the information including token as JSON
+            res.status(200).send(user);
+
+        }
+
+    });
+});
 
 //Route to authenticate a user (POST /v1/users/authenticate)
 apiRoutes.post('/v1/users/authenticate', function (req, res) {
@@ -224,7 +249,6 @@ apiRoutes.get('/v1/users/update/achievements', function (req, res) {
     Achievements.find({}, function (err, achievs) {
         _.each(achievs, function (achievement) {
             User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
-
             });
         })
         if (err) {
