@@ -13,6 +13,7 @@ var config = require('./config'), // get our config file
     Message = require('../models/message'), // get our mongoose model
     UserActivities = mongoose.models.useractivities, // get our mongoose model
     Scores = mongoose.models.scores,
+    Achievements = mongoose.models.achievements,
     _ = require('lodash');
 
 var needle = require('needle');
@@ -130,7 +131,32 @@ apiRoutes.post('/v1/users', function (req, res) {
     });
 });
 
+//Route to authenticate a user (POST /v1/users/authenticate)
+apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
 
+    // find the user
+    User.findOne({
+        social_id: req.body.social_id
+    }, function (err, user) {
+
+        if (err) throw err;
+
+        if (!user) {
+            res.json({ success: false, message: 'Authentication failed. User not found.' });
+        } else if (user) {
+            user = user.toObject();
+            var token = jsonwebtoken.sign(user, app.get('superSecret'), {
+                expiresIn: 1440 * 60 // expires in 24 hours
+            });
+            user.token = token;
+            user.success = true;
+            // return the information including token as JSON
+            res.status(200).send(user);
+
+        }
+
+    });
+});
 
 //Route to authenticate a user (POST /v1/users/authenticate)
 apiRoutes.post('/v1/users/authenticate', function (req, res) {
@@ -217,7 +243,24 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
     });
 });
 
+//Get user messages
+apiRoutes.get('/v1/users/update/achievements', function (req, res) {
 
+    Achievements.find({}, function (err, achievs) {
+        _.each(achievs, function (achievement) {
+            User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
+            });
+        })
+        if (err) {
+            return res.status(500).send(err);
+        } else {
+            return res.send({ success: true });
+        }
+    })
+
+
+
+});
 
 //Sends message to routers
 apiRoutes.post('/v1/users/messages', function (req, res) {
@@ -351,47 +394,47 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     var stats = {}
-     User.findById(req.params.uid)
-     .select("username level stats")
-     .exec(function(err,result){
-         console.log(err)
-         
-         if(err)
-         return res.status(500).send(err);
-         
-         stats.user = result;
-          Scores.find({ user_id: req.params.uid, score:{$gt:0}})
-        .limit(5)
-        .sort({ lastActive: -1 })
-        // .populate('away_team', 'name logo')
-        .exec(function (err, scores) {
-             console.log(err)
-              if(err)
-             return res.status(500).send(err);
-             
-            stats.lastmatches = _.map(scores, 'score')
+    User.findById(req.params.uid)
+        .select("username level stats achievements")
+        .exec(function (err, result) {
+            console.log(err)
 
-            UserActivities.aggregate({$match:{}},
-                {
-                    $group: {
-                         _id: null,
-                        cardsPlayed: { $sum: "$cardsPlayed" },
-                        cardsWon: { $sum: "$cardsWon" }
-                    }
-                },function(err,result){
-                    if(err)
-                     return res.status(500).send(err);
-                     
-                    stats.all = result[0];
-                    delete stats.all._id;
-                    stats.all.successPercent = (stats.all.cardsWon/ stats.all.cardsPlayed) * 100;
-                    // console.log(result);
-                    
-                    res.status(200).send(stats);
+            if (err)
+                return res.status(500).send(err);
+
+            stats.user = result;
+            Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
+                .limit(5)
+                .sort({ lastActive: -1 })
+                // .populate('away_team', 'name logo')
+                .exec(function (err, scores) {
+                    console.log(err)
+                    if (err)
+                        return res.status(500).send(err);
+
+                    stats.lastmatches = _.map(scores, 'score')
+
+                    UserActivities.aggregate({ $match: {} },
+                        {
+                            $group: {
+                                _id: null,
+                                cardsPlayed: { $sum: "$cardsPlayed" },
+                                cardsWon: { $sum: "$cardsWon" }
+                            }
+                        }, function (err, result) {
+                            if (err)
+                                return res.status(500).send(err);
+
+                            stats.all = result[0];
+                            delete stats.all._id;
+                            stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100;
+                            // console.log(result);
+
+                            res.status(200).send(stats);
+                        });
                 });
-        });
-     })
-   
+        })
+
 });
 
 /* =========================
