@@ -71,6 +71,49 @@ api.UpdateTeamStats = function (req, res) {
     }
 };
 
+// POST //function(leagueName, teamId, season, callback)
+api.UpdateTeamStatsFull = function (req, res) {
+	if(!req.params.competitionId)
+		return res.status(400).json({error: "No 'competitionId' id parameter defined in the request path."});
+
+    // UpdateTeams for each supported parser
+    var response = { error: null, parsers: {} };
+    
+	try
+    {
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+    	async.eachSeries(parsers, function(parser, callback) {
+            parser.UpdateTeamStatsFull(req.params.competitionId, req.body.teamid, req.body.season, function(error, result) {
+                if (!error)
+                {
+                    response.parsers[parser.Name] = result;
+    
+                    callback();
+                }
+                else {
+                    winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error)
+            {
+                response.error = error.message;
+                return res.status(500).json(response);
+            }
+            else
+                return res.status(200).json(response);
+        });
+    }
+    catch(error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+    }
+};
+
 // POST
 api.UpdateAllTeams = function (req, res) {
 	if(!req.params.competitionId)
@@ -326,6 +369,8 @@ router.post('/:competitionId/teams', api.UpdateAllTeams);
 // update team stats
 router.post('/teamstats/:competitionId/update', api.UpdateTeamStats);
 
+// update team stats full
+router.post('/teamstats/:competitionId/update/full', api.UpdateTeamStatsFull);
 
 // update all player career stats for all players in teamId
 router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);

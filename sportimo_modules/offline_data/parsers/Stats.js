@@ -78,6 +78,27 @@ Parser.GetSeasonYear = function () {
     else return now.getFullYear() - 1;
 };
 
+// Helper method to retrieve a team based on the parser id
+Parser.FindMongoTeamId = function (parserid, select, callback) {
+    var q = mongoDb.teams.findOne({ "parserids.Stats": parserid });
+
+    if (select)
+        q.select(select);
+
+    q.exec(function (err, team) {
+        if (err)
+            return callback(err);
+
+        if (!team)
+            return callback('No team found in database with this Id');
+
+        if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
+            return callback('Data are current. No need to update them yet.');
+
+        return callback(null, team);
+    });
+}
+
 // Stats.com Endpoint invocation Methods
 
 // Get team stats. Always return the season stats.
@@ -95,13 +116,11 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
             var teamStats = TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
-            console.log(teamId);
+
             return mongoDb.teams.findOne({ "parserids.Stats": teamId }, function (err, team) {
-                console.log(team);
                 if (team) {
                     team.stats = teamStats;
                     team.save(function (err, result) {
-                        console.log(result);
                         return callback(null, teamStats);
                     });
                 } else
@@ -114,6 +133,230 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
             return callback(err);
         }
     });
+};
+
+// Get team stats. Always return the season stats.
+Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback) {
+
+    season = season || Parser.GetSeasonYear();
+
+    //soccer/epl/stats/players/345879?enc=true&
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+
+    // API Endpoint for season stats
+    const stats_url = configuration.urlPrefix + leagueName + "/stats/teams/" + teamId + "?accept=json&season=" + season + "&" + signature;
+    // API Endpoint for standing
+    const standings_url = configuration.urlPrefix + leagueName + "/standings/teams/" + teamId + "?accept=json&season=" + season + "&" + signature;
+    // API Endpoint for schedule
+    const schedule_url = configuration.urlPrefix + leagueName + "/scores/teams/" + teamId + "?linescore=true&accept=json&" + signature;
+    // AP Endpoint for team events
+    const events_url = configuration.urlPrefix + leagueName + "/stats/teams/" + teamId + "/events/?accept=json&season=" + season + "&" + signature;
+    // API Endpoint for top scorer
+    const scorer_url = configuration.urlPrefix + leagueName + "/leaders/?teamId=" + teamId + "&accept=json&" + signature;
+
+    async.waterfall(
+        [
+            function (callback) {
+                Parser.FindMongoTeamId(teamId, false, callback);
+            },
+
+            // First let's update the stats for use in the client gamecard infos
+            function (team, callback) {
+                needle.get(stats_url, { timeout: 50000 }, function (error, response) {
+                    if (error)
+                        return callback(error, team);
+                    // try {
+
+                        if (response.statusCode == 404)
+                            return callback(null, team);
+
+                        var teamStats = TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
+                        team.stats = teamStats;
+
+                        callback(null, team);
+                    // }
+
+                    // catch (err) {
+                    //     return callback(err.errosta, team);
+                    // }
+                });
+            },
+
+            // Secondly let's get the team standing in it's main league
+            function (team, callback) {
+                needle.get(standings_url, { timeout: 50000 }, function (error, response) {
+                    if (error)
+                        return callback(error, team);
+                    // try {
+                        if (response.statusCode == 404)
+                            return callback(null, team);
+
+                        var teamStanding = response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
+                        team.standing = {
+                            "rank": teamStanding.league.rank,
+                            "teamName": team.name,
+                            "teamId": team._id.toString(),
+                            "points": teamStanding.teamPoints,
+                            "pointsPerGame": teamStanding.teamPointsPerGame,
+                            "penaltyPoints": teamStanding.penaltyPoints,
+                            "wins": teamStanding.record.wins,
+                            "losses": teamStanding.record.losses,
+                            "ties": teamStanding.record.ties,
+                            "gamesPlayed": teamStanding.record.gamesPlayed,
+                            "goalsFor": teamStanding.goalsFor.overall,
+                            "goalsAgainst": teamStanding.goalsAgainst.overall
+                        }
+
+                        callback(null, team);
+                    // }
+                    // catch (err) {
+                    //     return callback(err, team);
+                    // }
+                });
+            },
+
+            // Now let's do the difficult stuff and get the schedule
+            function (team, callback) {
+                needle.get(schedule_url, { timeout: 50000 }, function (error, response) {
+                    if (error)
+                        return callback(error, team);
+                    // try {
+                        if (response.statusCode == 404){
+                            team.nextmatch = null;
+                            return callback(null, team);
+                        }
+                      
+                        var nextMatch = response.body.apiResults[0].league.season.eventType[0].events[0];
+
+                        team.nextmatch = {
+                            "home": "",
+                            "away": "",
+                            "eventdate": nextMatch.startDate[1].full,
+                            "homescore": 0,
+                            "awayscore": 0
+                        }
+
+                        Parser.FindMongoTeamId(nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
+                            if (!err)
+                                team.nextmatch.home = home_team ? home_team : {name:{en:nextMatch.teams[0].displayName }};
+
+                            Parser.FindMongoTeamId(nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
+                                if (!err)
+                                    team.nextmatch.away = away_team ? away_team :  {name:{en:nextMatch.teams[1].displayName }};
+
+                                callback(null, team);
+                            })
+                        })
+                    // }
+                    // catch (err) {
+                    //     return callback(err, team);
+                    // }
+                });
+            },
+
+            // It's time to go for the last match entry and recent form
+            function (team, callback) {
+                return needle.get(events_url, { timeout: 50000 }, function (error, response) {
+                    if (error)
+                        return callback(error, team);
+                    // try {
+                        if (response.statusCode == 404)
+                            return callback(null, team);
+
+                        var lastFiveEvents = _.takeRight(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].events, 5);
+                        var lastEvent = _.takeRight(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].events)[0];
+
+                        team.recentform = _.map(lastFiveEvents, function (o) {
+                            return o.outcome.name;
+                        })
+
+                        // Now let's retrieve the last match data
+                        team.lastmatch = {
+                            "home": "",
+                            "away": "",
+                            "eventdate": lastEvent.startDate[1].full,
+                            "homescore": 0,
+                            "awayscore": 0
+                        }
+
+                        Parser.FindMongoTeamId(lastEvent.opponentTeam.teamId, 'name logo', function (err, opponent_team) {
+                            if (!opponent_team)
+                                opponent_team = {
+                                    _id: "",
+                                    name: { en: lastEvent.opponentTeam.displayName }
+                                };
+
+                            if (lastEvent.team.teamLocationType.name == 'away') {
+                                team.lastmatch.away = _.pick(team,['_id','name','logo']);
+                                team.lastmatch.awayscore = lastEvent.outcome.teamScore;
+                                team.lastmatch.home =  opponent_team;
+                                team.lastmatch.homescore = lastEvent.outcome.opponentTeamScore;
+                            } else {
+
+                                team.lastmatch.home = _.pick(team,['_id','name','logo']);
+                                team.lastmatch.homescore = lastEvent.outcome.teamScore;
+                                team.lastmatch.away =  opponent_team;
+                                team.lastmatch.awayscore = lastEvent.outcome.opponentTeamScore;
+                            }
+                            return callback(null, team);
+                        })
+                    // }
+                    // catch (err) {
+                    //     return callback(err, team);
+                    // }
+                });
+            },
+
+            // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
+            function (team, callback) {
+                needle.get(scorer_url, { timeout: 50000 }, function (error, response) {
+                    if (error)
+                        return callback(error);
+                    // try {
+                        if (response.statusCode == 404)
+                            return callback(null, team);
+
+
+                        var scorerParserId = response.body.apiResults[0].league.seasons[0].eventType[0].leaderCategory[0].ranking[0].player.playerId;
+
+
+                        var q = mongoDb.players.findOne({ "parserids.Stats": scorerParserId });
+
+                        q.select('_id');
+
+                        q.exec(function (err, player) {
+                            if (err)
+                                return callback(err, team);
+
+                            if (!player)
+                                return callback('No player found in database with this Id', team);
+
+                            team.topscorer = player._id.toString();
+
+                            return callback(null, team);
+                        });
+                    // }
+                    // catch (err) {
+                    //     return callback(err, team);
+                    // }
+                });
+            }],
+
+        function (err, team) {
+
+            if (err)
+                return outerCallback(err);
+
+            team.save(function (err, result) {
+                if (err)
+                    return outerCallback(err);
+                return outerCallback(null, result);
+            });
+        }
+
+    )
+
+
 };
 
 // Get player stats. If season is null, then return the career stats, else the stats for the given season.
