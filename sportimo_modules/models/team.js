@@ -25,7 +25,8 @@ else {
         logo: { type: String },
         color: { type: String },
         stats: { type: Schema.Types.Mixed },
-        parserids: {  type: Schema.Types.Mixed },
+        parserids: { type: Schema.Types.Mixed },
+        leagueids: { type: Schema.Types.Mixed },
         competitionid: { type: String, ref: 'competitions' },
         recentform: [String], // an array of String of type "W","L","D"
         nextmatch: Schema.Types.Mixed,
