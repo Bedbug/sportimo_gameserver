@@ -57,7 +57,18 @@ api.teamFull = function (req, res) {
 		 
 	}); 
 };
-
+api.teamFavoriteData = function (req, res) {
+	var id = req.params.id;
+	return team.teamFavoriteData(id,function(err,data){
+		
+		if (err) {
+			return res.status(404).json(err);
+		} else {
+			res.status(200).json(data);
+		}
+		 
+	}); 
+};
 // PUT
 api.editTeam = function (req, res) {
 	var id = req.params.id;
@@ -115,6 +126,9 @@ router.route('/v1/data/teams/:id')
 
 router.route('/v1/data/teams/:id/full')
 .get(api.teamFull);
+
+router.route('/v1/data/teams/:id/favorite')
+.get(api.teamFavoriteData);
 
 router.route('/v1/data/teams')
 .get(api.teams);

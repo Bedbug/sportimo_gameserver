@@ -8,6 +8,7 @@ var async = require('async');
 var _ = require('lodash');
 var mongoose = require('../config/db.js');
 var objectId = mongoose.mongoose.Schema.ObjectId;
+var moment = require('moment');
 
 
 // Settings for the development environment
@@ -92,9 +93,6 @@ Parser.FindMongoTeamId = function (parserid, select, callback) {
         if (!team)
             return callback('No team found in database with this Id');
 
-        if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
-            return callback('Data are current. No need to update them yet.');
-
         return callback(null, team);
     });
 }
@@ -162,11 +160,15 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // First let's update the stats for use in the client gamecard infos
             function (team, callback) {
+
+
+             if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
+                return outerCallback('Data are current. No need to update them yet.', team);
+
                 needle.get(stats_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error, team);
-                    // try {
-
+                    try {
                         if (response.statusCode == 404)
                             return callback(null, team);
 
@@ -174,11 +176,10 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         team.stats = teamStats;
 
                         callback(null, team);
-                    // }
-
-                    // catch (err) {
-                    //     return callback(err.errosta, team);
-                    // }
+                    }
+                    catch (err) {
+                        return callback(err.errosta, team);
+                    }
                 });
             },
 
@@ -187,7 +188,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                 needle.get(standings_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error, team);
-                    // try {
+                    try {
                         if (response.statusCode == 404)
                             return callback(null, team);
 
@@ -208,10 +209,10 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         }
 
                         callback(null, team);
-                    // }
-                    // catch (err) {
-                    //     return callback(err, team);
-                    // }
+                    }
+                    catch (err) {
+                        return callback(err, team);
+                    }
                 });
             },
 
@@ -220,9 +221,11 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                 needle.get(schedule_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error, team);
-                    // try {
+                    try {
                         if (response.statusCode == 404){
-                            team.nextmatch = null;
+                            team.nextmatch = {
+                                 "eventdate": moment().utc().add(1,'d').format(),
+                            };
                             return callback(null, team);
                         }
                       
@@ -247,10 +250,10 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 callback(null, team);
                             })
                         })
-                    // }
-                    // catch (err) {
-                    //     return callback(err, team);
-                    // }
+                    }
+                    catch (err) {
+                        return callback(err, team);
+                    }
                 });
             },
 
@@ -259,7 +262,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                 return needle.get(events_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error, team);
-                    // try {
+                    try {
                         if (response.statusCode == 404)
                             return callback(null, team);
 
@@ -300,10 +303,10 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             }
                             return callback(null, team);
                         })
-                    // }
-                    // catch (err) {
-                    //     return callback(err, team);
-                    // }
+                    }
+                    catch (err) {
+                        return callback(err, team);
+                    }
                 });
             },
 
@@ -312,7 +315,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                 needle.get(scorer_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error);
-                    // try {
+                    try {
                         if (response.statusCode == 404)
                             return callback(null, team);
 
@@ -322,7 +325,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
                         var q = mongoDb.players.findOne({ "parserids.Stats": scorerParserId });
 
-                        q.select('_id');
+                        q.select('name uniformNumber pic stats');
 
                         q.exec(function (err, player) {
                             if (err)
@@ -331,18 +334,19 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             if (!player)
                                 return callback('No player found in database with this Id', team);
 
-                            team.topscorer = player._id.toString();
 
-                            return callback(null, team);
+                            team.topscorer = player._id;
+
+                            return callback(null, team, player);
                         });
-                    // }
-                    // catch (err) {
-                    //     return callback(err, team);
-                    // }
+                    }
+                    catch (err) {
+                        return callback(err, team);
+                    }
                 });
             }],
 
-        function (err, team) {
+        function (err, team, player) {
 
             if (err)
                 return outerCallback(err);
@@ -350,6 +354,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             team.save(function (err, result) {
                 if (err)
                     return outerCallback(err);
+                    result.topscorer = player; 
                 return outerCallback(null, result);
             });
         }

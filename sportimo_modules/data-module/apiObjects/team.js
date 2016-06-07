@@ -2,7 +2,7 @@
 var mongoose = require('mongoose'),
   Team = mongoose.models.teams,
   api = {},
-  l = require('../config/lib');
+  Stats_parser = require.main.require('./sportimo_modules/offline_data/parsers/Stats');
 
 
 
@@ -58,18 +58,38 @@ api.getTeamFull = function (id, cb) {
     q.exec(function (err, players) {
       if (team && players)
         team.players = players;
-      
+
       console.log("-------------------------------------------");
-		console.log(team);
-		console.log("-------------------------------------------");
+      console.log(team);
+      console.log("-------------------------------------------");
       cbf(cb, err, team);
     });
+  });
+};
 
+api.teamFavoriteData = function (id, cb) {
 
+  var q = Team.findById(id);
 
+  q.populate('nextmatch.home_team', 'name logo');
+  q.populate('nextmatch.away_team', 'name logo');
+  q.populate('lastmatch.home_team', 'name logo');
+  q.populate('lastmatch.away_team', 'name logo');
+  q.populate('competitionid', 'name parserids');
+  q.populate('topscorer', 'name uniformNumber pic stats')
+
+  q.exec(function (err, team) {
+
+    if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
+      Stats_parser.UpdateTeamStatsFull(team.leagueids[0] || team.competitionid.parserids.Stats, team.parserids.Stats, null, function (error, response) {
+        cbf(cb, error, response);
+      })
+    } else
+      cbf(cb, err, team);
   });
 
 };
+
 
 // POST
 api.addTeam = function (team, cb) {
