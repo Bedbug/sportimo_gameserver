@@ -360,10 +360,10 @@ var matchModule = function (match, PubChannel, SubChannel) {
             data: {
                 id: null,
                 sender: null,
-                matchid: HookedMatch.id,
+                match_id: HookedMatch.id,
                 team: null,
                 players: null,
-                segment: 1,
+                stats: { Segment: 1 },
                 state: HookedMatch.data.state,
                 timeline_event: false
             }

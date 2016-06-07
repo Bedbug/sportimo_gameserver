@@ -1210,14 +1210,18 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
         let condition = conditions[i];
         let target = condition.target || 0;
         
+        let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
         if (isCardTermination == false)
         {
             if (condition.conditionNegation == true || condition.remaining > target)
                 return false;
+                
+            // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
+            if (isConditionComparative)
+                return false;
         }
         else
         {
-            let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
             if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
                 return false;
             if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
