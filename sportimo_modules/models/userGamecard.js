@@ -44,7 +44,6 @@ else {
         segment: Number,
         activationLatency: Number,
         duration: Number,
-        appearConditions: [condition],
         winConditions: [condition],
         terminationConditions: [condition],
         pointsPerMinute: Number,

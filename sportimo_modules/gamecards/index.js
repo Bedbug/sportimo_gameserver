@@ -56,7 +56,8 @@ gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeCh
         UserGamecard = db.models.userGamecards;
     }
 
-    if (!redisPublish)
+    //if (!redisPublish)
+    // Enforce re-registering the redisPublish object, to ensure proper initialization
         redisPublish = redisPublishChannel;
 
     if (!redisSubscribe) {
@@ -343,8 +344,8 @@ gamecards.upsertDefinition = function (gamecard, callback) {
         if (gamecards.validateDefinition(gamecard) == false)
             return callback(new Error('bad request: validation error in request body'));
 
-        if (gamecard._id) {
-            processedDefinition = db.models.gamecardDefinitions.findById(gamecard._id);
+        if (gamecard.id) {
+            processedDefinition = db.models.gamecardDefinitions.findById(gamecard.id);
             processedDefinition.title = gamecard.title;
             processedDefinition.image = gamecard.image;
             processedDefinition.text = gamecard.text;
@@ -410,16 +411,6 @@ gamecards.validateDefinition = function (gamecardDefinition) {
         return false;
     if (gamecardDefinition.wonTime)
         return false;
-    // if (!gamecardDefinition.winConditions || gamecardDefinition.winConditions.length == 0)
-    //     return false;
-    // if (gamecardDefinition.startPoints < gamecardDefinition.endPoints)
-    //     return false;
-    // if (gamecardDefinition.maxUserInstances && gamecardDefinition.maxUserInstances <= 0)
-    //     return false;
-    // if (!gamecardDefinition.duration)
-    //     return false;
-    // if (gamecardDefinition.activationLatency && gamecardDefinition.activationLatency < 0)
-    //     return false;
 
     return true;
 };
@@ -787,7 +778,6 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 segment: gamecard.segment,
                 duration: gamecardDefinition.duration || null,
                 activationLatency: gamecardDefinition.activationLatency || null,
-                appearConditions: gamecardDefinition.appearConditions,
                 winConditions: gamecardDefinition.winConditions,
                 terminationConditions: gamecardDefinition.terminationConditions,
                 pointsPerMinute: gamecardDefinition.pointsPerMinute || 0,
@@ -1244,18 +1234,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
                     return false;
             }
         }
-        
-        
-        // if (isCardTermination == false && (condition.conditionNegation == true || condition.remaining > target)) {
-        //     return false;
-        // }
-        // if (isCardTermination == true && condition.remaining <= target && condition.conditionNegation == true) {
-        //     return false;
-        // }
-        // if (isCardTermination == true && condition.remaining > target && condition.conditionNegation == false) {
-        //     return false;
-        // }
-    }
+   }
     gamecard.status = 2; // terminated
     if (!gamecard.terminationTime)
         gamecard.terminationTime = itsNow.toDate();
@@ -1332,13 +1311,7 @@ gamecards.CheckIfLooses = function (gamecard, isCardTermination) {
 
 
 
-gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches, cbk) {
-    let matchesStats = {};
-    _.forEach(matches, function(match) {
-        if (!matchesStats[match.id])
-            matchesStats[match.id] = match;
-    });
-    
+gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, cbk) {
     mongoGamecards.forEach(function (gamecard) {
         if (gamecard.status != 1) {
             return cbk();
@@ -1360,7 +1333,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
             }
         });
 
-        if (gamecards.CheckIfWins(gamecard, true, matchesStats[gamecard.matchid])) {
+        if (gamecards.CheckIfWins(gamecard, true, match)) {
             // Send an event through Redis pub/sub:
             log.info("Detected a winning gamecard: " + gamecard);
         }
@@ -1397,6 +1370,113 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, matches,
 };
 
 
+// Resolve an incoming event against all gamecard definitions appearConditions, and make any matching definitions visible / hidden
+gamecards.GamecardsAppearanceHandle = function(event, match)
+{
+    const CheckAppearConditions = function(gamecard, match)
+    {
+        let conditions = gamecard.appearConditions;
+        const isCardTermination = false;
+        
+        // All appearConditions have to be met to win the card
+        for (let i = 0; i < conditions.length; i++) {
+            let condition = conditions[i];
+            let target = condition.target || 0;
+            
+            let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
+            if (isCardTermination == false)
+            {
+                if (condition.conditionNegation == true || condition.remaining > target)
+                    return false;
+                    
+                // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
+                if (isConditionComparative)
+                    return false;
+            }
+            else
+            {
+                if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
+                    return false;
+                if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
+                    return false;
+                if (isConditionComparative && match ) {
+                    
+                    let id1 = condition.playerid || condition.teamid;
+                    let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
+                    let id1StatItem = _.find(match.stats, {id: id1});
+                    let id2StatItem = _.find(match.stats, {id: id2});
+                    if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
+                        return false;
+                    let id1Stat = id1StatItem[condition.stat] || 0;
+                    let id2Stat = id2StatItem[condition.stat] || 0;
+                    if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
+                        return false;
+                    if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
+                        return false;
+                    if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+                        return false;
+                }
+            }
+        }
+        
+        return true;
+    };
+
+    const itsNow = moment.utc();
+
+    const gamecardsQuery = {
+        isVisible: true,
+        //creationTime: { $lt: event.time || itsNow },
+        matchid: event.matchid
+    };
+
+    const orPlayerQuery = [{ playerid: null }];
+    if (event.playerid != null) {
+        orPlayerQuery.push({ playerid: event.playerid });
+    }
+
+    const orTeamQuery = [{ teamid: null }];
+    if (event.teamid != null) {
+        orTeamQuery.push({ teamid: event.teamid });
+    }
+
+    gamecardsQuery.appearConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+    db.models.gamecardDefinitions.find(gamecardsQuery, function (error, mongoGamecards) {
+        if (error) {
+            log.error("Error while resolving event: " + error.message);
+            return error;
+        }
+
+        async.each(mongoGamecards, function (gamecard, cbk) {
+            gamecard.appearConditions.forEach(function (condition) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
+                    condition.remaining -= event.incr;
+                    if (condition.remaining <= 0) {
+                        condition.remaining = 0;
+                    }
+                }
+            });
+            if (CheckAppearConditions(gamecard, match)) {
+                gamecard.markModified('appearConditions');
+                // switch the current visibility state
+                gamecard.isVisible = !gamecard.isVisible;
+                gamecard.save(function(err) {
+                    if (err)
+                        return cbk(err);
+                    cbk();
+                });
+            }
+        }, function (err) {
+            if (err)
+                return err;
+
+            return;
+        });
+
+    });
+};
+
+
 // Resolve an incoming match event and see if some matching wildcards win
 gamecards.ResolveEvent = function (matchEvent) {
 
@@ -1423,7 +1503,6 @@ gamecards.ResolveEvent = function (matchEvent) {
     };
 
     const gamecardsWinHandle = function (mongoGamecards, event, outerCbk) {
-        //mongoGamecards.forEach(function (gamecard) {
         async.each(mongoGamecards, function (gamecard, cbk) {
             if (gamecard.status != 1) {
                 async.setImmediate(function () {
@@ -1493,7 +1572,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             const gamecardsQuery = {
                 status: 1,
                 creationTime: { $lt: event.time || itsNow },
-                matchid: event.matchid,
+                matchid: event.matchid
             };
             //const statLogic = [{ stat: event.stat, conditionNegation: false }, { stat: { $ne: event.stat }, conditionNegation: true }];
 
@@ -1565,21 +1644,14 @@ gamecards.ResolveEvent = function (matchEvent) {
                                 return !(gamecard.wonTime && gamecard.status == 2);
                             });
                             
-                            let matchIdsInGamecards = {};
-                            _.forEach(finalGamecards, function(gamecard) {
-                                if (!matchIdsInGamecards[gamecard.matchid])
-                                    matchIdsInGamecards[gamecard.matchid] = true;
-                            });
-                            
-                            let matchIds = _.keys(matchIdsInGamecards);
-                            let matchObjectIds = _.map(matchIds, function(matchId) {
-                                return db.Types.ObjectId(matchId);
-                            });
-                            db.models.scheduled_matches.find({_id: {$in: matchObjectIds}}, function(innerError, matches) {
-                                if (error)
-                                    return callback(error);
+                            db.models.scheduled_matches.findById(event.matchid, function(innerError, match) {
+                                if (innerError)
+                                    return callback(innerError);
                                     
-                                return gamecards.GamecardsTerminationHandle(finalGamecards, event, matches, callback);
+                                // Fire and forget 
+                                gamecards.GamecardsAppearanceHandle(event, match);
+                                
+                                return gamecards.GamecardsTerminationHandle(finalGamecards, event, match, callback);
                             });
  
                             
@@ -1606,6 +1678,26 @@ gamecards.ResolveEvent = function (matchEvent) {
     });
 
 
+};
+
+
+
+// Take back an event, find all affected user gamecards (both active and resolved), reset any winning/losing property and re-resolve them against all match events from their creation time and on.
+// In progress.
+gamecards.RollbackEvent = function(matchId, eventId, outerCallback) {
+// find match and eventId in its timeline
+    db.models.scheduled_matches.findById(matchId, function(matchError, match) {
+        if (matchError)
+            return outerCallback(matchError);
+            
+        if (!match || !match.timeline || _.indexOf(match.timeline.id, eventId) == -1)
+            return outerCallback(null);
+        
+        let event = _.find(match.timeline, {'events._id': db.types.ObjectId(eventId)} );
+        
+    });
+    
+    
 };
 
 
