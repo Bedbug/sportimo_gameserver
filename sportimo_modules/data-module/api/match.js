@@ -95,9 +95,10 @@ var TranslateUserGamecard = function (userGamecard) {
         title: userGamecard.title,
         image: userGamecard.image,
         text: userGamecard.text,
+        primaryStatistic: userGamecard.primaryStatistic,
         cardType: userGamecard.cardType,
         isDoublePoints: userGamecard.isDoublePoints,
-         isDoubleTime: userGamecard.isDoubleTime,
+        isDoubleTime: userGamecard.isDoubleTime,
         status: userGamecard.status
     };
 

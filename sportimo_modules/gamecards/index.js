@@ -289,6 +289,7 @@ gamecards.addMatchDefinition = function (gamecard, callback) {
         text: gamecard.text,
         title: gamecard.title,
         image: gamecard.image,
+        primaryStatistic: gamecard.primaryStatistic,
         activationTime: gamecard.activationTime,
         duration: gamecard.duration,
         appearConditions: gamecard.appearConditions,
@@ -349,6 +350,7 @@ gamecards.upsertDefinition = function (gamecard, callback) {
             processedDefinition.title = gamecard.title;
             processedDefinition.image = gamecard.image;
             processedDefinition.text = gamecard.text;
+            processedDefinition.primaryStatistic = gamecard.primaryStatistic;
             processedDefinition.activationTime = gamecard.activationTime;
             processedDefinition.duration = gamecard.duration;
             processedDefinition.appearConditions = gamecard.appearConditions;
@@ -372,6 +374,7 @@ gamecards.upsertDefinition = function (gamecard, callback) {
                 text: gamecard.text,
                 title: gamecard.title,
                 image: gamecard.image,
+                primaryStatistic: gamecard.primaryStatistic,
                 activationTime: gamecard.activationTime,
                 duration: gamecard.duration,
                 appearConditions: gamecard.appearConditions,
@@ -446,6 +449,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         text: template.text,
         title: template.title,
         image: template.image,
+        primaryStatistic: template.primaryStatistic,
         activationTime: activationTime.toDate(),
         terminationTime: terminationTime ? terminationTime.toDate() : null,
         duration: template.duration,
@@ -774,6 +778,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 matchid: gamecard.matchid,
                 title: gamecardDefinition.title,
                 image: gamecardDefinition.image,
+                primaryStatistic: gamecardDefinition.primaryStatistic,
                 minute: gamecard.minute,
                 segment: gamecard.segment,
                 duration: gamecardDefinition.duration || null,
@@ -949,6 +954,7 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         title: userGamecard.title,
         image: userGamecard.image,
         text: userGamecard.text,
+        primaryStatistic: userGamecard.primaryStatistic,
         cardType: userGamecard.cardType,
         isDoubleTime: userGamecard.isDoubleTime,
         isDoublePoints: userGamecard.isDoublePoints,

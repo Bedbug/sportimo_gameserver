@@ -32,6 +32,7 @@ else {
         title: Schema.Types.Mixed, // card title
         image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
+        primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
         // Trigger specifications
         activationLatency: Number, // seconds between the wildcard's creation and activation
         duration: Number,   // seconds between the wildcard's activation and termination
