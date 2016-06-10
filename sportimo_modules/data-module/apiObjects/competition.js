@@ -54,7 +54,8 @@ api.addCompetition = function (competition,cb) {
 api.editCompetition = function (id,updateData, cb) {
   Competition.findByIdAndUpdate(id, updateData, function (err, competition) {
    
-    return Matches.update({ competition: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
+   
+    return Matches.update({ competition: id }, updateData,function(err,data){
         if(!err)
          Standings.update({ competitionid: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
              if(!err)
