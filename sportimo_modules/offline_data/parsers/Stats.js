@@ -7,9 +7,9 @@ var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
 var mongoose = require('../config/db.js');
+var log = require('winston');
 var objectId = mongoose.mongoose.Schema.ObjectId;
 var moment = require('moment');
-
 
 // Settings for the development environment
 var mongoDb = mongoose.mongoose.models;
@@ -67,6 +67,7 @@ var Parser = function () {
 
 Parser.Configuration = configuration;
 Parser.Name = configuration.parserIdName;
+Parser.methodSchedules = {};
 
 
 // Helper Methods
@@ -97,6 +98,14 @@ Parser.FindMongoTeamId = function (parserid, select, callback) {
     });
 }
 
+Parser.FindMongoTeamsInCompetition = function (competitionId, callback) {
+    mongoDb.teams.find({competitionid: competitionId, parserids: {$ne: null}}, function(error, teams) {
+        if (error)
+            return callback(error);
+        callback(null, teams);
+    });
+};
+
 // Stats.com Endpoint invocation Methods
 
 // Get team stats. Always return the season stats.
@@ -116,14 +125,21 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
             var teamStats = TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
 
             return mongoDb.teams.findOne({ "parserids.Stats": teamId }, function (err, team) {
+                if (err)
+                    return callback(err);
+                    
                 if (team) {
                     team.stats = teamStats;
+                    team.markModified('stats');
                     team.save(function (err, result) {
+                        if (err)
+                            return callback(err);
+                            
                         return callback(null, teamStats);
                     });
                 } else
                     return callback(null, teamStats);
-            })
+            });
 
         }
 
@@ -493,6 +509,72 @@ Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
 
 
 // Parser methods that other modules may call:
+
+Parser.UpdateCompetitionTeamsStats = function(competitionId, season, callback)
+{
+    mongoDb.competitions.findById(competitionId, function(competitionError, competition) {
+        if (competitionError)
+            return callback(competitionError);
+            
+        if (!competition.parserids || !competition.parserids[Parser.Name])   
+            return callback(new Error('No proper parserids found in selected competition with id ' + competitionId));
+            
+        Parser.FindMongoTeamsInCompetition(competitionId, function(error, teams) {
+            if (error)
+                return callback(error);
+                
+            async.eachSeries(teams, function(team, cbk) {
+                setTimeout(
+                    Parser.UpdateTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], season, function(teamError, updateOutcome) {
+                        if (teamError)
+                            log.error(teamError.message);
+                        cbk(null);
+                    })
+                , 1000);
+            }, function(seriesErr) {
+                if (seriesErr)
+                    log.error(seriesErr.message);
+                    
+                callback(null);
+            });
+        });        
+    });
+
+};
+
+Parser.GetCompetitionTeamsStatsSchedule = function(competitionId, callback)
+{
+    return callback(null, Parser.methodSchedules['UpdateCompetitionTeamsStats']);
+};
+
+Parser.CreateCompetitionTeamsStatsSchedule = function(competitionId, season, schedulePattern, callback)
+{
+    if (Parser.methodSchedules['UpdateCompetitionTeamsStats'])
+    {
+        log.info('Deleting existing UpdateCompetitionTeamsStats schedule to replace it with a new one');
+        Parser.methodSchedules['UpdateCompetitionTeamsStats'].cancel();
+    }
+    
+    log.info('Scheduling UpdateCompetitionTeamsStats for season %s with the pattern %s', season, schedulePattern);
+    Parser.methodSchedules['UpdateCompetitionTeamsStats'] = scheduler.scheduleJob(schedulePattern, function(){
+        log.info('scheduled job is running');
+        // Parser.UpdateCompetitionTeamsStats(competitionId, season, function(error, data) {
+        //     if (error)
+        //         log.error(error.message);
+        // });
+    });
+    callback(null, Parser.methodSchedules['UpdateCompetitionTeamsStats']);
+};
+
+Parser.DeleteCompetitionTeamsStatsSchedule = function(competitionId, season, schedulePattern, callback)
+{
+    if (Parser.methodSchedules['UpdateCompetitionTeamsStats'])
+    {
+        log.info('Deleting existing UpdateCompetitionTeamsStats schedule');
+        Parser.methodSchedules['UpdateCompetitionTeamsStats'].cancel();
+    }
+    callback(null);
+};
 
 Parser.UpdateTeams = function (competitionId, callback) {
     mongoDb.competitions.findById(competitionId, function (err, competition) {

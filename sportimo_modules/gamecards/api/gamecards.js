@@ -184,4 +184,4 @@ module.exports = function (gamecardModule) {
 
 
     return router;
-}
+};

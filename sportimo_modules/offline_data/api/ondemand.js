@@ -3,7 +3,7 @@ var express = require('express'),
     path = require("path"),
     fs = require("fs"),
     async = require('async'),
-    winston = require('winston');
+    log = require('winston');
 
 
 var parsers = {};
@@ -28,7 +28,6 @@ var api = {};
 // Define api actions:
 
 
-// POST //function(leagueName, teamId, season, callback)
 api.UpdateTeamStats = function (req, res) {
     if (!req.params.competitionId)
         return res.status(400).json({ error: "No 'competitionId' id parameter defined in the request path." });
@@ -39,14 +38,14 @@ api.UpdateTeamStats = function (req, res) {
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateTeamStats(req.params.competitionId, req.body.teamid, req.body.season, function (error, result) {
+            parser.UpdateCompetitionTeamsStats(req.params.competitionId, req.body.season, function (error, result) {
                 if (!error) {
                     response.parsers[parser.Name] = result;
 
                     callback();
                 }
                 else {
-                    winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -66,6 +65,90 @@ api.UpdateTeamStats = function (req, res) {
         response.error = error.message;
         return res.status(500).json(response);
     }
+};
+
+// POST //function(competitionId, season, schedulePattern, callback)
+api.UpdateAllTeamsAddSchedule = function(req, res) {
+    if (!req.params.competitionId)  
+        return res.status(400).json({ error: "No 'competitionId' id parameter defined in the request path." });
+    if (!req.body || !req.body.season)  
+        return res.status(400).json({ error: "No 'season' parameter defined in the request body." });
+    if (!req.body || !req.body.pattern)  
+        return res.status(400).json({ error: "No 'pattern' parameter defined in the request body." });
+
+    // UpdateTeams for each supported parser
+    var response = { error: null, parsers: {} };
+
+    try {
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+        async.eachSeries(parsers, function (parser, callback) {
+            parser.CreateCompetitionTeamsStatsSchedule(req.params.competitionId, req.body.season, req.body.pattern, function (error, result) {
+                if (!error) {
+                    response.parsers[parser.Name] = result;
+
+                    callback();
+                }
+                else {
+                    log.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error) {
+                response.error = error.message;
+                return res.status(500).json(response);
+            }
+            else
+                return res.status(200).json(response);
+        });
+    }
+    catch (error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+    }    
+};
+
+// GET //function(leagueName, callback)
+api.UpdateAllTeamsGetSchedule = function(req, res) {
+    if (!req.params.competitionId)  
+        return res.status(400).json({ error: "No 'competitionId' id parameter defined in the request path." });
+
+    // UpdateTeams for each supported parser
+    var response = { error: null, parsers: {} };
+
+    try {
+        // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
+        async.eachSeries(parsers, function (parser, callback) {
+            parser.GetCompetitionTeamsStatsSchedule(req.params.competitionId, function (error, result) {
+                if (error) {
+                    log.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    response.parsers[parser.Name] = {
+                        error: error.message
+                    };
+                    callback();
+                }
+                else {
+                    response.parsers[parser.Name] = result;
+
+                    callback();
+                }
+            });
+        }, function done(error) {
+            if (error) {
+                response.error = error.message;
+                return res.status(500).json(response);
+            }
+            else
+                return res.status(200).json(response);
+        });
+    }
+    catch (error) {
+        response.error = error.message;
+        return res.status(500).json(response);
+    }    
 };
 
 // POST //function(leagueName, teamId, season, callback)
@@ -99,7 +182,7 @@ api.GetTeamFullData = function (competitionId, teamid, season, outerCallback ) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling GetTeamFullData for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling GetTeamFullData for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -144,7 +227,7 @@ api.UpdateAllTeams = function (req, res) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling UpdateAllTeams for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -191,7 +274,7 @@ api.UpdateAllPlayerStatsInTeam = function (req, res) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling UpdateAllPlayerStatsInTeam for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling UpdateAllPlayerStatsInTeam for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -236,7 +319,7 @@ api.UpdateLeagueStandings = function (req, res) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling UpdateLeagueStandings for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling UpdateLeagueStandings for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -276,7 +359,7 @@ api.UpdateAllStandings = function (req, res) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling UpdateAllStandings for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling UpdateAllStandings for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -318,7 +401,7 @@ api.GetCompetitionFixtures = function (req, res) {
                     callback();
                 }
                 else {
-                    winston.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
+                    log.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
                     response.parsers[parser.Name] = {
                         error: error.message
                     };
@@ -354,8 +437,12 @@ router.get('/', api.Welcome);
 // update all teams and players in each
 router.post('/:competitionId/teams', api.UpdateAllTeams);
 
+
 // update team stats
 router.post('/teamstats/:competitionId/update', api.UpdateTeamStats);
+router.get('/teamstats/:competitionId/schedule', api.UpdateAllTeamsGetSchedule);
+router.post('/teamstats/:competitionId/schedule', api.UpdateAllTeamsAddSchedule);
+//router.delete('/teamstats/:competitionId/schedule', api.UpdateAllTeamsDeleteSchedule);
 
 // update team stats full
 router.post('/teamstats/:competitionId/update/full', api.UpdateTeamStatsFull);

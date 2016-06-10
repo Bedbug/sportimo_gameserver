@@ -4,7 +4,7 @@ var path = require('path'),
 var http = require('http'),
     express = require('express');
 
-    
+var bodyParser = require('body-parser');
     
 var app = express();
 
@@ -16,6 +16,9 @@ server.listen(port, function () {
         //console.log('Express server listening on port %d in %s mode', port, app.get('env') || 'development');
         console.log('Express server listening on port %d', port);
     });
+
+
+app.use(bodyParser.json());
 
 
 // Recursively add router paths
