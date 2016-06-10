@@ -12,6 +12,7 @@ else {
         logo: { type: String },
         parserids: { type: Schema.Types.Mixed },
         visiblein: [String],
+        graphics: { type: Schema.Types.Mixed },
         season: String,
         status: {type:String},
         created: { type: Date, default: Date.now }

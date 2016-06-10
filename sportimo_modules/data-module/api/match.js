@@ -26,8 +26,8 @@ console.log(userid);
     // First we get the match data
     Matches.findById(gameid)
         .select('home_team away_team home_score away_score time isTimeCounting stats timeline start settings completed state')
-        .populate('home_team', 'name logo')
-        .populate('away_team', 'name logo')
+        .populate('home_team', 'name logo stats')
+        .populate('away_team', 'name logo stats')
         .exec(function (err, match) {
             if (!err) {
                 // Assign the data if everything is ok
