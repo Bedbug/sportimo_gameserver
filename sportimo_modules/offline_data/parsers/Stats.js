@@ -557,11 +557,11 @@ Parser.CreateCompetitionTeamsStatsSchedule = function(competitionId, season, sch
     
     log.info('Scheduling UpdateCompetitionTeamsStats for season %s with the pattern %s', season, schedulePattern);
     Parser.methodSchedules['UpdateCompetitionTeamsStats'] = scheduler.scheduleJob(schedulePattern, function(){
-        log.info('scheduled job is running');
-        // Parser.UpdateCompetitionTeamsStats(competitionId, season, function(error, data) {
-        //     if (error)
-        //         log.error(error.message);
-        // });
+        log.info('Scheduled job is running for %s', Parser.methodSchedules['UpdateCompetitionTeamsStats']);
+        Parser.UpdateCompetitionTeamsStats(competitionId, season, function(error, data) {
+            if (error)
+                log.error(error.message);
+        });
     });
     callback(null, Parser.methodSchedules['UpdateCompetitionTeamsStats']);
 };
