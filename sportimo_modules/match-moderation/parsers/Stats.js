@@ -447,7 +447,7 @@ Parser.TickMatchFeed = function() {
                     if (event.playEvent.playEventId == 17)
                     {
                         setTimeout(function() {
-                            let goalEvent = _.cloneDeep(event);
+                            var goalEvent = _.cloneDeep(event);
                             goalEvent.playEvent.playEventId = 11;
                             goalEvent.playEvent.name = 'Goal';
                             var translatedGoalEvent = TranslateMatchEvent(goalEvent);
