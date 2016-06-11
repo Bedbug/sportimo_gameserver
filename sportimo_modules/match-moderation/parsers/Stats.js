@@ -4,6 +4,7 @@ var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
 var moment = require('moment');
+var log = require('winston');
 
 // Settings for the development environment
 
@@ -226,7 +227,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         matchPlayersLookup[item.parserids[Parser.Name]] = item;
                 });
                 
-                return callback();
+                callback(null);
             });
         },
         function(callback) {
@@ -242,7 +243,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         matchPlayersLookup[item.parserids[Parser.Name]] = item;
                 });
                 
-                return callback();
+                callback(null);
             });
         }
         ], function(error) {
@@ -403,97 +404,104 @@ var TranslateMatchSegment = function(parserEvent)
 
 // and now, the functions that can be called from outside modules.
 Parser.TickMatchFeed = function() {
-    if (!Parser.matchHandler || !matchParserId || !Parser.feedService)
+    try
     {
-        console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
-        return;
-    }
-    
-    var leagueName = league.parserids[Parser.Name];
-    
-    GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
-        if (error)
+        if (!Parser.matchHandler || !matchParserId || !Parser.feedService)
         {
-            console.log('error in TickMatchFeed: ' + error.message);
+            console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
             return;
         }
         
-        // Produce the diff with eventFeedSnapshot
-        var eventsDiff = _.filter(events, function(item) {
-            return !eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
-        });
-        _.forEach(events, function(event) {
-            eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
-        });
-        //eventFeedSnapshot = events;
+        var leagueName = league.parserids[Parser.Name];
         
-        // Nothing to add
-        if (eventsDiff.length == 0)
-            return;
-        
-        Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, _.keys(eventFeedSnapshot));
-            
-        if (Parser.isPaused != true)
-        {
-            // Translate all events in eventsDiff and send them to feedService
-            _.forEach(eventsDiff, function(event)
+        GetMatchEvents(leagueName, matchParserId, function(error, events, teams, matchStatus) {
+            if (error)
             {
-                // First try parsing a normal event
-                var translatedEvent = TranslateMatchEvent(event);
-                if (translatedEvent) {
-                    Parser.feedService.AddEvent(translatedEvent);
-                    
-                    // Determine if the event is a successful panalty, in this case create an extra Goal event
-                    if (event.playEvent.playEventId == 17)
-                    {
-                        setTimeout(function() {
-                            var goalEvent = _.cloneDeep(event);
-                            goalEvent.playEvent.playEventId = 11;
-                            goalEvent.playEvent.name = 'Goal';
-                            var translatedGoalEvent = TranslateMatchEvent(goalEvent);
-                            Parser.feedService.AddEvent(translatedGoalEvent);
-                        }, 500);
-                    }
-                    
-                    // Determine if the Penalties Segment has just started (in this case, advance the segment)
-                    if (translatedEvent.data.state == 9) {
-                        if (!penaltiesSegmentStarted)
+                console.log('error in TickMatchFeed: ' + error.message);
+                return;
+            }
+            
+            // Produce the diff with eventFeedSnapshot
+            var eventsDiff = _.filter(events, function(item) {
+                return !eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
+            });
+            _.forEach(events, function(event) {
+                eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
+            });
+            //eventFeedSnapshot = events;
+            
+            // Nothing to add
+            if (eventsDiff.length == 0)
+                return;
+            
+            Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, _.keys(eventFeedSnapshot));
+                
+            if (Parser.isPaused != true)
+            {
+                // Translate all events in eventsDiff and send them to feedService
+                _.forEach(eventsDiff, function(event)
+                {
+                    // First try parsing a normal event
+                    var translatedEvent = TranslateMatchEvent(event);
+                    if (translatedEvent) {
+                        Parser.feedService.AddEvent(translatedEvent);
+                        
+                        // Determine if the event is a successful panalty, in this case create an extra Goal event
+                        if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17)
                         {
-                            penaltiesSegmentStarted = true;
-                            Parser.feedService.AdvanceMatchSegment(Parser.matchHandler);
+                            setTimeout(function() {
+                                var goalEvent = _.cloneDeep(event);
+                                goalEvent.playEvent.playEventId = 11;
+                                goalEvent.playEvent.name = 'Goal';
+                                var translatedGoalEvent = TranslateMatchEvent(goalEvent);
+                                Parser.feedService.AddEvent(translatedGoalEvent);
+                            }, 500);
+                        }
+                        
+                        // Determine if the Penalties Segment has just started (in this case, advance the segment)
+                        if (translatedEvent.data.state == 9) {
+                            if (!penaltiesSegmentStarted)
+                            {
+                                penaltiesSegmentStarted = true;
+                                Parser.feedService.AdvanceMatchSegment(Parser.matchHandler);
+                            }
                         }
                     }
-                }
-                else
-                {
-                    // Then try to parse a match segment advancing event
-                    var translatedMatchSegment = TranslateMatchSegment(event);
-                    if (translatedMatchSegment)
+                    else
                     {
-                        Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                        // Then try to parse a match segment advancing event
+                        var translatedMatchSegment = TranslateMatchSegment(event);
+                        if (translatedMatchSegment)
+                        {
+                            Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                        }
                     }
-                }
+                });
+            }
+                
+            var lastEvent = _.findLast(events, function(n)
+            {
+                return n.sequenceNumber;
             });
-        }
             
-        var lastEvent = _.findLast(events, function(n)
-        {
-            return n.sequenceNumber;
+            // Game Over?
+            if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final"))
+            {
+                // End recurring task
+                clearInterval(Parser.recurringTask);
+                // Cancel scheduled task, if existent
+                if (Parser.scheduledTask)
+                    Parser.scheduledTask.cancel();
+                // Send an event that the match is ended.
+                Parser.feedService.EndOfMatch(Parser.matchHandler);
+            }
+            
         });
-        
-        // Game Over?
-        if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final"))
-        {
-            // End recurring task
-            clearInterval(Parser.recurringTask);
-            // Cancel scheduled task, if existent
-            if (Parser.scheduledTask)
-                Parser.scheduledTask.cancel();
-            // Send an event that the match is ended.
-            Parser.feedService.EndOfMatch(Parser.matchHandler);
-        }
-        
-    });
+    }
+    catch(methodError)
+    {
+        log.error('Stats parser tick error: ' + methodError.message);
+    }
 };
     
 
