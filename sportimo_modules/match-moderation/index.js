@@ -172,6 +172,7 @@ var ModerationModule = {
                 })
                 .populate('home_team')
                 .populate('away_team')
+                .populate('competition')
                 .exec(function (err, match) {
                     if (err)
                         return cbk(err);
