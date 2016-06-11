@@ -344,7 +344,7 @@ var TranslateMatchEvent = function(parserEvent)
         type: 'Add',
         time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
         data: {
-            id: parserEvent.sequenceNumber,
+            id: parserEvent.sequenceNumber + ':' + parserEvent.playEvent.playEventId,
             status: 'active',
             type: eventName,
             state: TranslateMatchPeriod(parserEvent.period, parserEvent.playEvent.playEventId),
@@ -356,7 +356,7 @@ var TranslateMatchEvent = function(parserEvent)
             players: [],
             stats: { }
         },
-        created: new Date() // ToDo: Infer creation time from match minute
+        created: moment.utc().toDate() // ToDo: Infer creation time from match minute
     };
     
     // ToDo: In certain match events, we may want to split the event in two (or three)
@@ -442,6 +442,18 @@ Parser.TickMatchFeed = function() {
                 var translatedEvent = TranslateMatchEvent(event);
                 if (translatedEvent) {
                     Parser.feedService.AddEvent(translatedEvent);
+                    
+                    // Determine if the event is a successful panalty, in this case create an extra Goal event
+                    if (event.playEvent.playEventId == 17)
+                    {
+                        setTimeout(function() {
+                            let goalEvent = _.cloneDeep(event);
+                            goalEvent.playEvent.playEventId = 11;
+                            goalEvent.playEvent.name = 'Goal';
+                            var translatedGoalEvent = TranslateMatchEvent(goalEvent);
+                            Parser.feedService.AddEvent(translatedGoalEvent);
+                        }, 500);
+                    }
                     
                     // Determine if the Penalties Segment has just started (in this case, advance the segment)
                     if (translatedEvent.data.state == 9) {
