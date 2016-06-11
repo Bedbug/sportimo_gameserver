@@ -8,11 +8,11 @@
 
 /*  Libraries   */
 var path = require('path'),
-    fs = require('fs');
-
-var _ = require('lodash');
-var bodyParser = require('body-parser');
-var log = require('winston');
+    fs = require('fs'),
+    _ = require('lodash'),
+    bodyParser = require('body-parser'),
+    log = require('winston'),
+    mongoose = require('mongoose');
 
 
 
@@ -21,7 +21,8 @@ var match_module = require('./lib/match-module.js');
 
 /*Bootstrap models*/
 var team = null,
-    scheduled_matches = null;
+    scheduled_matches = null,
+    matches = mongoose.models.scheduled_matches;
 
 /**
  * Redis Pub/Sub Channels
@@ -68,7 +69,7 @@ var ModerationModule = {
         team = this.mongoose.models.team;
         scheduled_matches = this.mongoose.models.scheduled_matches;
         log.info("Connected to MongoDB");
-        
+
         // Initialize the gamecards module
         var gamecards = require('../gamecards');
         gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
@@ -189,7 +190,7 @@ var ModerationModule = {
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
-                    
+
                     if (cbk)
                         return cbk(null, hookedMatch);
                     else
@@ -227,6 +228,7 @@ ModerationModule.GetSchedule = function (cbk) {
         .find({})
         .populate('home_team')
         .populate('away_team')
+        .populate('competition')
         .exec(function (err, schedule) {
             if (err) {
                 log.error(err);
@@ -295,6 +297,7 @@ function initModule(done) {
             })
             .populate('home_team')
             .populate('away_team')
+            .populate('competition')
             .exec(function (err, matches) {
                 if (err)
                     return ModerationModule.callback ? ModerationModule.callback(err) : log.error(err);
