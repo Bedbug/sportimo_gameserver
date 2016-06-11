@@ -140,7 +140,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 if (!response.parserids)
                     return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
                 matchTeamsLookup[response.parserids[Parser.Name]] = response;
-                return callback();
+                callback(null);
             });
         },
         function(callback) {
@@ -152,7 +152,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                 if (!response.parserids)
                     return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
                 matchTeamsLookup[response.parserids[Parser.Name]] = response;
-                return callback();
+                callback(null);
             });
         },
         function(callback) {
@@ -166,7 +166,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         eventFeedSnapshot[eventid] = true;
                     });
                 }   
-                callback();
+                callback(null);
             });
         },
         function(callback) {
@@ -209,7 +209,7 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                         }
                     }
                     
-                    return callback();
+                    callback(null);
                 });
             });
         },

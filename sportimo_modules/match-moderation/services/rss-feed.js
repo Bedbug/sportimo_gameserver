@@ -212,7 +212,7 @@ feed_service.LoadParsedEvents = function(matchId, callback)
             if (!result || !result.parsed_eventids)
                 return callback(null);
                 
-            callback(result);
+            callback(null, result);
         });
     }
     catch(error) {
