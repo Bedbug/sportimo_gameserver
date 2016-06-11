@@ -345,7 +345,7 @@ var TranslateMatchEvent = function(parserEvent)
         type: 'Add',
         time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
         data: {
-            id: parserEvent.sequenceNumber + ':' + parserEvent.playEvent.playEventId,
+            id: parserEvent.sequenceNumber,
             status: 'active',
             type: eventName,
             state: TranslateMatchPeriod(parserEvent.period, parserEvent.playEvent.playEventId),

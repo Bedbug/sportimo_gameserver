@@ -183,7 +183,7 @@ feed_service.SaveParsedEvents = function(matchId, events)
         return;
         
     try {
-        mongoose.mongoose.models.matchfeedStatus.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events} }, { upsert: true }, function(err, result) {
+        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events} }, { upsert: true }, function(err, result) {
             if (err)
             {
                 log.error("Error while saving parser eventIds in match moderation");
@@ -203,7 +203,7 @@ feed_service.LoadParsedEvents = function(matchId, callback)
         return;
         
     try {
-        mongoose.mongoose.models.matchfeedStatus.findOne({matchid: matchId}, function(err, result) {
+        mongoose.mongoose.models.matchfeedStatuses.findOne({matchid: matchId}, function(err, result) {
             if (err)
             {
                 log.error("Error while saving parser eventIds in match moderation");
