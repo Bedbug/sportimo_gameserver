@@ -197,4 +197,28 @@ feed_service.SaveParsedEvents = function(matchId, events)
     }
 };
 
+feed_service.LoadParsedEvents = function(matchId, callback)
+{
+    if (!mongoose)
+        return;
+        
+    try {
+        mongoose.mongoose.models.matchfeedStatus.findOne({matchid: matchId}, function(err, result) {
+            if (err)
+            {
+                log.error("Error while saving parser eventIds in match moderation");
+                return callback(err);
+            }
+            if (!result.parsed_eventids)
+                return callback(null);
+                
+            callback(result.parsed_eventids);
+        });
+    }
+    catch(error) {
+        log.error("Error while loading competition from Mongo: %s", error.message);
+        return callback(error);        
+    }
+};
+
 module.exports = feed_service;

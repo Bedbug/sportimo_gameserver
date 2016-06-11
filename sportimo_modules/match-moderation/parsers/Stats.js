@@ -156,6 +156,20 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
             });
         },
         function(callback) {
+            feedServiceContext.LoadParsedEvents(matchContext.id, function(error, response) {
+                if (error) 
+                    return callback(error);
+                    
+                if (response  && response.parsed_eventids.length > 0)
+                {
+                    _.forEach(response.parsed_eventids, function(eventid) {
+                        eventFeedSnapshot[eventid] = true;
+                    });
+                }   
+                callback();
+            });
+        },
+        function(callback) {
             feedServiceContext.LoadCompetition(matchContext.competition, function(error, response) {
                 if (error) 
                     return callback(error);
@@ -170,13 +184,6 @@ Parser.init = function(matchContext, feedServiceContext, cbk){
                     var scheduleDate = Parser.matchHandler.start || startDate;  
                     if (!scheduleDate)
                         return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
-                        
-                    if (Parser.feedService.parsed_eventids  && Parser.feedService.parsed_eventids.length > 0)
-                    {
-                        _.forEach(Parser.feedService.parsed_eventids, function(eventid) {
-                            eventFeedSnapshot[eventid] = true;
-                        });
-                    }   
                         
                     var formattedScheduleDate = moment.utc(scheduleDate);
                     formattedScheduleDate.subtract(300, 'seconds');
