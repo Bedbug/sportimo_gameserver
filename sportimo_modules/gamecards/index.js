@@ -638,6 +638,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
 * this timestamp should be in utc time, earlier than now, later than the gamecard definition's activation time
 * the userGamecard is not played before the start of the scheduled match when the card type is Instant
 * the user should not have played the same gamecard (gamecardDefinitionId) more than the maxUserInstances (if null ignore this rule)
+* the referenced match is not completed
 */
 gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
@@ -730,6 +731,9 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (referencedDefinition.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))
             return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet (its start time is later than NOW in UTC)" });
+
+        if (scheduledMatch.completed && scheduledMatch.completed == true)
+            return callback({ isValid: false, error: "The referenced match is completed. No more gamecards can be played past the match's completion." });
 
         if (!referencedDefinition.status || referencedDefinition.status != 1)
             return callback({ isValid: false, error: "The gamecardDefinitionId document's status is not in an active state" });
