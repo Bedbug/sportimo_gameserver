@@ -209,7 +209,7 @@ feed_service.LoadParsedEvents = function(matchId, callback)
                 log.error("Error while saving parser eventIds in match moderation");
                 return callback(err);
             }
-            if (!result.parsed_eventids)
+            if (!result || !result.parsed_eventids)
                 return callback(null);
                 
             callback(result.parsed_eventids);
