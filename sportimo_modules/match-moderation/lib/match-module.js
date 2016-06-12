@@ -347,7 +347,8 @@ var matchModule = function (match, PubChannel, SubChannel) {
             thisMatch.timeline.push(newSegment);
             thisMatch.markModified('timeline');
 
-
+            setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'State', thisMatch.state);
+            thisMatch.markModified('stats');
 
             // Commit the update to the database
             thisMatch.save(function (err, result) {
@@ -374,7 +375,18 @@ var matchModule = function (match, PubChannel, SubChannel) {
                     }
                 }));
 
-               
+                // Inform the system about the segment change
+                PubChannel.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    payload: {
+                        type: "Stats_changed",
+                        room: thisMatch._id,
+                        data: thisMatch.stats
+                    }
+                }
+                ));
+
+
 
                 // Update gamecards module of the segment change. Create an event out of this
                 const segmentEvent = {
@@ -397,7 +409,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 // Update the data in memory. Only temporary for backwards combatibility.
                 HookedMatch.data = result;
 
-                 // Everythings is save and updated so it is safe to send a new event now if this new segment is timed.
+                // Everythings is save and updated so it is safe to send a new event now if this new segment is timed.
                 if (HookedMatch.sport.segments[thisMatch.state].timed) {
                     console.log(HookedMatch.sport.segments[thisMatch.state].name.en + " Starts");
                     var startEvent = {
@@ -406,7 +418,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                         data: {
                             match_id: HookedMatch.id,
                             type: HookedMatch.sport.segments[thisMatch.state].name.en + " Starts",
-                            time: HookedMatch.sport.segments[thisMatch.data.state].initialTime,
+                            time: HookedMatch.sport.segments[thisMatch.state].initialTime,
                             state: HookedMatch.data.state,
                             timeline_event: true
                         }
@@ -469,7 +481,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
             id: matchId
         });
         if (statIndex > -1) {
-            stats[statIndex].statKey = statValue;
+            stats[statIndex][statKey] = statValue;
         }
         else {
             var newGroup = { id: matchId };
