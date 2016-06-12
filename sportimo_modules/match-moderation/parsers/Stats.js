@@ -428,8 +428,9 @@ Parser.TickMatchFeed = function() {
             _.forEach(events, function(event) {
                 eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
             });
-            //eventFeedSnapshot = events;
-            log.info('[Feed Stats Parser]: Stats call returned ' + events.length + ' events from the feed');
+
+            //if (Math.random() < 0.03)
+            //    log.info('[Feed Stats Parser]: Stats call returned ' + events.length + ' events from the feed');
             
             // Nothing to add
             if (eventsDiff.length == 0)
