@@ -429,6 +429,7 @@ Parser.TickMatchFeed = function() {
                 eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
             });
             //eventFeedSnapshot = events;
+            log.info('[Feed Stats Parser]: Stats call returned ' + events.length + ' events from the feed');
             
             // Nothing to add
             if (eventsDiff.length == 0)
