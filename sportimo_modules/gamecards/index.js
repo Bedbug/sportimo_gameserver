@@ -951,18 +951,18 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 
 gamecards.TranslateUserGamecard = function (userGamecard) {
     let retValue = {
-        id: userGamecard.id,
-        userid: userGamecard.userid,
-        matchid: userGamecard.matchid,
-        gamecardDefinitionId: userGamecard.gamecardDefinitionId,
-        title: userGamecard.title,
-        image: userGamecard.image,
-        text: userGamecard.text,
-        primaryStatistic: userGamecard.primaryStatistic,
-        cardType: userGamecard.cardType,
-        isDoubleTime: userGamecard.isDoubleTime,
-        isDoublePoints: userGamecard.isDoublePoints,
-        status: userGamecard.status
+        id: userGamecard.id || null,
+        userid: userGamecard.userid || null,
+        matchid: userGamecard.matchid || null,
+        gamecardDefinitionId: userGamecard.gamecardDefinitionId || null,
+        title: userGamecard.title || null,
+        image: userGamecard.image || null,
+        text: userGamecard.text || null,
+        primaryStatistic: userGamecard.primaryStatistic || null,
+        cardType: userGamecard.cardType || null,
+        isDoubleTime: userGamecard.isDoubleTime || null,
+        isDoublePoints: userGamecard.isDoublePoints || null,
+        status: userGamecard.status || null
     };
 
     if (userGamecard.startPoints)
@@ -1694,7 +1694,7 @@ gamecards.ResolveEvent = function (matchEvent) {
 
 // Take back an event, find all affected user gamecards (both active and resolved), reset any winning/losing property and re-resolve them against all match events from their creation time and on.
 // In progress.
-gamecards.RollbackEvent = function(matchId, eventId, outerCallback) {
+gamecards.RollbackEvent = function(matchId, eventId, matchSegment, outerCallback) {
 // find match and eventId in its timeline
     db.models.scheduled_matches.findById(matchId, function(matchError, match) {
         if (matchError)
