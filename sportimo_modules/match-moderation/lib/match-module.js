@@ -317,6 +317,9 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
                 };
 
+                if (evtObject.type)
+                evtObject.type = cleanSafe(evtObject.type);
+
                 thisMatch.timeline[thisMatch.state].events.push(evtObject);
 
                 // Inform Clients for the new event to draw
