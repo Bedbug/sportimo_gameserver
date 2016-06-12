@@ -43,7 +43,7 @@ feed_service.type = "rss-feed";
 feed_service.parserid = "";
 
 // The interval that the module will request an update
-feed_service.interval = 1;
+feed_service.interval = 5000;
 
 // The parser name for this feed
 feed_service.parsername = null;
