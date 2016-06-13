@@ -1272,6 +1272,46 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
     return true;
 };
 
+
+gamecards.CheckIfTerminates = function (gamecard, match) {
+    let conditions = gamecard.terminationConditions;
+
+    // If any of the terminationConditions is met, the card terminates
+    for (let i = 0; i < conditions.length; i++) {
+        let condition = conditions[i];
+        let target = condition.target || 0;
+        
+        let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
+
+        if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation && condition.conditionNegation == true)
+            continue;
+        if (!isConditionComparative && condition.remaining > target && (!condition.conditionNegation || condition.conditionNegation == false))
+            continue;
+        if (isConditionComparative && match ) {
+            
+            let id1 = condition.playerid || condition.teamid;
+            let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
+            let id1StatItem = _.find(match.stats, {id: id1});
+            let id2StatItem = _.find(match.stats, {id: id2});
+            if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
+                continue;
+            let id1Stat = id1StatItem[condition.stat] || 0;
+            let id2Stat = id2StatItem[condition.stat] || 0;
+            if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
+                continue;
+            if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
+                continue;
+            if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+                continue;
+        }
+        
+        // if the execution control reached this far, it means that the condition is met
+        return true;
+    }
+
+    return false;
+};
+
 gamecards.publishWinToUser = function (gamecard) {
     // Delay publication so to avoid missing the event on sockets
     console.log("called to win:" + Date.now());
@@ -1343,26 +1383,29 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
             }
         });
 
-        if (gamecards.CheckIfWins(gamecard, true, match)) {
-            // Send an event through Redis pub/sub:
-            log.info("Detected a winning gamecard: " + gamecard);
-        }
-        else {
-            gamecard.terminationTime = moment.utc().toDate();
-            gamecard.status = 2;
-            gamecard.pointsAwarded = 0;
-            // Send an event through Redis pu/sub:
-            log.info("Card lost: " + gamecard);
-            redisPublish.publish("socketServers", JSON.stringify({
-                sockets: true,
-                clients: [gamecard.userid],
-                payload: {
-                    type: "Card_lost",
-                    client: gamecard.userid,
-                    room: event.matchid,
-                    data: gamecards.TranslateUserGamecard(gamecard)
-                }
-            }));
+        if (gamecards.CheckIfTerminates(gamecard, match))
+        {
+            if (gamecards.CheckIfWins(gamecard, true, match)) {
+                // Send an event through Redis pub/sub:
+                log.info("Detected a winning gamecard: " + gamecard);
+            }
+            else {
+                gamecard.terminationTime = moment.utc().toDate();
+                gamecard.status = 2;
+                gamecard.pointsAwarded = 0;
+                // Send an event through Redis pu/sub:
+                log.info("Card lost: " + gamecard);
+                redisPublish.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    clients: [gamecard.userid],
+                    payload: {
+                        type: "Card_lost",
+                        client: gamecard.userid,
+                        room: event.matchid,
+                        data: gamecards.TranslateUserGamecard(gamecard)
+                    }
+                }));
+            }
         }
         
         if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
@@ -1507,7 +1550,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             };
 
             events.push(newEvent);
-        }
+        }q
 
         return events;
     };
