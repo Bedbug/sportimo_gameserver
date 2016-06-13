@@ -960,9 +960,9 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         text: userGamecard.text || null,
         primaryStatistic: userGamecard.primaryStatistic || null,
         cardType: userGamecard.cardType || null,
-        isDoubleTime: userGamecard.isDoubleTime || null,
-        isDoublePoints: userGamecard.isDoublePoints || null,
-        status: userGamecard.status || null
+        isDoubleTime: userGamecard.isDoubleTime || false,
+        isDoublePoints: userGamecard.isDoublePoints || false,
+        status: userGamecard.status || 0
     };
 
     if (userGamecard.startPoints)
