@@ -881,6 +881,9 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 
                 if (!userGamecard)
                     return callback(null, "userGamecardId is not found");
+                    
+                if (userGamecard.status > 1)
+                    return callback(null, "userGamecardId is completed, no specials can be played.");
 
                 if (options.doubleTime && userGamecard.cardType == 'Overall')
                     return callback(null, "Cannot add double time in an Overall card");
@@ -1170,6 +1173,7 @@ gamecards.Tick = function () {
                                 return parallelCbk(null);
                             }, 200);
                         },
+                        // Check match state and minute against user gamecards' terminationConditions
                         function(parallelCbk) {
                             const wildcardsQuery = {
                                 status: 1,
