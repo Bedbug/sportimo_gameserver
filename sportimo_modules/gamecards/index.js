@@ -1282,11 +1282,11 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
         let target = condition.target || 0;
         
         let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
-        
+
         if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation && condition.conditionNegation == true)
-            return false;
+            continue;
         if (!isConditionComparative && condition.remaining > target && (!condition.conditionNegation || condition.conditionNegation == false))
-            return false;
+            continue;
         if (isConditionComparative && match ) {
             
             let id1 = condition.playerid || condition.teamid;
@@ -1294,22 +1294,22 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
             let id1StatItem = _.find(match.stats, {id: id1});
             let id2StatItem = _.find(match.stats, {id: id2});
             if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
-                return false;
+                continue;
             let id1Stat = id1StatItem[condition.stat] || 0;
             let id2Stat = id2StatItem[condition.stat] || 0;
             if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
-                return false;
+                continue;
             if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
-                return false;
+                continue;
             if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
-                return false;
+                continue;
         }
         
         // if the execution control reached this far, it means that the condition is met
         return true;
     }
 
-    return true;
+    return false;
 };
 
 gamecards.publishWinToUser = function (gamecard) {
