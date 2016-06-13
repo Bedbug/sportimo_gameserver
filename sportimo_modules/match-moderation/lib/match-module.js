@@ -308,7 +308,6 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 console.log(HookedMatch.sport.segments[thisMatch.state].name.en + " Ends");
 
                 var evtObject = {
-
                     match_id: HookedMatch.id,
                     type: HookedMatch.sport.segments[thisMatch.state].name.en + " Ends",
                     time: thisMatch.time,
@@ -318,7 +317,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 };
 
                 if (evtObject.type)
-                evtObject.type = cleanSafe(evtObject.type);
+                    evtObject.type = cleanSafe(evtObject.type);
 
                 thisMatch.timeline[thisMatch.state].events.push(evtObject);
 
@@ -353,12 +352,33 @@ var matchModule = function (match, PubChannel, SubChannel) {
             setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'State', thisMatch.state);
             thisMatch.markModified('stats');
 
-            // Commit the update to the database
-            thisMatch.save(function (err, result) {
-                if (err)
+             var updateObject = {
+                home_score: thisMatch.home_score,
+                stats:  thisMatch.stats,
+                timeline: thisMatch.timeline,
+                away_score:   thisMatch.away_score
+            }
+           
+            matches.findOneAndUpdate({_id: thisMatch._id},updateObject,{new:true},function(err,result){
+            // thisMatch.save(function (err, done) {
+
+               if (err)
                     log.error(err);
                 else
                     log.info("Match Updated");
+
+                if (result)
+                    HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+                    
+            //     return HookedMatch;
+            // });
+
+            // Commit the update to the database
+            // thisMatch.save(function (err, result) {
+            //     if (err)
+            //         log.error(err);
+            //     else
+            //         log.info("Match Updated");
 
                 // Send new segment change to clients
                 // Inform Clients for the new event to draw
@@ -410,7 +430,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 startMatchTimer();
 
                 // Update the data in memory. Only temporary for backwards combatibility.
-                HookedMatch.data = result;
+                HookedMatch.data = _.merge(HookedMatch.data, updateObject);
 
                 // Everythings is save and updated so it is safe to send a new event now if this new segment is timed.
                 if (HookedMatch.sport.segments[thisMatch.state].timed) {
@@ -545,99 +565,111 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
     HookedMatch.AddEvent = function (event, cbk) {
 
-        event.data = new matchEvents(event.data);
+        matches.findById(HookedMatch.id, function (err, thisMatch) {
+            if (err || !thisMatch)
+                return console.log(err);
 
-        // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
+            event.data = new matchEvents(event.data);
 
-        //        console.log("When adding event:");
-        //        console.log(HookedMatch.data.timeline[this.data.state]);
+            // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
-        var evtObject = event.data;
+            //        console.log("When adding event:");
+            //        console.log(HookedMatch.data.timeline[this.data.state]);
+
+            var evtObject = event.data;
 
 
 
-        // Parses the event based on sport and makes changes in the match instance
-        if (event.data.stats != null) {
-            evtObject.linked_mods = StatsHelper.Parse(event, match);
-            //Detour process in case of 'Goal'
-            if (evtObject.stats.Goal) {
-                if (evtObject.team == "home_team")
-                    HookedMatch.data.home_score++;
-                else
-                    HookedMatch.data.away_score++;
+            // Parses the event based on sport and makes changes in the match instance
+            if (event.data.stats != null) {
+                evtObject.linked_mods = StatsHelper.Parse(event, thisMatch);
+                
+                //Detour process in case of 'Goal'
+                if (evtObject.stats.Goal) {
+                    if (evtObject.team == "home_team")
+                        thisMatch.home_score++;
+                    else
+                        thisMatch.away_score++;
+                }
             }
-        }
 
-        // 1. push event in timeline
-        if (evtObject.timeline_event) {
-            log.info("Received Timeline event");
-            if (evtObject.type)
-                evtObject.type = cleanSafe(evtObject.type);
-            // evtObject = new matchEvents(evtObject);
-            this.data.timeline[this.data.state].events.push(evtObject);
-        }
-
-        // 2. broadcast event on pub/sub channel
-        log.info("Pushing event to Redis Pub/Sub channel");
-        // PubChannel.publish("socketServers", JSON.stringify(event));
-
-        // 3. send event to wildcards module for wildcard resolution
-        if (!event.data.team_id) {
-            if (event.data.team && event.data.team == 'home_team')
-                event.data.team_id = this.data.home_team.id;
-            if (event.data.team && event.data.team == 'away_team')
-                event.data.team_id = this.data.away_team.id;
-        }
-        HookedMatch.gamecards.ResolveEvent(event);
-
-        // 4. save match to db
-        // if (evtObject.timeline_event) {
-        // this.data.markModified('timeline');
-        // log.info("Updating database");
-        // }
-
-        StatsHelper.UpsertStat("system", {
-            events_sent: 1
-        }, this.data, "system");
-
-        this.data.markModified('stats');
-
-
-        // Add 'created' property in the socket event data for easier sorting on clients 
-        event.data = event.data.toObject();
-        event.data.created = moment().utc().format();
-
-        // Inform Clients for the new event to draw
-        PubChannel.publish("socketServers", JSON.stringify({
-            sockets: true,
-            payload: {
-                type: "Event_added",
-                room: event.data.match_id.toString(),
-                data: event.data
+            // 1. push event in timeline
+            if (evtObject.timeline_event) {
+                log.info("Received Timeline event");
+                if (evtObject.type)
+                    evtObject.type = cleanSafe(evtObject.type);
+                // evtObject = new matchEvents(evtObject);
+                thisMatch.timeline[thisMatch.state].events.push(evtObject);
             }
-        }
-        ));
 
-        // Inform the system about the stat changes
-        PubChannel.publish("socketServers", JSON.stringify({
-            sockets: true,
-            payload: {
-                type: "Stats_changed",
-                room: event.data.match_id.toString(),
-                data: match.stats
+            // 2. broadcast event on pub/sub channel
+            log.info("Pushing event to Redis Pub/Sub channel");
+            // PubChannel.publish("socketServers", JSON.stringify(event));
+
+            // 3. send event to wildcards module for wildcard resolution
+            if (!event.data.team_id) {
+                if (event.data.team && event.data.team == 'home_team')
+                    event.data.team_id = thisMatch.home_team.id;
+                if (event.data.team && event.data.team == 'away_team')
+                    event.data.team_id = thisMatch.away_team.id;
             }
-        }
-        ));
 
-        this.data.save(function (err, done) {
-            if (err)
-                return log.error(err.message);
-            if (cbk)
-                cbk(null, evtObject);
+            HookedMatch.gamecards.ResolveEvent(event);
 
-            return HookedMatch;
+            StatsHelper.UpsertStat("system", {
+                events_sent: 1
+            }, thisMatch, "system");
+
+            thisMatch.markModified('stats');
+
+
+            // Add 'created' property in the socket event data for easier sorting on clients 
+            event.data = event.data.toObject();
+            event.data.created = moment().utc().format();
+
+            // Inform Clients for the new event to draw
+            PubChannel.publish("socketServers", JSON.stringify({
+                sockets: true,
+                payload: {
+                    type: "Event_added",
+                    room: event.data.match_id.toString(),
+                    data: event.data
+                }
+            }
+            ));
+
+            // Inform the system about the stat changes
+            PubChannel.publish("socketServers", JSON.stringify({
+                sockets: true,
+                payload: {
+                    type: "Stats_changed",
+                    room: event.data.match_id.toString(),
+                    data: thisMatch.stats
+                }
+            }
+            ));
+
+            var updateObject = {
+                home_score: thisMatch.home_score,
+               stats:  thisMatch.stats,
+                timeline: thisMatch.timeline,
+                away_score:   thisMatch.away_score
+            }
+           
+            matches.findOneAndUpdate({_id: thisMatch._id},updateObject,{new:true},function(err,result){
+            // thisMatch.save(function (err, done) {
+
+                if (err)
+                    return log.error(err.message);
+                if (cbk)
+                    cbk(null, evtObject);
+
+                if (result)
+                    HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+                    
+                return HookedMatch;
+            });
         });
-
 
     };
 

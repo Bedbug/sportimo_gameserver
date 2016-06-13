@@ -101,7 +101,7 @@ var StatsMethods = {
     toObject: function (event) {
         parsers.e.data = event.data;
         parsers.e.match_id = event.data.match_id;
-        parsers.e.team_id = CurrentMatch[event.data.team]._id.toString(); //CurrentMatch[event.data.team]._id ? CurrentMatch[event.data.team]._id.toString() : null;
+        parsers.e.team_id = CurrentMatch[event.data.team]; //CurrentMatch[event.data.team]._id ? CurrentMatch[event.data.team]._id.toString() : null;
         parsers.e.team_name = event.data.team; //event.data.team ? event.data.team : null;
         if (event.data.players[0]) {
             parsers.e.player_id = event.data.players[0].id; //event.data.players[0] ? event.data.players[0].id : null;
