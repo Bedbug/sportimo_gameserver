@@ -1548,9 +1548,8 @@ gamecards.ResolveEvent = function (matchEvent) {
                 state: eventData.state,
                 timelineEvent: eventData.timeline_event
             };
-
             events.push(newEvent);
-        }q
+        };
 
         return events;
     };
