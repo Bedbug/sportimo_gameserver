@@ -1134,28 +1134,114 @@ gamecards.Tick = function () {
                 });
                 
                 async.each(matches, function(match, cbk) {
-                    const gamecardsQuery = {
-                        cardType: "Overall",
-                        creationTime: { $lt: itsNow },
-                        matchid: match.id
+                    
+                    let segment = {
+                        matchid: match.id,
+                        time: null,
+                        playerid: null,
+                        teamid: null,
+                        stat: 'Segment',
+                        statTotal: match.state,
+                        incr: 1
                     };
+                    
+                   let event = {
+                        matchid: match.id,
+                        time: null,
+                        playerid: null,
+                        teamid: null,
+                        stat: 'Minute',
+                        statTotal: getTotalMatchMinutes(match.state, match.time),
+                        incr: 1
+                    };
+                    
+                    // Check for appearance conditions, and set accordingly the visible property
+                    //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
+                    async.parallel([
+                        function(parallelCbk) {
+                            setTimeout(function() {
+                                gamecards.GamecardsAppearanceHandle(event, match);
+                                return parallelCbk(null);
+                            }, 100);
+                        },
+                        function(parallelCbk) {
+                            setTimeout(function() {
+                                gamecards.GamecardsAppearanceHandle(segment, match);
+                                return parallelCbk(null);
+                            }, 200);
+                        },
+                        function(parallelCbk) {
+                            const wildcardsQuery = {
+                                status: 1,
+                                cardType: "Overall",
+                                creationTime: { $lt: event.time || itsNow },
+                                matchid: event.matchid
+                            };
     
-                    gamecardsQuery.appearConditions = { $elemMatch: { $and: [{ stat: 'Minute' }, { remaining: { $ne: 0 } }] } };
+                            const orPlayerQuery = [{ playerid: null }];
+                            if (event.playerid != null) {
+                                orPlayerQuery.push({ playerid: event.playerid });
+                            }
     
-                    db.models.gamecardDefinitions.find(gamecardsQuery, function (innerError, mongoGamecards) {
-                        if (innerError) {
-                            log.error("Error while resolving event: " + innerError.message);
-                            return cbk(innerError);
+                            const orTeamQuery = [{ teamid: null }];
+                            if (event.teamid != null) {
+                                orTeamQuery.push({ teamid: event.teamid });
+                            }
+    
+                            wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+                            let mongoGamecards;
+    
+                            db.models.userGamecards.find(wildcardsQuery, function (error, data) {
+                                if (error) {
+                                    log.error("Error while resolving event: " + error.message);
+                                    return parallelCbk(error);
+                                }
+    
+                                mongoGamecards = data;
+                                
+                                return gamecards.GamecardsTerminationHandle(mongoGamecards, event, match, parallelCbk);
+                            });
+                            
+                        },
+                        function(parallelCbk) {
+                            const wildcardsQuery = {
+                                status: 1,
+                                cardType: "Overall",
+                                creationTime: { $lt: segment.time || itsNow },
+                                matchid: segment.matchid
+                            };
+    
+                            const orPlayerQuery = [{ playerid: null }];
+                            if (segment.playerid != null) {
+                                orPlayerQuery.push({ playerid: segment.playerid });
+                            }
+    
+                            const orTeamQuery = [{ teamid: null }];
+                            if (segment.teamid != null) {
+                                orTeamQuery.push({ teamid: segment.teamid });
+                            }
+    
+                            wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: segment.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+                            let mongoGamecards;
+    
+                            db.models.userGamecards.find(wildcardsQuery, function (error, data) {
+                                if (error) {
+                                    log.error("Error while resolving event: " + error.message);
+                                    return parallelCbk(error);
+                                }
+    
+                                mongoGamecards = data;
+                                
+                                gamecards.GamecardsTerminationHandle(mongoGamecards, segment, match);
+                                
+                                parallelCbk(null);
+                            });
+                            
                         }
+                        ], function(error) {
+                        if (error)
+                            return cbk(error);
                         
-                        let event = {
-                            stat: 'Minute',
-                            statTotal: getTotalMatchMinutes(match.state, match.time),
-                            incr: 1
-                        };
-    
-                        // ToDo: Check for appearance conditions, and set accordingly the visible property
-                        //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
                         cbk();
                     });
                 }, function(eachError) {
@@ -1362,10 +1448,13 @@ gamecards.CheckIfLooses = function (gamecard, isCardTermination) {
 
 
 gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, cbk) {
-    mongoGamecards.forEach(function (gamecard) {
+    async.each(mongoGamecards, function (gamecard, parallelCbk) {
         if (gamecard.status != 1) {
-            return cbk();
+            async.setImmediate(function () {
+                cbk(null);
+            });
         }
+        
         gamecard.terminationConditions.forEach(function (condition) {
             if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
                 if (event.statTotal)
@@ -1415,11 +1504,12 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
         gamecard.save(function (err) {
             if (err) {
                 log.error(err.message);
+                return parallelCbk(err);
             }
+            
+            parallelCbk(null);
         });
-    });
-
-    cbk(null);
+    }, cbk);
 };
 
 
@@ -1480,6 +1570,7 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
     const gamecardsQuery = {
         isVisible: true,
         //creationTime: { $lt: event.time || itsNow },
+        cardType: 'Overall',
         matchid: event.matchid
     };
 
