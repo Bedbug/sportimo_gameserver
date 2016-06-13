@@ -801,7 +801,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 pointsAwarded: null,
 
                 // ARIS ASKS: WHY IF OVERALL IS ACTIVATED IMMEDIATLY?
-                status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 1)
+                status: gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 0)
             });
 
             if (newCard.duration && newCard.duration > 0)
