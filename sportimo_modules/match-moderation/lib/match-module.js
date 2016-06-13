@@ -352,33 +352,37 @@ var matchModule = function (match, PubChannel, SubChannel) {
             setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'State', thisMatch.state);
             thisMatch.markModified('stats');
 
-             var updateObject = {
+            var updateObject = {
+                state: thisMatch.state,
                 home_score: thisMatch.home_score,
-                stats:  thisMatch.stats,
+                stats: thisMatch.stats,
                 timeline: thisMatch.timeline,
-                away_score:   thisMatch.away_score
+                away_score: thisMatch.away_score
             }
-           
-            matches.findOneAndUpdate({_id: thisMatch._id},updateObject,{new:true},function(err,result){
-            // thisMatch.save(function (err, done) {
 
-               if (err)
+            matches.findOneAndUpdate({ _id: thisMatch._id }, updateObject, { new: true }, function (err, result) {
+                // thisMatch.save(function (err, done) {
+
+                if (err)
                     log.error(err);
                 else
                     log.info("Match Updated");
 
                 if (result)
                     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
-                    
-            //     return HookedMatch;
-            // });
 
-            // Commit the update to the database
-            // thisMatch.save(function (err, result) {
-            //     if (err)
-            //         log.error(err);
-            //     else
-            //         log.info("Match Updated");
+                // // Update the data in memory. Only temporary for backwards combatibility.
+                // HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+
+                //     return HookedMatch;
+                // });
+
+                // Commit the update to the database
+                // thisMatch.save(function (err, result) {
+                //     if (err)
+                //         log.error(err);
+                //     else
+                //         log.info("Match Updated");
 
                 // Send new segment change to clients
                 // Inform Clients for the new event to draw
@@ -424,13 +428,13 @@ var matchModule = function (match, PubChannel, SubChannel) {
                         timeline_event: false
                     }
                 };
+
                 HookedMatch.gamecards.ResolveEvent(segmentEvent);
 
                 // Check if we should initiate a match timer to change the main TIME property.
                 startMatchTimer();
 
-                // Update the data in memory. Only temporary for backwards combatibility.
-                HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+
 
                 // Everythings is save and updated so it is safe to send a new event now if this new segment is timed.
                 if (HookedMatch.sport.segments[thisMatch.state].timed) {
@@ -583,7 +587,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
             // Parses the event based on sport and makes changes in the match instance
             if (event.data.stats != null) {
                 evtObject.linked_mods = StatsHelper.Parse(event, thisMatch);
-                
+
                 //Detour process in case of 'Goal'
                 if (evtObject.stats.Goal) {
                     if (evtObject.team == "home_team")
@@ -651,13 +655,13 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
             var updateObject = {
                 home_score: thisMatch.home_score,
-               stats:  thisMatch.stats,
+                stats: thisMatch.stats,
                 timeline: thisMatch.timeline,
-                away_score:   thisMatch.away_score
+                away_score: thisMatch.away_score
             }
-           
-            matches.findOneAndUpdate({_id: thisMatch._id},updateObject,{new:true},function(err,result){
-            // thisMatch.save(function (err, done) {
+
+            matches.findOneAndUpdate({ _id: thisMatch._id }, updateObject, { new: true }, function (err, result) {
+                // thisMatch.save(function (err, done) {
 
                 if (err)
                     return log.error(err.message);
@@ -666,7 +670,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
                 if (result)
                     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
-                    
+
                 return HookedMatch;
             });
         });
