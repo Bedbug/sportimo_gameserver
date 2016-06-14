@@ -157,6 +157,17 @@ var matchModule = function (match, PubChannel, SubChannel) {
         });
     };
 
+HookedMatch.updateFeedMatchStats = function(league, matchid, callback){
+     // Check if service of same type already exists 
+        var serviceTypeFound = _.find(services, {
+            type: "rss-feed"
+        });
+        if (!serviceTypeFound)
+            return callback(new Error("Service type does not exist. Please add it first."));
+
+        serviceTypeFound.updateMatchStats(league, matchid, callback);
+}
+
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
         var serviceTypeFound = _.find(this.services, {
@@ -424,20 +435,20 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
 
                 // Update gamecards module of the segment change. Create an event out of this
-                const segmentEvent = {
-                    data: {
-                        id: null,
-                        sender: null,
-                        match_id: HookedMatch.id,
-                        team: null,
-                        players: null,
-                        stats: { Segment: 1 },
-                        state: thisMatch.state,
-                        timeline_event: false
-                    }
-                };
+                // const segmentEvent = {
+                //     data: {
+                //         id: null,
+                //         sender: null,
+                //         match_id: HookedMatch.id,
+                //         team: null,
+                //         players: null,
+                //         stats: { Segment: 1 },
+                //         state: thisMatch.state,
+                //         timeline_event: false
+                //     }
+                // };
 
-                HookedMatch.gamecards.ResolveEvent(segmentEvent);
+                // HookedMatch.gamecards.ResolveEvent(segmentEvent);
 
                 // Check if we should initiate a match timer to change the main TIME property.
                 startMatchTimer();

@@ -12,6 +12,7 @@ else {
     match_id: String,
     type: String,
     stats: mongoose.Schema.Types.Mixed,
+    headtohead: [String],
     playerscount: Number,
     status: String,
     timeline_event: Boolean,

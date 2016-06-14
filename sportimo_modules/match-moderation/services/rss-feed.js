@@ -98,6 +98,15 @@ feedService.prototype.init = function (matchHandler, cbk) {
     }
 };
 
+feedService.prototype.updateMatchStats = function(leagueName, matchId, manualCallback)
+{
+    // if (feedService.parsername == null)
+    //     return "No parser attached to service";
+
+    this.parser.GetMatchEventsWithBox(leagueName, matchId, manualCallback);    
+};
+
+
 feedService.prototype.pause = function()
 {
     if (!this.parser || this.parsername == null)

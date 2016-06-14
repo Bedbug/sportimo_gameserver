@@ -293,7 +293,7 @@ function initModule(done) {
         scheduled_matches
             .find({
                 state: { $gt: -1 },
-                completed: { $ne: true }
+                // completed: { $ne: true }
             })
             .populate('home_team')
             .populate('away_team')

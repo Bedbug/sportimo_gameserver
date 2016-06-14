@@ -859,6 +859,14 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 });
             }
 
+            if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
+            {
+                newCard.terminationConditions.forEach(function(condition) {
+                   if (condition.remaining && condition.stat == 'Segment') 
+                        condition.remaining -= scheduledMatch.state;
+                });
+            }
+
             newCard.save(function (error) {
                 if (error)
                     return callback(error);
