@@ -287,8 +287,10 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
 // Number of ticks before full data retrieval
 var numberOfTicksBeforeBoxscore = 30;
 var ticks = 1;
-
-var GetMatchEventsWithBox = function (leagueName, matchId, callback) {
+Parser.GetMatchEventsWithBox = function (leagueName, matchId, manualCallback) {
+    GetMatchEventsWithBox(leagueName, matchId, null, manualCallback);
+}
+var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallback) {
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?box=true&pbp=true&" + signature; // &box=true for boxing statistics
 
@@ -303,23 +305,45 @@ var GetMatchEventsWithBox = function (leagueName, matchId, callback) {
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
             var boxscores = response.body.apiResults[0].league.season.eventType[0].events[0].boxscores;
-            UpdateMatchStats(matchId, boxscores);
-
+            UpdateMatchStats(matchId, boxscores, manualCallback);
+         
+         if(callback)
             callback(null, events, teams, matchStatus);
         }
         catch (err) {
+            if(callback)
             return callback(err);
+            else
+             return manualCallback(err);
         }
     });
 };
 
-var UpdateMatchStats = function (matchId, boxscores) {
+var UpdateMatchStats = function (matchId, boxscores, callback) {
 
-    matches.findOne({ 'parserids.Stats': matchId }, function (err, match) {
+    matches.findOne({ 'moderation.parserid': matchId }, function (err, match) {       
         // find home_team in match stats and update to boxscores[0]
-
+        var homeStats = _.find(match.stats, {"name": "home_team"});
+        homeStats.possession = boxscores[0].teamStats.possessionPercentage;
+        homeStats.shotsOnGoal = boxscores[0].teamStats.shotsOnGoal;
+        homeStats.saves = boxscores[0].teamStats.saves;
+        homeStats.crosses = boxscores[0].teamStats.crosses;
+        homeStats.passes = boxscores[0].teamStats.touches.passes;
         // find away_team in match stats and update to boxscores[1]
+        var awayStats = _.find(match.stats, {"name": "away_team"});
+        awayStats.possession = boxscores[1].teamStats.possessionPercentage;
+        awayStats.shotsOnGoal = boxscores[1].teamStats.shotsOnGoal;
+        awayStats.saves = boxscores[1].teamStats.saves;
+        awayStats.crosses = boxscores[1].teamStats.crosses;
+        awayStats.passes = boxscores[1].teamStats.touches.passes;
 
+        match.markModified('stats');
+        match.save(function(err,result){
+            if(callback)
+            callback(err,result);
+            else
+            console.log("Stats.js:345  Update of match stats ahndled correctly");
+        })
     });
 
 }

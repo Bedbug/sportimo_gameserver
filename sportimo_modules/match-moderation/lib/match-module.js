@@ -152,6 +152,17 @@ var matchModule = function (match, PubChannel, SubChannel) {
         });
     };
 
+HookedMatch.updateFeedMatchStats = function(league, matchid, callback){
+     // Check if service of same type already exists 
+        var serviceTypeFound = _.find(services, {
+            type: "rss-feed"
+        });
+        if (!serviceTypeFound)
+            return callback(new Error("Service type does not exist. Please add it first."));
+
+        serviceTypeFound.updateMatchStats(league, matchid, callback);
+}
+
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
         var serviceTypeFound = _.find(services, {

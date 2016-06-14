@@ -1075,7 +1075,7 @@ gamecards.Tick = function () {
         // },
         function (callback) {
             // Update all user gamecards that have passed from their pending state into activation
-            return db.models.userGamecards.update({ status: 0, cardType: "Instant", activationTime: { $lt: itsNow } }, { $set: { status: 1 } }, { multi: true }, callback);
+            return db.models.userGamecards.update({ status: 0, activationTime: { $lt: itsNow } }, { $set: { status: 1 } }, { multi: true }, callback);
         },
         function (callback) {
             // Find all instant gameCards that terminate, and decide if they have won or lost

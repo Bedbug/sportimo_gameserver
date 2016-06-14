@@ -86,6 +86,15 @@ feed_service.init = function (matchHandler, cbk) {
     }
 };
 
+feed_service.updateMatchStats = function(leagueName, matchId, manualCallback)
+{
+    // if (feed_service.parsername == null)
+    //     return "No parser attached to service";
+
+    parsers["Stats"].GetMatchEventsWithBox(leagueName, matchId, manualCallback)    
+};
+
+
 feed_service.pause = function()
 {
     if (feed_service.parsername == null)
