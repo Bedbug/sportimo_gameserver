@@ -23,7 +23,6 @@ var path = require('path'),
     fs = require('fs');
 
 /*Bootstrap service*/
-var services = [];
 var serviceTypes = {};
 
 var servicesPath = path.join(__dirname, '../services');
@@ -44,6 +43,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
     var HookedMatch = {}; // = match;
     //HookedMatch.moderationServices = [];
+    HookedMatch.services = [];
 
 
     // Set ID
@@ -89,7 +89,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
     */
     HookedMatch.AddModerationService = function (service, callback) {
         // Check if service of same type already exists 
-        if (_.find(services, {
+        if (_.find(this.services, {
             type: service.type
         })) {
             log.info("Service already active");
@@ -110,22 +110,27 @@ var matchModule = function (match, PubChannel, SubChannel) {
     };
 
     HookedMatch.StartService = function (service, callback) {
-        var newService = serviceTypes[service.type];
+        var serviceType = serviceTypes[service.type];
+        var that = HookedMatch;
+        if (!serviceType)
+            return callback(null);
 
-        newService = _.cloneDeep(newService);
+        var newService = new serviceType(service);
+        if (!newService)
+            return callback(null);
         //_.merge(newService, service);
-        if (service.parsername)
-            newService.parsername = service.parsername;
-        if (service.parserid)
-            newService.parserid = service.parserid;
-        if (service.type)
-            newService.type = service.type;
-        if (service.interval)
-            newService.interval = 1000 * service.interval; // convert seconds to milliseconds
-        if (service.active)
-            newService.active = service.active;
-        if (service.parsed_eventids)
-            newService.parsed_eventids = service.parsed_eventids;
+        // if (service.parsername)
+        //     newService.parsername = service.parsername;
+        // if (service.parserid)
+        //     newService.parserid = service.parserid;
+        // if (service.type)
+        //     newService.type = service.type;
+        // if (service.interval)
+        //     newService.interval = 1000 * service.interval; // convert seconds to milliseconds
+        // if (service.active)
+        //     newService.active = service.active;
+        // if (service.parsed_eventids)
+        //     newService.parsed_eventids = service.parsed_eventids;
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
         newService.init(this.data, function (error, initService) {
@@ -147,14 +152,14 @@ var matchModule = function (match, PubChannel, SubChannel) {
                     HookedMatch.Terminate();
             });
 
-            services.push(initService);
+            that.services.push(initService);
             callback(null, initService);
         });
     };
 
     HookedMatch.PauseService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.find(services, {
+        var serviceTypeFound = _.find(this.services, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -174,7 +179,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
     HookedMatch.ResumeService = function (service, callback) {
         // Check if service of same type already exists 
-        var serviceTypeFound = _.find(services, {
+        var serviceTypeFound = _.find(this.services, {
             type: service.type
         });
         if (!serviceTypeFound)
@@ -193,7 +198,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
 
     HookedMatch.GetServices = function () {
-        return _.map(services, function (service) {
+        return _.map(this.services, function (service) {
             return getServiceDTO(service);
         });
     };
