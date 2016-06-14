@@ -851,6 +851,14 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 }
             }
 
+            if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
+            {
+                newCard.terminationConditions.forEach(function(condition) {
+                   if (condition.remaining && condition.stat == 'Segment') 
+                        condition.remaining -= scheduledMatch.state;
+                });
+            }
+
             newCard.save(function (error) {
                 if (error)
                     return callback(error);
@@ -1161,18 +1169,18 @@ gamecards.Tick = function () {
                     // Check for appearance conditions, and set accordingly the visible property
                     //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
                     async.parallel([
-                        function(parallelCbk) {
-                            setTimeout(function() {
-                                gamecards.GamecardsAppearanceHandle(event, match);
-                                return parallelCbk(null);
-                            }, 100);
-                        },
-                        function(parallelCbk) {
-                            setTimeout(function() {
-                                gamecards.GamecardsAppearanceHandle(segment, match);
-                                return parallelCbk(null);
-                            }, 200);
-                        },
+                        // function(parallelCbk) {
+                        //     setTimeout(function() {
+                        //         gamecards.GamecardsAppearanceHandle(event, match);
+                        //         return parallelCbk(null);
+                        //     }, 100);
+                        // },
+                        // function(parallelCbk) {
+                        //     setTimeout(function() {
+                        //         gamecards.GamecardsAppearanceHandle(segment, match);
+                        //         return parallelCbk(null);
+                        //     }, 200);
+                        // },
                         // Check match state and minute against user gamecards' terminationConditions
                         function(parallelCbk) {
                             const wildcardsQuery = {
