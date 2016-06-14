@@ -111,6 +111,8 @@ feedService.prototype.pause = function()
 {
     if (!this.parser || this.parsername == null)
         return "No parser attached to service";
+    
+    log.info('[Feed service]: Paused');
 
     this.parser.isPaused = true;  
     this.active = false;
@@ -120,6 +122,8 @@ feedService.prototype.resume = function()
 {
     if (!this.parser || this.parsername == null)
         return "No parser attached to service";
+
+    log.info('[Feed service]: Resumed');
 
     this.parser.isPaused = false;  
     this.active = true;
@@ -142,6 +146,8 @@ feedService.prototype.AddEvent = function(event) {
 // Manage match segment advances, simple proxy to match module
 feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
 
+    log.info('[Feed service]: Sent a nextMatchSegment event');
+    
     this.emitter.emit('nextMatchSegment', matchInstance);
 };
 
@@ -149,6 +155,8 @@ feedService.prototype.EndOfMatch = function(matchInstance) {
     
     this.emitter.emit('endOfMatch', matchInstance);
     
+    log.info('[Feed service]: Sent an endOfMatch event');
+
     // Try disposing all parser objects
     //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
     this.parsername = null;

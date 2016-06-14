@@ -545,6 +545,7 @@ Parser.prototype.TickMatchFeed = function() {
                         var translatedMatchSegment = TranslateMatchSegment(event);
                         if (translatedMatchSegment)
                         {
+                            log.Info('[Stats parser]: Intercepted a Segment Advance event.');
                             that.feedService.AdvanceMatchSegment(translatedMatchSegment);
                         }
                     }
@@ -557,8 +558,10 @@ Parser.prototype.TickMatchFeed = function() {
 
             // Game Over?
             if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+                log.Info('[Stats parser]: Intercepted a match Termination event.');
+               
                 // End recurring task
-                clearInterval(Parser.recurringTask);
+                clearInterval(that.recurringTask);
                 // Cancel scheduled task, if existent
                 if (that.scheduledTask)
                     that.scheduledTask.cancel();
