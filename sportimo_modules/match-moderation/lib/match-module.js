@@ -119,18 +119,6 @@ var matchModule = function (match, PubChannel, SubChannel) {
         if (!newService)
             return callback(null);
         //_.merge(newService, service);
-        // if (service.parsername)
-        //     newService.parsername = service.parsername;
-        // if (service.parserid)
-        //     newService.parserid = service.parserid;
-        // if (service.type)
-        //     newService.type = service.type;
-        // if (service.interval)
-        //     newService.interval = 1000 * service.interval; // convert seconds to milliseconds
-        // if (service.active)
-        //     newService.active = service.active;
-        // if (service.parsed_eventids)
-        //     newService.parsed_eventids = service.parsed_eventids;
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
         newService.init(this.data, function (error, initService) {
@@ -159,7 +147,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
 HookedMatch.updateFeedMatchStats = function(league, matchid, callback){
      // Check if service of same type already exists 
-        var serviceTypeFound = _.find(services, {
+        var serviceTypeFound = _.find(this.services, {
             type: "rss-feed"
         });
         if (!serviceTypeFound)
