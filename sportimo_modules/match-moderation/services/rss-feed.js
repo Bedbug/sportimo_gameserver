@@ -144,9 +144,9 @@ feedService.prototype.AddEvent = function(event) {
 };
 
 // Manage match events, simple proxy to match module
-feed_service.emitStats = function(matchid, stats) {
+feedService.prototype.emitStats = function(matchid, stats) {
 
-    feed_service.emitter.emit('emitStats', matchid, stats);
+    this.emitter.emit('emitStats', matchid, stats);
 };
 
 // Manage match segment advances, simple proxy to match module
