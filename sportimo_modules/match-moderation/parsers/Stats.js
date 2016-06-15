@@ -338,32 +338,32 @@ var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallb
 
 var UpdateMatchStats = function (matchId, boxscores, callback) {
 
-    // matches.findOne({ 'moderation.parserid': matchId }, function (err, match) {       
-    //     // find home_team in match stats and update to boxscores[0]
-    //     var homeStats = _.find(match.stats, {"name": "home_team"});
-    //     homeStats.possession = boxscores[0].teamStats.possessionPercentage;
-    //     homeStats.shotsOnGoal = boxscores[0].teamStats.shotsOnGoal;
-    //     homeStats.saves = boxscores[0].teamStats.saves;
-    //     homeStats.crosses = boxscores[0].teamStats.crosses;
-    //     homeStats.passes = boxscores[0].teamStats.touches.passes;
-    //     // find away_team in match stats and update to boxscores[1]
-    //     var awayStats = _.find(match.stats, {"name": "away_team"});
-    //     awayStats.possession = boxscores[1].teamStats.possessionPercentage;
-    //     awayStats.shotsOnGoal = boxscores[1].teamStats.shotsOnGoal;
-    //     awayStats.saves = boxscores[1].teamStats.saves;
-    //     awayStats.crosses = boxscores[1].teamStats.crosses;
-    //     awayStats.passes = boxscores[1].teamStats.touches.passes;
+    matches.findOne({ 'moderation.parserid': matchId }, function (err, match) {       
+        // find home_team in match stats and update to boxscores[0]
+        var homeStats = _.find(match.stats, {"name": "home_team"});
+        homeStats.possession = boxscores[0].teamStats.possessionPercentage;
+        homeStats.shotsOnGoal = boxscores[0].teamStats.shotsOnGoal;
+        homeStats.saves = boxscores[0].teamStats.saves;
+        homeStats.crosses = boxscores[0].teamStats.crosses;
+        homeStats.passes = boxscores[0].teamStats.touches.passes;
+        // find away_team in match stats and update to boxscores[1]
+        var awayStats = _.find(match.stats, {"name": "away_team"});
+        awayStats.possession = boxscores[1].teamStats.possessionPercentage;
+        awayStats.shotsOnGoal = boxscores[1].teamStats.shotsOnGoal;
+        awayStats.saves = boxscores[1].teamStats.saves;
+        awayStats.crosses = boxscores[1].teamStats.crosses;
+        awayStats.passes = boxscores[1].teamStats.touches.passes;
 
-    //     match.markModified('stats');
-    //     match.save(function(err,result){
-    //         if(callback)
-    //         callback(err,result);
-    //         else
-    //         console.log("[Stats.js:345]  Update of match stats handled succesfully");
+        match.markModified('stats');
+        match.save(function(err,result){
+            if(callback)
+            callback(err,result);
+            else
+            console.log("[Stats.js:345]  Update of match stats handled succesfully");
 
-    //         Parser.feedService.emitStats(result._id, result.stats);
-    //     })
-    // });
+            that.feedService.emitStats(result._id, result.stats);
+        })
+    });
 
 }
 
