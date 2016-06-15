@@ -477,23 +477,6 @@ var TranslateMatchSegment = function (parserEvent) {
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function() {
     var that = this;
-    try
-    {
-        if (!that.matchHandler || !that.matchParserId || !that.feedService)
-        {
-            console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
-            return;
-        }
-
-        var leagueName = league.parserids[that.Name];
-        
-        if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, that.matchParserId, callback);
-            that.ticks = 1;
-        } else {
-            GetMatchEvents(leagueName, that.matchParserId, callback);
-            that.ticks++;
-        }
 
         function callbackCall (error, events, teams, matchStatus) {
             if (error) {
@@ -577,6 +560,26 @@ Parser.prototype.TickMatchFeed = function() {
             }
 
         };
+
+
+    try
+    {
+        if (!that.matchHandler || !that.matchParserId || !that.feedService)
+        {
+            console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
+            return;
+        }
+
+        var leagueName = league.parserids[that.Name];
+        
+        if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
+            GetMatchEventsWithBox(leagueName, that.matchParserId, callbackCall);
+            that.ticks = 1;
+        } else {
+            GetMatchEvents(leagueName, that.matchParserId, callbackCall);
+            that.ticks++;
+        }
+
     }
     catch (methodError) {
         log.error('Stats parser tick error: ' + methodError.message);
