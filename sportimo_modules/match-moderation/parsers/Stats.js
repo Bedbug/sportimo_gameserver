@@ -279,6 +279,8 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
             callback(null, events, teams, matchStatus);
         }
         catch (err) {
+            console.log(err);
+            if(callback)
             return callback(err);
         }
     });
@@ -342,7 +344,9 @@ var UpdateMatchStats = function (matchId, boxscores, callback) {
             if(callback)
             callback(err,result);
             else
-            console.log("Stats.js:345  Update of match stats ahndled correctly");
+            console.log("[Stats.js:345]  Update of match stats handled succesfully");
+
+            Parser.feedService.emitStats(result._id, result.stats);
         })
     });
 
@@ -465,14 +469,14 @@ Parser.TickMatchFeed = function () {
         var leagueName = league.parserids[Parser.Name];
 
         if (ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, matchParserId, callback);
+            GetMatchEventsWithBox(leagueName, matchParserId, callbackCall);
             ticks = 1;
         } else {
-            GetMatchEvents(leagueName, matchParserId, callback);
+            GetMatchEvents(leagueName, matchParserId, callbackCall);
             ticks++;
         }
 
-        var callback = function (error, events, teams, matchStatus) {
+        function callbackCall (error, events, teams, matchStatus) {
             if (error) {
                 console.log('error in TickMatchFeed: ' + error.message);
                 return;
