@@ -27,8 +27,9 @@ var apiPath = path.join(__dirname, 'api');
         app.use('/offline_data/', require(apiPath + '/' + file));
     });
 
-    
-    
+
+var mongoose = require('./config/db.js');
+// mongoose.mongoose.models. ...
     
 var offlineDataUpdater = {};
 

@@ -33,51 +33,63 @@ var modelsPath = path.join(__dirname, '../../models');
     fs.readdirSync(modelsPath).forEach(function (file) {
         require(modelsPath + '/' + file);
     });
+    
+var serviceType = "rss-feed";
 
-var feed_service = {};
-
-// All services have a type attribute
-feed_service.type = "rss-feed";
-
-// The id of the corresponding event(match)
-feed_service.parserid = "";
-
-// The interval that the module will request an update
-feed_service.interval = 5000;
-
-// The parser name for this feed
-feed_service.parsername = null;
-
-// Build a node.js event emitter (see: https://nodejs.org/api/events.html)
-var MyEmitter = function()
-{
-    EventEmitter.call(this);
+function feedService(service) {
+    // All services have a type attribute
+    if (service.type != serviceType)
+        return null;
+    this.type = serviceType;
+    
+    // The parser name for this feed
+    if (!service.parsername)
+        return null;
+    this.parsername = service.parsername || null; 
+    
+    // The id of the corresponding event(match)
+    this.parserid = service.parserid || 0;
+    
+    // The interval that the module will request an update
+    this.interval = service.interval || 5000;
+    
+    this.active = service.active || true;
+    
+    this.parser = null;
 };
-util.inherits(MyEmitter, EventEmitter);
 
 
-feed_service.parser = null;
  
 // Initialize feed and validate response
-feed_service.init = function (matchHandler, cbk) {
-    if (this.parsername == null)
+feedService.prototype.init = function (matchHandler, cbk) {
+    var that = this;
+    
+    if (that.parsername == null)
         return cbk(new Error("No parser attached to service"));
-    if (!parsers[this.parsername])
+    if (!parsers[that.parsername])
         return cbk(new Error("No parser with the name " + this.parsername + " can be found."));
 
     log.info("Initializing rss-feed service for match id " + matchHandler.id);
 
     try
     {
-        var selectedParser = _.cloneDeep(parsers[this.parsername]);
-        selectedParser.init(matchHandler, this, function(error) {
+        var selectedParser = new parsers[that.parsername](matchHandler, that);
+        selectedParser.init(function(error) {
             if (error)
                 return cbk(error);
                 
-            feed_service.parser = parsers[this.parsername];
-            feed_service.emitter = new MyEmitter();
-            return cbk(null, feed_service);
+            // Build a node.js event emitter (see: https://nodejs.org/api/events.html)
+            var MyEmitter = function()
+            {
+                EventEmitter.call(that);
+            };
+            util.inherits(MyEmitter, EventEmitter);
+
+                
+            that.emitter = new MyEmitter();
+            return cbk(null, that);
         });
+        that.parser = selectedParser;
     }
     catch(error)
     {
@@ -86,43 +98,49 @@ feed_service.init = function (matchHandler, cbk) {
     }
 };
 
-feed_service.updateMatchStats = function(leagueName, matchId, manualCallback)
+feedService.prototype.updateMatchStats = function(leagueName, matchId, manualCallback)
 {
-    // if (feed_service.parsername == null)
+    // if (feedService.parsername == null)
     //     return "No parser attached to service";
 
-    parsers["Stats"].GetMatchEventsWithBox(leagueName, matchId, manualCallback)    
+    this.parser.GetMatchEventsWithBox(leagueName, matchId, manualCallback);    
 };
 
 
-feed_service.pause = function()
+feedService.prototype.pause = function()
 {
-    if (feed_service.parsername == null)
+    if (!this.parser || this.parsername == null)
+        return "No parser attached to service";
+    
+    log.info('[Feed service]: Paused');
+
+    this.parser.isPaused = true;  
+    this.active = false;
+};
+
+feedService.prototype.resume = function()
+{
+    if (!this.parser || this.parsername == null)
         return "No parser attached to service";
 
-    parsers[feed_service.parsername].isPaused = true;    
+    log.info('[Feed service]: Resumed');
+
+    this.parser.isPaused = false;  
+    this.active = true;
 };
 
-feed_service.resume = function()
+feedService.prototype.isActive = function()
 {
-    if (feed_service.parsername == null)
-        return "No parser attached to service";
-
-    parsers[feed_service.parsername].isPaused = false;    
-};
-
-feed_service.isActive = function()
-{
-    if (!feed_service.parsername || !parsers.length > 0 || !parsers[feed_service.parsername])
+    if (!this.parser || !this.parsername)
         return false;
     else
-        return parsers[feed_service.parsername].isPaused;
-}
+        return this.parser.isPaused;
+};
 
 // Manage match events, simple proxy to match module
-feed_service.AddEvent = function(event) {
+feedService.prototype.AddEvent = function(event) {
 
-    feed_service.emitter.emit('matchEvent', event);
+    this.emitter.emit('matchEvent', event);
 };
 
 // Manage match events, simple proxy to match module
@@ -132,23 +150,28 @@ feed_service.emitStats = function(matchid, stats) {
 };
 
 // Manage match segment advances, simple proxy to match module
-feed_service.AdvanceMatchSegment = function(matchInstance) {
+feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
 
-    feed_service.emitter.emit('nextMatchSegment', matchInstance);
+    log.info('[Feed service]: Sent a nextMatchSegment event');
+    
+    this.emitter.emit('nextMatchSegment', matchInstance);
 };
 
-feed_service.EndOfMatch = function(matchInstance) {
+feedService.prototype.EndOfMatch = function(matchInstance) {
     
-    feed_service.emitter.emit('endOfMatch', matchInstance);
+    this.emitter.emit('endOfMatch', matchInstance);
     
+    log.info('[Feed service]: Sent an endOfMatch event');
+
     // Try disposing all parser objects
     //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
-    feed_service.parsername = null;
+    this.parsername = null;
+    this.parser = null;
 };
 
 
 // Helper function that loads a team players from the mongoDb store
-feed_service.LoadPlayers = function(teamId, callback)
+feedService.prototype.LoadPlayers = function(teamId, callback)
 {
     if (!mongoose)
         return callback(null);
@@ -163,7 +186,7 @@ feed_service.LoadPlayers = function(teamId, callback)
 };
 
 
-feed_service.LoadTeam = function(teamId, callback)
+feedService.prototype.LoadTeam = function(teamId, callback)
 {
     if (!mongoose)
         return callback(null);
@@ -178,7 +201,7 @@ feed_service.LoadTeam = function(teamId, callback)
 };
 
 
-feed_service.LoadCompetition = function(competitionId, callback)
+feedService.prototype.LoadCompetition = function(competitionId, callback)
 {
     if (!mongoose)
         return callback(null);
@@ -192,7 +215,7 @@ feed_service.LoadCompetition = function(competitionId, callback)
     }
 };
 
-feed_service.SaveParsedEvents = function(matchId, events)
+feedService.prototype.SaveParsedEvents = function(matchId, events)
 {
     if (!mongoose)
         return;
@@ -212,7 +235,7 @@ feed_service.SaveParsedEvents = function(matchId, events)
     }
 };
 
-feed_service.LoadParsedEvents = function(matchId, callback)
+feedService.prototype.LoadParsedEvents = function(matchId, callback)
 {
     if (!mongoose)
         return;
@@ -236,4 +259,4 @@ feed_service.LoadParsedEvents = function(matchId, callback)
     }
 };
 
-module.exports = feed_service;
+module.exports = feedService;

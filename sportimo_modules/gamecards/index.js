@@ -850,6 +850,14 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
+            
+            if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
+            {
+                newCard.terminationConditions.forEach(function(condition) {
+                   if (condition.remaining && condition.stat == 'Segment') 
+                        condition.remaining -= scheduledMatch.state;
+                });
+            }
 
             if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
             {

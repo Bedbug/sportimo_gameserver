@@ -49,34 +49,9 @@ var statsComConfigProduction = {
 var localConfiguration = statsComConfigDevelopment;
 
 
-
-var Parser = {};
-
 // Settings properties
 var configuration = localConfiguration;
 
-//update configuration settings with this object settings
-if (Parser.interval)
-    configuration.eventsInterval = Parser.interval;
-if (Parser.parsername)
-    configuration.parserIdName = Parser.parsername;
-
-Parser.matchHandler = null;
-Parser.feedService = null;
-Parser.recurringTask = null;
-Parser.scheduledTask = null;
-
-// holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
-var eventFeedSnapshot = {};
-
-// the parser upon initialization will inquire about the match parserid
-var matchParserId = null;
-
-// the parser upon initialization will inquire about all team players and their parserids.
-var matchPlayersLookup = {};
-
-// the parser upon initialization will inquire about the 2 teams (home and away) parserids
-var matchTeamsLookup = {};
 
 // the parser upon initialization will inquire about the competition mappings
 var league = null;
@@ -103,106 +78,143 @@ var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
 
 var penaltiesSegmentStarted = false;
 
-Parser.Name = configuration.parserIdName;
 
-Parser.isPaused = false;
+module.exports = Parser;
 
 // Restrict to Only call this once in the lifetime of this object
-Parser.init = function (matchContext, feedServiceContext, cbk) {
-    //        return console.log("[Stats] Parser service initiliazed");
-    Parser.matchHandler = matchContext;
-    Parser.feedService = feedServiceContext;
+function Parser(matchContext, feedServiceContext){
 
+    this.Name = configuration.parserIdName;
+    this.isPaused = false;
+    this.matchHandler = matchContext;
+    this.feedService = feedServiceContext;
+    this.recurringTask = null;
+    this.scheduledTask = null;
+    
+    // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
+    this.eventFeedSnapshot = { };
+    
+    // the parser upon initialization will inquire about all team players and their parserids.
+    this.matchPlayersLookup = {};
+    
+    // the parser upon initialization will inquire about the 2 teams (home and away) parserids
+    this.matchTeamsLookup = {};
+    
 
-    // fill in the matchParserId var
-    matchParserId = Parser.feedService.parserid || Parser.matchHandler.parserids[configuration.parserIdName];
+    // the parser upon initialization will inquire about the match parserid
+    this.matchParserId = this.feedService.parserid || this.matchHandler.parserids[configuration.parserIdName];
+   
+    if (!this.matchParserId || !this.matchHandler.competition)
+        return; // new Error('Invalid or absent match parserids');
+        
+    if (this.feedService.active)
+        this.isPaused = !this.feedService.active;
+        
+    this.ticks = 1;
+        
+    // A queue to sequentially process inbound events, work in progress
+    this.eventQueue = async.queue(function(task, callback) {
+        if (task.eventType && task.eventType == 'event')
+        {
+            setTimeout( this.feedService.AddEvent(task), 200);
+        }
+        else
+        if (task.eventType && task.eventType == 'segment')
+        {
+            
+        }
+        else
+        if (task.eventType && task.eventType == 'termination')
+        {
+            
+        }
+        else
+        {
+            async.setImmediate(function () {
+                callback(null);
+            });
+        }
+    });
+};
 
-    if (!matchParserId || !Parser.matchHandler.competition)
-        return cbk(new Error('Invalid or absent match parserids'));
-
-    if (Parser.feedService.active)
-        Parser.isPaused = !Parser.feedService.active;
-
-    // Set the team ids and parserids mapping
-    // var homeTeam = _.cloneDeep(matchContext.home_team);
-    // homeTeam['matchType'] = 'home_team';
-    // matchTeamsLookup[matchContext.home_team.parserids[matchParserId]] = homeTeam;
-
-    // var awayTeam = _.cloneDeep(matchContext.away_team);
-    // awayTeam['matchType'] = 'away_team';
-    // matchTeamsLookup[matchContext.away_team.parserids[matchParserId]] = awayTeam;
-
+Parser.prototype.init = function(cbk)
+{
+    var that = this;
     // Execute multiple async functions in parallel getting the player ids and parserids mapping
     async.parallel([
-        function (callback) {
-            feedServiceContext.LoadTeam(matchContext.home_team, function (error, response) {
-                if (error)
+        function(callback) {
+            that.feedService.LoadTeam(that.matchHandler.home_team, function(error, response) {
+                if (error) 
                     return callback(error);
 
                 response['matchType'] = 'home_team';
                 if (!response.parserids)
-                    return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
-                matchTeamsLookup[response.parserids[Parser.Name]] = response;
+                    return callback(new Error("No parserids[" + that.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
+                that.matchTeamsLookup[response.parserids[this.Name]] = response;
                 callback(null);
             });
         },
-        function (callback) {
-            feedServiceContext.LoadTeam(matchContext.away_team, function (error, response) {
-                if (error)
+        function(callback) {
+            that.feedService.LoadTeam(that.matchHandler.away_team, function(error, response) {
+                if (error) 
                     return callback(error);
 
                 response['matchType'] = 'away_team';
                 if (!response.parserids)
-                    return callback(new Error("No parserids[" + Parser.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
-                matchTeamsLookup[response.parserids[Parser.Name]] = response;
+                    return callback(new Error("No parserids[" + that.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
+                that.matchTeamsLookup[response.parserids[that.Name]] = response;
                 callback(null);
             });
         },
-        function (callback) {
-            feedServiceContext.LoadParsedEvents(matchContext.id, function (error, response) {
-                if (error)
+        function(callback) {
+            that.feedService.LoadParsedEvents(that.matchHandler.id, function(error, response) {
+                if (error) 
                     return callback(error);
-
-                if (response && response.parsed_eventids.length > 0) {
-                    _.forEach(response.parsed_eventids, function (eventid) {
-                        eventFeedSnapshot[eventid] = true;
+                    
+                if (response  && response.parsed_eventids.length > 0)
+                {
+                    _.forEach(response.parsed_eventids, function(eventid) {
+                        that.eventFeedSnapshot[eventid] = true;
                     });
                 }
                 callback(null);
             });
         },
-        function (callback) {
-            feedServiceContext.LoadCompetition(matchContext.competition, function (error, response) {
-                if (error)
+        function(callback) {
+            that.feedService.LoadCompetition(that.matchHandler.competition, function(error, response) {
+                if (error) 
                     return callback(error);
 
                 league = response;
 
                 // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
-                GetMatchStatus(league.parserids[Parser.Name], matchParserId, function (err, isActive, startDate) {
+                GetMatchStatus(league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
                     if (err)
                         return callback(err);
-
-                    var scheduleDate = Parser.matchHandler.start || startDate;
+                    
+                    var scheduleDate = that.matchHandler.start || startDate;  
                     if (!scheduleDate)
                         return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
 
                     var formattedScheduleDate = moment.utc(scheduleDate);
                     formattedScheduleDate.subtract(300, 'seconds');
 
-                    var interval = Parser.feedService.interval || configuration.eventsInterval;
+                    var interval = that.feedService.interval || configuration.eventsInterval;
                     if (interval < 1000)
                         interval = 1000;
 
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
-                    if (formattedScheduleDate < moment.utc() && isActive) {
-                        Parser.recurringTask = setInterval(Parser.TickMatchFeed, interval);
+                    if (formattedScheduleDate < moment.utc() && isActive) 
+                    {
+                        that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                     }
                     else {
                         // Schedule match feed event calls
-                        if (scheduleDate) {
-                            Parser.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function () {
-                                Parser.recurringTask = setInterval(Parser.TickMatchFeed, interval);
+                        if (scheduleDate)
+                        {
+                            that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
+                            {
+                                that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                             });
                         }
                     }
@@ -211,33 +223,33 @@ Parser.init = function (matchContext, feedServiceContext, cbk) {
                 });
             });
         },
-        function (callback) {
-            feedServiceContext.LoadPlayers(matchContext.home_team._id, function (error, response) {
+        function(callback) {
+            that.feedService.LoadPlayers(that.matchHandler.home_team._id, function(error, response) {
                 if (error)
                     return callback(error);
 
                 // if (!_.isArrayLike(response))
                 //     return callback();
 
-                _.forEach(response, function (item) {
-                    if (item.parserids && item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
-                        matchPlayersLookup[item.parserids[Parser.Name]] = item;
+                _.forEach(response, function(item) {
+                    if (item.parserids && item.parserids[that.Name] && !that.matchPlayersLookup[item.parserids[that.Name]])
+                        that.matchPlayersLookup[item.parserids[that.Name]] = item;
                 });
 
                 callback(null);
             });
         },
-        function (callback) {
-            feedServiceContext.LoadPlayers(matchContext.away_team._id, function (error, response) {
+        function(callback) {
+            that.feedService.LoadPlayers(that.matchHandler.away_team._id, function(error, response) {
                 if (error)
                     return callback(error);
 
                 // if (!_.isArrayLike(response))
                 //     return callback();
 
-                _.forEach(response, function (item) {
-                    if (item.parserids && item.parserids[Parser.Name] && !matchPlayersLookup[item.parserids[Parser.Name]])
-                        matchPlayersLookup[item.parserids[Parser.Name]] = item;
+                _.forEach(response, function(item) {
+                    if (item.parserids && item.parserids[that.Name] && !that.matchPlayersLookup[item.parserids[that.Name]])
+                        that.matchPlayersLookup[item.parserids[that.Name]] = item;
                 });
 
                 callback(null);
@@ -288,10 +300,11 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
 
 // Number of ticks before full data retrieval
 var numberOfTicksBeforeBoxscore = 30;
-var ticks = 1;
-Parser.GetMatchEventsWithBox = function (leagueName, matchId, manualCallback) {
+
+Parser.prototype.GetMatchEventsWithBox = function (leagueName, matchId, manualCallback) {
     GetMatchEventsWithBox(leagueName, matchId, null, manualCallback);
 }
+
 var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallback) {
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?box=true&pbp=true&" + signature; // &box=true for boxing statistics
@@ -374,7 +387,8 @@ var GetMatchStatus = function (leagueName, matchId, callback) {
 };
 
 
-var TranslateMatchEvent = function (parserEvent) {
+Parser.prototype.TranslateMatchEvent = function(parserEvent)
+{
     if (!parserEvent)
         return null;
 
@@ -382,11 +396,11 @@ var TranslateMatchEvent = function (parserEvent) {
     if (_.indexOf(supportedEventTypes, parserEvent.playEvent.playEventId) == -1)
         return null;
 
-    var offensivePlayer = parserEvent.offensivePlayer && matchPlayersLookup[parserEvent.offensivePlayer.playerId] ?
+    var offensivePlayer = parserEvent.offensivePlayer  && this.matchPlayersLookup[parserEvent.offensivePlayer.playerId] ? 
         {
-            id: matchPlayersLookup[parserEvent.offensivePlayer.playerId].id,
-            name: matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
-            team: matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
+            id : this.matchPlayersLookup[parserEvent.offensivePlayer.playerId].id,
+            name : this.matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
+            team : this.matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
         } : null;
     // var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
     //     {
@@ -411,8 +425,8 @@ var TranslateMatchEvent = function (parserEvent) {
             sender: configuration.parserIdName,
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: isTimelineEvent,
-            team: matchTeamsLookup[parserEvent.teamId] ? matchTeamsLookup[parserEvent.teamId].matchType : null,
-            match_id: Parser.matchHandler._id,
+            team: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].matchType : null,
+            match_id: this.matchHandler._id,
             players: [],
             stats: {}
         },
@@ -459,21 +473,24 @@ var TranslateMatchSegment = function (parserEvent) {
 
 
 // and now, the functions that can be called from outside modules.
-Parser.TickMatchFeed = function () {
-    try {
-        if (!Parser.matchHandler || !matchParserId || !Parser.feedService) {
+Parser.prototype.TickMatchFeed = function() {
+    var that = this;
+    try
+    {
+        if (!that.matchHandler || !that.matchParserId || !that.feedService)
+        {
             console.log('Invalid call of TickMatchFeed before binding to a Stats-supported match');
             return;
         }
 
-        var leagueName = league.parserids[Parser.Name];
-
-        if (ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, matchParserId, callbackCall);
-            ticks = 1;
+        var leagueName = league.parserids[that.Name];
+        
+        if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
+            GetMatchEventsWithBox(leagueName, that.matchParserId, callback);
+            that.ticks = 1;
         } else {
-            GetMatchEvents(leagueName, matchParserId, callbackCall);
-            ticks++;
+            GetMatchEvents(leagueName, that.matchParserId, callback);
+            that.ticks++;
         }
 
         function callbackCall (error, events, teams, matchStatus) {
@@ -483,11 +500,11 @@ Parser.TickMatchFeed = function () {
             }
 
             // Produce the diff with eventFeedSnapshot
-            var eventsDiff = _.filter(events, function (item) {
-                return !eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
+            var eventsDiff = _.filter(events, function(item) {
+                return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
             });
-            _.forEach(events, function (event) {
-                eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
+            _.forEach(events, function(event) {
+                that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
             });
 
             //if (Math.random() < 0.03)
@@ -497,24 +514,25 @@ Parser.TickMatchFeed = function () {
             if (eventsDiff.length == 0)
                 return;
 
-            Parser.feedService.SaveParsedEvents(Parser.matchHandler._id, _.keys(eventFeedSnapshot));
-
-            if (Parser.isPaused != true) {
+            that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot));
+                
+            if (that.isPaused != true)
+            {
                 // Translate all events in eventsDiff and send them to feedService
                 _.forEach(eventsDiff, function (event) {
                     // First try parsing a normal event
-                    var translatedEvent = TranslateMatchEvent(event);
+                    var translatedEvent = that.TranslateMatchEvent(event);
                     if (translatedEvent) {
-                        Parser.feedService.AddEvent(translatedEvent);
-
+                        that.feedService.AddEvent(translatedEvent);
+                        
                         // Determine if the event is a successful panalty, in this case create an extra Goal event
                         if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
                             setTimeout(function () {
                                 var goalEvent = _.cloneDeep(event);
                                 goalEvent.playEvent.playEventId = 11;
                                 goalEvent.playEvent.name = 'Goal';
-                                var translatedGoalEvent = TranslateMatchEvent(goalEvent);
-                                Parser.feedService.AddEvent(translatedGoalEvent);
+                                var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                                that.feedService.AddEvent(translatedGoalEvent);
                             }, 500);
                         }
 
@@ -522,15 +540,17 @@ Parser.TickMatchFeed = function () {
                         if (translatedEvent.data.state == 9) {
                             if (!penaltiesSegmentStarted) {
                                 penaltiesSegmentStarted = true;
-                                Parser.feedService.AdvanceMatchSegment(Parser.matchHandler);
+                                that.feedService.AdvanceMatchSegment(that.matchHandler);
                             }
                         }
                     }
                     else {
                         // Then try to parse a match segment advancing event
                         var translatedMatchSegment = TranslateMatchSegment(event);
-                        if (translatedMatchSegment) {
-                            Parser.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                        if (translatedMatchSegment)
+                        {
+                            log.Info('[Stats parser]: Intercepted a Segment Advance event.');
+                            that.feedService.AdvanceMatchSegment(translatedMatchSegment);
                         }
                     }
                 });
@@ -542,13 +562,15 @@ Parser.TickMatchFeed = function () {
 
             // Game Over?
             if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+                log.Info('[Stats parser]: Intercepted a match Termination event.');
+               
                 // End recurring task
-                clearInterval(Parser.recurringTask);
+                clearInterval(that.recurringTask);
                 // Cancel scheduled task, if existent
-                if (Parser.scheduledTask)
-                    Parser.scheduledTask.cancel();
+                if (that.scheduledTask)
+                    that.scheduledTask.cancel();
                 // Send an event that the match is ended.
-                Parser.feedService.EndOfMatch(Parser.matchHandler);
+                that.feedService.EndOfMatch(that.matchHandler);
             }
 
         };
@@ -562,7 +584,6 @@ Parser.TickMatchFeed = function () {
 
 
 
-module.exports = Parser;
 
 
 
