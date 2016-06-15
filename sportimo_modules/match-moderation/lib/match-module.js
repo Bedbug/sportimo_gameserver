@@ -137,7 +137,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
             });
             initService.emitter.on('endOfMatch', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                    HookedMatch.Terminate();
+                    HookedMatch.TerminateMatch();
             });
 
 
@@ -594,7 +594,10 @@ HookedMatch.AddEvent = function (event, cbk) {
 
     matches.findById(HookedMatch.id, function (err, thisMatch) {
         if (err || !thisMatch)
-            return console.log(err);
+            if (cbk)
+                return cbk(err);
+            else
+                return console.log(err);
 
         event.data = new matchEvents(event.data);
 
@@ -820,7 +823,7 @@ HookedMatch.UpdateEvent = function (event, cbk) {
 };
 
 // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
-HookedMatch.Terminate = function () {
+HookedMatch.TerminateMatch = function () {
     Timers.clear();
     this.data.completed = true;
     this.data.save(function (err, done) {
@@ -828,7 +831,16 @@ HookedMatch.Terminate = function () {
             log.error(err.message);
     });
     HookedMatch.gamecards.TerminateMatch(this.data);
+    HookedMatch.Terminate();
+};
 
+HookedMatch.Terminate = function () {
+    if (this.services)
+    {
+        _.forEach(this.services, function(service) {
+            service.Terminate(); 
+        });
+    }
 };
 
 return HookedMatch;

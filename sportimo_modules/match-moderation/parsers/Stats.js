@@ -218,6 +218,8 @@ Parser.prototype.init = function(cbk)
                                 log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                                 that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                             });
+                            if (that.scheduledTask)
+                                log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
                         }
                     }
 
@@ -266,6 +268,23 @@ Parser.prototype.init = function(cbk)
         cbk(null);
     });
 };
+
+
+Parser.prototype.Terminate = function(callback)
+{
+    log.Info('[Stats parser]: Terminating and closing down.');
+   
+    // End recurring task
+    clearInterval(this.recurringTask);
+    // Cancel scheduled task, if existent
+    if (this.scheduledTask)
+        this.scheduledTask.cancel();
+
+    log.info('[Stats parser]: Terminated and closed down parser for matchid %s', this.matchHandler.id);
+    
+    if (callback)
+        callback(null);
+}
 
 // Helper Methods
 
@@ -549,17 +568,12 @@ Parser.prototype.TickMatchFeed = function() {
             if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
                 log.Info('[Stats parser]: Intercepted a match Termination event.');
                
-                // End recurring task
-                clearInterval(that.recurringTask);
-                // Cancel scheduled task, if existent
-                if (that.scheduledTask)
-                    that.scheduledTask.cancel();
                 // Send an event that the match is ended.
                 that.feedService.EndOfMatch(that.matchHandler);
-                log.info('[Stats parser]: Timer ended for matchid %s', that.matchHandler.id);
+                that.Terminate();
             }
 
-        };
+        }
 
 
     try

@@ -170,6 +170,17 @@ feedService.prototype.EndOfMatch = function(matchInstance) {
 };
 
 
+feedService.prototype.Terminate = function(callback)
+{
+    if (this.parser)
+        this.parser.Terminate();
+    this.parsername = null;
+    this.parser = null;
+    
+    if (callback)
+        callback(null);
+};
+
 // Helper function that loads a team players from the mongoDb store
 feedService.prototype.LoadPlayers = function(teamId, callback)
 {
