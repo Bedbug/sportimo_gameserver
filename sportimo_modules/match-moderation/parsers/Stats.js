@@ -585,7 +585,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                 var translatedMatchSegment = TranslateMatchSegment(event);
                 if (translatedMatchSegment)
                 {
-                    log.Info('[Stats parser]: Intercepted a Segment Advance event.');
+                    log.info('[Stats parser]: Intercepted a Segment Advance event.');
                     that.feedService.AdvanceMatchSegment(translatedMatchSegment);
                 }
             }
@@ -598,7 +598,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
 
     // Game Over?
     if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
-        log.Info('[Stats parser]: Intercepted a match Termination event.');
+        log.info('[Stats parser]: Intercepted a match Termination event.');
        
         // Send an event that the match is ended.
         that.feedService.EndOfMatch(that.matchHandler);
