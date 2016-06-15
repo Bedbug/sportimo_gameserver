@@ -220,6 +220,12 @@ Parser.prototype.init = function(cbk)
                             });
                             if (that.scheduledTask)
                                 log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
+                            else
+                                if (!that.matchHandler.completed|| that.matchHandler.completed == false)
+                                {
+                                    log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
+                                    that.TickMatchFeed();
+                                }
                         }
                     }
 
@@ -272,7 +278,7 @@ Parser.prototype.init = function(cbk)
 
 Parser.prototype.Terminate = function(callback)
 {
-    log.Info('[Stats parser]: Terminating and closing down.');
+    log.info('[Stats parser]: Terminating and closing down.');
    
     // End recurring task
     clearInterval(this.recurringTask);

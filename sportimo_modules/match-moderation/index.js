@@ -186,7 +186,8 @@ var ModerationModule = {
                             return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                     }
                     
-                    var foundMatch = ModerationModule.GetMatch(match.id);
+                    var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
+
                     if (foundMatch)
                         foundMatch.Terminate();
                     
