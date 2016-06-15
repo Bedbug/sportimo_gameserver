@@ -507,7 +507,7 @@ function startMatchTimer() {
             return console.log(err);
         }
 
-        if (!HookedMatch.sport.segments[thisMatch.state].timed) { return console.log("No need to be timed."); }
+        if (!HookedMatch.sport.segments[thisMatch.state].timed) { return ; }
 
         console.log("Start Match Timer for Match [ID: " + HookedMatch.id + "] ");
 
