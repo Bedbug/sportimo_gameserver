@@ -206,7 +206,7 @@ Parser.prototype.init = function(cbk)
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
                     if (formattedScheduleDate < moment.utc() && isActive) 
                     {
-                        log.info('[Stats parser]: Timer startedfor matchid %s', that.matchHandler.id);
+                        log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                         that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                     }
                     else {
@@ -215,7 +215,7 @@ Parser.prototype.init = function(cbk)
                         {
                             that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
                             {
-                                log.info('[Stats parser]: Timer startedfor matchid %s', that.matchHandler.id);
+                                log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                                 that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                             });
                         }
@@ -573,6 +573,7 @@ Parser.prototype.TickMatchFeed = function() {
                     that.scheduledTask.cancel();
                 // Send an event that the match is ended.
                 that.feedService.EndOfMatch(that.matchHandler);
+                log.info('[Stats parser]: Timer ended for matchid %s', that.matchHandler.id);
             }
 
         };
