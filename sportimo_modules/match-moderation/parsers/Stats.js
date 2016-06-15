@@ -502,86 +502,6 @@ var TranslateMatchSegment = function (parserEvent) {
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function() {
     var that = this;
-
-        function callbackCall (error, events, teams, matchStatus) {
-            if (error) {
-                console.log('error in TickMatchFeed: ' + error.message);
-                return;
-            }
-
-            // Produce the diff with eventFeedSnapshot
-            var eventsDiff = _.filter(events, function(item) {
-                return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
-            });
-            _.forEach(events, function(event) {
-                that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
-            });
-
-            //if (Math.random() < 0.03)
-            //    log.info('[Feed Stats Parser]: Stats call returned ' + events.length + ' events from the feed');
-
-            // Nothing to add
-            if (eventsDiff.length == 0)
-                return;
-
-            that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot));
-                
-            if (that.isPaused != true)
-            {
-                // Translate all events in eventsDiff and send them to feedService
-                _.forEach(eventsDiff, function (event) {
-                    // First try parsing a normal event
-                    var translatedEvent = that.TranslateMatchEvent(event);
-                    if (translatedEvent) {
-                        that.feedService.AddEvent(translatedEvent);
-                        
-                        // Determine if the event is a successful panalty, in this case create an extra Goal event
-                        if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
-                            setTimeout(function () {
-                                var goalEvent = _.cloneDeep(event);
-                                goalEvent.playEvent.playEventId = 11;
-                                goalEvent.playEvent.name = 'Goal';
-                                var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
-                                that.feedService.AddEvent(translatedGoalEvent);
-                            }, 500);
-                        }
-
-                        // Determine if the Penalties Segment has just started (in this case, advance the segment)
-                        if (translatedEvent.data.state == 9) {
-                            if (!penaltiesSegmentStarted) {
-                                penaltiesSegmentStarted = true;
-                                that.feedService.AdvanceMatchSegment(that.matchHandler);
-                            }
-                        }
-                    }
-                    else {
-                        // Then try to parse a match segment advancing event
-                        var translatedMatchSegment = TranslateMatchSegment(event);
-                        if (translatedMatchSegment)
-                        {
-                            log.Info('[Stats parser]: Intercepted a Segment Advance event.');
-                            that.feedService.AdvanceMatchSegment(translatedMatchSegment);
-                        }
-                    }
-                });
-            }
-
-            var lastEvent = _.findLast(events, function (n) {
-                return n.sequenceNumber;
-            });
-
-            // Game Over?
-            if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
-                log.Info('[Stats parser]: Intercepted a match Termination event.');
-               
-                // Send an event that the match is ended.
-                that.feedService.EndOfMatch(that.matchHandler);
-                that.Terminate();
-            }
-
-        }
-
-
     try
     {
         if (!that.matchHandler || !that.matchParserId || !that.feedService)
@@ -593,10 +513,10 @@ Parser.prototype.TickMatchFeed = function() {
         var leagueName = league.parserids[that.Name];
         
         if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, that.matchParserId, callbackCall);
+            GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that));
             that.ticks = 1;
         } else {
-            GetMatchEvents(leagueName, that.matchParserId, callbackCall);
+            GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
             that.ticks++;
         }
 
@@ -606,6 +526,86 @@ Parser.prototype.TickMatchFeed = function() {
     }
 };
 
+
+Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
+    if (error) {
+        console.log('error in TickMatchFeed: ' + error.message);
+        return;
+    }
+    
+    var that = this;
+
+    // Produce the diff with eventFeedSnapshot
+    var eventsDiff = _.filter(events, function(item) {
+        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
+    });
+    _.forEach(events, function(event) {
+        that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
+    });
+
+    //if (Math.random() < 0.03)
+    //    log.info('[Feed Stats Parser]: Stats call returned ' + events.length + ' events from the feed');
+
+    // Nothing to add
+    if (eventsDiff.length == 0)
+        return;
+
+    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot));
+        
+    if (that.isPaused != true)
+    {
+        // Translate all events in eventsDiff and send them to feedService
+        _.forEach(eventsDiff, function (event) {
+            // First try parsing a normal event
+            var translatedEvent = that.TranslateMatchEvent(event);
+            if (translatedEvent) {
+                that.feedService.AddEvent(translatedEvent);
+                
+                // Determine if the event is a successful panalty, in this case create an extra Goal event
+                if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
+                    setTimeout(function () {
+                        var goalEvent = _.cloneDeep(event);
+                        goalEvent.playEvent.playEventId = 11;
+                        goalEvent.playEvent.name = 'Goal';
+                        var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                        that.feedService.AddEvent(translatedGoalEvent);
+                    }, 500);
+                }
+
+                // Determine if the Penalties Segment has just started (in this case, advance the segment)
+                if (translatedEvent.data.state == 9) {
+                    if (!penaltiesSegmentStarted) {
+                        penaltiesSegmentStarted = true;
+                        that.feedService.AdvanceMatchSegment(that.matchHandler);
+                    }
+                }
+            }
+            else {
+                // Then try to parse a match segment advancing event
+                var translatedMatchSegment = TranslateMatchSegment(event);
+                if (translatedMatchSegment)
+                {
+                    log.Info('[Stats parser]: Intercepted a Segment Advance event.');
+                    that.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                }
+            }
+        });
+    }
+
+    var lastEvent = _.findLast(events, function (n) {
+        return n.sequenceNumber;
+    });
+
+    // Game Over?
+    if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+        log.Info('[Stats parser]: Intercepted a match Termination event.');
+       
+        // Send an event that the match is ended.
+        that.feedService.EndOfMatch(that.matchHandler);
+        that.Terminate();
+    }
+
+};
 
 
 
