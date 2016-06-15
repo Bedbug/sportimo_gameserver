@@ -1,6 +1,7 @@
 var express = require('express'),
     router = express.Router(),
     log = require('winston');
+    _ = require('lodash');
 
 module.exports = function(ModerationModule) {
 
@@ -48,8 +49,10 @@ module.exports = function(ModerationModule) {
 
     router.get('/v1/live/match/:id', function(req, res) {
         ModerationModule.GetMatch(req.params.id, function(err,match){
+            var strippedMatch = _.cloneDeep(match);
+            delete strippedMatch.services;
             if(!err)
-             return res.send(match);
+             return res.send(strippedMatch);
         })
     });
 
