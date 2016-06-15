@@ -153,7 +153,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                     }));
             });
 
-        this.services.push(initService);
+        that.services.push(initService);
         callback(null, initService);
     });
 };
