@@ -225,7 +225,7 @@ HookedMatch.updateFeedMatchStats = function(league, matchid, callback){
 };
 
 HookedMatch.GetServices = function () {
-    return _.map(services, function (service) {
+    return _.map(HookedMatch.services, function (service) {
         return getServiceDTO(service);
     });
 };
