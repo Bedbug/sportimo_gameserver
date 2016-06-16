@@ -244,11 +244,18 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
 });
 
 //Get user messages
-apiRoutes.get('/v1/users/update/achievements', function (req, res) {
+apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) {
 
     Achievements.find({}, function (err, achievs) {
+        var achievsCount = achievs.length;
+
         _.each(achievs, function (achievement) {
-            User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
+            User.update({ 'achievements._id': achievement._id }, { $set: { 'achievements.$.text': achievement.text, 'achievements.$.title': achievement.title, 'achievements.$.total': achievement.total } }, { multi: true }, function (err) {
+                User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
+                    achievsCount--;
+                    if (achievsCount == 0)
+                        recalculate();
+                });
             });
         })
         if (err) {
@@ -258,6 +265,20 @@ apiRoutes.get('/v1/users/update/achievements', function (req, res) {
         }
     })
 
+    function recalculate() {
+        var recalc = req.params.recalculate;
+        if (recalc == true) {
+            console.log("Recalculating: " + req.params.recalculate);
+            User.find({}, function (err, allUsers) {
+                _.each(allUsers, function (eachUser) {
+                    var total = _.sumBy(eachUser.achievements, 'total');
+                    var has = _.sumBy(eachUser.achievements, 'has');
+                    eachUser.level = has / total;
+                    eachUser.save(function (err, result) { });
+                })
+            })
+        }
+    }
 
 
 });
