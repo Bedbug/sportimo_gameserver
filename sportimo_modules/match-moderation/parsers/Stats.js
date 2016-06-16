@@ -329,7 +329,7 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
 };
 
 // Number of ticks before full data retrieval
-var numberOfTicksBeforeBoxscore = 10;
+var numberOfTicksBeforeBoxscore = 30;
 
 Parser.prototype.GetMatchEventsWithBox = function (leagueName, matchId, manualCallback) {
     GetMatchEventsWithBox(leagueName, matchId, null, null, manualCallback);
@@ -524,7 +524,7 @@ Parser.prototype.TickMatchFeed = function() {
             that.ticks = 1;
         } else {
             GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
-            log.info('[Match module] Tick to match stats: '+ (numberOfTicksBeforeBoxscore-that.ticks));
+            // log.info('[Match module] Tick to match stats: '+ (numberOfTicksBeforeBoxscore-that.ticks));
             that.ticks++;
         }
 
