@@ -495,7 +495,7 @@ var TranslateMatchSegment = function (parserEvent) {
     if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) == -1)
         return null;
 
-    return Parser.matchHandler;   // return anything but null
+    return true;   // return anything but null
 };
 
 
@@ -586,7 +586,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                 if (translatedMatchSegment)
                 {
                     log.info('[Stats parser]: Intercepted a Segment Advance event.');
-                    that.feedService.AdvanceMatchSegment(translatedMatchSegment);
+                    that.feedService.AdvanceMatchSegment(that.matchHandler);
                 }
             }
         });
