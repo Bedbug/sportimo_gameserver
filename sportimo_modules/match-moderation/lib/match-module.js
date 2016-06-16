@@ -72,6 +72,18 @@ var matchModule = function (match, PubChannel, SubChannel) {
     
     HookedMatch.queue = async.queue(function(matchEvent, callback) {
         setTimeout(function() {
+            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment')
+            {
+                HookedMatch.AdvanceSegment(matchEvent);
+                return callback(null);
+            }
+
+            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch')
+            {
+                HookedMatch.TerminateMatch();
+                return callback(null);
+            }
+
             return HookedMatch.AddEvent(matchEvent, callback);
             }, 2000);
         var eventName = matchEvent.data.type;
@@ -155,11 +167,23 @@ var matchModule = function (match, PubChannel, SubChannel) {
             });
             initService.emitter.on('nextMatchSegment', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                    HookedMatch.AdvanceSegment(matchEvent);
+                    if (HookedMatch.queue)
+                    {
+                        matchEvent.data.type = 'AdvanceSegment';
+                        HookedMatch.queue.push(matchEvent);
+                    }
+                    else
+                        HookedMatch.AdvanceSegment(matchEvent);
             });
             initService.emitter.on('endOfMatch', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                    HookedMatch.TerminateMatch();
+                    if (HookedMatch.queue)
+                    {
+                        matchEvent.data.type = 'TerminateMatch';
+                        HookedMatch.queue.push(matchEvent);
+                    }
+                    else
+                        HookedMatch.TerminateMatch();
             });
 
 
