@@ -74,6 +74,8 @@ var matchModule = function (match, PubChannel, SubChannel) {
         setTimeout(function() {
             return HookedMatch.AddEvent(matchEvent, callback);
             }, 100);
+        var eventName = matchEvent.data.type;
+        log.info('[Match module] queued stat %s for match id %s', eventName? eventName : 'Unknown', this.data.id);
     });
 
 
