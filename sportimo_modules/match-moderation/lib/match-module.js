@@ -86,8 +86,8 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
             return HookedMatch.AddEvent(matchEvent, callback);
             }, 2000);
-        var eventName = matchEvent.data.type;
-        log.info('[Match module] queued stat %s for match id %s', eventName? eventName : 'Unknown',HookedMatch.id);
+        var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
+        log.info('[Match module] queued stat %s for match id %s', eventName, HookedMatch.id);
     });
 
 
