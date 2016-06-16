@@ -14,7 +14,8 @@ var moment = require('moment'),
     mongoConnection = require('../config/db.js'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents'),
-    matches = require('../../models/scheduled-matches');
+    matches = require('../../models/scheduled-matches'),
+    async = require('async');
 
 
 
@@ -68,6 +69,12 @@ var matchModule = function (match, PubChannel, SubChannel) {
     // establishing a link with gamecards module, where match events should propagate in order to resolve played match wildcards
     HookedMatch.gamecards = require('../../gamecards');
     HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, SubChannel, match);
+    
+    HookedMatch.queue = async.queue(function(matchEvent, callback) {
+        setTimeout(function() {
+            return HookedMatch.AddEvent(matchEvent, callback);
+            }, 100);
+    });
 
 
     /*  -------------
@@ -129,7 +136,10 @@ var matchModule = function (match, PubChannel, SubChannel) {
             // Register this match module to the events emitted by the new service, but first filter only those relative to its match id (I have to re-evaluate this filter, might be redundant). 
             initService.emitter.on('matchEvent', function (matchEvent) {
                 if (matchEvent && matchEvent.data.match_id == HookedMatch.data.id)
-                    HookedMatch.AddEvent(matchEvent);
+                    if (HookedMatch.queue)
+                        HookedMatch.queue.push(matchEvent);
+                    else
+                        HookedMatch.AddEvent(matchEvent);
             });
             initService.emitter.on('nextMatchSegment', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)

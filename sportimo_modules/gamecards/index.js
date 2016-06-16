@@ -748,7 +748,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
 // Add a user played gamecard, after first validating it against fraud, latency and inconsistency
 // {
-//     "wildcardDefinitionId": "",
+//     "gamecardDefinitionId": "",
 //     "userId": "",
 //     "matchid": "",
 //     "creationTime": "",
@@ -851,14 +851,6 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 }
             }
             
-            if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
-            {
-                newCard.terminationConditions.forEach(function(condition) {
-                   if (condition.remaining && condition.stat == 'Segment') 
-                        condition.remaining -= scheduledMatch.state;
-                });
-            }
-
             if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
             {
                 newCard.terminationConditions.forEach(function(condition) {
