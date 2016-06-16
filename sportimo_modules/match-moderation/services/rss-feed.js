@@ -248,7 +248,7 @@ feedService.prototype.SaveParsedEvents = function(matchId, events, diffedEvents)
         mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events}, $push: { diffed_events: diffedEvents } }, { upsert: true }, function(err, result) {
             if (err)
             {
-                log.error("Error while saving parser eventIds in match moderation");
+                log.error("Error while saving parser eventIds in match moderation: %s", err.message);
                 return;
             }
         });
