@@ -877,7 +877,9 @@ HookedMatch.TerminateMatch = function () {
             log.error(err.message);
     });
     HookedMatch.gamecards.TerminateMatch(this.data);
-    HookedMatch.Terminate();
+    setInterval(function() {
+        HookedMatch.Terminate();
+    }, 1000);
 };
 
 HookedMatch.Terminate = function () {
@@ -887,6 +889,7 @@ HookedMatch.Terminate = function () {
             service.Terminate(); 
         });
     }
+    this.services.length = 0;
 };
 
 return HookedMatch;
