@@ -569,12 +569,12 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         // Translate all events in eventsDiff and send them to feedService
         _.forEach(eventsDiff, function (event) {
             // Game Over?
-            if (event.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+            if (event.playEvent.playEventId == 10) //|| (matchStatus.name && matchStatus.name == "Final")) {
                 log.info('[Stats parser]: Intercepted a match Termination event.');
                
+                that.feedService.EndOfMatch(that.matchHandler);
                 // Send an event that the match is ended.
                 setTimeout(function() {
-                    that.feedService.EndOfMatch(that.matchHandler);
                     that.Terminate();
                 }, 5000);
             }
