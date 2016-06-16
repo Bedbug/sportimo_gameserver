@@ -150,7 +150,7 @@ Parser.prototype.init = function(cbk)
                 response['matchType'] = 'home_team';
                 if (!response.parserids)
                     return callback(new Error("No parserids[" + that.Name + "]  property in team id " + response.id + " document in Mongo. Aborting."));
-                that.matchTeamsLookup[response.parserids[this.Name]] = response;
+                that.matchTeamsLookup[response.parserids[that.Name]] = response;
                 callback(null);
             });
         },
