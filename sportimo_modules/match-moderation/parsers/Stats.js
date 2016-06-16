@@ -557,6 +557,10 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     // Nothing to add
     if (eventsDiff.length == 0)
         return;
+        
+    _.orderBy(eventsDiff, function(ev) {
+        return ev.time.minute + ev.time.seconds * 60;
+    });
 
     that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff);
         
@@ -564,6 +568,17 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     {
         // Translate all events in eventsDiff and send them to feedService
         _.forEach(eventsDiff, function (event) {
+            // Game Over?
+            if (event.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+                log.info('[Stats parser]: Intercepted a match Termination event.');
+               
+                // Send an event that the match is ended.
+                setTimeout(function() {
+                    that.feedService.EndOfMatch(that.matchHandler);
+                    that.Terminate();
+                }, 5000);
+            }
+
             // First try parsing a normal event
             var translatedEvent = that.TranslateMatchEvent(event);
             if (translatedEvent) {
@@ -600,18 +615,18 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         });
     }
 
-    var lastEvent = _.findLast(events, function (n) {
-        return n.sequenceNumber;
-    });
+    // var lastEvent = _.findLast(events, function (n) {
+    //     return n.sequenceNumber;
+    // });
 
-    // Game Over?
-    if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
-        log.info('[Stats parser]: Intercepted a match Termination event.');
+    // // Game Over?
+    // if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
+    //     log.info('[Stats parser]: Intercepted a match Termination event.');
        
-        // Send an event that the match is ended.
-        that.feedService.EndOfMatch(that.matchHandler);
-        that.Terminate();
-    }
+    //     // Send an event that the match is ended.
+    //     that.feedService.EndOfMatch(that.matchHandler);
+    //     that.Terminate();
+    // }
 
 };
 

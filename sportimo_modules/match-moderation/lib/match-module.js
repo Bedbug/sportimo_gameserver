@@ -77,14 +77,14 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 HookedMatch.AdvanceSegment(matchEvent);
                 return callback(null);
             }
-
+            else
             if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch')
             {
                 HookedMatch.TerminateMatch();
                 return callback(null);
             }
-
-            return HookedMatch.AddEvent(matchEvent, callback);
+            else    
+                return HookedMatch.AddEvent(matchEvent, callback);
             }, 2000);
         var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
         log.info('[Match module] queued stat %s for match id %s', eventName, HookedMatch.id);
@@ -169,7 +169,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     if (HookedMatch.queue)
                     {
-                        matchEvent['data.type'] = 'AdvanceSegment';
+                        matchEvent.data = { type: 'AdvanceSegment' };
                         HookedMatch.queue.push(matchEvent);
                     }
                     else
@@ -179,7 +179,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     if (HookedMatch.queue)
                     {
-                        matchEvent['data.type'] = 'TerminateMatch';
+                        matchEvent.data = { type: 'TerminateMatch' };
                         HookedMatch.queue.push(matchEvent);
                     }
                     else
