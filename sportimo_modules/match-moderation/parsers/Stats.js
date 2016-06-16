@@ -286,11 +286,11 @@ Parser.prototype.Terminate = function(callback)
     if (this.scheduledTask)
         this.scheduledTask.cancel();
         
+    log.info('[Stats parser]: Terminated and closed down parser for matchid %s', this.matchHandler.id);
+
     this.matchHandler = null;
     this.feedService = null;
 
-    log.info('[Stats parser]: Terminated and closed down parser for matchid %s', this.matchHandler.id);
-    
     if (callback)
         callback(null);
 }
