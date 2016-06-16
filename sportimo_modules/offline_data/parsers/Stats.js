@@ -328,6 +328,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, callback) {
+    
                 needle.get(scorer_url, { timeout: 50000 }, function (error, response) {
                     if (error)
                         return callback(error);
