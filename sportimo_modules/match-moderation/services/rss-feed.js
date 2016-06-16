@@ -172,13 +172,26 @@ feedService.prototype.EndOfMatch = function(matchInstance) {
 
 feedService.prototype.Terminate = function(callback)
 {
-    if (this.parser)
-        this.parser.Terminate();
-    this.parsername = null;
-    this.parser = null;
+    var that = this;
+    if (that.parser)
+    {
+        that.parser.Terminate(callback);
+        setTimeout(function() { 
+            that.parsername = null;
+            that.parser = null;
+
+            if (callback)
+                return callback(null); 
+        }, 300);
+    }
+    else
+    {
+        that.parsername = null;
+        that.parser = null;
     
-    if (callback)
-        callback(null);
+        if (callback)
+            callback(null);
+    }
 };
 
 // Helper function that loads a team players from the mongoDb store
@@ -226,13 +239,13 @@ feedService.prototype.LoadCompetition = function(competitionId, callback)
     }
 };
 
-feedService.prototype.SaveParsedEvents = function(matchId, events)
+feedService.prototype.SaveParsedEvents = function(matchId, events, diffedEvents)
 {
     if (!mongoose)
         return;
         
     try {
-        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events} }, { upsert: true }, function(err, result) {
+        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events}, $push: { diffed_events: diffedEvents } }, { upsert: true }, function(err, result) {
             if (err)
             {
                 log.error("Error while saving parser eventIds in match moderation");

@@ -119,8 +119,18 @@ var matchModule = function (match, PubChannel, SubChannel) {
     };
 
     HookedMatch.StartService = function (service, callback) {
+        var that = this;
+        
+        var foundService = _.find(that.services, { type: service.type });
+        if (foundService) {
+            foundService.Terminate(function() { 
+               that.services = _.remove(that.services, function(aservice) {
+                   return (aservice.type == service.type);
+               });
+            });
+        }
+        
         var serviceType = serviceTypes[service.type];
-        var that = HookedMatch;
         if (!serviceType)
             return callback(null);
 
@@ -130,7 +140,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
         //_.merge(newService, service);
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(this.data, function (error, initService) {
+        newService.init(that.data, function (error, initService) {
             if (error) {
                 return callback(error);
             }
@@ -213,34 +223,34 @@ HookedMatch.updateFeedMatchStats = function(league, matchid, callback){
         if (!serviceTypeFound)
             return callback(new Error("Service type does not exist. Please add it first."));
 
-    // Update status in MongoDB
-    var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
-    if (serviceData) {
-        serviceData.active = true;
-        HookedMatch.data.save();
-    }
-
-    serviceTypeFound.resume();
-    callback(null, getServiceDTO(serviceTypeFound));
-};
-
-HookedMatch.GetServices = function () {
-    return _.map(HookedMatch.services, function (service) {
-        return getServiceDTO(service);
-    });
-};
-
-
-// Return a strip down version of a service, only the information needed in API endpoints to know
-var getServiceDTO = function (service) {
-    return {
-        type: service.type,
-        parserid: service.parserid,
-        interval: service.interval,
-        active: service.isActive()
-
+        // Update status in MongoDB
+        var serviceData = _.find(HookedMatch.data.moderation, { type: service.type });
+        if (serviceData) {
+            serviceData.active = true;
+            HookedMatch.data.save();
+        }
+    
+        serviceTypeFound.resume();
+        callback(null, getServiceDTO(serviceTypeFound));
     };
-}
+
+    HookedMatch.GetServices = function () {
+        return _.map(HookedMatch.services, function (service) {
+            return getServiceDTO(service);
+        });
+    };
+
+
+    // Return a strip down version of a service, only the information needed in API endpoints to know
+    var getServiceDTO = function (service) {
+        return {
+            type: service.type,
+            parserid: service.parserid,
+            interval: service.interval,
+            active: service.isActive()
+    
+        };
+    }
 
 // Set services for the first time
 //HookedMatch.moderationServices = match.moderation;

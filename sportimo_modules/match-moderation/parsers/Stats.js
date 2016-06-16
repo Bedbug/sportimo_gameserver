@@ -285,6 +285,9 @@ Parser.prototype.Terminate = function(callback)
     // Cancel scheduled task, if existent
     if (this.scheduledTask)
         this.scheduledTask.cancel();
+        
+    this.matchHandler = null;
+    this.feedService = null;
 
     log.info('[Stats parser]: Terminated and closed down parser for matchid %s', this.matchHandler.id);
     
@@ -555,7 +558,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     if (eventsDiff.length == 0)
         return;
 
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot));
+    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff);
         
     if (that.isPaused != true)
     {
