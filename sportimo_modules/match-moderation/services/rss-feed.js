@@ -268,7 +268,7 @@ feedService.prototype.LoadParsedEvents = function(matchId, callback)
         mongoose.mongoose.models.matchfeedStatuses.findOne({matchid: matchId}, function(err, result) {
             if (err)
             {
-                log.error("Error while saving parser eventIds in match moderation");
+                log.error("Error while saving parser eventIds in match moderation: %s", err.message);
                 return callback(err);
             }
             if (!result || !result.parsed_eventids)
