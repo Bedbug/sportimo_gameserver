@@ -73,9 +73,9 @@ var matchModule = function (match, PubChannel, SubChannel) {
     HookedMatch.queue = async.queue(function(matchEvent, callback) {
         setTimeout(function() {
             return HookedMatch.AddEvent(matchEvent, callback);
-            }, 100);
+            }, 2000);
         var eventName = matchEvent.data.type;
-        log.info('[Match module] queued stat %s for match id %s', eventName? eventName : 'Unknown', this.data.id);
+        log.info('[Match module] queued stat %s for match id %s', eventName? eventName : 'Unknown',HookedMatch.id);
     });
 
 
@@ -637,7 +637,7 @@ HookedMatch.AddEvent = function (event, cbk) {
 
         // 1. push event in timeline
         if (evtObject.timeline_event) {
-            log.info("Received Timeline event");
+            // log.info("Received Timeline event");
             if (evtObject.type)
                 evtObject.type = cleanSafe(evtObject.type);
             // evtObject = new matchEvents(evtObject);
@@ -645,7 +645,7 @@ HookedMatch.AddEvent = function (event, cbk) {
         }
 
         // 2. broadcast event on pub/sub channel
-        log.info("Pushing event to Redis Pub/Sub channel");
+        // log.info("Pushing event to Redis Pub/Sub channel");
         // PubChannel.publish("socketServers", JSON.stringify(event));
 
         // 3. send event to wildcards module for wildcard resolution
@@ -790,7 +790,7 @@ HookedMatch.UpdateEvent = function (event, cbk) {
 
     // Broadcast the remove event so others can consume it.
     // 2. broadcast event on pub/sub channel
-    log.info("Pushing event to Redis Pub/Sub channel");
+    // log.info("Pushing event to Redis Pub/Sub channel");
     // PubChannel.publish("socketServers", JSON.stringify(event));
 
     // Inform Clients for the new event to draw
