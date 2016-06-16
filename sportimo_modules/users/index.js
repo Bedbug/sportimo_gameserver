@@ -245,7 +245,7 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
 
 //Get user messages
 apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) {
-
+    var recalc = req.params.recalculate;
     Achievements.find({}, function (err, achievs) {
         var achievsCount = achievs.length;
 
@@ -266,8 +266,8 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
     })
 
     function recalculate() {
-        var recalc = req.params.recalculate;
-        if (recalc == true) {
+
+        if (recalc == "true") {
             console.log("Recalculating: " + req.params.recalculate);
             User.find({}, function (err, allUsers) {
                 _.each(allUsers, function (eachUser) {

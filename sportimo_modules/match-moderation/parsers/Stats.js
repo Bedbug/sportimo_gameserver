@@ -326,13 +326,13 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
 };
 
 // Number of ticks before full data retrieval
-var numberOfTicksBeforeBoxscore = 30;
+var numberOfTicksBeforeBoxscore = 10;
 
 Parser.prototype.GetMatchEventsWithBox = function (leagueName, matchId, manualCallback) {
-    GetMatchEventsWithBox(leagueName, matchId, null, manualCallback);
+    GetMatchEventsWithBox(leagueName, matchId, null, null, manualCallback);
 }
 
-var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallback) {
+var GetMatchEventsWithBox = function (leagueName, matchId, callback, context, manualCallback) {
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?box=true&pbp=true&" + signature; // &box=true for boxing statistics
 
@@ -347,7 +347,7 @@ var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallb
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
             var boxscores = response.body.apiResults[0].league.season.eventType[0].events[0].boxscores;
-            UpdateMatchStats(matchId, boxscores, manualCallback);
+            UpdateMatchStats(matchId, boxscores, context, manualCallback);
          
          if(callback)
             callback(null, events, teams, matchStatus);
@@ -361,11 +361,13 @@ var GetMatchEventsWithBox = function (leagueName, matchId, callback, manualCallb
     });
 };
 
-var UpdateMatchStats = function (matchId, boxscores, callback) {
-
+var UpdateMatchStats = function (matchId, boxscores, that, callback) {
+   
     matches.findOne({ 'moderation.parserid': matchId }, function (err, match) {       
         // find home_team in match stats and update to boxscores[0]
         var homeStats = _.find(match.stats, {"name": "home_team"});
+        if(!homeStats)
+            homeStats = match.stats.push({"name": "home_team"});
         homeStats.possession = boxscores[0].teamStats.possessionPercentage;
         homeStats.shotsOnGoal = boxscores[0].teamStats.shotsOnGoal;
         homeStats.saves = boxscores[0].teamStats.saves;
@@ -373,6 +375,8 @@ var UpdateMatchStats = function (matchId, boxscores, callback) {
         homeStats.passes = boxscores[0].teamStats.touches.passes;
         // find away_team in match stats and update to boxscores[1]
         var awayStats = _.find(match.stats, {"name": "away_team"});
+        if(!homeStats)
+            awayStats = match.stats.push({"name": "away_team"});
         awayStats.possession = boxscores[1].teamStats.possessionPercentage;
         awayStats.shotsOnGoal = boxscores[1].teamStats.shotsOnGoal;
         awayStats.saves = boxscores[1].teamStats.saves;
@@ -386,7 +390,7 @@ var UpdateMatchStats = function (matchId, boxscores, callback) {
             else
             console.log("[Stats.js:345]  Update of match stats handled succesfully");
 
-            that.feedService.emitStats(result._id, result.stats);
+             that.feedService.emitStats(result._id, result.stats);
         })
     });
 
@@ -513,10 +517,11 @@ Parser.prototype.TickMatchFeed = function() {
         var leagueName = league.parserids[that.Name];
         
         if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that));
+            GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that), that);
             that.ticks = 1;
         } else {
             GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
+            log.info('[Match module] Tick to match stats: '+ (numberOfTicksBeforeBoxscore-that.ticks));
             that.ticks++;
         }
 
