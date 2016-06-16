@@ -169,7 +169,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     if (HookedMatch.queue)
                     {
-                        matchEvent.data.type = 'AdvanceSegment';
+                        matchEvent['data.type'] = 'AdvanceSegment';
                         HookedMatch.queue.push(matchEvent);
                     }
                     else
@@ -179,7 +179,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     if (HookedMatch.queue)
                     {
-                        matchEvent.data.type = 'TerminateMatch';
+                        matchEvent['data.type'] = 'TerminateMatch';
                         HookedMatch.queue.push(matchEvent);
                     }
                     else
