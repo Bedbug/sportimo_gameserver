@@ -154,7 +154,6 @@ feedService.prototype.emitStats = function(matchid, stats) {
 feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
     feedService.prototype.queueCount++;
     log.info('[Feed service]: Sent a nextMatchSegment event');
-    
     this.emitter.emit('nextMatchSegment', matchInstance);
 };
 
