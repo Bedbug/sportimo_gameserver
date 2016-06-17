@@ -43,6 +43,10 @@ var Timers = {
 var matchModule = function (match, PubChannel, SubChannel) {
 
     var HookedMatch = {}; // = match;
+
+    // Time spacing bewtween events 
+    HookedMatch.queueDelay = 5000;
+
     //HookedMatch.moderationServices = [];
     HookedMatch.services = [];
 
@@ -71,26 +75,36 @@ var matchModule = function (match, PubChannel, SubChannel) {
     HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, SubChannel, match);
     var queueIndex = 0;
     HookedMatch.queue = async.queue(function (matchEvent, callback) {
-        setTimeout(function () {
-         
-            var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
-            queueIndex++;
+        
+        // --> This creates wait time
+        // setTimeout(function () {
+        var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
+        queueIndex++;
 
-            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
-                  log.info('[Match module] %s: %s', queueIndex, eventName);
-                return HookedMatch.AdvanceSegment(matchEvent, callback );
+        if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
+            log.info('[Match module] %s: %s', queueIndex, eventName);
+            return HookedMatch.AdvanceSegment(matchEvent, function () {
+                 // --> This creates space between
+                setTimeout(function () {
+                    return callback();
+                }, HookedMatch.queueDelay)
+            });
+        }
+        else
+            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch') {
+                log.info('[Match module] %s: %s', queueIndex, eventName);
+                HookedMatch.TerminateMatch();
+                return callback(null);
             }
-            else
-                if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch') {
-                      log.info('[Match module] %s: %s', queueIndex, eventName);
-                    HookedMatch.TerminateMatch();
-                    return callback(null);
-                }
-                else{
-                      log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
-                    return HookedMatch.AddEvent(matchEvent, callback);
-                }
-        }, 5000);
+            else {
+                log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);   
+                return HookedMatch.AddEvent(matchEvent, function () {
+                    setTimeout(function () {
+                        return callback();
+                    }, matchEvent.data.timeline_event? HookedMatch.queueDelay: 100)
+                });
+            }
+        // }, HookedMatch.queueDelay);
 
 
 
@@ -173,33 +187,33 @@ var matchModule = function (match, PubChannel, SubChannel) {
                     else
                         HookedMatch.AddEvent(matchEvent);
             });
-            
+
             initService.emitter.on('nextMatchSegment', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                console.log(HookedMatch.queue.length());
-                    if (HookedMatch.queue) {
-                        console.log("--------- Advance Segment Queue: " + HookedMatch.queue.length());
-                        var StateEvent = {data:{}};
-                        StateEvent.data.type = 'AdvanceSegment';
-                        StateEvent.data.time = HookedMatch.data.time;
-                        HookedMatch.queue.push(StateEvent);
-                    }
-                    else
-                        HookedMatch.AdvanceSegment(matchEvent);
+                    console.log(HookedMatch.queue.length());
+                if (HookedMatch.queue) {
+                    console.log("--------- Advance Segment Queue: " + HookedMatch.queue.length());
+                    var StateEvent = { data: {} };
+                    StateEvent.data.type = 'AdvanceSegment';
+                    StateEvent.data.time = HookedMatch.data.time;
+                    HookedMatch.queue.push(StateEvent);
+                }
+                else
+                    HookedMatch.AdvanceSegment(matchEvent);
             });
 
             initService.emitter.on('endOfMatch', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                  console.log(HookedMatch.queue.length());
-                    if (HookedMatch.queue) {
-                        console.log("--------- End Segment Queue: " + HookedMatch.queue.length());
-                        var StateEvent = {data:{}};
-                        StateEvent.data.type= 'TerminateMatch';
-                        StateEvent.data.time = HookedMatch.data.time;
-                        HookedMatch.queue.push(StateEvent);
-                    }
-                    else
-                        HookedMatch.TerminateMatch();
+                    console.log(HookedMatch.queue.length());
+                if (HookedMatch.queue) {
+                    console.log("--------- End Segment Queue: " + HookedMatch.queue.length());
+                    var StateEvent = { data: {} };
+                    StateEvent.data.type = 'TerminateMatch';
+                    StateEvent.data.time = HookedMatch.data.time;
+                    HookedMatch.queue.push(StateEvent);
+                }
+                else
+                    HookedMatch.TerminateMatch();
             });
 
 
@@ -539,7 +553,7 @@ var matchModule = function (match, PubChannel, SubChannel) {
                     HookedMatch.AddEvent(startEvent);
                 }
 
-                if(callback)
+                if (callback)
                     callback();
 
                 return HookedMatch;
