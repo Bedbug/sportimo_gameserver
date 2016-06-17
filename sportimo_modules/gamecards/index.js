@@ -1471,7 +1471,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
         
         gamecard.terminationConditions.forEach(function (condition) {
             if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
-                if (event.statTotal)
+                if (event.statTotal != null)
                 {
                     if (event.statTotal >= condition.remaining)
                         condition.remaining = 0;
