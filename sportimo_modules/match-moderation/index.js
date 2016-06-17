@@ -168,6 +168,7 @@ var ModerationModule = {
             match.timeline = _.take(match.timeline);
             match.timeline[0].events = [];
             match.state = 0;
+            match.time = 1;
             match.save(function(err, result){
                 feedstatuses.find({matchid:matchid}).remove().exec(function(err,opResult){
                     cbk(opResult);
