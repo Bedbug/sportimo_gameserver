@@ -61,6 +61,18 @@ module.exports = function(ModerationModule) {
         res.send("All ok");
     });
 
+     router.get('/v1/moderation/:id/event/reset', function(req, res) {
+       ModerationModule.ResetMatch(req.params.id, function(result){
+           res.send(result);
+       })
+    });
+
+      router.get('/v1/moderation/:id/event/complete', function(req, res) {
+       ModerationModule.ToggleMatchComplete(req.params.id, function(result){
+           res.send(result);
+       })
+    });
+
     router.post('/v1/moderation/:id/event', function(req, res) {
         var match_id = req.params.id;
         switch (req.body.type) {
