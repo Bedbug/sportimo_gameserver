@@ -84,8 +84,7 @@ feedService.prototype.init = function (matchHandler, cbk) {
                 EventEmitter.call(that);
             };
             util.inherits(MyEmitter, EventEmitter);
-
-                
+       
             that.emitter = new MyEmitter();
             return cbk(null, that);
         });

@@ -969,6 +969,8 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         title: userGamecard.title || null,
         image: userGamecard.image || null,
         text: userGamecard.text || null,
+        minute: userGamecard.minute || 0,
+        segment: userGamecard.segment || 0,
         primaryStatistic: userGamecard.primaryStatistic || null,
         cardType: userGamecard.cardType || null,
         isDoubleTime: userGamecard.isDoubleTime || false,
