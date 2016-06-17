@@ -22,7 +22,8 @@ var match_module = require('./lib/match-module.js');
 /*Bootstrap models*/
 var team = null,
     scheduled_matches = null,
-    matches = mongoose.models.scheduled_matches;
+    matches = mongoose.models.scheduled_matches,
+    feedstatuses = mongoose.models.matchfeedStatuses;
 
 /**
  * Redis Pub/Sub Channels
@@ -159,6 +160,33 @@ var ModerationModule = {
             return ModerationModule.LoadMatchFromDB(mongoMatchID);
         }
     },
+    ResetMatch: function (matchid, cbk) {
+        scheduled_matches.findOne({
+            _id: matchid
+        }).exec(function (err, match) {
+            match.stats = [];
+            match.timeline = _.take(match.timeline);
+            match.timeline[0].events = [];
+            match.state = 0;
+            match.save(function(err, result){
+                feedstatuses.find({matchid:matchid}).remove().exec(function(err,opResult){
+                    cbk(opResult);
+                });
+            })
+        });
+    },
+     ToggleMatchComplete: function (matchid, cbk) {
+        scheduled_matches.findOne({
+            _id: matchid
+        }).exec(function (err, match) {
+            match.completed = !match.completed;
+            match.save(function(err, result){
+                feedstatuses.find({matchid:matchid}).remove().exec(function(err,opResult){
+                    cbk(opResult);
+                });
+            })
+        });
+    },
     LoadMatchFromDB: function (matchid, cbk) {
 
         if (!this.mock) {
@@ -185,12 +213,12 @@ var ModerationModule = {
                         else
                             return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
                     }
-                    
+
                     var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
 
                     if (foundMatch)
                         foundMatch.Terminate();
-                    
+
                     var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
