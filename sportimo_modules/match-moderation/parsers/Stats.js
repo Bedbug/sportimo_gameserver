@@ -568,16 +568,6 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     {
         // Translate all events in eventsDiff and send them to feedService
         _.forEach(eventsDiff, function (event) {
-            // Game Over?
-            if (event.playEvent.playEventId == 10) { //|| (matchStatus.name && matchStatus.name == "Final")) {
-                log.info('[Stats parser]: Intercepted a match Termination event.');
-               
-                that.feedService.EndOfMatch(that.matchHandler);
-                // Send an event that the match is ended.
-                setTimeout(function() {
-                    that.Terminate();
-                }, 5000);
-            }
 
             // First try parsing a normal event
             var translatedEvent = that.TranslateMatchEvent(event);
@@ -602,7 +592,17 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         that.feedService.AdvanceMatchSegment(that.matchHandler);
                     }
                 }
+            }else // Game Over?
+            if (event.playEvent.playEventId == 10) { //|| (matchStatus.name && matchStatus.name == "Final")) {
+                log.info('[Stats parser]: Intercepted a match Termination event.');
+               
+                that.feedService.EndOfMatch(that.matchHandler);
+                // Send an event that the match is ended.
+                setTimeout(function() {
+                    that.Terminate();
+                }, that.feedService.queueCount * 1000);
             }
+
             else {
                 // Then try to parse a match segment advancing event
                 var translatedMatchSegment = TranslateMatchSegment(event);

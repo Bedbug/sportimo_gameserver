@@ -139,7 +139,8 @@ feedService.prototype.isActive = function()
 
 // Manage match events, simple proxy to match module
 feedService.prototype.AddEvent = function(event) {
-
+    feedService.prototype.queueCount++;
+     log.info('[Feed service]: Sent a match event: %s\' %s ', event.data.time, event.data.type);
     this.emitter.emit('matchEvent', event);
 };
 
@@ -151,7 +152,7 @@ feedService.prototype.emitStats = function(matchid, stats) {
 
 // Manage match segment advances, simple proxy to match module
 feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
-
+    feedService.prototype.queueCount++;
     log.info('[Feed service]: Sent a nextMatchSegment event');
     
     this.emitter.emit('nextMatchSegment', matchInstance);
@@ -159,8 +160,7 @@ feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
 
 feedService.prototype.EndOfMatch = function(matchInstance) {
     
-    this.emitter.emit('endOfMatch', matchInstance);
-    
+    this.emitter.emit('endOfMatch', matchInstance);   
     log.info('[Feed service]: Sent an endOfMatch event');
 
     // Try disposing all parser objects
@@ -169,6 +169,8 @@ feedService.prototype.EndOfMatch = function(matchInstance) {
     this.parser = null;
 };
 
+// The count of events added to queue
+feedService.prototype.queueCount = 0;
 
 feedService.prototype.Terminate = function(callback)
 {
