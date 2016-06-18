@@ -268,7 +268,7 @@ Parser.prototype.Terminate = function(callback)
 
     if (callback)
         callback(null);
-}
+};
 
 // Helper Methods
 
