@@ -38,7 +38,9 @@ var RedisClientSub;
  * of active matches schedule.
  */
 
- var shouldInitAutoFeed = false;
+// Use for local instances in order to not interfere with live server
+var shouldInitAutoFeed = true;
+
 var ModerationModule = {
     // MatchTimers: {
     //     Timers: {},
@@ -64,6 +66,13 @@ var ModerationModule = {
         initModule(done);
     },
     SetupMongoDB: function (mongooseConnection) {
+
+        if(!shouldInitAutoFeed){
+        console.log("---------------------------------------------------------------------------------------------");
+        console.log("---- Warning: This server instance does not initialize the feed auto moderation feature -----");
+        console.log("---------------------------------------------------------------------------------------------");
+}
+
         if (this.mock) return;
         this.mongoose = mongooseConnection;
         var modelsPath = path.join(__dirname, '../models');
