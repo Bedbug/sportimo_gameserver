@@ -191,11 +191,6 @@ var ModerationModule = {
     LoadMatchFromDB: function (matchid, cbk) {
 
         if (!this.mock) {
-            // remove match in case it already exists
-            _.remove(ModerationModule.ModeratedMatches, {
-                id: matchid
-            });
-
             scheduled_matches
                 .findOne({
                     _id: matchid
@@ -218,7 +213,13 @@ var ModerationModule = {
                     var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
 
                     if (foundMatch)
+                    {
                         foundMatch.Terminate();
+                        // remove match in case it already exists
+                        _.remove(ModerationModule.ModeratedMatches, {
+                            id: matchid
+                        });
+                    }
 
                     var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
 
