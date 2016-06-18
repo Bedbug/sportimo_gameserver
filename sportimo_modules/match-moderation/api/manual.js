@@ -100,7 +100,7 @@ module.exports = function(ModerationModule) {
                  case "Terminate":
                 //console.log(req.body);
                     log.info("Terminate Request for matchid [" + match_id + "]");
-                    res.status(200).send(ModerationModule.GetMatch(match_id).Terminate());
+                    res.status(200).send(ModerationModule.GetMatch(match_id).TerminateMatch());
                 break;
                 case "SocketMessage":
                 //console.log(req.body);

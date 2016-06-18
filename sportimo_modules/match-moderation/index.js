@@ -37,6 +37,10 @@ var RedisClientSub;
  * Handles outside interaction and hold the list
  * of active matches schedule.
  */
+
+// Use for local instances in order to not interfere with live server
+var shouldInitAutoFeed = true;
+
 var ModerationModule = {
     // MatchTimers: {
     //     Timers: {},
@@ -50,6 +54,7 @@ var ModerationModule = {
     //     }
     // },
     ModeratedMatches: [],
+   
     testing: false,
     callback: null,
     mongoose: null,
@@ -61,6 +66,13 @@ var ModerationModule = {
         initModule(done);
     },
     SetupMongoDB: function (mongooseConnection) {
+
+        if(!shouldInitAutoFeed){
+        console.log("---------------------------------------------------------------------------------------------");
+        console.log("---- Warning: This server instance does not initialize the feed auto moderation feature -----");
+        console.log("---------------------------------------------------------------------------------------------");
+}
+
         if (this.mock) return;
         this.mongoose = mongooseConnection;
         var modelsPath = path.join(__dirname, '../models');
@@ -221,7 +233,7 @@ var ModerationModule = {
                         });
                     }
 
-                    var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
+                    var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
@@ -339,7 +351,7 @@ function initModule(done) {
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
-                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
+                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
                     });

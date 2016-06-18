@@ -1014,7 +1014,7 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
             const startDateString = fixture.startDate[1].full;
             const startDate = Date.parse(startDateString);
 
-            return startDate > now;
+            return startDate > moment().subtract(5, 'h');
         });
 
         var futureSchedules = _.map(futureFixtures, function (fixture) {

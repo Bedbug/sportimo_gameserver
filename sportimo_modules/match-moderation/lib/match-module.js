@@ -8,6 +8,7 @@
 
 var Sports = require('./sports-settings');
 var StatsHelper = require('./StatsHelper');
+
 var moment = require('moment'),
     log = require('winston'),
     _ = require('lodash'),
@@ -15,7 +16,8 @@ var moment = require('moment'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents'),
     matches = require('../../models/scheduled-matches'),
-    async = require('async');
+    async = require('async'),
+    Achievements = require('../../bedbugAchievements');
 
 
 
@@ -40,10 +42,13 @@ var Timers = {
     }
 };
 
-var matchModule = function (match, PubChannel, SubChannel) {
+var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     var HookedMatch = {}; // = match;
 
+    // Boolean that informs the service if this instance should initialize feed services
+    HookedMatch.shouldInitAutoFeed = shouldInitAutoFeed;
+    
     // Time spacing bewtween events 
     HookedMatch.queueDelay = 100;
     HookedMatch.queueEventsSpace = 5000;
@@ -156,6 +161,8 @@ var matchModule = function (match, PubChannel, SubChannel) {
 
     HookedMatch.StartService = function (service, callback) {
         var that = this;
+        
+        if(!that.shouldInitAutoFeed) return callback(null);
 
         var foundService = _.find(that.services, { type: service.type });
         if (foundService) {
@@ -911,7 +918,13 @@ var matchModule = function (match, PubChannel, SubChannel) {
             if (err)
                 log.error(err.message);
         });
+
         HookedMatch.gamecards.TerminateMatch(this.data);
+
+        // Handle all achievements calculated at the end of a match
+        // 1. Persistant Gamer
+        Achievements.Reward.persist_gamer(HookedMatch.id);
+
         setInterval(function () {
             HookedMatch.Terminate();
         }, 1000);

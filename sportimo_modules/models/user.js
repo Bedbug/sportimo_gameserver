@@ -129,9 +129,10 @@ UserSchema.statics.IncrementStat = function (uid, statChange, cb) {
 // error: String - an error message
 // success: String - a success message
 // data: Achievement Object - The achievement object to forward to users in case of complettion
+
 UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
     return mongoose.model('users').findById(uid, function (err, user) {
-        var achievement = _.find(user.achievements, { iniqueid: achievementChange });
+        var achievement = _.find(user.achievements, { uniqueid: achievementChange.uniqueid });
 
         if (achievement) {
             if (achievement.completed)
@@ -146,6 +147,11 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
 
             //TODO: Should calculate level and return achievement object to clients
             cb(null, "Success. Achievement completed.", achievement);
+
+            user.save(function(err,result){
+                if(!err)
+                console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
+            })
         }
 
 
