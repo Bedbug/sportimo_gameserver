@@ -112,29 +112,6 @@ function Parser(matchContext, feedServiceContext){
         
     this.ticks = 1;
         
-    // A queue to sequentially process inbound events, work in progress
-    this.eventQueue = async.queue(function(task, callback) {
-        if (task.eventType && task.eventType == 'event')
-        {
-            setTimeout( this.feedService.AddEvent(task), 200);
-        }
-        else
-        if (task.eventType && task.eventType == 'segment')
-        {
-            
-        }
-        else
-        if (task.eventType && task.eventType == 'termination')
-        {
-            
-        }
-        else
-        {
-            async.setImmediate(function () {
-                callback(null);
-            });
-        }
-    });
 };
 
 Parser.prototype.init = function(cbk)
@@ -278,15 +255,13 @@ Parser.prototype.init = function(cbk)
 
 Parser.prototype.Terminate = function(callback)
 {
-    log.info('[Stats parser]: Terminating and closing down.');
-   
     // End recurring task
     clearInterval(this.recurringTask);
     // Cancel scheduled task, if existent
     if (this.scheduledTask)
         this.scheduledTask.cancel();
         
-    log.info('[Stats parser]: Terminated and closed down parser for matchid %s', this.matchHandler.id);
+    log.info('[Stats parser]: Terminated and closed down parser');
 
     this.matchHandler = null;
     this.feedService = null;
