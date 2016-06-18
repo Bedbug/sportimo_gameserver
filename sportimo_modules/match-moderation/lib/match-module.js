@@ -720,10 +720,10 @@ var matchModule = function (match, PubChannel, SubChannel) {
             // PubChannel.publish("socketServers", JSON.stringify(event));
 
             // 3. send event to wildcards module for wildcard resolution
-            if (event.data.team && event.data.team == 'home_team')
-                event.data.team_id = thisMatch.home_team.id;
-            if (event.data.team && event.data.team == 'away_team')
-                event.data.team_id = thisMatch.away_team.id;
+            if (!event.data.team_id && event.data.team && event.data.team == 'home_team')
+                event.data.team_id = thisMatch.home_team;
+            if (!event.data.team_id && event.data.team && event.data.team == 'away_team')
+                event.data.team_id = thisMatch.away_team;
 
             HookedMatch.gamecards.ResolveEvent(event);
 
