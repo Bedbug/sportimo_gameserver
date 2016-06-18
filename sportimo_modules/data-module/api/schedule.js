@@ -64,7 +64,7 @@ api.itemsSearch = function (req, res) {
         .populate('away_team')
         .populate('competition');
 
-    q.select('home_team home_score away_team away_score completed competition time state start');
+    q.select('home_team home_score away_team away_score donttouch completed competition time state start');
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);
