@@ -436,6 +436,7 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: isTimelineEvent,
             team: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].matchType : null,
+            team_id: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].id : null,
             match_id: this.matchHandler._id,
             players: [],
             stats: {}

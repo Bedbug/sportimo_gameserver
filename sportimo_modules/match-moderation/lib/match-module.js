@@ -80,32 +80,32 @@ var matchModule = function (match, PubChannel, SubChannel) {
         
         // --> This creates wait time
         setTimeout(function () {
-        var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
-        queueIndex++;
-
-        if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
-            log.info('[Match module] %s: %s', queueIndex, eventName);
-            return HookedMatch.AdvanceSegment(matchEvent, function () {
-                 // --> This creates space between
-                setTimeout(function () {
-                    return callback();
-                }, HookedMatch.queueSegmentsSpace)
-            });
-        }
-        else
-            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch') {
+            var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
+            queueIndex++;
+    
+            if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
                 log.info('[Match module] %s: %s', queueIndex, eventName);
-                HookedMatch.TerminateMatch();
-                return callback(null);
-            }
-            else {
-                log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);   
-                return HookedMatch.AddEvent(matchEvent, function () {
+                return HookedMatch.AdvanceSegment(matchEvent, function () {
+                     // --> This creates space between
                     setTimeout(function () {
                         return callback();
-                    }, matchEvent.data.timeline_event? HookedMatch.queueEventsSpace: 100)
+                    }, HookedMatch.queueSegmentsSpace);
                 });
             }
+            else
+                if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch') {
+                    log.info('[Match module] %s: %s', queueIndex, eventName);
+                    HookedMatch.TerminateMatch();
+                    return callback(null);
+                }
+                else {
+                    log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);   
+                    return HookedMatch.AddEvent(matchEvent, function () {
+                        setTimeout(function () {
+                            return callback();
+                        }, matchEvent.data.timeline_event? HookedMatch.queueEventsSpace: 100);
+                    });
+                }
         }, HookedMatch.queueDelay);
 
 
