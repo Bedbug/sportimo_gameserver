@@ -18,6 +18,7 @@ var matchevent = new mongoose.Schema({
     team_id: String,
     complete: Boolean,
     playerSelected: String,
+    extrainfo: String,
     players: [mongoose.Schema.Types.Mixed],
     linked_mods: [
       {

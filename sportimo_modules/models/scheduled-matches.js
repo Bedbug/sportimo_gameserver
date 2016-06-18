@@ -19,6 +19,8 @@ else {
     sender: String,
     time: Number,
     team: String,
+    // extra info property to store general references
+    extrainfo: String,
     team_id: String,
     complete: Boolean,
     playerSelected: String,
@@ -70,6 +72,7 @@ else {
       type: String,
       ref: 'competitions'
     },
+    donttouch: Boolean,
     visiblein: [String],
     isTimeCounting: { type: Boolean, default: false },
     home_score: {type:Number, default:0},
