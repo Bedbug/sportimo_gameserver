@@ -37,6 +37,8 @@ var RedisClientSub;
  * Handles outside interaction and hold the list
  * of active matches schedule.
  */
+
+ var shouldInitAutoFeed = false;
 var ModerationModule = {
     // MatchTimers: {
     //     Timers: {},
@@ -50,6 +52,7 @@ var ModerationModule = {
     //     }
     // },
     ModeratedMatches: [],
+   
     testing: false,
     callback: null,
     mongoose: null,
@@ -220,7 +223,7 @@ var ModerationModule = {
                     if (foundMatch)
                         foundMatch.Terminate();
 
-                    var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
+                    var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
                     log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
@@ -338,7 +341,7 @@ function initModule(done) {
                 if (matches) {
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
-                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub);
+                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
                         log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
                     });
