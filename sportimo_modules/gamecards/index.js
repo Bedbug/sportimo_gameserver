@@ -67,12 +67,14 @@ gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeCh
             log.error("{''Error'': ''" + err + "''}");
         });
 
+        var countConnections = 0;
         redisSubscribe.on("subscribe", function (channel, count) {
-            log.info("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel");
+            countConnections++;
+            // log.info("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel - connections: "+countConnections);
         });
 
         redisSubscribe.on("unsubscribe", function (channel, count) {
-            log.info("[Gamecards] Unsubscribed from Sportimo Events PUB/SUB channel");
+            // log.info("[Gamecards] Unsubscribed from Sportimo Events PUB/SUB channel");
         });
 
         redisSubscribe.on("end", function () {

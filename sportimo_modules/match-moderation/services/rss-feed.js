@@ -69,7 +69,7 @@ feedService.prototype.init = function (matchHandler, cbk) {
     if (!parsers[that.parsername])
         return cbk(new Error("No parser with the name " + this.parsername + " can be found."));
 
-    log.info("Initializing rss-feed service for match id " + matchHandler.id);
+    log.info("[Auto-Moderation] Initializing rss-feed service for match id " + matchHandler.id);
 
     try
     {
