@@ -67,14 +67,12 @@ gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeCh
             log.error("{''Error'': ''" + err + "''}");
         });
 
-        var countConnections = 0;
         redisSubscribe.on("subscribe", function (channel, count) {
-            countConnections++;
-            // log.info("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel - connections: "+countConnections);
+            log.info("[Gamecards] Subscribed to Sportimo Events PUB/SUB channel");
         });
 
         redisSubscribe.on("unsubscribe", function (channel, count) {
-            // log.info("[Gamecards] Unsubscribed from Sportimo Events PUB/SUB channel");
+            log.info("[Gamecards] Unsubscribed from Sportimo Events PUB/SUB channel");
         });
 
         redisSubscribe.on("end", function () {
@@ -839,11 +837,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
             if (newCard.cardType == "Overall" && newCard.pointsPerMinute && scheduledMatch && scheduledMatch.start) {
                 // Compute the updated starting points (winning points if the card wins) if the match has already started (is live)
                 if (scheduledMatch.state > 0) {
-                    let timeDiff = itsNow.subtract(moment.utc(scheduledMatch.start.toISOString()));
-                    let minutesSinceMatchStart = timeDiff.get('minutes');
-
-                    // if you need the minutes from the game start, you do:
-                    var minutesPassedSinceFirstHalfStarted = moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
+                    let minutesSinceMatchStart = scheduledMatch.time; //moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
                     // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
                     // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
                     // Since there is a half time period all this time in between would make your calculations off.
@@ -1026,19 +1020,8 @@ gamecards.deleteUserInstance = function (gamecardId, callback) {
     });
 };
 
-
-// Manage gamecards in time, activate the ones pending activation, terminate the ones pending termination
-gamecards.Tick = function () {
-    // Update all wildcards pending to be activated
-    let itsNow = moment.utc().toDate();
-
-    if (!db) {
-        log.warn('Gamecards module is not yet connected to Mongo store. Aborting Tick.');
-        return;
-    }
-    
-    // a helper function that returns match total minutes from current match state and minute
-    let getTotalMatchMinutes = function(state, stateMinute)
+// a helper function that returns match total minutes from current match state and minute
+gamecards.GetMatchMinute = function(state, stateMinute)
     {
         switch(state)
         {
@@ -1061,7 +1044,18 @@ gamecards.Tick = function () {
             default: 
                 return 120;
         }
+};
+
+// Manage gamecards in time, activate the ones pending activation, terminate the ones pending termination
+gamecards.Tick = function () {
+    // Update all wildcards pending to be activated
+    let itsNow = moment.utc().toDate();
+
+    if (!db) {
+        log.warn('Gamecards module is not yet connected to Mongo store. Aborting Tick.');
+        return;
     }
+    
 
     // Check terminationConditions on overall cards
     // Terminate active instant cards if terminationTime is passed
@@ -1165,7 +1159,7 @@ gamecards.Tick = function () {
                         playerid: null,
                         teamid: null,
                         stat: 'Minute',
-                        statTotal: getTotalMatchMinutes(match.state, match.time),
+                        statTotal: match.time,
                         incr: 1
                     };
                     
