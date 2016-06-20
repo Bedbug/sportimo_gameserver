@@ -50,7 +50,8 @@ module.exports = function(ModerationModule) {
     router.get('/v1/live/match/:id', function(req, res) {
         ModerationModule.GetMatch(req.params.id, function(err,match){
             var strippedMatch = _.cloneDeep(match);
-            delete strippedMatch.services;
+            if(strippedMatch.services)
+                delete strippedMatch.services;
             if(!err)
              return res.send(strippedMatch);
         })

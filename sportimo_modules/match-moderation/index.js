@@ -54,7 +54,7 @@ var ModerationModule = {
     //     }
     // },
     ModeratedMatches: [],
-   
+
     testing: false,
     callback: null,
     mongoose: null,
@@ -66,12 +66,12 @@ var ModerationModule = {
         initModule(done);
     },
     SetupMongoDB: function (mongooseConnection) {
-
-        if(!shouldInitAutoFeed){
-        console.log("---------------------------------------------------------------------------------------------");
-        console.log("---- Warning: This server instance does not initialize the feed auto moderation feature -----");
-        console.log("---------------------------------------------------------------------------------------------");
-}
+      
+        if (!shouldInitAutoFeed) {
+            console.log("---------------------------------------------------------------------------------------------");
+            console.log("---- Warning: This server instance does not initialize the feed auto moderation feature -----");
+            console.log("---------------------------------------------------------------------------------------------");
+        }
 
         if (this.mock) return;
         this.mongoose = mongooseConnection;
@@ -81,11 +81,11 @@ var ModerationModule = {
         });
         team = this.mongoose.models.team;
         scheduled_matches = this.mongoose.models.scheduled_matches;
-        log.info("Connected to MongoDB");
+        // log.info("Connected to MongoDB");
 
         // Initialize the gamecards module
         var gamecards = require('../gamecards');
-        gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
+         gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
 
     },
     SetupRedis: function (Pub, Sub, Channel) {
@@ -99,7 +99,7 @@ var ModerationModule = {
         setInterval(function () {
 
             RedisClientPub.publish("socketServers", JSON.stringify({
-                server: "[GameServer] Active matches: " + ModerationModule.ModeratedMatches.length
+                server: "[Moderation] Active matches: " + ModerationModule.ModeratedMatches.length
             }));
 
         }, 30000);
@@ -114,19 +114,21 @@ var ModerationModule = {
             log.error("{''Error'': ''" + err + "''}");
         });
 
+        var countConnections = 0;
         RedisClientSub.on("subscribe", function (channel, count) {
-            console.log("[Game Server] Subscribed to Sportimo Events PUB/SUB channel");
+            countConnections++;
+            // log.info("[Moderation] Subscribed to Sportimo Events PUB/SUB channel - connections: " + countConnections);
         });
 
         RedisClientSub.on("unsubscribe", function (channel, count) {
-            log.info("[Game Server] Unsubscribed from Sportimo Events PUB/SUB channel");
+            // log.info("[Moderation] Unsubscribed from Sportimo Events PUB/SUB channel");
         });
 
         RedisClientSub.on("end", function () {
             log.error("{Connection ended}");
         });
 
-        RedisClientSub.subscribe(Channel);
+        // RedisClientSub.subscribe(Channel);
 
         RedisClientSub.on("message", function (channel, message) {
             if (JSON.parse(message).server)
@@ -152,7 +154,7 @@ var ModerationModule = {
         });
 
 
-        log.info("Setting up [Manual] moderation routes");
+        // log.info("Setting up [Manual] moderation routes");
         var apiPath = path.join(__dirname, 'api');
         fs.readdirSync(apiPath).forEach(function (file) {
             server.use('/', require(apiPath + '/' + file)(ModerationModule));
@@ -181,20 +183,20 @@ var ModerationModule = {
             match.timeline[0].events = [];
             match.state = 0;
             match.time = 1;
-            match.save(function(err, result){
-                feedstatuses.find({matchid:matchid}).remove().exec(function(err,opResult){
+            match.save(function (err, result) {
+                feedstatuses.find({ matchid: matchid }).remove().exec(function (err, opResult) {
                     cbk(opResult);
                 });
             })
         });
     },
-     ToggleMatchComplete: function (matchid, cbk) {
+    ToggleMatchComplete: function (matchid, cbk) {
         scheduled_matches.findOne({
             _id: matchid
         }).exec(function (err, match) {
             match.completed = !match.completed;
-            match.save(function(err, result){
-                feedstatuses.find({matchid:matchid}).remove().exec(function(err,opResult){
+            match.save(function (err, result) {
+                feedstatuses.find({ matchid: matchid }).remove().exec(function (err, opResult) {
                     cbk(opResult);
                 });
             })
@@ -224,8 +226,7 @@ var ModerationModule = {
 
                     var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
 
-                    if (foundMatch)
-                    {
+                    if (foundMatch) {
                         foundMatch.Terminate();
                         // remove match in case it already exists
                         _.remove(ModerationModule.ModeratedMatches, {
@@ -236,7 +237,7 @@ var ModerationModule = {
                     var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
 
                     ModerationModule.ModeratedMatches.push(hookedMatch);
-                    log.info("Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
+                    log.info("[Moderation] Found match with ID [" + hookedMatch.id + "]. Hooking on it.");
 
                     if (cbk)
                         return cbk(null, hookedMatch);
@@ -353,7 +354,7 @@ function initModule(done) {
                     _.forEach(matches, function (match) {
                         var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
                         ModerationModule.ModeratedMatches.push(hookedMatch);
-                        log.info("Found match with ID [" + hookedMatch.id + "]. Creating match instance");
+                        log.info("[Moderation] Found match with ID [" + hookedMatch.id + "]. Creating match instance");
                     });
                 } else {
                     log.warn("No scheduled matches could be found in the database.");

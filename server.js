@@ -56,13 +56,15 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-
+var version = "0.9.4";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
 var port = (process.env.PORT || 3030)
 app.listen(port, function () {
-    console.log("[Game Server] Server 0.9.2 listening on port %d in %s mode", port, app.get('env'));
+    console.log("------------------------------------------------------------------------------------");
+    console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version,port);
+    console.log("------------------------------------------------------------------------------------");
 });
 
 
@@ -105,8 +107,8 @@ SubscribeChannel.auth(redisCreds.secret, function (err) {
     if (err) {
         console.log(err);
     }
-    else
-        console.log("[Game Server] Redis Authenticated.")
+    // else
+    //     console.log("[Game Server] Redis Authenticated.")
 });
 
 PublishChannel.on("error", function (err) {
@@ -128,9 +130,10 @@ var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/spor
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
         console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);
-    } else {
-        console.log("[Game Server] MongoDB Connected.");
     }
+    //  else {
+    //     console.log("[Game Server] MongoDB Connected.");
+    // }
 });
 
 /* Modules */
@@ -139,6 +142,7 @@ mongoose.connect(mongoConnection, function (err, res) {
 var liveMatches = require('./sportimo_modules/match-moderation');
 if (PublishChannel && SubscribeChannel)
     liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
+    
 liveMatches.SetupMongoDB(mongoose);
 liveMatches.SetupAPIRoutes(app);
 liveMatches.init(TestSuite.done);

@@ -52,7 +52,7 @@ schema.statics.SetMatchPlayed = function (uid, room, cb) {
     // console.log("SET MATCHES PLAYED:");
     // console.log("------------------------------------------");
     // console.log(result.matchesPlayed);
-    if (!result.matchesPlayed) {
+    if (result && !result.matchesPlayed) {
       return mongoose.model('users').findByIdAndUpdate(uid, { $inc: { 'stats.matchesPlayed': 1 } }, { upsert: true }, function (err, result) {
         if (err)
           console.log(err);
