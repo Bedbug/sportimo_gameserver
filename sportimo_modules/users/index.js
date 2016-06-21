@@ -14,7 +14,8 @@ var config = require('./config'), // get our config file
     UserActivities = mongoose.models.useractivities, // get our mongoose model
     Scores = mongoose.models.scores,
     Achievements = mongoose.models.achievements,
-    _ = require('lodash');
+    CryptoJS = require("crypto-js");
+_ = require('lodash');
 
 var needle = require('needle');
 
@@ -221,6 +222,48 @@ apiRoutes.get('/v1/users/:id', jwtMiddle, function (req, res) {
         });
     }
 });
+
+apiRoutes.get('/v1/users/:id/reset', function (req, res) {
+
+    User.findById(req.params.id, function (err, user) {
+        var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
+        user.resetToken = token;
+        user.save(function (err, result) {
+            if (!err)
+                res.json({ "success": true, "text": "Reset email will be sent soon but anyway since I see you are in a hurry, here is your...", "token": token });
+            else
+                res.json({ "success": false });
+        })
+    });
+});
+
+apiRoutes.get('/v1/users/:utoken/token', function (req, res) {
+    User.findOne({ resetToken: req.params.utoken }, function (err, user) {
+        res.json(user);
+    })
+});
+
+apiRoutes.post('/v1/users/:utoken/password/reset', function (req, res) {
+    User.findOne({ resetToken: req.params.utoken }, function (err, user) {
+        user.password = req.body.password;
+        user.save(function (err, response) {
+            if (err)
+                res.send({ success: false })
+            else
+                res.send({ success: true });
+        })
+    })
+});
+
+apiRoutes.post('/v1/users/token', function (req, res) {
+    if (req.body.token == null)
+        return res.status(404).send();
+
+    User.findOne({ resetToken: req.body.token }, function (err, user) {
+        res.json(user);
+    })
+});
+
 
 // Allowed mini user obejct
 apiRoutes.get('/v1/user/:id', function (req, res) {

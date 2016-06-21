@@ -22,7 +22,7 @@ var achievement = new Schema({
     completed: Boolean
 });
 
-var Achievements =  mongoose.model('achievements', achievement);
+var Achievements = mongoose.model('achievements', achievement);
 
 var UserSchema = new Schema({
     name: {
@@ -50,6 +50,7 @@ var UserSchema = new Schema({
     unread: Number,
     social_id: String,
     pushToken: String,
+    resetToken: String,
     country: { type: String, required: false },
     admin: Boolean,
     stats: mongoose.Schema.Types.Mixed,
@@ -67,18 +68,36 @@ var UserSchema = new Schema({
 
 UserSchema.pre('save', function (next) {
     var user = this;
-    
-    if(this.isNew){
-       Achievements.find({},function(err,achievs){
-            this.achievements = achievs;
+
+    console.log("IS NEW?: " + user.isNew);
+
+    // If this is new, get achievements and hash password
+    if (this.isNew) {
+        Achievements.find({}, function (err, achievs) {
+            user.achievements = achievs;
+            bcrypt.genSalt(10, function (err, salt) {
+                if (err) {
+                    return next(err);
+                }
+
+                bcrypt.hash(user.password, salt, function (err, hash) {
+                    if (err) {
+                        return next(err);
+                    }
+                    user.password = hash;
+                    next();
+                });
+            });
+
         })
     }
-    
-    if (this.isModified('password') || this.isNew) {
+    else if (this.isModified('password')) {
+        console.log('Password was modified');
         bcrypt.genSalt(10, function (err, salt) {
             if (err) {
                 return next(err);
             }
+
             bcrypt.hash(user.password, salt, function (err, hash) {
                 if (err) {
                     return next(err);
@@ -87,13 +106,14 @@ UserSchema.pre('save', function (next) {
                 next();
             });
         });
-    } else {
-        
+    }
+    else {
+
         // Calculate achievements level
         var total = _.sumBy(user.achievements, 'total');
         var has = _.sumBy(user.achievements, 'has');
         user.level = has / total;
-        
+
         return next();
     }
 });
@@ -148,9 +168,9 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
             //TODO: Should calculate level and return achievement object to clients
             cb(null, "Success. Achievement completed.", achievement);
 
-            user.save(function(err,result){
-                if(!err)
-                console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
+            user.save(function (err, result) {
+                if (!err)
+                    console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
             })
         }
 
