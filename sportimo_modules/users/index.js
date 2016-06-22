@@ -237,15 +237,37 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
     });
 });
 
+var nodemailer = require('nodemailer');
+
+// create reusable transporter object using the default SMTP transport
+var transporter = nodemailer.createTransport('smtps://aribrink@gmail.com:a21th21_a21@smtp.gmail.com');
+
+
 apiRoutes.post('/v1/users/reset', function (req, res) {
 
-    User.findOne({email: req.body.email}, function (err, user) {
+    User.findOne({ email: req.body.email }, function (err, user) {
         var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
         user.resetToken = token;
         user.save(function (err, result) {
-            if (!err)
-                res.json({ "success": true, "redirect":true,"text": {en:"Reset email will be sent soon but anyway since I see you are in a hurry, here is your..."}, "token": token });
-            else
+            if (!err) {
+                res.json({ "success": true, "redirect": true, "text": { en: "Reset email will be sent soon but anyway since I see you are in a hurry, here is your..." }, "token": token });
+                // setup e-mail data with unicode symbols
+                var mailOptions = {
+                    from: 'info@sportimo.com', // sender address
+                    to: req.body.email, // list of receivers
+                    subject: 'Reset link from Sportimo ✔', // Subject line
+                    // text: 'Hello world 🐴', // plaintext body
+                    html: '<b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/'+token // html body
+                };
+
+                // send mail with defined transport object
+                transporter.sendMail(mailOptions, function (error, info) {
+                    if (error) {
+                        return console.log(error);
+                    }
+                    console.log('Message sent: ' + info.response);
+                });
+            } else
                 res.json({ "success": false });
         })
     });
