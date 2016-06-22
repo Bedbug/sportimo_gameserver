@@ -7,18 +7,12 @@ if (mongoose.models.gameserversettings)
     module.exports = mongoose.models.gameserversettings;
 else {
     var gameServerSetting = new mongoose.Schema({
-        scheduledTasks: {
-            updateTeamStats: [{
-                competition: String,
+        scheduledTasks: [{
+                competitionId: String,
                 season: String,
                 cronPattern: String
-            }],
-            updatePlayerStats: [{
-                competition: String,
-                season: String
-            }]
-        }
-      });
+        }]
+    });
 
     module.exports = mongoose.model("gameserversettings", gameServerSetting);
 }

@@ -38,7 +38,7 @@ api.UpdateTeamStats = function (req, res) {
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateCompetitionTeamsStats(req.params.competitionId, req.body.season, function (error, result) {
+            parser.UpdateAllCompetitionStats(req.params.competitionId, req.body.season, function (error, result) {
                 if (!error) {
                     response.parsers[parser.Name] = result;
 
@@ -164,7 +164,7 @@ api.UpdateTeamStatsFull = function (req, res) {
             }
             else
                 return res.status(200).json(response);
-        })
+        });
 
 };
 
@@ -192,15 +192,15 @@ api.GetTeamFullData = function (competitionId, teamid, season, outerCallback ) {
         }, function done(error) {
             if (error) 
                 response.error = error.message;
-                outerCallback(error,response);
+                outerCallback(error, response);
             
         });
     }
     catch (error) {
         response.error = error.message;
-        return res.status(500).json(response);
+        return outerCallback(error, response);
     }
-}
+};
 
 // POST
 api.UpdateAllTeams = function (req, res) {
