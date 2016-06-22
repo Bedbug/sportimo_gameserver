@@ -596,7 +596,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         definitionsLookup[definition.id] = definition;
                 });
 
-                // from the definitions, remove those that have as usercards eual or more instances than maxUserInstances
+                // from the definitions, remove those that have as usercards equal or more instances than maxUserInstances
                 let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
                 let definitionIdsToDrop = [];
                 _.forEach(instancesPerDefinition, function (instancePerDefinition) {
@@ -838,10 +838,13 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 // Compute the updated starting points (winning points if the card wins) if the match has already started (is live)
                 if (scheduledMatch.state > 0) {
                     let minutesSinceMatchStart = scheduledMatch.time; //moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
+
+                    // Reset to 45' if it is a halftime
+                    if(scheduledMatch.state == 2) minutesSinceMatchStart = 45;
+
                     // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
                     // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
                     // Since there is a half time period all this time in between would make your calculations off.
-
                     newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }

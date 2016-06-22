@@ -33,22 +33,23 @@ fs.readdirSync(servicesPath).forEach(function (file) {
     serviceTypes[path.basename(file, ".js")] = require(servicesPath + '/' + file);
 });
 
-var Timers = {
-    Timeout: null,
-    matchTimer: null,
-    clear: function () {
-        clearTimeout(Timers.Timeout);
-        clearInterval(Timers.matchTimer);
-    }
-};
 
 var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     var HookedMatch = {}; // = match;
 
+    HookedMatch.Timers = {
+        Timeout: null,
+        matchTimer: null,
+        clear: function () {
+            clearTimeout(HookedMatch.Timers.Timeout);
+            clearInterval(HookedMatch.Timers.matchTimer);
+        }
+    };
+
     // Boolean that informs the service if this instance should initialize feed services
     HookedMatch.shouldInitAutoFeed = shouldInitAutoFeed;
-    
+
     // Time spacing bewtween events 
     HookedMatch.queueDelay = 100;
     HookedMatch.queueEventsSpace = 5000;
@@ -82,16 +83,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     HookedMatch.gamecards.init(mongoConnection.mongoose, PubChannel, SubChannel, match);
     var queueIndex = 0;
     HookedMatch.queue = async.queue(function (matchEvent, callback) {
-        
+
         // --> This creates wait time
         setTimeout(function () {
             var eventName = matchEvent && matchEvent.data && matchEvent.data.type ? matchEvent.data.type : 'Unknown';
             queueIndex++;
-    
+
             if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
                 log.info('[Match module] %s: %s', queueIndex, eventName);
                 return HookedMatch.AdvanceSegment(matchEvent, function () {
-                     // --> This creates space between
+                    // --> This creates space between
                     setTimeout(function () {
                         return callback();
                     }, HookedMatch.queueSegmentsSpace);
@@ -104,11 +105,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return callback(null);
                 }
                 else {
-                    log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);   
+                    log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                     return HookedMatch.AddEvent(matchEvent, function () {
                         setTimeout(function () {
                             return callback();
-                        }, matchEvent.data.timeline_event? HookedMatch.queueEventsSpace: 100);
+                        }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
                     });
                 }
         }, HookedMatch.queueDelay);
@@ -161,8 +162,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     HookedMatch.StartService = function (service, callback) {
         var that = this;
-        
-        if(!that.shouldInitAutoFeed) return callback(null);
+
+        if (!that.shouldInitAutoFeed) return callback(null);
 
         var foundService = _.find(that.services, { type: service.type });
         if (foundService) {
@@ -200,9 +201,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             initService.emitter.on('nextMatchSegment', function (matchEvent) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     var StateEvent = { data: {} };
-                    StateEvent.data.type = 'AdvanceSegment';
-                    StateEvent.data.time = HookedMatch.data.time;
-                
+                StateEvent.data.type = 'AdvanceSegment';
+                StateEvent.data.time = HookedMatch.data.time;
+
                 if (HookedMatch.queue) {
                     console.log("--------- Advance Segment Queue: " + HookedMatch.queue.length());
                     HookedMatch.queue.push(StateEvent);
@@ -215,9 +216,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 if (matchEvent && matchEvent.id == HookedMatch.data.id)
                     console.log(HookedMatch.queue.length());
 
-                    var StateEvent = { data: {} };
-                    StateEvent.data.type = 'TerminateMatch';
-                    StateEvent.data.time = HookedMatch.data.time;
+                var StateEvent = { data: {} };
+                StateEvent.data.type = 'TerminateMatch';
+                StateEvent.data.time = HookedMatch.data.time;
 
                 if (HookedMatch.queue) {
                     console.log("--------- End Segment Queue: " + HookedMatch.queue.length());
@@ -586,7 +587,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     function startMatchTimer() {
 
-        Timers.clear();
+        HookedMatch.Timers.clear();
 
         var segment;
         var segmentStart;
@@ -606,10 +607,10 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             secondsToMinuteTick = 60 - moment.duration(moment().diff(moment(segment.start))).seconds();
 
             // Start the match timer update in secondsToMinuteTick;
-            Timers.Timeout = setTimeout(function () {
+            HookedMatch.Timers.Timeout = setTimeout(function () {
                 updateTimeForMatchId(HookedMatch.id);
                 // and start an interval that will update the match time every minute from now on
-                Timers.matchTimer = setInterval(function () {
+               HookedMatch.Timers.matchTimer = setInterval(function () {
                     updateTimeForMatchId(HookedMatch.id);
                 }, 60000);
             }, secondsToMinuteTick * 1000);
