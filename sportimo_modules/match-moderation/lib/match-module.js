@@ -913,7 +913,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.TerminateMatch = function () {
-        Timers.clear();
+        HookedMatch.Timers.clear();
         this.data.completed = true;
         this.data.save(function (err, done) {
             if (err)

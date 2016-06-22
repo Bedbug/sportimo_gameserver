@@ -237,6 +237,23 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
     });
 });
 
+apiRoutes.post('/v1/users/reset', function (req, res) {
+
+    User.findOne({email: req.body.email}, function (err, user) {
+        var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
+        user.resetToken = token;
+        user.save(function (err, result) {
+            if (!err)
+                res.json({ "success": true, "text": "Reset email will be sent soon but anyway since I see you are in a hurry, here is your...", "token": token });
+            else
+                res.json({ "success": false });
+        })
+    });
+
+    // TODO: NodeMailer
+});
+
+
 apiRoutes.get('/v1/users/:utoken/token', function (req, res) {
     User.findOne({ resetToken: req.params.utoken }, function (err, user) {
         res.json(user);
