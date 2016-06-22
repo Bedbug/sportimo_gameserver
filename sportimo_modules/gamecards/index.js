@@ -700,12 +700,12 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
             });
         },
         function (cbk) {
-            db.models.userGamecards.find({ matchid: matchId, userid: userGamecard.userid, gamecardDefinitionId: userGamecard.gamecardDefinitionId }, function (error, sameDefinitionUsercards) {
+            db.models.userGamecards.find({ matchid: matchId, userid: userGamecard.userid, gamecardDefinitionId: userGamecard.gamecardDefinitionId }, 'status', function (error, sameDefinitionUsercards) {
                 if (error)
                     return cbk(error);
                 sameInstanceCount = sameDefinitionUsercards.length || 0;
                 
-                if (_.some(sameDefinitionUsercards, {status: 1}))
+                if (_.some(sameDefinitionUsercards, {status: 1}) == true)
                     return cbk(new Error( "There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state" ));
                     
                 cbk(null, sameInstanceCount);
