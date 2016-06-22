@@ -1260,6 +1260,7 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, outerCallback) {
 Parser.UpdateAllCompetitionStats = function(competitionId, season, outerCallback)
 {
     var competitionTeams = [];
+    var competition;
     async.waterfall(
         [
             function(callback) {
@@ -1283,13 +1284,14 @@ Parser.UpdateAllCompetitionStats = function(competitionId, season, outerCallback
                 return Parser.UpdateCompetitionTeamsStats(competitionId, season, callback);
             },
             function(callback) {
-                mongoDb.competitions.findById(competitionId, function(error, competition) {
+                mongoDb.competitions.findById(competitionId, function(error, comp) {
                     if (error)
                         return callback(error);
-                    callback(null, competition);
-                })
-            }
-            function(competition, callback) {
+                    competition = comp;
+                    callback(null, comp);
+                });
+            },
+            function(callback) {
                 async.eachSeries(competitionTeams, function(team, innerCallback) {
                     return Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.id, season, innerCallback);
                 });
