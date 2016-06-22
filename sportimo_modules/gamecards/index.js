@@ -845,7 +845,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
                     // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
                     // Since there is a half time period all this time in between would make your calculations off.
-                    newCard.startPoints -= Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
+                    newCard.startPoints += Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
             
