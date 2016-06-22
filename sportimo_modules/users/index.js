@@ -244,7 +244,7 @@ apiRoutes.post('/v1/users/reset', function (req, res) {
         user.resetToken = token;
         user.save(function (err, result) {
             if (!err)
-                res.json({ "success": true, "text": "Reset email will be sent soon but anyway since I see you are in a hurry, here is your...", "token": token });
+                res.json({ "success": true, "redirect":true,"text": {en:"Reset email will be sent soon but anyway since I see you are in a hurry, here is your..."}, "token": token });
             else
                 res.json({ "success": false });
         })
