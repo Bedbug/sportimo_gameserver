@@ -638,6 +638,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
 * this timestamp should be in utc time, earlier than now, later than the gamecard definition's activation time
 * the userGamecard is not played before the start of the scheduled match when the card type is Instant
 * the user should not have played the same gamecard (gamecardDefinitionId) more than the maxUserInstances (if null ignore this rule)
+* the user should not play the same gamecard definition while the previous one played is active and is not yet resolved
 * the referenced match is not completed
 */
 gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
@@ -683,27 +684,31 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
                     // Found referenced definition, keep validating
                     if (!referencedDefinition.matchid || matchId != referencedDefinition.matchid)
-                        return cbk({ isValid: false, error: "The referenced gamecardDefinitionId document either does not include a matchid reference or is not related to the matchid in the body" });
+                        return cbk(new Error("The referenced gamecardDefinitionId document either does not include a matchid reference or is not related to the matchid in the body"));
 
                     if (data.status != 1)
-                        return cbk({ isValid: false, error: "The referenced gamecardDefinitionId document is not in an active state" });
+                        return cbk(new Error( "The referenced gamecardDefinitionId document is not in an active state" ));
 
                     if (data.options && data.options.length > 0 && !userGamecard.optionId)
-                        return cbk({ isValid: false, error: "The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body" });
+                        return cbk(new Error( "The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body" ));
 
                     if (moment.utc(userGamecard.creationTime).isBefore(moment.utc(referencedDefinition.creationTime)))
-                        return cbk({ isValid: false, error: "The creationTime in the body is before the creationTime in the gamecardDefinitionId document" });
+                        return cbk(new Error( "The creationTime in the body is before the creationTime in the gamecardDefinitionId document" ));
                 }
 
                 cbk(null, referencedDefinition);
             });
         },
         function (cbk) {
-            db.models.userGamecards.count({ matchid: matchId, userid: userGamecard.userid, gamecardDefinitionId: userGamecard.gamecardDefinitionId }, function (error, count) {
+            db.models.userGamecards.find({ matchid: matchId, userid: userGamecard.userid, gamecardDefinitionId: userGamecard.gamecardDefinitionId }, function (error, sameDefinitionUsercards) {
                 if (error)
                     return cbk(error);
-                sameInstanceCount = count;
-                cbk(null, count);
+                sameInstanceCount = sameDefinitionUsercards.length || 0;
+                
+                if (_.some(sameDefinitionUsercards, {status: 1}))
+                    return cbk(new Error( "There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state" ));
+                    
+                cbk(null, sameInstanceCount);
             });
         },
         function (cbk) {
