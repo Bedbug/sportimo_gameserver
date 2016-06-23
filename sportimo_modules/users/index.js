@@ -238,10 +238,22 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
 });
 
 var nodemailer = require('nodemailer');
-
+var smtpTransport = require('nodemailer-smtp-transport');
 // create reusable transporter object using the default SMTP transport
-var transporter = nodemailer.createTransport('smtps://aribrink@gmail.com:a21th21_a21@smtp.gmail.com');
+// var transporter = nodemailer.createTransport('smtps://aribrink@gmail.com:a21th21_a21@smtp.gmail.com');
 
+var transporter = nodemailer.createTransport(smtpTransport({
+    host: 'http://bedbugstudiocom.ipage.com',
+    secure: false,
+    port: 587,
+    auth: {
+        user: 'sender@bedbugstudio.com',
+        pass: 'a21th21_A21'
+    },
+    tls: {
+        rejectUnauthorized:false
+    }
+}));
 
 apiRoutes.post('/v1/users/reset', function (req, res) {
 
