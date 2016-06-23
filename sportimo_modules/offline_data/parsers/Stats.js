@@ -556,13 +556,13 @@ Parser.UpdateCompetitionTeamsStats = function(competitionId, season, callback)
                 return callback(error);
                 
             async.eachSeries(teams, function(team, cbk) {
-                setTimeout(
+                setTimeout( function() {
                     Parser.UpdateTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], season, function(teamError, updateOutcome) {
                         if (teamError)
                             log.error(teamError.message);
                         cbk(null);
                     })
-                , 1000);
+                }, 1000);
             }, function(seriesErr) {
                 if (seriesErr)
                     log.error(seriesErr.message);
