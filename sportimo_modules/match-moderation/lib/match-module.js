@@ -16,10 +16,11 @@ var moment = require('moment'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents'),
     matches = require('../../models/scheduled-matches'),
+    useractivities = require('../../models/userActivity'),
     async = require('async'),
     Achievements = require('../../bedbugAchievements');
 
-
+var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
 
 
 var path = require('path'),
@@ -405,9 +406,18 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     HookedMatch.AdvanceSegment = function (event, callback) {
 
 
-        matches.findById(HookedMatch.id, function (err, thisMatch) {
+        var q = matches.findById(HookedMatch.id);
+
+        q.populate('home_team away_team');
+
+        q.exec(function (err, thisMatch) {
             if (err || !thisMatch)
                 return console.log(err);
+
+            if (thisMatch.state == 0) {
+                // Send push notification to users that the game has started.
+                MessagingTools.sendPushToUsers({}, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, null, "match_reminder");
+            }
 
             // Register the time that the previous segment ended
             thisMatch.timeline[thisMatch.state].end = moment().utc().format();
@@ -610,7 +620,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             HookedMatch.Timers.Timeout = setTimeout(function () {
                 updateTimeForMatchId(HookedMatch.id);
                 // and start an interval that will update the match time every minute from now on
-               HookedMatch.Timers.matchTimer = setInterval(function () {
+                HookedMatch.Timers.matchTimer = setInterval(function () {
                     updateTimeForMatchId(HookedMatch.id);
                 }, 60000);
             }, secondsToMinuteTick * 1000);
@@ -683,7 +693,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     HookedMatch.AddEvent = function (event, cbk) {
 
-        matches.findById(HookedMatch.id, function (err, thisMatch) {
+        var m = matches.findById(HookedMatch.id)
+        m.populate("home_team away_team");
+        m.exec(function (err, thisMatch) {
             if (err || !thisMatch)
                 if (cbk)
                     return cbk(err);
@@ -711,6 +723,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         thisMatch.home_score++;
                     else
                         thisMatch.away_score++;
+
+                    useractivities.find({ room: HookedMatch.id })
+                    .select('user')
+                        .exec(function (err, users) {
+                           var userids = _.compact(_.map(users, 'user'));
+                            // console.log(req.params.matchid);
+                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "goals");
+                        });
+                   
                 }
             }
 
@@ -914,11 +935,22 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.
     HookedMatch.TerminateMatch = function () {
         HookedMatch.Timers.clear();
-        this.data.completed = true;
-        this.data.save(function (err, done) {
-            if (err)
-                log.error(err.message);
+
+        var m = matches.findById(HookedMatch.id);
+        m.populate('home_team away_team');
+
+        m.exec(function (err, thisMatch) {
+            HookedMatch.data.completed = true;
+            thisMatch.completed = true;
+            thisMatch.save(function (err, done) {
+
+                // Send push notification to users that the game has ended.
+                MessagingTools.sendPushToUsers({}, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "final_result");
+                if (err)
+                    log.error(err.message);
+            });
         });
+
 
         HookedMatch.gamecards.TerminateMatch(this.data);
 

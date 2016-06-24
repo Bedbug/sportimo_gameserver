@@ -51,6 +51,17 @@ var UserSchema = new Schema({
     unread: Number,
     social_id: String,
     pushToken: String,
+    pushSettings: {
+        type: mongoose.Schema.Types.Mixed, default: {
+            all: true,
+            new_message: true,
+            match_reminder: true,
+            kick_off: true,
+            goals: true,
+            won_cards: true,
+            final_result: true
+        }
+    },
     resetToken: String,
     country: { type: String, required: false },
     admin: Boolean,

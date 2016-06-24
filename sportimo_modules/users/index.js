@@ -19,6 +19,8 @@ _ = require('lodash');
 
 var needle = require('needle');
 
+var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
+
 var app = null;
 var tools = {};
 
@@ -237,24 +239,6 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
     });
 });
 
-var nodemailer = require('nodemailer');
-var smtpTransport = require('nodemailer-smtp-transport');
-// create reusable transporter object using the default SMTP transport
-// var transporter = nodemailer.createTransport('smtps://aribrink@gmail.com:a21th21_a21@smtp.gmail.com');
-
-var transporter = nodemailer.createTransport(smtpTransport({
-    host: 'bedbugstudiocom.ipage.com',
-    secure: false,
-    port: 587,
-    auth: {
-        user: 'sender@bedbugstudio.com',
-        pass: 'a21th21_A21'
-    },
-    tls: {
-        rejectUnauthorized:false
-    }
-}));
-
 apiRoutes.post('/v1/users/reset', function (req, res) {
 
     User.findOne({ email: req.body.email }, function (err, user) {
@@ -269,11 +253,11 @@ apiRoutes.post('/v1/users/reset', function (req, res) {
                     to: req.body.email, // list of receivers
                     subject: 'Reset link from Sportimo ✔', // Subject line
                     // text: 'Hello world 🐴', // plaintext body
-                    html: '<b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/'+token // html body
+                    html: '<b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
                 };
 
                 // send mail with defined transport object
-                transporter.sendMail(mailOptions, function (error, info) {
+                MessagingTools.sendEmailToUser(mailOptions, function (error, info) {
                     if (error) {
                         return console.log(error);
                     }
@@ -283,8 +267,6 @@ apiRoutes.post('/v1/users/reset', function (req, res) {
                 res.json({ "success": false });
         })
     });
-
-    // TODO: NodeMailer
 });
 
 
@@ -380,7 +362,7 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
 //Sends message to routers
 apiRoutes.post('/v1/users/messages', function (req, res) {
 
-    return tools.SendMessageToInbox(req.body, function (err, data) {
+    return MessagingTools.SendMessageToInbox(req.body, function (err, data) {
         if (!err)
             res.send(data);
         else
@@ -424,70 +406,56 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 
 });
 
-tools.SendMessageToInbox = function (msgData, callback) {
+// tools.SendMessageToInbox = function (msgData, callback) {
 
-    //First create the message and save the instance in database
-    var newMessage = new Message(msgData);
+//     //First create the message and save the instance in database
+//     var newMessage = new Message(msgData);
 
-    if (msgData.push && msgData.pushTokens) {
-        tools.pushNotifyUser(msgData.pushTokens, msgData.msg, msgData.data, msgData.application);
-    }
+//     // TODO: Maybe we should remove recipients property from model to save wasted space
+//     if (msgData.message)
+//         newMessage.save(function (err, message) {
 
-    // TODO: Maybe we should remove recipients property from model to save wasted space
-    if (msgData.message)
-        newMessage.save(function (err, message) {
+//             if (err) callback(err);
+//             else {
+//                 var querry = {};
+//                 if (msgData.recipients) querry._id = { $in: msgData.recipients };
+//                 // if (msgData.id) querry._id = msgData.id;
 
-            if (err) callback(err);
-            else {
-                var querry = {};
-                if (msgData.recipients) querry._id = { $in: msgData.recipients };
-                // if (msgData.id) querry._id = msgData.id;
+//                 User.update(querry,
+//                     { $push: { inbox: message._id }, $inc: { unread: 1 } },
+//                     { safe: true, new: true, multi: true },
+//                     function (err, model) {
 
-                User.update(querry,
-                    { $push: { inbox: message._id }, $inc: { unread: 1 } },
-                    { safe: true, new: true, multi: true },
-                    function (err, model) {
+//                         // Send web sockets notice
+//                         if (msgData.sockets) {
+//                             app.PublishChannel.publish("socketServers", JSON.stringify({
+//                                 sockets: true,
+//                                 clients: msgData.recipients,
+//                                 payload: {
+//                                     type: "Message",
+//                                     data: {
+//                                         message: { "en": "You have a new message in your inbox." }
+//                                     }
+//                                 }
+//                             }));
+//                         }
 
-                        // Send web sockets notice
-                        if (msgData.sockets) {
-                            app.PublishChannel.publish("socketServers", JSON.stringify({
-                                sockets: true,
-                                clients: msgData.recipients,
-                                payload: {
-                                    type: "Message",
-                                    data: {
-                                        message: { "en": "You have a new message in your inbox." }
-                                    }
-                                }
-                            }));
-                        }
+//                         // TODO: Send Push Notification
+//                         if (msgData.push) {
+//                             MessagingTools.sendPushToUsers(msgData.recipients, msgData.msg, msgData.data, "new_message");
+//                         }
 
-                        // TODO: Send Push Notification
-                        // if(msgData.push)
-                        //     Push(msgData);
-
-                        callback(err, model);
-                    }
-                );
+//                         callback(err, model);
+//                     }
+//                 );
 
 
 
 
-            }
-        });
+//             }
+//         });
 
-}
-
-
-// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-// @@ 
-// @@   PushWoosh API
-
-var PushOptions = {
-    api: "https://cp.pushwoosh.com/json/1.3/createMessage",
-    application: "BF7AF-7F9B8",
-    auth: "RjBCef0fkWWCw0tI8Jw0fvHQbBCGZJUvtE4Z14OlCAeKAWNRk5RHhQnYbqW03ityah2wiPVsA2qzX2Kz7E2l",
-};
+// }
 
 
 
@@ -571,7 +539,7 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
  */
 
 apiRoutes.post('/v1/users/push', function (req, res) {
-    log("Push request received");
+    console.log("Push request received");
     /*
     *   NotificationMessage can be multilingual in the form of
     *   {
@@ -580,89 +548,15 @@ apiRoutes.post('/v1/users/push', function (req, res) {
     *   }
     */
     var PushRequest = {
-        NotificationMessage: req.body.message,
-        NotificationData: req.body.data,
-        tokens: req.body.tokens,
+        message: req.body.message,
+        data: req.body.data,
+        ids: req.body.ids,
         application: req.body.application
     }
-    return tools.pushNotifyUser(PushRequest.tokens, PushRequest.NotificationMessage, PushRequest.NotificationData, PushRequest.application, res);
+    return MessagingTools.sendPushToUsers(PushRequest.ids, PushRequest.message, PushRequest.data, "all", res);
     // return res.status(200).send(JSON.stringify(PushRequest));
 });
 
-tools.pushNotifyUser = function (tokens, NotificationMessage, data, application, callerResponse) {
-
-    //console.log("[PUSH] Sending pushes with data: " + JSON.parse(data));
-
-    // for (var i = 0; i < tokens.length; i++) {
-    //     //console.log(i);
-    console.log("[PUSH] Send push to app: " + (application || PushOptions.application));
-    // }
-
-    var options = {
-        headers: { 'content_type': 'application/json' }
-    }
-
-
-
-    var payload;
-
-    if (data != undefined) {
-        payload =
-            {
-                "request": {
-                    "application": application || PushOptions.application,
-                    "auth": PushOptions.auth,
-                    "notifications": [
-                        {
-                            "send_date": "now",
-                            "ignore_user_timezone": true,
-                            "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String) ? JSON.parse(NotificationMessage) : NotificationMessage,
-                            "devices": tokens,
-                            "data": (typeof data === 'string' || data instanceof String) ? JSON.parse(data) : data,
-
-                        }
-                    ]
-                }
-            }
-    }
-    else {
-        payload =
-            {
-                "request": {
-                    "application": application || PushOptions.application,
-                    "auth": PushOptions.auth,
-                    "notifications": [
-                        {
-                            "send_date": "now",
-                            "ignore_user_timezone": true,
-                            "content": (typeof NotificationMessage === 'string' || NotificationMessage instanceof String) ? JSON.parse(NotificationMessage) : NotificationMessage,
-                            "devices": tokens
-
-                        }
-                    ]
-                }
-            }
-    }
-
-    //);
-
-    return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
-
-        if (!err) {
-            if (callerResponse)
-                return callerResponse.send("[PUSH] Sent push to app: " + (application || PushOptions.application));
-        }
-        else {
-            console.log(err);
-            if (callerResponse)
-                return callerResponse.send(err);
-        }
-        return 'Done';
-        // in this case, if the request takes more than 5 seconds
-        // the callback will return a [Socket closed] error
-    });
-
-}
 
 
 // apply the routes to our application with the prefix /api
