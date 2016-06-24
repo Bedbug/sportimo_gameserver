@@ -28,6 +28,8 @@ var path = require('path'),
     _ = require('lodash'),
     bodyParser = require('body-parser');
 
+/* Module to handle user feedback */
+var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
 
 /* Mongoose model
 Used to access wildcards store in database*/
@@ -1369,6 +1371,8 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
         if (err)
             log.error(err.message);
     });
+
+    MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for "+gamecard.pointsAwarded+" points." }, null, "won_cards");
 
     gamecards.publishWinToUser(gamecard);
 
