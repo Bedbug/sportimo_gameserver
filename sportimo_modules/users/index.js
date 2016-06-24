@@ -246,7 +246,7 @@ apiRoutes.post('/v1/users/reset', function (req, res) {
         user.resetToken = token;
         user.save(function (err, result) {
             if (!err) {
-                res.json({ "success": true, "redirect": true, "text": { en: "Reset email will be sent soon but anyway since I see you are in a hurry, here is your..." }, "token": token });
+                res.json({ "success": true, "redirect": false, "text": { en: "An email with a link to reset your password will be sent to you shortly." }, "token": token });
                 // setup e-mail data with unicode symbols
                 var mailOptions = {
                     from: 'info@sportimo.com', // sender address

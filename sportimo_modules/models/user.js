@@ -50,7 +50,7 @@ var UserSchema = new Schema({
     }],
     unread: Number,
     social_id: String,
-    pushToken: String,
+    pushToken: {type:String, default:"NoPustTokenYet"},
     pushSettings: {
         type: mongoose.Schema.Types.Mixed, default: {
             all: true,
