@@ -243,7 +243,7 @@ var smtpTransport = require('nodemailer-smtp-transport');
 // var transporter = nodemailer.createTransport('smtps://aribrink@gmail.com:a21th21_a21@smtp.gmail.com');
 
 var transporter = nodemailer.createTransport(smtpTransport({
-    host: 'http://bedbugstudiocom.ipage.com',
+    host: 'bedbugstudiocom.ipage.com',
     secure: false,
     port: 587,
     auth: {

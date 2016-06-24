@@ -57,7 +57,17 @@ api.getTeamFull = function (id, cb) {
     q.select('name position pic uniformNumber personalData');
     q.exec(function (err, players) {
       if (team && players)
-        team.players = players;
+        team.players = _.sortBy(players, function (element) {
+
+          var rank = {
+            "Goalkeeper": 1,
+            "Defender": 2,
+            "Midfielder": 3,
+            "Forward": 4
+          };
+
+          return rank[element.position];
+        });
 
       console.log("-------------------------------------------");
       console.log(team);
@@ -81,11 +91,11 @@ api.teamFavoriteData = function (id, cb) {
   q.exec(function (err, team) {
 
     if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
-      
-      if(!team.competitionid.parserids.Stats && !team.league && !team.leagueids)
-      return  cbf(cb, '404: There is no league id for this team. Please contact platform administrator to ask for a free soda.', null);
-      
-      var leagueId =  (team.competitionid.parserids.Stats || team.league || team.leagueids[0]);
+
+      if (!team.competitionid.parserids.Stats && !team.league && !team.leagueids)
+        return cbf(cb, '404: There is no league id for this team. Please contact platform administrator to ask for a free soda.', null);
+
+      var leagueId = (team.competitionid.parserids.Stats || team.league || team.leagueids[0]);
       Stats_parser.UpdateTeamStatsFull(leagueId, team.parserids.Stats, null, function (error, response) {
         cbf(cb, error, response);
       })
