@@ -598,14 +598,19 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         definitionsLookup[definition.id] = definition;
                 });
 
-                // from the definitions, remove those that have as usercards equal or more instances than maxUserInstances
                 let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
                 let definitionIdsToDrop = [];
                 _.forEach(instancesPerDefinition, function (instancePerDefinition) {
                     if (instancePerDefinition.length > 0) {
                         let key = instancePerDefinition[0].gamecardDefinitionId;
+                        // From the definitions, remove those that have as usercards equal or more instances than maxUserInstances
                         if (definitionsLookup[key] && definitionsLookup[key].maxUserInstances && instancePerDefinition.length >= definitionsLookup[key].maxUserInstances)
                             definitionIdsToDrop.push(key);
+                        // From the definitions, reove those where an existing user gamecacrd is currently active and is pending for resolution.
+                        _.forEach(instancePerDefinition, function(userGamecard) {
+                            if (userGamecard.status == 1 && _.indexOf(definitionIdsToDrop, key) == -1)
+                                definitionIdsToDrop.push(key);
+                        });
                         //log.info(instancePerDefinition.length);
                     }
                 });
