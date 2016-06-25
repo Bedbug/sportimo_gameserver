@@ -10,11 +10,11 @@ var answer = new Schema({
     text: { type: Schema.Types.Mixed },
     img: String,
     votes: {type:Number,default:0},
-    percent: {type:Number,default:0},
-    voters: [{
-            type:String,
-            ref:'users'
-        }]
+    percent: {type:Number,default:0}
+    // voters: [{
+    //         type:String,
+    //         ref:'users'
+    //     }]
 })
 
 var fields = {
@@ -24,6 +24,11 @@ var fields = {
     type: {type: String},
     img: { type: String },
     total_votes: {type:Number, default: 0},
+    hasAlreadyVoted: Number,
+    voters: [{
+            type:String,
+            ref:'users'
+        }],
     status: Number,
     tags: { type: Schema.Types.Mixed },
     sponsor: { type: Schema.Types.Mixed },

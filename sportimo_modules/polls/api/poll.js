@@ -13,8 +13,29 @@ var express = require('express'),
 api.findPollByTag = function (req, res) {
 	var q = polls.find({ 'tags._id': req.params.tag });
     q.exec(function (err, polls) {
-		if (!err)
-			return res.send(polls);
+		if (!err){
+
+			var trimmedPolls = [];
+			_.each(polls, function(poll){
+				
+				var hasAlreadyVoted = _.find(poll.voters, function (o) {
+					return o ==  req.params.uid;
+				});
+
+				if(hasAlreadyVoted) poll.hasAlreadyVoted = 1;
+				
+				poll = poll.toObject();
+
+				if(poll.voters)
+					delete poll.voters;
+
+				trimmedPolls.push(poll);
+			})
+
+			
+			return res.send(trimmedPolls);
+		}
+			
 		else
 			return res.status(500).send(err);
     });
@@ -44,13 +65,7 @@ api.uservote = function (req, res) {
 				return res.status(200).send('Poll has been closed.');
 			else {
 
-
-
-				var answer = _.find(poll.answers, function (o) {
-					return o._id == req.body.answerid;
-				});
-
-				var hasAlreadyVoted = _.find(answer.voters, function (o) {
+				var hasAlreadyVoted = _.find(poll.voters, function (o) {
 					return o == req.body.userid;
 				});
 
@@ -58,7 +73,7 @@ api.uservote = function (req, res) {
 					return res.status(302).send("User has alreay voted for this.");
 
 				answer.votes++;
-				answer.voters.push(req.body.userid);
+				poll.voters.push(req.body.userid);
 
 				poll.save(function (err, result) {
 					if (err)
@@ -166,7 +181,7 @@ var cbf = function (cb, err, data) {
 */
 
 
-router.get('/v1/polls/:tag/tag', api.findPollByTag);
+router.get('/v1/polls/:tag/tag/:uid/user', api.findPollByTag);
 
 router.post('/v1/polls', api.addpoll);
 
