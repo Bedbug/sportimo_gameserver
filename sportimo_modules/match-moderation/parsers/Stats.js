@@ -165,7 +165,7 @@ Parser.prototype.init = function(cbk)
                 league = response;
 
                 // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
-                GetMatchStatus(league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
+                that.GetMatchStatus(league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
                     if (err)
                         return callback(err);
                     
@@ -376,7 +376,7 @@ var UpdateMatchStats = function (matchId, boxscores, that, callback) {
 }
 
 
-var GetMatchStatus = function (leagueName, matchId, callback) {
+Parser.prototype.GetMatchStatus = function (leagueName, matchId, callback) {
     var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     var url = configuration.urlPrefix + leagueName + "/scores/" + matchId + "?" + signature;
 
