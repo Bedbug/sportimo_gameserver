@@ -562,7 +562,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                     }, 500);
                 }
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
-                if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
+                if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 28) {
                     setTimeout(function () {
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
