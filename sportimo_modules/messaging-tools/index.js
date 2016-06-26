@@ -86,8 +86,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
         // console.log(pushTokens)
         // for (var i = 0; i < tokens.length; i++) {
         //     //console.log(i);
-        console.log("[UserMessaging] Send push to app: " + (PushOptions.application));
-        // }
+
 
         var options = {
             headers: { 'content_type': 'application/json' }
@@ -138,11 +137,13 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
         return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
 
             if (!err) {
-                if (callback)
-                    return callback.send("[PUSH] Sent push to app: " + (PushOptions.application));
+                if (callback) {
+                    console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
+                    return callback("[UserMessaging] Send push to "+pushTokens.length+" users.");
+                }
             }
             else {
-                console.log(err);
+                // console.log(err);
                 if (callback)
                     return callback.send(err);
             }

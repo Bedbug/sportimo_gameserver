@@ -368,7 +368,8 @@ var UpdateMatchStats = function (matchId, boxscores, that, callback) {
             callback(err,result);
             else
             console.log("[Stats.js:345]  Update of match stats handled succesfully");
-
+            
+            if(result._id)
              that.feedService.emitStats(result._id, result.stats);
         })
     });

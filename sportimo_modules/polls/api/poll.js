@@ -71,6 +71,11 @@ api.uservote = function (req, res) {
 
 				if (hasAlreadyVoted)
 					return res.status(302).send("User has alreay voted for this.");
+				
+				var answer = _.find(poll.answers, function (o) {
+					return o._id == req.body.answerid;
+				});
+
 
 				answer.votes++;
 				poll.voters.push(req.body.userid);
@@ -78,6 +83,7 @@ api.uservote = function (req, res) {
 				poll.save(function (err, result) {
 					if (err)
 						return res.status(500).send(err);
+						result.hasAlreadyVoted = 1;
 					return res.send(result);
 				});
 			}
