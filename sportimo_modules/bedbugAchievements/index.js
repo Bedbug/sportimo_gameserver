@@ -31,7 +31,7 @@ Handler.Reward.persist_gamer = function (matchid, callback) {
  * This method rewards players for their rank position
  */
 Handler.Reward.rank_achievements = function (matchid, outerCallback) {
-
+console.log("Calculating and sending rank achievements");
     async.waterfall([
         // First we must find all leaderboards for the matchid
         function (callback) {
@@ -51,12 +51,15 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
 
             var poolsCount = pools.length;
             _.each(pools, function (pool) {
+
+                var parsedPool = parseConditons(pool);
                 var q = mongoose.models.scores.aggregate({
-                    $match: parseConditons(pool)
+                    $match: parsedPool
                 });
 
                 q.sort({ score: -1 });
                 var usersCount = 0;
+
                 q.exec(function (err, leaderboard) {
                     _.each(leaderboard, function (user) {
                         if (usersCount == 0 && user.score > 0)
@@ -85,7 +88,7 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
                         console.log(err);
                 })
             });
-            
+
             if (top1s.length > 0)
                 MessagingTools.sendPushToUsers(top1s, MessagingTools.preMessages.top1, null, "all");
 
@@ -149,7 +152,10 @@ function parseConditons(conditions) {
 
     var parsed_conditions = {};
 
-    if (conditions.gameid)
+    if(conditions.game_id){
+        parsed_conditions.game_id = conditions.game_id;
+    }
+    else if (conditions.gameid)
         parsed_conditions.game_id = conditions.gameid;
     else {
         parsed_conditions.created = {};
@@ -158,8 +164,10 @@ function parseConditons(conditions) {
         if (conditions.ends)
             parsed_conditions.created.$lte = new Date(conditions.ends);
     }
-    if (conditions.country.length > 0 && conditions.country[0] != "All")
-        parsed_conditions.country = { "$in": conditions.country };
+
+    // if (conditions.country)
+    //     if (conditions.country.length > 0 && conditions.country[0] != "All")
+    //         parsed_conditions.country = { "$in": conditions.country };
 
     return parsed_conditions;
 
