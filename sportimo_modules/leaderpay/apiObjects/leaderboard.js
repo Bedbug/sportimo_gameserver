@@ -67,6 +67,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
     // if (limit != undefined)
     //     q.limit(limit * 1);
 
+
     q.sort({ score: -1 });
 
     var rank;

@@ -81,7 +81,7 @@ var UserSchema = new Schema({
 UserSchema.pre('save', function (next) {
     var user = this;
 
-    console.log("IS NEW?: " + user.isNew);
+    // console.log("IS NEW?: " + user.isNew);
 
     // If this is new, get achievements and hash password
     if (this.isNew) {
@@ -104,7 +104,7 @@ UserSchema.pre('save', function (next) {
         })
     }
     else if (this.isModified('password')) {
-        console.log('Password was modified');
+        // console.log('Password was modified');
         bcrypt.genSalt(10, function (err, salt) {
             if (err) {
                 return next(err);
@@ -164,6 +164,14 @@ UserSchema.statics.IncrementStat = function (uid, statChange, cb) {
 
 UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
     return mongoose.model('users').findById(uid, function (err, user) {
+
+        if(!user){
+            return  cb("No User found with id: ["+user._id+"]", null, null);
+        }
+        if(user && !user.achievements){
+            console.log("User ["+user._id+"] has no achievements");
+            return  cb("User ["+user._id+"] has no achievements", null, null);
+        }
         var achievement = _.find(user.achievements, { uniqueid: achievementChange.uniqueid });
 
         if (achievement) {
