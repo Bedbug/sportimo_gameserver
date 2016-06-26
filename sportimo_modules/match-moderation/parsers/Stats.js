@@ -107,7 +107,7 @@ function Parser(matchContext, feedServiceContext){
     if (!this.matchParserId || !this.matchHandler.competition)
         return; // new Error('Invalid or absent match parserids');
         
-    if (this.feedService.active)
+    if (this.feedService.active !== 'undefined' && this.feedService.active != null)
         this.isPaused = !this.feedService.active;
         
     this.ticks = 1;
@@ -593,19 +593,6 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
             }
         });
     }
-
-    // var lastEvent = _.findLast(events, function (n) {
-    //     return n.sequenceNumber;
-    // });
-
-    // // Game Over?
-    // if (lastEvent.playEvent.playEventId == 10 || (matchStatus.name && matchStatus.name == "Final")) {
-    //     log.info('[Stats parser]: Intercepted a match Termination event.');
-       
-    //     // Send an event that the match is ended.
-    //     that.feedService.EndOfMatch(that.matchHandler);
-    //     that.Terminate();
-    // }
 
 };
 

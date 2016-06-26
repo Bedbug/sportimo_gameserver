@@ -53,10 +53,10 @@ function feedService(service) {
     // The interval that the module will request an update
     this.interval = service.interval || 5000;
     
-    this.active = service.active || true;
+    this.active = service.active === 'undefined' || service.active == null ?  true : service.active;
     
     this.parser = null;
-};
+}
 
 
  
