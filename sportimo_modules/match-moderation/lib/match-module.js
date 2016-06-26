@@ -957,6 +957,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         // Handle all achievements calculated at the end of a match
         // 1. Persistant Gamer
         Achievements.Reward.persist_gamer(HookedMatch.id);
+        // 2. Rank achievements
+        Achievements.Reward.rank_achievements(HookedMatch.id);
 
         setInterval(function () {
             HookedMatch.Terminate();

@@ -24,7 +24,7 @@ api.poolbygameid = function(req, res) {
 
     if (req.params.country)
         querry.$or[1] = { country: req.params.country.toUpperCase() };
-
+ 
     var q = Pool.find(querry);
 
     q.exec(function(err, pools) {

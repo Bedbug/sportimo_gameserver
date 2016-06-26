@@ -6,7 +6,7 @@ var mongoose = require('mongoose'),
     needle = require('needle'),
     redis = require('redis'),
     redisCreds = require.main.require('./config/redisConfig');
-
+    premessages = require("./config/pre-messages");
 
 var PublishChannel = null;
 PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
@@ -26,6 +26,8 @@ PublishChannel.on("error", function (err) {
 
 
 MessagingTools = {};
+
+MessagingTools.preMessages = premessages;
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@ 
