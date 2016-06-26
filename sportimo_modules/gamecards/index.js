@@ -615,9 +615,9 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                     }
                 });
 
-                let userGamecardDefinitions = [];
-                userGamecardDefinitions = _.dropWhile(definitions, function (definition) {
-                    return _.indexOf(definitionIdsToDrop, definition.id) != -1;
+                let userGamecardDefinitions = null;
+                userGamecardDefinitions = _.remove(definitions, function (definition) {
+                    return _.indexOf(definitionIdsToDrop, definition.id) == -1;
                 });
                 callback(null, userGamecardDefinitions);
             });
@@ -1477,16 +1477,20 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
     async.each(mongoGamecards, function (gamecard, parallelCbk) {
         if (gamecard.status != 1) {
             async.setImmediate(function () {
-                cbk(null);
+                parallelCbk(null);
             });
         }
+        
+        let gamecardChanged = false;
         
         gamecard.terminationConditions.forEach(function (condition) {
             if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
                 if (event.statTotal != null)
                 {
-                    if (event.statTotal >= condition.remaining)
+                    if (event.statTotal >= condition.remaining) {
                         condition.remaining = 0;
+                        gamecardChanged = true;
+                    }
                 }
                 else
                 {
@@ -1494,6 +1498,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
                     }
+                    gamecardChanged = true;
                 }
             }
         });
@@ -1503,6 +1508,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
             if (gamecards.CheckIfWins(gamecard, true, match)) {
                 // Send an event through Redis pub/sub:
                 log.info("Detected a winning gamecard: " + gamecard);
+                gamecardChanged = true;
             }
             else {
                 gamecard.terminationTime = moment.utc().toDate();
@@ -1520,21 +1526,28 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                         data: gamecards.TranslateUserGamecard(gamecard)
                     }
                 }));
+                gamecardChanged = true;
             }
         }
         
         if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
             gamecard.contributingEventIds.push(event.id);
 
+        
+        if (gamecardChanged)
+            gamecard.save(function (err) {
+                if (err) {
+                    log.error(err.message);
+                    return parallelCbk(err);
+                }
+                
+                parallelCbk(null);
+            });
+        else
+            async.setImmediate(function () {
+                parallelCbk(null);
+            });
 
-        gamecard.save(function (err) {
-            if (err) {
-                log.error(err.message);
-                return parallelCbk(err);
-            }
-            
-            parallelCbk(null);
-        });
     }, cbk);
 };
 
@@ -1723,8 +1736,10 @@ gamecards.ResolveEvent = function (matchEvent) {
                 cbk();
             });
         }, function (err) {
-            if (err)
+            if (err) {
+                log.error(err.message);
                 return outerCbk(err);
+            }
 
             outerCbk(null, mongoGamecards);
         });
