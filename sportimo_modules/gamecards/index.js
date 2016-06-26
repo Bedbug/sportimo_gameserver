@@ -606,9 +606,9 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         // From the definitions, remove those that have as usercards equal or more instances than maxUserInstances
                         if (definitionsLookup[key] && definitionsLookup[key].maxUserInstances && instancePerDefinition.length >= definitionsLookup[key].maxUserInstances)
                             definitionIdsToDrop.push(key);
-                        // From the definitions, reove those where an existing user gamecacrd is currently active and is pending for resolution.
+                        // From the definitions, remove those where an existing user gamecacrd is currently pending or active and is pending for resolution.
                         _.forEach(instancePerDefinition, function(userGamecard) {
-                            if (userGamecard.status == 1 && _.indexOf(definitionIdsToDrop, key) == -1)
+                            if (userGamecard.status < 2 && _.indexOf(definitionIdsToDrop, key) == -1)
                                 definitionIdsToDrop.push(key);
                         });
                         //log.info(instancePerDefinition.length);
@@ -1552,7 +1552,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
 };
 
 
-// Resolve an incoming event against all gamecard definitions appearConditions, and make any matching definitions visible / hidden
+// Resolve an incoming event against all gamecard definitions appearConditions, and make any matching definitions visible 
 gamecards.GamecardsAppearanceHandle = function(event, match)
 {
     const CheckAppearConditions = function(gamecard, match)
@@ -1631,11 +1631,25 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
         }
 
         async.each(mongoGamecards, function (gamecard, cbk) {
+            let gamecardChanged = false;
+            
             gamecard.appearConditions.forEach(function (condition) {
                 if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
-                    condition.remaining -= event.incr;
-                    if (condition.remaining <= 0) {
-                        condition.remaining = 0;
+
+                    if (event.statTotal != null)
+                    {
+                        if (event.statTotal >= condition.remaining) {
+                            condition.remaining = 0;
+                            gamecardChanged = true;
+                        }
+                    }
+                    else
+                    {
+                        condition.remaining -= event.incr;
+                        if (condition.remaining <= 0) {
+                            condition.remaining = 0;
+                        }
+                        gamecardChanged = true;
                     }
                 }
             });
@@ -1648,6 +1662,12 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
                         return cbk(err);
                     cbk();
                 });
+            }
+            else
+            if (gamecardChanged)
+            {
+                gamecard.markModified('appearConditions');
+                gamecard.save(cbk);
             }
         }, function (err) {
             if (err)
