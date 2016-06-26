@@ -76,8 +76,6 @@ var penaltyShootOutEvents = [30, 41]; // 30: goal, 41: missed
 
 var matchSegmentProgressionEventTypes = [21, 13, 35, 37, 38];
 
-var penaltiesSegmentStarted = false;
-
 
 module.exports = Parser;
 
@@ -111,8 +109,9 @@ function Parser(matchContext, feedServiceContext){
         this.isPaused = !this.feedService.active;
         
     this.ticks = 1;
-        
-};
+    
+    this.penaltiesSegmentStarted = false;
+}
 
 Parser.prototype.init = function(cbk)
 {
@@ -552,7 +551,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
             if (translatedEvent) {
                 that.feedService.AddEvent(translatedEvent);
                 
-                // Determine if the event is a successful panalty, in this case create an extra Goal event
+                // Determine if the event is a successful penalty, in this case create an extra Goal event
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
                     setTimeout(function () {
                         var goalEvent = _.cloneDeep(event);
@@ -562,11 +561,24 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         that.feedService.AddEvent(translatedGoalEvent);
                     }, 500);
                 }
+                // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
+                if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
+                    setTimeout(function () {
+                        var goalEvent = _.cloneDeep(event);
+                        goalEvent.playEvent.playEventId = 11;
+                        goalEvent.playEvent.name = 'Goal';
+                        var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                        translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
+                        translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
+                        translatedGoalEvent.players = []; 
+                        that.feedService.AddEvent(translatedGoalEvent);
+                    }, 500);
+                }
 
                 // Determine if the Penalties Segment has just started (in this case, advance the segment)
                 if (translatedEvent.data.state == 9) {
-                    if (!penaltiesSegmentStarted) {
-                        penaltiesSegmentStarted = true;
+                    if (!that.penaltiesSegmentStarted) {
+                        that.penaltiesSegmentStarted = true;
                         that.feedService.AdvanceMatchSegment(that.matchHandler);
                     }
                 }
