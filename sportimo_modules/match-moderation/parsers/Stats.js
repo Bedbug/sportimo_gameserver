@@ -53,9 +53,6 @@ var localConfiguration = statsComConfigDevelopment;
 var configuration = localConfiguration;
 
 
-// the parser upon initialization will inquire about the competition mappings
-var league = null;
-
 var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28, 30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
 var timelineEvents = {
     "2": "Yellow",
@@ -111,6 +108,9 @@ function Parser(matchContext, feedServiceContext){
     this.ticks = 1;
     
     this.penaltiesSegmentStarted = false;
+    
+    // the parser upon initialization will inquire about the competition mappings
+    this.league = null;
 }
 
 Parser.prototype.init = function(cbk)
@@ -161,10 +161,10 @@ Parser.prototype.init = function(cbk)
                 if (error) 
                     return callback(error);
 
-                league = response;
+                that.league = response;
 
                 // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
-                that.GetMatchStatus(league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
+                that.GetMatchStatus(that.league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
                     if (err)
                         return callback(err);
                     
@@ -180,7 +180,7 @@ Parser.prototype.init = function(cbk)
                         interval = 1000;
 
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
-                    if (formattedScheduleDate < moment.utc() && isActive) 
+                    if ((formattedScheduleDate < moment.utc() && isActive) || moment.utc() < moment.utc(scheduleDate))
                     {
                         log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                         that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
@@ -494,7 +494,7 @@ Parser.prototype.TickMatchFeed = function() {
             return;
         }
 
-        var leagueName = league.parserids[that.Name];
+        var leagueName = that.league.parserids[that.Name];
         
         if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
             GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that), that);
@@ -570,7 +570,10 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
                         translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
                         translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
-                        translatedGoalEvent.players = []; 
+                        if (translatedGoalEvent.players.length > 0) {
+                            if (translatedGoalEvent.players[0].name)
+                                translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
+                        } 
                         that.feedService.AddEvent(translatedGoalEvent);
                     }, 500);
                 }
