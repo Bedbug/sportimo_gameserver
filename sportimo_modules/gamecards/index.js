@@ -1181,12 +1181,12 @@ gamecards.Tick = function () {
                     // Check for appearance conditions, and set accordingly the visible property
                     //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
                     async.parallel([
-                        // function(parallelCbk) {
-                        //     setTimeout(function() {
-                        //         gamecards.GamecardsAppearanceHandle(event, match);
-                        //         return parallelCbk(null);
-                        //     }, 100);
-                        // },
+                        function(parallelCbk) {
+                            setTimeout(function() {
+                                gamecards.GamecardsAppearanceHandle(event, match);
+                                return parallelCbk(null);
+                            }, 100);
+                        },
                         // function(parallelCbk) {
                         //     setTimeout(function() {
                         //         gamecards.GamecardsAppearanceHandle(segment, match);
@@ -1227,6 +1227,7 @@ gamecards.Tick = function () {
                             });
                             
                         },
+                        // Check terminationConditions whether any is met, and in this case resolve the affected userGamecards
                         function(parallelCbk) {
                             const wildcardsQuery = {
                                 status: 1,
@@ -1558,50 +1559,53 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
     const CheckAppearConditions = function(gamecard, match)
     {
         let conditions = gamecard.appearConditions;
-        const isCardTermination = false;
+        //const isCardTermination = false;
         
-        // All appearConditions have to be met to win the card
+        // If any appearCondition is met, the gamecard definition gets invisible to clients.
+        let conditionIsMet = false;
         for (let i = 0; i < conditions.length; i++) {
             let condition = conditions[i];
             let target = condition.target || 0;
             
             let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
-            if (isCardTermination == false)
-            {
+            // if (isCardTermination == false)
+            // {
                 if (condition.conditionNegation == true || condition.remaining > target)
-                    return false;
+                    continue;
                     
                 // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
                 if (isConditionComparative)
-                    return false;
-            }
-            else
-            {
-                if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
-                    return false;
-                if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
-                    return false;
-                if (isConditionComparative && match ) {
+                    continue;
                     
-                    let id1 = condition.playerid || condition.teamid;
-                    let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
-                    let id1StatItem = _.find(match.stats, {id: id1});
-                    let id2StatItem = _.find(match.stats, {id: id2});
-                    if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
-                        return false;
-                    let id1Stat = id1StatItem[condition.stat] || 0;
-                    let id2Stat = id2StatItem[condition.stat] || 0;
-                    if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
-                        return false;
-                    if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
-                        return false;
-                    if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
-                        return false;
-                }
-            }
+                conditionIsMet = true;
+            // }
+            // else
+            // {
+            //     if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
+            //         return false;
+            //     if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
+            //         return false;
+            //     if (isConditionComparative && match ) {
+                    
+            //         let id1 = condition.playerid || condition.teamid;
+            //         let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
+            //         let id1StatItem = _.find(match.stats, {id: id1});
+            //         let id2StatItem = _.find(match.stats, {id: id2});
+            //         if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
+            //             return false;
+            //         let id1Stat = id1StatItem[condition.stat] || 0;
+            //         let id2Stat = id2StatItem[condition.stat] || 0;
+            //         if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
+            //             return false;
+            //         if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
+            //             return false;
+            //         if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+            //             return false;
+            //     }
+            // }
         }
         
-        return true;
+        return conditionIsMet;
     };
 
     const itsNow = moment.utc();
@@ -1669,6 +1673,10 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
                 gamecard.markModified('appearConditions');
                 gamecard.save(cbk);
             }
+            else
+            async.setImmediate(function() {
+                return cbk(null);
+            })
         }, function (err) {
             if (err)
                 return err;
