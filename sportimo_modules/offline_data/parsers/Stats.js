@@ -87,7 +87,7 @@ setTimeout(function() {
                         
                         log.info('Scheduling UpdateCompetitionStats for season %s with the pattern %s', season, pattern);
                         Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(pattern, function(){
-                            log.info('Scheduled job is running for %s', Parser.methodSchedules['UpdateCompetitionStats']);
+                            log.info('Scheduled job is running for %s : %s : %s', updateTeamSchedule.competitionId, updateTeamSchedule.season, updateTeamSchedule.cronPattern);
                             Parser.UpdateAllCompetitionStats(competitionId, season, function(error, data) {
                                 if (error)
                                     log.error(error.message);
