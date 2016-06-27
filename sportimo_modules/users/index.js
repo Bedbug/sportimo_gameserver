@@ -478,7 +478,7 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     var stats = {}
     User.findById(req.params.uid)
-        .select("username level stats achievements")
+        .select("username picture level stats achievements")
         .exec(function (err, result) {
             if (err)
                 return res.status(500).send(err);

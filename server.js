@@ -56,7 +56,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.6";
+var version = "0.9.7";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
