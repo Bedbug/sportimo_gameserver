@@ -455,7 +455,7 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
         translatedEvent.data.players.push(offensivePlayer);
     // if (defensivePlayer)
     //     translatedEvent.data.players.push(defensivePlayer);
-    if (parserEvent.playEvent.playEventId == 22)
+    if (parserEvent.playEvent.playEventId == 22 && replacedPlayer)
         translatedEvent.data.players.push(replacedPlayer);
 
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
@@ -585,7 +585,18 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         that.feedService.AddEvent(translatedGoalEvent);
                     }, 500);
                 }
-
+                // Determine if the event includes a deflected post, in this case create a deflected post event
+                if (event.saveType && event.saveType.saveTypeId == 17) // Deflected around post
+                {
+                    setTimeout(function () {
+                        var goalEvent = _.cloneDeep(event);
+                        goalEvent.playEvent.playEventId = 53; // out of the timeline id range
+                        goalEvent.playEvent.name = 'Deflected_on_Post';
+                        var translatedDeflectionEvent = that.TranslateMatchEvent(goalEvent);
+                        that.feedService.AddEvent(translatedDeflectionEvent);
+                    }, 500);
+                    
+                }
                 // Determine if the Penalties Segment has just started (in this case, advance the segment)
                 if (translatedEvent.data.state == 9) {
                     if (!that.penaltiesSegmentStarted) {
