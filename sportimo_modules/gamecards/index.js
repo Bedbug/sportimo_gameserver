@@ -1369,8 +1369,8 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
     else
         gamecard.pointsAwarded = gamecard.startPoints;
 
-    console.log("-----------------------------------");
-    console.log("Card Won");
+    // console.log("-----------------------------------");
+    // console.log("Card Won");
 
     // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
     gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.pointsAwarded, function (err, result) { 
@@ -1427,9 +1427,9 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
 
 gamecards.publishWinToUser = function (gamecard) {
     // Delay publication so to avoid missing the event on sockets
-    console.log("called to win:" + Date.now());
+    // console.log("called to win:" + Date.now());
     setTimeout(function () {
-        console.log("publish:" + Date.now());
+        // console.log("publish:" + Date.now());
         redisPublish.publish("socketServers", JSON.stringify({
             sockets: true,
             clients: [gamecard.userid],
@@ -1508,7 +1508,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
         {
             if (gamecards.CheckIfWins(gamecard, true, match)) {
                 // Send an event through Redis pub/sub:
-                log.info("Detected a winning gamecard: " + gamecard);
+                // log.info("Detected a winning gamecard: " + gamecard);
                 gamecardChanged = true;
             }
             else {
@@ -1516,7 +1516,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                 gamecard.status = 2;
                 gamecard.pointsAwarded = 0;
                 // Send an event through Redis pu/sub:
-                log.info("Card lost: " + gamecard);
+                // log.info("Card lost: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
                     sockets: true,
                     clients: [gamecard.userid],

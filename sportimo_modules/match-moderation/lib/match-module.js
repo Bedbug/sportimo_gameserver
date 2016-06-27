@@ -91,7 +91,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             queueIndex++;
 
             if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'AdvanceSegment') {
-                log.info('[Match module] %s: %s', queueIndex, eventName);
+                // log.info('[Match module] %s: %s', queueIndex, eventName);
                 return HookedMatch.AdvanceSegment(matchEvent, function () {
                     // --> This creates space between
                     setTimeout(function () {
@@ -101,12 +101,12 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             }
             else
                 if (matchEvent && matchEvent.data && matchEvent.data.type && matchEvent.data.type == 'TerminateMatch') {
-                    log.info('[Match module] %s: %s', queueIndex, eventName);
+                    // log.info('[Match module] %s: %s', queueIndex, eventName);
                     HookedMatch.TerminateMatch();
                     return callback(null);
                 }
                 else {
-                    log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
+                    // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                     return HookedMatch.AddEvent(matchEvent, function () {
                         setTimeout(function () {
                             return callback();
