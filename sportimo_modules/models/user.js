@@ -18,6 +18,7 @@ var achievement = new Schema({
     title: mongoose.Schema.Types.Mixed,
     text: mongoose.Schema.Types.Mixed,
     has: Number,
+    value: Number,
     total: Number,
     completed: Boolean
 });
@@ -122,8 +123,14 @@ UserSchema.pre('save', function (next) {
     else {
 
         // Calculate achievements level
-        var total = _.sumBy(user.achievements, 'total');
-        var has = _.sumBy(user.achievements, 'has');
+        var total = _.sumBy(user.achievements, function(o){
+            return _.multiply(o.total, o.value);
+        });
+        
+        var has = _.sumBy(user.achievements,function(o){
+            return _.multiply(o.has, o.value);
+        });
+
         user.level = has / total;
 
         return next();
@@ -168,6 +175,7 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
         if(!user){
             return  cb("No User found with id: ["+user._id+"]", null, null);
         }
+
         if(user && !user.achievements){
             console.log("User ["+user._id+"] has no achievements");
             return  cb("User ["+user._id+"] has no achievements", null, null);
