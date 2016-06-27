@@ -53,7 +53,7 @@ var localConfiguration = statsComConfigDevelopment;
 var configuration = localConfiguration;
 
 
-var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28, 30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
+var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 22, 28, 30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
 var timelineEvents = {
     "2": "Yellow",
     "5": "Corner",
@@ -412,12 +412,18 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
             name : this.matchPlayersLookup[parserEvent.offensivePlayer.playerId].name,
             team : this.matchPlayersLookup[parserEvent.offensivePlayer.playerId].teamId
         } : null;
-    // var defensivePlayer = parserEvent.defensivePlayer && matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
-    //     {
-    //         id : matchPlayersLookup[parserEvent.defensivePlayer.playerId].id,
-    //         name : matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
-    //         team : matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId
-    //     } : null;
+    var defensivePlayer = parserEvent.defensivePlayer && this.matchPlayersLookup[parserEvent.defensivePlayer.playerId] ? 
+        {
+            id : this.matchPlayersLookup[parserEvent.defensivePlayer.playerId].id,
+            name : this.matchPlayersLookup[parserEvent.defensivePlayer.playerId].name,
+            team : this.matchPlayersLookup[parserEvent.defensivePlayer.playerId].teamId
+        } : null;
+    var replacedPlayer = parserEvent.replacedPlayer && this.matchPlayersLookup[parserEvent.replacedPlayer.playerId] ? 
+        {
+            id : this.matchPlayersLookup[parserEvent.replacedPlayer.playerId].id,
+            name : this.matchPlayersLookup[parserEvent.replacedPlayer.playerId].name,
+            team : this.matchPlayersLookup[parserEvent.replacedPlayer.playerId].teamId
+        } : null;
 
     var isTimelineEvent = timelineEvents[parserEvent.playEvent.playEventId] ? true : false
     var eventName = isTimelineEvent == true ? timelineEvents[parserEvent.playEvent.playEventId] : parserEvent.playEvent.name;
@@ -449,6 +455,8 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
         translatedEvent.data.players.push(offensivePlayer);
     // if (defensivePlayer)
     //     translatedEvent.data.players.push(defensivePlayer);
+    if (parserEvent.playEvent.playEventId == 22)
+        translatedEvent.data.players.push(replacedPlayer);
 
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
     translatedEvent.data.stats[eventName] = 1;
