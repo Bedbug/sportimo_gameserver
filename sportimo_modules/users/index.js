@@ -480,18 +480,14 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     User.findById(req.params.uid)
         .select("username level stats achievements")
         .exec(function (err, result) {
-            console.log(err)
-
             if (err)
                 return res.status(500).send(err);
-
             stats.user = result;
             Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
                 .limit(5)
                 .sort({ lastActive: -1 })
                 // .populate('away_team', 'name logo')
                 .exec(function (err, scores) {
-                    console.log(err)
                     if (err)
                         return res.status(500).send(err);
 

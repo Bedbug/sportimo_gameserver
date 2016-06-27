@@ -779,11 +779,11 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
         console.log()
 
         var created = creationMoment.toISOString();
-        console.log("Created: " + created);
+        // console.log("Created: " + created);
         var activated = creationMoment.add(gamecardDefinition.activationLatency, 'ms').toISOString();
-        console.log("Activated: " + activated);
+        // console.log("Activated: " + activated);
         var terminated = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
-        console.log("Terminated: " + terminated);
+        // console.log("Terminated: " + terminated);
 
         // Store the mongoose model
         let newCard = null;

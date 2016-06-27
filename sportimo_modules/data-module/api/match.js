@@ -16,7 +16,6 @@ var express = require('express'),
 api.item = function (req, res) {
     var gameid = req.params.gameid;
     var userid = req.params.userid;
-console.log(userid);
     var game = {
         userScore: 0,
         questions: [],

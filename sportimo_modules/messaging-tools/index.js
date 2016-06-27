@@ -69,7 +69,8 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 
     var conditions = {
         pushToken: {
-            $exists: true
+            $exists: true,
+            $ne: "NoPustTokenYet"
         }
     };
 
