@@ -31,8 +31,8 @@ scoreSchema.statics.AddPoints = function (uid, room, points, cb) {
         { $inc: { score: points } },
         { upsert: true },
         function (err, result) {
-            if (!err)
-                console.log('passed scres with no error 1/2.');
+            if (err)
+                console.log(err);
 
             if (cb)
                 return cb(err, result);

@@ -31,7 +31,7 @@ Handler.Reward.persist_gamer = function (matchid, callback) {
  * This method rewards players for their rank position
  */
 Handler.Reward.rank_achievements = function (matchid, outerCallback) {
-console.log("Calculating and sending rank achievements");
+    console.log("Calculating and sending rank achievements");
     async.waterfall([
         // First we must find all leaderboards for the matchid
         function (callback) {
@@ -82,6 +82,17 @@ console.log("Calculating and sending rank achievements");
             });
         },
         function (top1s, top10s, top100s, loosers, callback) {
+
+            if (top1s.length > 0)
+                MessagingTools.sendPushToUsers(top1s, MessagingTools.preMessages.top1, null, "all");
+
+            if (top10s.length > 0)
+                MessagingTools.sendPushToUsers(top10s, MessagingTools.preMessages.top10, null, "all");
+
+            if (top100s.length > 0)
+                MessagingTools.sendPushToUsers(top100s, MessagingTools.preMessages.top100, null, "all");
+
+            
             _.each(top1s, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'mike_drop', value: 1 }, function (err, result) {
                     if (err)
@@ -89,28 +100,27 @@ console.log("Calculating and sending rank achievements");
                 })
             });
 
-            if (top1s.length > 0)
-                MessagingTools.sendPushToUsers(top1s, MessagingTools.preMessages.top1, null, "all");
 
+            var concat10s = _.concat(top1s, top10s);
 
-            _.each(top10s, function (user) {
+            _.each(concat10s, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'top_10', value: 1 }, function (err, result) {
                     if (err)
                         console.log(err);
 
                 })
             });
-            if (top10s.length > 0)
-                MessagingTools.sendPushToUsers(top10s, MessagingTools.preMessages.top10, null, "all");
-            _.each(top100s, function (user) {
+
+             var concat100s = _.concat(concat10s, top100s);
+
+            _.each(concat100s, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'top_100', value: 1 }, function (err, result) {
                     if (err)
                         console.log(err);
 
                 })
             });
-            if (top100s.length > 0)
-                MessagingTools.sendPushToUsers(top100s, MessagingTools.preMessages.top100, null, "all");
+
             _.each(loosers, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'loosers_reward', value: 1 }, function (err, result) {
                     if (err)
@@ -152,7 +162,7 @@ function parseConditons(conditions) {
 
     var parsed_conditions = {};
 
-    if(conditions.game_id){
+    if (conditions.game_id) {
         parsed_conditions.game_id = conditions.game_id;
     }
     else if (conditions.gameid)
