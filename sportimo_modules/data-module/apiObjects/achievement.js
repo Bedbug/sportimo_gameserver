@@ -78,6 +78,10 @@ api.editAchievement = function (id, updateData, cb) {
       achievement["total"] = updateData["total"];
     }
 
+    if (typeof updateData["value"] != 'undefined') {
+      achievement["value"] = updateData["value"];
+    }
+
     if (typeof updateData["completed"] != 'undefined') {
       achievement["completed"] = updateData["completed"];
     }
