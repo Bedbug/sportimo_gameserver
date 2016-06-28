@@ -1293,7 +1293,12 @@ Parser.UpdateAllCompetitionStats = function(competitionId, season, outerCallback
             },
             function(callback) {
                 async.eachSeries(competitionTeams, function(team, innerCallback) {
-                    return Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.id, season, innerCallback);
+                    if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
+                        async.setImmediate(function() {
+                            innerCallback(null);
+                        });
+                    else
+                        return Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, innerCallback);
                 });
             }
         ], function(error) {
