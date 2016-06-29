@@ -249,7 +249,15 @@ gamecards.upsertTemplate = function (template, callback) {
 
 };
 
-
+gamecards.removeTemplate = function(templateId, callback){
+    db.models.gamecardTemplates.findByIdAndRemove(templateId, function (err, result) {
+        if (!err) {
+            return callback(err);
+        } else {
+            return callback(null,result);
+        }
+    })
+}
 
 gamecards.getDefinitions = function (state, callback) {
     if (!state || typeof (state) == 'function') {
