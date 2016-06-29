@@ -508,7 +508,7 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
                             sum += stats.lastmatches[i];
                             ++count;
                     }
-                    var avg = sum / count;
+                    var avg = Math.round(sum / count);
 
 
                     UserActivities.aggregate({ $match: {} },
@@ -525,7 +525,7 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
                             stats.all = result[0];
                             delete stats.all._id;
                             
-                            stats.all.pointspermatch = avg;
+                            stats.all.pointsPerGame = avg || 0;
                             stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100;
                             // console.log(result);
 
