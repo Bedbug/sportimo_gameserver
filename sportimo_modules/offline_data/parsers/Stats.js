@@ -70,25 +70,22 @@ Parser.Name = configuration.parserIdName;
 Parser.methodSchedules = {};
 
 // Initialize scheduled tasks on (re)start, but wait 5 secs for the mongo connection to be established first.
-setTimeout(function() {
-    mongoDb.gameserversettings.findOne().exec(function(error, settings) {
+setTimeout(function () {
+    mongoDb.gameserversettings.findOne().exec(function (error, settings) {
         if (error)
             log.error('Failed to get the game server settings during offline_data Stats parser initialization');
-        else
-        {
-            if (settings)
-            {
-                if (settings.scheduledTasks)
-                {
-                    _.forEach(settings.scheduledTasks, function(updateTeamSchedule) {
+        else {
+            if (settings) {
+                if (settings.scheduledTasks) {
+                    _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
                         let competitionId = updateTeamSchedule.competitionId;
                         let season = updateTeamSchedule.season;
                         let pattern = updateTeamSchedule.cronPattern;
-                        
+
                         log.info('Scheduling UpdateCompetitionStats for season %s with the pattern %s', season, pattern);
-                        Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(pattern, function(){
+                        Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(pattern, function () {
                             log.info('Scheduled job is running for %s : %s : %s', updateTeamSchedule.competitionId, updateTeamSchedule.season, updateTeamSchedule.cronPattern);
-                            Parser.UpdateAllCompetitionStats(competitionId, season, function(error, data) {
+                            Parser.UpdateAllCompetitionStats(competitionId, season, function (error, data) {
                                 if (error)
                                     log.error(error.message);
                             });
@@ -130,7 +127,7 @@ Parser.FindMongoTeamId = function (parserid, fieldProjection, callback) {
 };
 
 Parser.FindMongoTeamsInCompetition = function (competitionId, callback) {
-    mongoDb.teams.find({competitionid: competitionId, parserids: {$ne: null}}, function(error, teams) {
+    mongoDb.teams.find({ competitionid: competitionId, parserids: { $ne: null } }, function (error, teams) {
         if (error)
             return callback(error);
         callback(null, teams);
@@ -158,14 +155,14 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
             return mongoDb.teams.findOne({ "parserids.Stats": teamId }, function (err, team) {
                 if (err)
                     return callback(err);
-                    
+
                 if (team) {
                     team.stats = teamStats;
                     team.markModified('stats');
                     team.save(function (err, result) {
                         if (err)
                             return callback(err);
-                            
+
                         return callback(null, teamStats);
                     });
                 } else
@@ -208,7 +205,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             // First let's update the stats for use in the client gamecard infos
             function (team, callback) {
                 if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
-                    async.setImmediate(function() {
+                    async.setImmediate(function () {
                         return callback(new Error('Data are current. No need to update them yet.'), team);
                     });
 
@@ -232,14 +229,14 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // Secondly let's get the team standing in it's main league
             function (team, callback) {
-                setTimeout(function() {
+                setTimeout(function () {
                     needle.get(standings_url, { timeout: 50000 }, function (error, response) {
                         if (error)
                             return callback(error, team);
                         try {
                             if (response.statusCode == 404)
                                 return callback(null, team);
-    
+
                             var teamStanding = response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
                             team.standing = {
                                 "rank": teamStanding.league ? teamStanding.league.rank : teamStanding.division ? teamStanding.division.rank : -1,
@@ -255,7 +252,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 "goalsFor": teamStanding.goalsFor.overall,
                                 "goalsAgainst": teamStanding.goalsAgainst.overall
                             };
-    
+
                             callback(null, team);
                         }
                         catch (err) {
@@ -267,20 +264,20 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // Now let's do the difficult stuff and get the schedule
             function (team, callback) {
-                setTimeout(function() {
+                setTimeout(function () {
                     needle.get(schedule_url, { timeout: 50000 }, function (error, response) {
                         if (error)
                             return callback(error, team);
                         try {
-                            if (response.statusCode == 404){
+                            if (response.statusCode == 404) {
                                 team.nextmatch = {
-                                     "eventdate": moment().utc().add(1,'d').format(),
+                                    "eventdate": moment().utc().add(1, 'd').format(),
                                 };
                                 return callback(null, team);
                             }
-                          
+
                             var nextMatch = response.body.apiResults[0].league.season.eventType[0].events[0];
-    
+
                             team.nextmatch = {
                                 "home": "",
                                 "away": "",
@@ -288,15 +285,15 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 "homescore": 0,
                                 "awayscore": 0
                             };
-    
+
                             Parser.FindMongoTeamId(nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
                                 if (!err)
-                                    team.nextmatch.home = home_team ? home_team : {name:{en:nextMatch.teams[0].displayName }};
-    
+                                    team.nextmatch.home = home_team ? home_team : { name: { en: nextMatch.teams[0].displayName } };
+
                                 Parser.FindMongoTeamId(nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
                                     if (!err)
-                                        team.nextmatch.away = away_team ? away_team :  {name:{en:nextMatch.teams[1].displayName }};
-    
+                                        team.nextmatch.away = away_team ? away_team : { name: { en: nextMatch.teams[1].displayName } };
+
                                     callback(null, team);
                                 });
                             });
@@ -310,21 +307,21 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // It's time to go for the last match entry and recent form
             function (team, callback) {
-                setTimeout(function() {
+                setTimeout(function () {
                     needle.get(events_url, { timeout: 50000 }, function (error, response) {
                         if (error)
                             return callback(error, team);
                         try {
                             if (response.statusCode != 200)
                                 return callback(null, team);
-    
+
                             var lastFiveEvents = _.takeRight(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].events, 5);
                             var lastEvent = _.takeRight(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].events)[0];
-    
+
                             team.recentform = _.map(lastFiveEvents, function (o) {
                                 return o.outcome.name;
                             });
-    
+
                             // Now let's retrieve the last match data
                             team.lastmatch = {
                                 "home": "",
@@ -333,27 +330,27 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 "homescore": 0,
                                 "awayscore": 0
                             };
-    
+
                             Parser.FindMongoTeamId(lastEvent.opponentTeam.teamId, 'name logo', function (teamError, opponent_team) {
                                 if (teamError)
                                     return callback(teamError, team);
-                                    
+
                                 if (!opponent_team)
                                     opponent_team = {
                                         _id: "",
                                         name: { en: lastEvent.opponentTeam.displayName }
                                     };
-    
+
                                 if (lastEvent.team.teamLocationType.name == 'away') {
-                                    team.lastmatch.away = _.pick(team,['_id','name','logo']);
+                                    team.lastmatch.away = _.pick(team, ['_id', 'name', 'logo']);
                                     team.lastmatch.awayscore = lastEvent.outcome.teamScore;
-                                    team.lastmatch.home =  opponent_team;
+                                    team.lastmatch.home = opponent_team;
                                     team.lastmatch.homescore = lastEvent.outcome.opponentTeamScore;
                                 } else {
-    
-                                    team.lastmatch.home = _.pick(team,['_id','name','logo']);
+
+                                    team.lastmatch.home = _.pick(team, ['_id', 'name', 'logo']);
                                     team.lastmatch.homescore = lastEvent.outcome.teamScore;
-                                    team.lastmatch.away =  opponent_team;
+                                    team.lastmatch.away = opponent_team;
                                     team.lastmatch.awayscore = lastEvent.outcome.opponentTeamScore;
                                 }
                                 return callback(null, team);
@@ -368,31 +365,31 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, callback) {
-                setTimeout(function() {
+                setTimeout(function () {
                     needle.get(scorer_url, { timeout: 50000 }, function (error, response) {
                         if (error)
                             return callback(error);
                         try {
                             if (response.statusCode == 404)
                                 return callback(null, team);
-    
-    
+
+
                             var scorerParserId = response.body.apiResults[0].league.seasons[0].eventType[0].leaderCategory[0].ranking[0].player.playerId;
-    
-    
-                            var q = mongoDb.players.findOne({ "parserids.Stats": scorerParserId });
-    
+                            // var goals = response.body.apiResults[0].league.seasons[0].eventType[0].leaderCategory[0].ranking[0].stat;
+
+                            var q = mongoDb.players.findOne({ "parserids.Stats": scorerParserId, teamId: team._id });
+
                             q.select('name uniformNumber pic stats');
-    
+
                             q.exec(function (err, player) {
                                 if (err)
                                     return callback(err, team);
-    
+
                                 if (!player)
                                     return callback(new Error('No player found in database with this Id'), team);
-    
-                                team.topscorer = player._id;
-    
+                                // player.stats.season.goalsTotal = goals;
+                                team.topscorer = player._id.toString();
+
                                 return callback(null, team, player);
                             });
                         }
@@ -410,8 +407,8 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             team.save(function (err, result) {
                 if (err)
                     return outerCallback(err);
-                    
-                result.topscorer = player; 
+
+                result.topscorer = player;
                 return outerCallback(null, result);
             });
         }
@@ -551,103 +548,96 @@ Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
 
 // Parser methods that other modules may call:
 
-Parser.UpdateCompetitionTeamsStats = function(competitionId, season, callback)
-{
-    mongoDb.competitions.findById(competitionId, function(competitionError, competition) {
+Parser.UpdateCompetitionTeamsStats = function (competitionId, season, callback) {
+    mongoDb.competitions.findById(competitionId, function (competitionError, competition) {
         if (competitionError)
             return callback(competitionError);
-            
-        if (!competition.parserids || !competition.parserids[Parser.Name])   
+
+        if (!competition.parserids || !competition.parserids[Parser.Name])
             return callback(new Error('No proper parserids found in selected competition with id ' + competitionId));
-            
-        Parser.FindMongoTeamsInCompetition(competitionId, function(error, teams) {
+
+        Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
             if (error)
                 return callback(error);
-                
-            async.eachSeries(teams, function(team, cbk) {
-                setTimeout( function() {
-                    Parser.UpdateTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], season, function(teamError, updateOutcome) {
+
+            async.eachSeries(teams, function (team, cbk) {
+                setTimeout(function () {
+                    Parser.UpdateTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], season, function (teamError, updateOutcome) {
                         if (teamError)
                             log.error(teamError.message);
                         cbk(null);
                     })
                 }, 1000);
-            }, function(seriesErr) {
+            }, function (seriesErr) {
                 if (seriesErr)
                     log.error(seriesErr.message);
-                    
+
                 callback(null);
             });
-        });        
+        });
     });
 
 };
 
-Parser.GetCompetitionTeamsStatsSchedule = function(competitionId, callback)
-{
+Parser.GetCompetitionTeamsStatsSchedule = function (competitionId, callback) {
     var schedule = Parser.methodSchedules['UpdateCompetitionStats'];
     return callback(null, schedule);
 };
 
 
-Parser.CreateCompetitionTeamsStatsSchedule = function(competitionId, season, schedulePattern, callback)
-{
-    if (Parser.methodSchedules['UpdateCompetitionStats'])
-    {
+Parser.CreateCompetitionTeamsStatsSchedule = function (competitionId, season, schedulePattern, callback) {
+    if (Parser.methodSchedules['UpdateCompetitionStats']) {
         log.info('Deleting existing UpdateCompetitionStats schedule to replace it with a new one');
         Parser.methodSchedules['UpdateCompetitionStats'].cancel();
-        
+
     }
-    
+
     log.info('Scheduling UpdateCompetitionStats for season %s with the pattern %s', season, schedulePattern);
-    Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(schedulePattern, function(){
+    Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(schedulePattern, function () {
         log.info('Scheduled job is running for %s', Parser.methodSchedules['UpdateCompetitionStats']);
-        Parser.UpdateCompetitionTeamsStats(competitionId, season, function(error, data) {
+        Parser.UpdateCompetitionTeamsStats(competitionId, season, function (error, data) {
             if (error)
                 log.error(error.message);
-                
+
         });
     });
-    
+
     let newSetting = {
         competitionId: competitionId,
         season: season,
         cronPattern: schedulePattern
     };
-    
-    mongoDb.gameserversettings.findOne({ }, function(findError, settings) { //{'scheduledTasks.updateTeamStats.competitionId': competitionId, 'scheduledTasks.updateTeamStats.season': season}, {$pull: {'scheduledTasks.updateTeamStats' : { 'scheduledTasks.updateTeamStats.competitionId': competitionId, 'scheduledTasks.updateTeamStats.season': season} } }, { safe: true }, function(removeError, settings) {
+
+    mongoDb.gameserversettings.findOne({}, function (findError, settings) { //{'scheduledTasks.updateTeamStats.competitionId': competitionId, 'scheduledTasks.updateTeamStats.season': season}, {$pull: {'scheduledTasks.updateTeamStats' : { 'scheduledTasks.updateTeamStats.competitionId': competitionId, 'scheduledTasks.updateTeamStats.season': season} } }, { safe: true }, function(removeError, settings) {
         if (findError)
             return callback(findError);
-            
+
         if (settings && settings.scheduledTasks)
             // let instanceToBeRemoved = _.find(settings.scheduledTasks.updateTeamStats, { competitionId: competitionId, season: season });
             // if (instanceToBeRemoved)
             _.remove(settings.scheduledTasks, { competitionId: competitionId, season: season });
         if (settings)
             settings.scheduledTasks.push(newSetting);
-        if (!settings)
-        {
+        if (!settings) {
             settings = new mongoDb.gameserversettings({
                 scheduledTasks: []
             });
             settings.scheduledTasks.push(newSetting);
         }
         settings.markModified('scheduledTasks');
-        
-        settings.save(function(saveError) {
+
+        settings.save(function (saveError) {
             if (saveError)
                 return callback(saveError);
-                
+
             callback(null, Parser.methodSchedules['UpdateCompetitionStats']);
         });
     });
 };
 
 
-Parser.DeleteCompetitionTeamsStatsSchedule = function(competitionId, season, schedulePattern, callback)
-{
-    if (Parser.methodSchedules['UpdateCompetitionStats'])
-    {
+Parser.DeleteCompetitionTeamsStatsSchedule = function (competitionId, season, schedulePattern, callback) {
+    if (Parser.methodSchedules['UpdateCompetitionStats']) {
         log.info('Deleting existing UpdateCompetitionStats schedule');
         Parser.methodSchedules['UpdateCompetitionStats'].cancel();
     }
@@ -1194,16 +1184,16 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
                             callback(null);
                         });
                     // wait for .5 sec, to anticipate the service's throttling
-                    setTimeout(function() {
+                    setTimeout(function () {
                         Parser.GetPlayerInTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], playerId, function (statsError, stats) {
                             if (statsError) {
                                 log.warn('Error while calling team GetPlayerInTeamStats for player %s', playerId);
                                 return callback();
                             }
-    
+
                             let playerDocInstance = playersLookup[playerId];
                             playerDocInstance.stats["team"] = TranslatePlayerStats(stats);
-    
+
                             callback(null);
                         });
                     }, 500);
@@ -1211,18 +1201,18 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
                 // next waterfall step: get the player's career stats
                 function (callback) {
                     // wait for .5 sec, to anticipate the service's throttling
-                    setTimeout(function() {
+                    setTimeout(function () {
                         Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, null, function (statsError, stats) {
                             if (statsError) {
                                 log.warn('Error while calling career GetPlayerInTeamStats for player %s', playerId);
                                 return callback();
                             }
-    
+
                             let playerDocInstance = playersLookup[playerId];
                             if (!playerDocInstance.stats)
                                 playerDocInstance.stats = {};
                             playerDocInstance.stats["career"] = TranslatePlayerStats(stats);
-    
+
                             callback(null);
                         });
                     }, 500);
@@ -1230,17 +1220,16 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
                 // next waterfall step: get the player's last season stats
                 function (callback) {
                     // wait for .5 sec, to anticipate the service's throttling
-                    setTimeout(function() {
+                    setTimeout(function () {
                         Parser.GetPlayerStats(competition.parserids[Parser.Name], playerId, seasonYear, function (statsError, stats) {
-                            if (statsError)
-                            {
+                            if (statsError) {
                                 log.warn('Error while calling season GetPlayerInTeamStats for player %s', playerId);
                                 return callback();
                             }
-    
+
                             let playerDocInstance = playersLookup[playerId];
                             playerDocInstance.stats["season"] = TranslatePlayerStats(stats);
-    
+
                             callback(null);
                         });
                     }, 500);
@@ -1272,32 +1261,31 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
 
 
 // Execute all update functions that bring back team and player stats for a given competition and season
-Parser.UpdateAllCompetitionStats = function(competitionId, season, outerCallback)
-{
+Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallback) {
     var competitionTeams = [];
     var competition;
     async.waterfall(
         [
-            function(callback) {
-                mongoDb.competitions.findById(competitionId, function(error, comp) {
+            function (callback) {
+                mongoDb.competitions.findById(competitionId, function (error, comp) {
                     if (error)
                         return callback(error);
                     competition = comp;
                     callback(null);
                 });
             },
-            function(callback) {
-                Parser.FindMongoTeamsInCompetition(competitionId, function(error, teams) {
+            function (callback) {
+                Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
                     if (error)
                         return callback(error);
                     competitionTeams = teams;
                     callback(null);
                 });
             },
-            function(callback) {
-                async.eachSeries(competitionTeams, function(team, innerCallback) {
+            function (callback) {
+                async.eachSeries(competitionTeams, function (team, innerCallback) {
                     if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
-                        async.setImmediate(function() {
+                        async.setImmediate(function () {
                             innerCallback(null);
                         });
                     else {
@@ -1306,25 +1294,25 @@ Parser.UpdateAllCompetitionStats = function(competitionId, season, outerCallback
                     }
                 }, callback);
             },
-            function(callback) {
-                async.eachSeries(competitionTeams, function(team, innerCallback) {
+            function (callback) {
+                async.eachSeries(competitionTeams, function (team, innerCallback) {
                     return Parser.UpdateTeamPlayersCareerStats(team.id, season, innerCallback);
-                }, function(seriesError) {
+                }, function (seriesError) {
                     if (seriesError)
                         return callback(seriesError);
                     callback(null);
                 });
             },
-            function(callback) {
+            function (callback) {
                 return Parser.UpdateCompetitionTeamsStats(competitionId, season, callback);
             }
-        ], function(error) {
-            if (error) {    
+        ], function (error) {
+            if (error) {
                 log.error('Error while updating all stats for competition %s and season %d: %s', competitionId, season, error.message);
                 return outerCallback(error);
             }
             outerCallback(null);
-    });
+        });
 };
 
 
