@@ -69,9 +69,9 @@ api.getTeamFull = function (id, cb) {
           return rank[element.position];
         });
 
-      console.log("-------------------------------------------");
-      console.log(team);
-      console.log("-------------------------------------------");
+      // console.log("-------------------------------------------");
+      // console.log(team);
+      // console.log("-------------------------------------------");
       cbf(cb, err, team);
     });
   });
