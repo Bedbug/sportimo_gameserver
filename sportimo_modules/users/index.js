@@ -310,6 +310,11 @@ apiRoutes.get('/v1/user/:id', function (req, res) {
 // Update specific user (PUT /v1/users)
 apiRoutes.put('/v1/users/:id', function (req, res) {
 
+if(req.body["picture"] != null)
+Scores.update({  user_id: req.params.id }, { $set: { 'pic': req.body["picture"]}},{upsert: true, mult:true}, function(err,result){
+console.log("pictures");
+});
+
     User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
         if (err) {
             res.status(500).send(err);
