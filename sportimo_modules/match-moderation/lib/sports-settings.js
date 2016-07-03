@@ -39,7 +39,7 @@ module.exports = {
             {
 				name: 			{en:"Overtime Second Half"},
 				timed: 			true,
-				initialTime:	115
+				initialTime:	105
 			},
 			{
 				name:			{en:"Overtime Ended"},

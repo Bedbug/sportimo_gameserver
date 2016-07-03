@@ -59,6 +59,13 @@ module.exports = function (gamecardModule) {
         });
     });
 
+    router.delete('/v1/gamecards/templates/:defid', function(req, res) {
+         gamecardModule.removeTemplate(req.params.defid, function(error, data) {
+          if(!error)
+          res.send(data);
+         });
+    });
+
 
     // Get existing definition gamecards for a specific matchId
     // Used by both the dashboard and the clients

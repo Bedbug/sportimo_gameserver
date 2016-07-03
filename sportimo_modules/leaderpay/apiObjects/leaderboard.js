@@ -23,7 +23,7 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
         _id: "$user_id",
         score: { $sum: "$score" },
         name: { $first: '$user_name' },
-        pic: { $first: '$pic' },
+        pic: { $last: '$pic' },
          level: { $max: '$level' },
         country: { $first: '$country' }
     });
@@ -56,7 +56,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
         score: { $sum: "$score" },
         name: { $first: '$user_name' },
         level: { $max: '$level' },
-        pic: { $first: '$pic' },
+        pic: {$last: '$pic' },
         country: { $first: '$country' }
     });
 

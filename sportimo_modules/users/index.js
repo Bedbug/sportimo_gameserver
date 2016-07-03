@@ -310,6 +310,11 @@ apiRoutes.get('/v1/user/:id', function (req, res) {
 // Update specific user (PUT /v1/users)
 apiRoutes.put('/v1/users/:id', function (req, res) {
 
+if(req.body["picture"] != null)
+Scores.update({  user_id: req.params.id }, { $set: { 'pic': req.body["picture"]}},{upsert: true, mult:true}, function(err,result){
+console.log("pictures");
+});
+
     User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
         if (err) {
             res.status(500).send(err);
@@ -350,14 +355,14 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
                     var total = _.sumBy(eachUser.achievements, function (o) {
                         return _.multiply(o.total, o.value);
                     });
-                    
+
                     var has = _.sumBy(eachUser.achievements, function (o) {
-                        if(eachUser.username =="RabidRabbit")
-                        console.log(o.has+"*"+o.value+"="+(o.value * o.has));
+                        // if(eachUser.username =="RabidRabbit")
+                        // console.log(o.has+"*"+o.value+"="+(o.value * o.has));
                         return _.multiply(o.has, o.value);
                     });
 
-                    
+
                     eachUser.level = has / total;
                     eachUser.save(function (err, result) { });
                 })
@@ -500,7 +505,16 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
                     if (err)
                         return res.status(500).send(err);
 
-                    stats.lastmatches = _.map(scores, 'score')
+                    stats.lastmatches = _.map(scores, 'score');
+
+                    var sum = 0;
+                    var count = 0;
+                    for (var i = 0; i < stats.lastmatches.length; ++i) {
+                            sum += stats.lastmatches[i];
+                            ++count;
+                    }
+                    var avg = Math.round(sum / count);
+
 
                     UserActivities.aggregate({ $match: {} },
                         {
@@ -515,6 +529,8 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
 
                             stats.all = result[0];
                             delete stats.all._id;
+                            
+                            stats.all.pointsPerGame = avg || 0;
                             stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100;
                             // console.log(result);
 
