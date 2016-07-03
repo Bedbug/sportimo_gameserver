@@ -311,7 +311,7 @@ api.UpdateLeagueStandings = function (req, res) {
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateLeagueStandings(leagueId, leagueId, function (error, teamsIncluded) {
+            parser.UpdateLeagueStandings(null, leagueId, function (error, teamsIncluded) {
                 if (!error) {
                     response.parsers[parser.Name] = {
                         error: null,

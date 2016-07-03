@@ -178,9 +178,11 @@ Parser.prototype.init = function(cbk)
                     var interval = that.feedService.interval || configuration.eventsInterval;
                     if (interval < 1000)
                         interval = 1000;
+                        
+                    var itsNow = moment.utc();
 
                     // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
-                    if ((formattedScheduleDate < moment.utc() && isActive) || moment.utc() < moment.utc(scheduleDate))
+                    if ((moment.utc(scheduleDate) < itsNow && isActive) || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)))
                     {
                         log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                         that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);

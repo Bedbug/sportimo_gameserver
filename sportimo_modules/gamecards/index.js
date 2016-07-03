@@ -1339,8 +1339,8 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
                 return false;
             if (isConditionComparative && match ) {
                 
-                let id1 = condition.playerid || condition.teamid;
-                let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
+                let id1 = condition.playerid || condition.teamid || condition.matchid;
+                let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
                 let id1StatItem = _.find(match.stats, {id: id1});
                 let id2StatItem = _.find(match.stats, {id: id2});
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
@@ -1402,8 +1402,8 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
             continue;
         if (isConditionComparative && match ) {
             
-            let id1 = condition.playerid || condition.teamid;
-            let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
+            let id1 = condition.playerid || condition.teamid || condition.matchid;
+            let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
             let id1StatItem = _.find(match.stats, {id: id1});
             let id2StatItem = _.find(match.stats, {id: id2});
             if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
@@ -1568,41 +1568,28 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
             let target = condition.target || 0;
             
             let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
-            // if (isCardTermination == false)
-            // {
-                if (condition.conditionNegation == true || condition.remaining > target)
+            if (condition.conditionNegation == true || condition.remaining > target)
+                continue;
+                
+            // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
+            if (isConditionComparative && match) {
+                let id1 = condition.playerid || condition.teamid || condition.matchid;
+                let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
+                let id1StatItem = _.find(match.stats, {id: id1});
+                let id2StatItem = _.find(match.stats, {id: id2});
+                if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     continue;
-                    
-                // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
-                if (isConditionComparative)
+                let id1Stat = id1StatItem[condition.stat] || 0;
+                let id2Stat = id2StatItem[condition.stat] || 0;
+                if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
                     continue;
-                    
-                conditionIsMet = true;
-            // }
-            // else
-            // {
-            //     if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
-            //         return false;
-            //     if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
-            //         return false;
-            //     if (isConditionComparative && match ) {
-                    
-            //         let id1 = condition.playerid || condition.teamid;
-            //         let id2 = condition.comparativePlayerid || condition.comparativeTeamid;
-            //         let id1StatItem = _.find(match.stats, {id: id1});
-            //         let id2StatItem = _.find(match.stats, {id: id2});
-            //         if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
-            //             return false;
-            //         let id1Stat = id1StatItem[condition.stat] || 0;
-            //         let id2Stat = id2StatItem[condition.stat] || 0;
-            //         if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
-            //             return false;
-            //         if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
-            //             return false;
-            //         if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
-            //             return false;
-            //     }
-            // }
+                if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
+                    continue;
+                if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+                    continue;
+            }
+                
+            conditionIsMet = true;
         }
         
         return conditionIsMet;
