@@ -1265,9 +1265,7 @@ gamecards.Tick = function () {
     
                                 mongoGamecards = data;
                                 
-                                gamecards.GamecardsTerminationHandle(mongoGamecards, segment, match);
-                                
-                                parallelCbk(null);
+                                return gamecards.GamecardsTerminationHandle(mongoGamecards, segment, match, parallelCbk);
                             });
                             
                         }
