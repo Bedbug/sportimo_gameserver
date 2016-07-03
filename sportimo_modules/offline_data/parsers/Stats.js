@@ -761,9 +761,11 @@ Parser.UpdateTeams = function (competitionId, callback) {
                                     // If new player, add to playersToAdd collection
                                     if (!existingPlayersLookup[player.playerId]) {
                                         var newPlayer = new mongoDb.players();
+                                        if (player.firstName)
+                                            newPlayer.firstName = { "en": player.firstName };
+                                        if (player.lastName)
+                                            newPlayer.lastName = { "en": player.lastName };
                                         newPlayer.name = { "en": (player.firstName ? player.firstName + " " : "") + player.lastName };
-                                        newPlayer.firstName = { "en": player.firstName };
-                                        newPlayer.lastName = { "en": player.lastName };
                                         newPlayer.uniformNumber = player.uniform;
                                         newPlayer.position = player.positions[0].name;
                                         newPlayer.personalData = {
@@ -784,14 +786,15 @@ Parser.UpdateTeams = function (competitionId, callback) {
                                     }
                                     else {
                                         var oldPlayer = existingPlayersLookup[player.playerId];
-                                        oldPlayer.firstName_en = player.firstName;
                                         if (!oldPlayer.firstName)
                                             oldPlayer.firstName = {};
-                                        //oldPlayer.firstName["en"] = player.firstName;
+                                        if (player.firstName)
+                                            oldPlayer.firstName["en"] = player.firstName;
                                         oldPlayer.lastName_en = player.lastName;
                                         if (!oldPlayer.lastName)
                                             oldPlayer.lastName = {};
-                                        //oldPlayer.lastName["en"] = player.lastName;
+                                        if (player.lastName)
+                                            oldPlayer.lastName["en"] = player.lastName;
                                         if (!oldPlayer.name)
                                             oldPlayer.name = {};
                                         oldPlayer.name["en"] = (player.firstName ? player.firstName + " " : "") + player.lastName;
@@ -826,7 +829,8 @@ Parser.UpdateTeams = function (competitionId, callback) {
                                     parsedTeams[player.team.teamId].name[key] = player.team.displayName;
 
                                 if (parsedPlayers[player.playerId]) {
-                                    parsedPlayers[player.playerId].firstName[key] = player.firstName;
+                                    if (player.firstName)
+                                        parsedPlayers[player.playerId].firstName[key] = player.firstName;
                                     parsedPlayers[player.playerId].lastName[key] = player.lastName;
                                     parsedPlayers[player.playerId].name[key] = (player.firstName ? player.firstName + " " : "") + player.lastName;
                                 }
