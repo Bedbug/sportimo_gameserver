@@ -922,14 +922,24 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         // }, this.data);
         this.data.markModified('stats');
 
-        this.data.save(function (err, done) {
-            if (err)
-                return log.error(err.message);
-            if (cbk)
-                cbk(null, eventToUpdate);
+            var updateObject = {
+                timeline: this.data.timeline
+            }
 
-            return HookedMatch;
-        });
+            matches.findOneAndUpdate({ _id: event.match_id }, updateObject, { new: true }, function (err, result) {
+                // thisMatch.save(function (err, done) {
+                    console.log(result.players);
+                if (err)
+                    return log.error(err.message);
+                if (cbk)
+                    cbk(null, eventToUpdate);
+
+                // if (result)
+                //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+
+                return HookedMatch;
+            });
+
     };
 
     // method to be called when the match is over. Disposes and releases handlers, timers, and takes care of loose ends.

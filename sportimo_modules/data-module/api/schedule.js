@@ -22,7 +22,7 @@ api.items = function (req, res) {
         .populate('away_team', 'name logo')
         .populate('competition', 'name logo graphics');
 
-    q.select('home_team home_score away_team away_score competition time state start');
+    q.select('home_team home_score away_team away_score competition time state start completed');
 
     q.exec(function (err, items) {
 
