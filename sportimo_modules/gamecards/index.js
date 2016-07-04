@@ -588,13 +588,20 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
 gamecards.getUserInstances = function (matchId, userId, cbk) {
     async.waterfall([
         function (callback) {
+            db.models.scheduled_matches.findById(matchId, 'settings', function(error, scheduledMatch) {
+                if (error)
+                    return callback(error);
+                callback(null, scheduledMatch.settings);
+            });
+        },
+        function (settings, callback) {
             db.models.gamecardDefinitions.find({ matchid: matchId, isVisible: true, status: { $ne: 2 } }, function (error, definitions) {
                 if (error)
                     return callback(error);
-                callback(null, definitions);
+                callback(null, definitions, settings);
             });
         },
-        function (definitions, callback) {
+        function (definitions, settings, callback) {
             // from the definitions, filter out those that the user has played maxUserInstances
             db.models.userGamecards.find({ matchid: matchId, userid: userId }, function (error, userCards) {
                 if (error)
@@ -606,6 +613,15 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         definitionsLookup[definition.id] = definition;
                 });
 
+                let instantCount = 0;
+                let overallCount = 0;
+                _.forEach(userCards, function(usercard) {
+                    if (usercard.cardType == 'Overall')
+                        overallCount++;
+                    else if (usercard.cardType == 'Instant')
+                        instantCount++;
+                });
+                
                 let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
                 let definitionIdsToDrop = [];
                 _.forEach(instancesPerDefinition, function (instancePerDefinition) {
@@ -622,6 +638,21 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         //log.info(instancePerDefinition.length);
                     }
                 });
+                
+                if (settings && settings.gameCards && settings.gameCards.overall && settings.gameCards.overall <= overallCount)
+                {
+                    _.forEach(definitions, function(definition) {
+                        if (definition.cardType == 'Overall' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
+                            definitionIdsToDrop.push(definition.id);
+                    });
+                }
+                if (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount)
+                {
+                    _.forEach(definitions, function(definition) {
+                        if (definition.cardType == 'Instant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
+                            definitionIdsToDrop.push(definition.id);
+                    });
+                }
 
                 let userGamecardDefinitions = null;
                 userGamecardDefinitions = _.remove(definitions, function (definition) {
