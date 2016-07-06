@@ -33,6 +33,7 @@ else {
         lastmatch: Schema.Types.Mixed,
         standing: { type: Schema.Types.Mixed },
         topscorer: { type: String, ref: 'players' },
+        topassister: { type: String, ref: 'players' },
         players: [Schema.Types.Mixed],
         created: { type: Date, default: Date.now }
     };

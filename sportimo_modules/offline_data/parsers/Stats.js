@@ -204,10 +204,10 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
             // First let's update the stats for use in the client gamecard infos
             function (team, callback) {
-                if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
-                    async.setImmediate(function () {
-                        return callback(new Error('Data are current. No need to update them yet.'), team);
-                    });
+                // if (team.nextmatch && team.nextmatch.eventdate >= Date.now())
+                //     async.setImmediate(function () {
+                //         return callback(new Error('Data are current. No need to update them yet.'), team);
+                //     });
 
                 needle.get(stats_url, { timeout: 50000 }, function (error, response) {
                     if (error)
@@ -362,45 +362,50 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                     });
                 }, 500);
             },
-
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, callback) {
-                setTimeout(function () {
-                    needle.get(scorer_url, { timeout: 50000 }, function (error, response) {
-                        if (error)
-                            return callback(error);
-                        try {
-                            if (response.statusCode == 404)
-                                return callback(null, team);
 
+                try {                   
+                    var q = mongoDb.players.find({ "teamId": team._id});
+                    q.sort({ "stats.season.assistsTotal": -1 });
+                    q.limit(1);
+                    q.select('name uniformNumber pic stats.season.assistsTotal');
+                    q.exec(function (err, players) {
+                        if (err)
+                            return callback(err, team);
 
-                            var scorerParserId = response.body.apiResults[0].league.seasons[0].eventType[0].leaderCategory[0].ranking[0].player.playerId;
-                            // var goals = response.body.apiResults[0].league.seasons[0].eventType[0].leaderCategory[0].ranking[0].stat;
+                        team.topassister = players[0]._id.toString();
 
-                            var q = mongoDb.players.findOne({ "parserids.Stats": scorerParserId, teamId: team._id });
-
-                            q.select('name uniformNumber pic stats');
-
-                            q.exec(function (err, player) {
-                                if (err)
-                                    return callback(err, team);
-
-                                if (!player)
-                                    return callback(new Error('No player found in database with this Id'), team);
-                                // player.stats.season.goalsTotal = goals;
-                                team.topscorer = player._id.toString();
-
-                                return callback(null, team, player);
-                            });
-                        }
-                        catch (err) {
-                            return callback(null, team);
-                        }
+                        return callback(null, team, players[0]);
                     });
-                }, 500);
+                }
+                catch (err) {
+                    return callback(null, team);
+                }
+
+            },
+            // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
+            function (team, assistPlayer, callback) {
+               try {                   
+                    var q = mongoDb.players.find({ "teamId": team._id});
+                    q.sort({ "stats.season.goalsTotal": -1 });
+                    q.limit(1);
+                    q.select('name uniformNumber pic stats.season.goalsTotal');
+                    q.exec(function (err, players) {
+                        if (err)
+                            return callback(err, team);
+
+                        team.topscorer = players[0]._id.toString();
+
+                        return callback(null, team, assistPlayer, players[0]);
+                    });
+                }
+                catch (err) {
+                    return callback(null, team, assistPlayer);
+                }
             }],
 
-        function (error, team, player) {
+        function (error, team, assistPlayer, player) {
             if (error)
                 return outerCallback(error);
 
@@ -409,6 +414,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                     return outerCallback(err);
 
                 result.topscorer = player;
+                result.topassister = assistPlayer;
                 return outerCallback(null, result);
             });
         }
