@@ -151,6 +151,9 @@ apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
             var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                 expiresIn: 1440 * 60 // expires in 24 hours
             });
+
+             delete user.rankingStats;
+             
             user.token = token;
             user.success = true;
             // return the information including token as JSON
@@ -187,6 +190,9 @@ apiRoutes.post('/v1/users/authenticate', function (req, res) {
                     var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                         expiresIn: 1440 * 60 // expires in 24 hours
                     });
+
+                    delete user.rankingStats;
+
                     user.token = token;
                     user.success = true;
                     // return the information including token as JSON
