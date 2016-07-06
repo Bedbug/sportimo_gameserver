@@ -615,6 +615,10 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
 
                 let instantCount = 0;
                 let overallCount = 0;
+                let totalCount = userCards.length;
+                if (settings && settings.gameCards && settings.gameCards.totalcards && settings.gameCards.totalcards <= totalCount)
+                    return callback(null, []);
+                
                 _.forEach(userCards, function(usercard) {
                     if (usercard.cardType == 'Overall')
                         overallCount++;
