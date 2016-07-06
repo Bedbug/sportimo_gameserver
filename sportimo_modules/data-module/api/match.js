@@ -65,8 +65,8 @@ api.item = function (req, res) {
                                             return TranslateUserGamecard(userCard);
                                         });
                                     }
-                                    
-                                    return res.status(200).json(game);  
+
+                                    return res.status(200).json(game);
                                 });
                             })
 
@@ -189,24 +189,24 @@ var TranslateUserGamecard = function (userGamecard) {
 
 // };
 
-// // POST
-// api.additem = function(req, res) {
+// POST
+api.updateHeadToHead = function (req, res) {
 
-//     if (req.body == 'undefined') {
-//         return res.status(500).json('No item Provided. Please provide valid team data.');
-//     }
+    if (req.body == 'undefined') {
+        return res.status(500).json('No item Provided. Please provide valid team data.');
+    }
 
-//     var newItem = new item(req.body);
+    return Matches.findOneAndUpdate({ _id: req.params.gameid }, {headtohead: req.body}, function (err, result) {
+        if (!err) {
+            return res.status(200).json(result);
+        } else {
+            return res.status(500).json(err);
+        }
+    });
 
-//     return newItem.save(function(err, data) {
-//         if (!err) {
-//             return res.status(200).json(data);
-//         } else {
-//             return res.status(500).json(err);
-//         }
-//     });
 
-// };
+
+};
 
 // api.updateVisibility = function(req, res) {
 
@@ -280,6 +280,8 @@ var TranslateUserGamecard = function (userGamecard) {
 router.route('/v1/data/match/:gameid/user/:userid')
     .get(api.item);
 
+router.route('/v1/data/match/:gameid/headtohead')
+    .post(api.updateHeadToHead);
 // router.post('/v1/data/standings', api.additem);
 
 // router.post('/v1/data/standings/visibility', api.updateVisibility);

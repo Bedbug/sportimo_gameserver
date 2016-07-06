@@ -108,6 +108,7 @@ api.editpoll = function (req, res) {
 
 		delete req.body._id;
 		delete req.body.__v;
+		
 		poll.answers = newData.answers;
 		poll = _.merge(poll, req.body);
 

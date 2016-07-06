@@ -2,6 +2,7 @@
 var mongoose = require('mongoose'),
   Schema = mongoose.Schema,
   ObjectId = Schema.ObjectId;
+var _ = require('lodash');
 
 var fields = {
   user: {
@@ -12,6 +13,10 @@ var fields = {
   matchesPlayed: Number,
   cardsPlayed: Number,
   cardsWon: Number,
+  instantCardsPlayed: Number,
+  instantCardsWon: Number,
+  overallCardsPlayed: Number,
+  overallCardsWon: Number,
   lastActive: Date,
   isPresent: Boolean
 };
@@ -27,11 +32,19 @@ schema.index({ uid: 1, room: 1 });
 // Assign a method to create and increment stats
 schema.statics.IncrementStat = function (uid, room, stat, byvalue, cb) {
   var statIncr = {};
-  statIncr[stat] = byvalue;
-  return mongoose.model('useractivities').findOneAndUpdate({ user: uid, room: room }, { $inc: statIncr }, { upsert: true }, function () {
+
+  var stats = _.split(stat, ' ');
+  _.each(stats, function (word) {
+    statIncr[word] = byvalue;
+  })
+
+  return mongoose.model('useractivities').findOneAndUpdate({ user: uid, room: room }, { $inc: statIncr }, { upsert: true, new: true }, function (err, result) {
 
     var statsPath = {};
-    statsPath['stats.' + stat] = byvalue;
+
+    _.each(stats, function (word) {
+      statsPath['stats.' + word] = byvalue;
+    })
 
     return mongoose.model('users').findByIdAndUpdate(uid, { $inc: statsPath }, { upsert: true }, function (err, result) {
       if (err)

@@ -62,6 +62,14 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
 
                 q.exec(function (err, leaderboard) {
                     _.each(leaderboard, function (user) {
+
+                        // Update Best Rank for User
+                        mongoose.models.users.updateRank(user.user_id, { rank: (usersCount+1), matchid: matchid }, function (err, result) {
+                            if (err)
+                                console.log(err);
+                        })
+
+
                         if (usersCount == 0 && user.score > 0)
                             top1s.push(user.user_id.toString());
                         if (usersCount > 0 && usersCount < 11 && user.score > 0)
@@ -92,7 +100,7 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
             if (top100s.length > 0)
                 MessagingTools.sendPushToUsers(top100s, MessagingTools.preMessages.top100, null, "all");
 
-            
+
             _.each(top1s, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'mike_drop', value: 1 }, function (err, result) {
                     if (err)
@@ -111,7 +119,7 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
                 })
             });
 
-             var concat100s = _.concat(concat10s, top100s);
+            var concat100s = _.concat(concat10s, top100s);
 
             _.each(concat100s, function (user) {
                 mongoose.models.users.addAchievementPoint(user, { uniqueid: 'top_100', value: 1 }, function (err, result) {

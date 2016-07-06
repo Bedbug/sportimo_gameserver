@@ -4,11 +4,16 @@ var mongoose = require('mongoose'),
     Schema = mongoose.Schema;
 
 var userStats = new Schema({
+    pointsPerGame: { type: Number, default: 0 },
     matchesVisited: { type: Number, default: 0 },
     matchesPlayed: { type: Number, default: 0 },
     cardsPlayed: { type: Number, default: 0 },
     cardsWon: { type: Number, default: 0 },
-    prizesWon: { type: Number, default: 0 }
+    prizesWon: { type: Number, default: 0 },
+    instantCardsPlayed: { type: Number, default: 0 },
+    instantCardsWon: { type: Number, default: 0 },
+    overallCardsPlayed: { type: Number, default: 0 },
+    overallCardsWon: { type: Number, default: 0 }
 })
 
 
@@ -22,6 +27,19 @@ var achievement = new Schema({
     total: Number,
     completed: Boolean
 });
+
+// var rankingStat = new Schema({
+//     bestRank: Number,
+//     bestRankMatch: {
+//         ref: 'scheduled_matches',
+//         type: String
+//     },
+//     bestScore: Number,
+//     bestScoreMatch: {
+//         ref: 'scheduled_matches',
+//         type: String
+//     }
+// })
 
 var Achievements = mongoose.model('achievements', achievement);
 
@@ -51,7 +69,7 @@ var UserSchema = new Schema({
     }],
     unread: Number,
     social_id: String,
-    pushToken: {type:String, default:"NoPustTokenYet"},
+    pushToken: { type: String, default: "NoPustTokenYet" },
     pushSettings: {
         type: mongoose.Schema.Types.Mixed, default: {
             all: true,
@@ -66,6 +84,15 @@ var UserSchema = new Schema({
     resetToken: String,
     country: { type: String, required: false },
     admin: Boolean,
+    rankingStats: {
+       type: mongoose.Schema.Types.Mixed, 
+       default: {
+            bestRank: 9999,
+            bestRankMatch: null,
+            bestScore: 0,
+            bestScoreMatch: null
+        }
+    },
     stats: mongoose.Schema.Types.Mixed,
     level: { type: Number, default: 0 },
     achievements: [achievement],
@@ -123,11 +150,11 @@ UserSchema.pre('save', function (next) {
     else {
 
         // Calculate achievements level
-        var total = _.sumBy(user.achievements, function(o){
+        var total = _.sumBy(user.achievements, function (o) {
             return _.multiply(o.total, o.value);
         });
-        
-        var has = _.sumBy(user.achievements,function(o){
+
+        var has = _.sumBy(user.achievements, function (o) {
             return _.multiply(o.has, o.value);
         });
 
@@ -172,13 +199,13 @@ UserSchema.statics.IncrementStat = function (uid, statChange, cb) {
 UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
     return mongoose.model('users').findById(uid, function (err, user) {
 
-        if(!user){
-            return  cb("No User found with id: ["+user._id+"]", null, null);
+        if (!user) {
+            return cb("No User found with id: [" + user._id + "]", null, null);
         }
 
-        if(user && !user.achievements){
-            console.log("User ["+user._id+"] has no achievements");
-            return  cb("User ["+user._id+"] has no achievements", null, null);
+        if (user && !user.achievements) {
+            console.log("User [" + user._id + "] has no achievements");
+            return cb("User [" + user._id + "] has no achievements", null, null);
         }
         var achievement = _.find(user.achievements, { uniqueid: achievementChange.uniqueid });
 
@@ -201,6 +228,24 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
                     console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
             })
         }
+
+
+    });
+}
+
+// Assign a method to update best rank in a leaderboard and that match id
+
+UserSchema.statics.updateRank = function (uid, newRank, cb) {
+    return mongoose.model('users').findById(uid, function (err, user) {
+
+       if(user.rankingStats.bestRank > newRank.rank){
+           mongoose.model('users').findByIdAndUpdate(uid, {rankingStats: {bestRank: newRank.rank, bestRankMatch: newRank.matchid}}, function (err, result) {
+                if (!err)
+                    console.log("User [%s] has a new best rank", uid);
+            })
+       }
+           
+       
 
 
     });

@@ -52,7 +52,7 @@ var tickSchedule = null;
 
 /************************************
  * Perform initialization functions */
-gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeChannel) {
+gamecards.connect = function (dbconnection, redisPublishChannel, redisSubscribeChannel) {
     if (!db) {
         db = dbconnection;
         UserGamecard = db.models.userGamecards;
@@ -60,7 +60,7 @@ gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeCh
 
     //if (!redisPublish)
     // Enforce re-registering the redisPublish object, to ensure proper initialization
-        redisPublish = redisPublishChannel;
+    redisPublish = redisPublishChannel;
 
     if (!redisSubscribe) {
         redisSubscribe = redisSubscribeChannel;
@@ -93,7 +93,7 @@ gamecards.connect = function(dbconnection, redisPublishChannel, redisSubscribeCh
         });
     }
 };
- 
+
 gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChannel, match) {
     gamecards.connect(dbconnection, redisPublishChannel, redisSubscribeChannel);
 
@@ -152,7 +152,7 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
  ***********************************/
 
 gamecards.testAwardsHandling = function (callback) {
-    gamecards.HandleUserCardRewards('57372d0c3b40f8e111e506d5', '5749c6afcbfeeaf500d4aba9', 150, callback);
+    gamecards.HandleUserCardRewards('576d77fb8c410cfa009130d8', '5749c6afcbfeeaf500d4aba9', 'Instant', 150, callback);
 }
 
 gamecards.getTemplates = function (callback) {
@@ -164,11 +164,11 @@ gamecards.createMatchDefinitions = function (matchid, callback) {
     async.waterfall([
         function (callback) {
             var q = db.models.scheduled_matches.findById(matchid);
-            q.populate('home_team away_team','name');
+            q.populate('home_team away_team', 'name');
             q.exec(function (error, match) {
                 if (error)
                     return callback(error);
-                    
+
                 callback(null, match);
             });
         },
@@ -200,20 +200,20 @@ gamecards.createMatchDefinitions = function (matchid, callback) {
                         gamecards.createDefinitionFromTemplate(template, match);
                     }
                 });
-                
+
                 callback(null, 'done')
             });
         }
     ], function (error, result) {
         if (error)
             log.error('Error while initializing gamecards module: ' + error.message);
-            
-            return callback(error, result);
+
+        return callback(error, result);
     });
-    
-   // callback(null,"Done");
+
+    // callback(null,"Done");
 };
- 
+
 
 
 
@@ -249,12 +249,12 @@ gamecards.upsertTemplate = function (template, callback) {
 
 };
 
-gamecards.removeTemplate = function(templateId, callback){
+gamecards.removeTemplate = function (templateId, callback) {
     db.models.gamecardTemplates.findByIdAndRemove(templateId, function (err, result) {
         if (!err) {
             return callback(err);
         } else {
-            return callback(null,result);
+            return callback(null, result);
         }
     })
 }
@@ -450,8 +450,8 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     let terminationTime = template.duration ? moment.utc(activationTime).add(template.duration, 'ms') : null;
     if (template.cardType == 'Instant' && !terminationTime)
         terminationTime = activationTime.add(300, 'seconds'); // set default termination time of 5 mins if for some reason the template lacks of a duration
-        
-      
+
+
     let newDefinition = new db.models.gamecardDefinitions({
         matchid: match._id.toString(),
         gamecardTemplateId: template.id,
@@ -631,7 +631,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         if (definitionsLookup[key] && definitionsLookup[key].maxUserInstances && instancePerDefinition.length >= definitionsLookup[key].maxUserInstances)
                             definitionIdsToDrop.push(key);
                         // From the definitions, remove those where an existing user gamecacrd is currently pending or active and is pending for resolution.
-                        _.forEach(instancePerDefinition, function(userGamecard) {
+                        _.forEach(instancePerDefinition, function (userGamecard) {
                             if (userGamecard.status < 2 && _.indexOf(definitionIdsToDrop, key) == -1)
                                 definitionIdsToDrop.push(key);
                         });
@@ -733,13 +733,13 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                         return cbk(new Error("The referenced gamecardDefinitionId document either does not include a matchid reference or is not related to the matchid in the body"));
 
                     if (data.status != 1)
-                        return cbk(new Error( "The referenced gamecardDefinitionId document is not in an active state" ));
+                        return cbk(new Error("The referenced gamecardDefinitionId document is not in an active state"));
 
                     if (data.options && data.options.length > 0 && !userGamecard.optionId)
-                        return cbk(new Error( "The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body" ));
+                        return cbk(new Error("The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body"));
 
                     if (moment.utc(userGamecard.creationTime).isBefore(moment.utc(referencedDefinition.creationTime)))
-                        return cbk(new Error( "The creationTime in the body is before the creationTime in the gamecardDefinitionId document" ));
+                        return cbk(new Error("The creationTime in the body is before the creationTime in the gamecardDefinitionId document"));
                 }
 
                 cbk(null, referencedDefinition);
@@ -750,10 +750,10 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                 if (error)
                     return cbk(error);
                 sameInstanceCount = sameDefinitionUsercards.length || 0;
-                
-                if (_.some(sameDefinitionUsercards, {status: 1}) == true)
-                    return cbk(new Error( "There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state" ));
-                    
+
+                if (_.some(sameDefinitionUsercards, { status: 1 }) == true)
+                    return cbk(new Error("There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state"));
+
                 cbk(null, sameInstanceCount);
             });
         },
@@ -891,7 +891,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     let minutesSinceMatchStart = scheduledMatch.time; //moment.duration(itsNow.diff(scheduledMatch.start)).asMinutes();
 
                     // Reset to 45' if it is a halftime
-                    if(scheduledMatch.state == 2) minutesSinceMatchStart = 45;
+                    if (scheduledMatch.state == 2) minutesSinceMatchStart = 45;
 
                     // But this is not correct. Minute of the game is not the time passed from the start of the match. It is the scheduledMatch.time or
                     // scheduledMatch.timeline[scheduledMatch.state].sport_start_time + (moment.duration(itsNow.diff( scheduledMatch.timeline[scheduledMatch.state].start)).asMinutes()).
@@ -899,7 +899,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     newCard.startPoints += Math.round(minutesSinceMatchStart * newCard.pointsPerMinute);
                 }
             }
-            
+
             // if (newCard.terminationConditions && newCard.terminationConditions.length > 0 && scheduledMatch && scheduledMatch.state)
             // {
             //     newCard.terminationConditions.forEach(function(condition) {
@@ -914,7 +914,8 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
                 db.models.useractivities.SetMatchPlayed(newCard.userid, newCard.matchid);
                 // Register user activity - 'PlayedCard'
-                db.models.useractivities.IncrementStat(newCard.userid, newCard.matchid, 'cardsPlayed', 1);
+                var statsToUpdateQuerry = 'cardsPlayed ' + newCard.cardType.toLowerCase() + 'CardsPlayed';
+                db.models.useractivities.IncrementStat(newCard.userid, newCard.matchid, statsToUpdateQuerry, 1);
 
                 callback(null, null, gamecards.TranslateUserGamecard(newCard));
             });
@@ -938,7 +939,7 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 
                 if (!userGamecard)
                     return callback(null, "userGamecardId is not found");
-                    
+
                 if (userGamecard.status > 1)
                     return callback(null, "userGamecardId is completed, no specials can be played.");
 
@@ -1075,29 +1076,27 @@ gamecards.deleteUserInstance = function (gamecardId, callback) {
 };
 
 // a helper function that returns match total minutes from current match state and minute
-gamecards.GetMatchMinute = function(state, stateMinute)
-    {
-        switch(state)
-        {
-            case 0:
-                return 0;
-            case 1:
-                return stateMinute > 45 ? 45 : stateMinute;
-            case 2:
-                return 45;
-            case 3:
-                return stateMinute > 45 ? 90 : 45 + stateMinute;
-            case 4:
-                return 90;
-            case 5:
-                return stateMinute > 15 ? 105 : 90 + stateMinute;
-            case 6:
-                return 105;
-            case 7:
-                return stateMinute > 15 ? 120 : 105 + stateMinute;
-            default: 
-                return 120;
-        }
+gamecards.GetMatchMinute = function (state, stateMinute) {
+    switch (state) {
+        case 0:
+            return 0;
+        case 1:
+            return stateMinute > 45 ? 45 : stateMinute;
+        case 2:
+            return 45;
+        case 3:
+            return stateMinute > 45 ? 90 : 45 + stateMinute;
+        case 4:
+            return 90;
+        case 5:
+            return stateMinute > 15 ? 105 : 90 + stateMinute;
+        case 6:
+            return 105;
+        case 7:
+            return stateMinute > 15 ? 120 : 105 + stateMinute;
+        default:
+            return 120;
+    }
 };
 
 // Manage gamecards in time, activate the ones pending activation, terminate the ones pending termination
@@ -1109,7 +1108,7 @@ gamecards.Tick = function () {
         log.warn('Gamecards module is not yet connected to Mongo store. Aborting Tick.');
         return;
     }
-    
+
 
     // Check terminationConditions on overall cards
     // Terminate active instant cards if terminationTime is passed
@@ -1177,26 +1176,25 @@ gamecards.Tick = function () {
                 callback(null);
             });
         },
-        function(callback) {
+        function (callback) {
             // Find all live match time in minutes, and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
-            
+
             let itsNow = moment.utc();
-            db.models.scheduled_matches.find({ completed: {$ne: true}, start: {$lt: itsNow.toDate()} }, function(error, matches) {
+            db.models.scheduled_matches.find({ completed: { $ne: true }, start: { $lt: itsNow.toDate() } }, function (error, matches) {
                 if (error)
                     return callback(error);
-                   
-                let matchMinutes = {};    
+
+                let matchMinutes = {};
                 let foundMatchIds = [];
-                _.forEach(matches, function(scheduledMatch) {
-                    if (!matchMinutes[scheduledMatch.id] && scheduledMatch.time && scheduledMatch.state)
-                    {
+                _.forEach(matches, function (scheduledMatch) {
+                    if (!matchMinutes[scheduledMatch.id] && scheduledMatch.time && scheduledMatch.state) {
                         matchMinutes[scheduledMatch.id] = { minute: scheduledMatch.time, segment: scheduledMatch.state };
                         foundMatchIds.push(scheduledMatch.id);
                     }
                 });
-                
-                async.each(matches, function(match, cbk) {
-                    
+
+                async.each(matches, function (match, cbk) {
+
                     let segment = {
                         matchid: match.id,
                         time: null,
@@ -1206,8 +1204,8 @@ gamecards.Tick = function () {
                         statTotal: match.state,
                         incr: 1
                     };
-                    
-                   let event = {
+
+                    let event = {
                         matchid: match.id,
                         time: null,
                         playerid: null,
@@ -1216,12 +1214,12 @@ gamecards.Tick = function () {
                         statTotal: match.time,
                         incr: 1
                     };
-                    
+
                     // Check for appearance conditions, and set accordingly the visible property
                     //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
                     async.parallel([
-                        function(parallelCbk) {
-                            setTimeout(function() {
+                        function (parallelCbk) {
+                            setTimeout(function () {
                                 gamecards.GamecardsAppearanceHandle(event, match);
                                 return parallelCbk(null);
                             }, 100);
@@ -1233,85 +1231,85 @@ gamecards.Tick = function () {
                         //     }, 200);
                         // },
                         // Check match state and minute against user gamecards' terminationConditions
-                        function(parallelCbk) {
+                        function (parallelCbk) {
                             const wildcardsQuery = {
                                 status: 1,
                                 cardType: "Overall",
                                 creationTime: { $lt: event.time || itsNow },
                                 matchid: event.matchid
                             };
-    
+
                             const orPlayerQuery = [{ playerid: null }];
                             if (event.playerid != null) {
                                 orPlayerQuery.push({ playerid: event.playerid });
                             }
-    
+
                             const orTeamQuery = [{ teamid: null }];
                             if (event.teamid != null) {
                                 orTeamQuery.push({ teamid: event.teamid });
                             }
-    
+
                             wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
                             let mongoGamecards;
-    
+
                             db.models.userGamecards.find(wildcardsQuery, function (error, data) {
                                 if (error) {
                                     log.error("Error while resolving event: " + error.message);
                                     return parallelCbk(error);
                                 }
-    
+
                                 mongoGamecards = data;
-                                
+
                                 return gamecards.GamecardsTerminationHandle(mongoGamecards, event, match, parallelCbk);
                             });
-                            
+
                         },
                         // Check terminationConditions whether any is met, and in this case resolve the affected userGamecards
-                        function(parallelCbk) {
+                        function (parallelCbk) {
                             const wildcardsQuery = {
                                 status: 1,
                                 cardType: "Overall",
                                 creationTime: { $lt: segment.time || itsNow },
                                 matchid: segment.matchid
                             };
-    
+
                             const orPlayerQuery = [{ playerid: null }];
                             if (segment.playerid != null) {
                                 orPlayerQuery.push({ playerid: segment.playerid });
                             }
-    
+
                             const orTeamQuery = [{ teamid: null }];
                             if (segment.teamid != null) {
                                 orTeamQuery.push({ teamid: segment.teamid });
                             }
-    
+
                             wildcardsQuery.terminationConditions = { $elemMatch: { $and: [{ stat: segment.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
                             let mongoGamecards;
-    
+
                             db.models.userGamecards.find(wildcardsQuery, function (error, data) {
                                 if (error) {
                                     log.error("Error while resolving event: " + error.message);
                                     return parallelCbk(error);
                                 }
-    
+
                                 mongoGamecards = data;
-                                
+
                                 return gamecards.GamecardsTerminationHandle(mongoGamecards, segment, match, parallelCbk);
                             });
-                            
+
                         }
-                        ], function(error) {
+                    ], function (error) {
                         if (error)
                             return cbk(error);
-                        
+
                         cbk();
                     });
-                }, function(eachError) {
+                }, function (eachError) {
                     if (eachError)
                         return callback(eachError);
                     callback(null);
                 });
-                
+
             });
         }
     ], function (error) {
@@ -1320,7 +1318,7 @@ gamecards.Tick = function () {
     });
 };
 
-gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
+gamecards.HandleUserCardRewards = function (uid, mid, cardType, pointsToGive, callback) {
 
     // Reward Points
     return db.models.scores.AddPoints(uid, mid, pointsToGive, function (err, result) {
@@ -1333,7 +1331,8 @@ gamecards.HandleUserCardRewards = function (uid, mid, pointsToGive, callback) {
                 return callback(err);
         }
         // Reward stats
-        db.models.useractivities.IncrementStat(uid, mid, 'cardsWon', 1, function (err, result) {
+        var statsToUpdateQuerry = 'cardsWon ' + cardType.toLowerCase() + 'CardsWon';
+        db.models.useractivities.IncrementStat(uid, mid, statsToUpdateQuerry, 1, function (err, result) {
             if (err) {
                 log.error(err);
                 if (callback)
@@ -1357,29 +1356,27 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
     for (let i = 0; i < conditions.length; i++) {
         let condition = conditions[i];
         let target = condition.target || 0;
-        
+
         let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
-        if (isCardTermination == false)
-        {
+        if (isCardTermination == false) {
             if (condition.conditionNegation == true || condition.remaining > target)
                 return false;
-                
+
             // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
             if (isConditionComparative)
                 return false;
         }
-        else
-        {
+        else {
             if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation == true)
                 return false;
             if (!isConditionComparative && condition.remaining > target && condition.conditionNegation == false)
                 return false;
-            if (isConditionComparative && match ) {
-                
+            if (isConditionComparative && match) {
+
                 let id1 = condition.playerid || condition.teamid || condition.matchid;
                 let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
-                let id1StatItem = _.find(match.stats, {id: id1});
-                let id2StatItem = _.find(match.stats, {id: id2});
+                let id1StatItem = _.find(match.stats, { id: id1 });
+                let id2StatItem = _.find(match.stats, { id: id2 });
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     return false;
                 let id1Stat = id1StatItem[condition.stat] || 0;
@@ -1392,7 +1389,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
                     return false;
             }
         }
-   }
+    }
     gamecard.status = 2; // terminated
     if (!gamecard.terminationTime)
         gamecard.terminationTime = itsNow.toDate();
@@ -1410,12 +1407,12 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
     // console.log("Card Won");
 
     // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
-    gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.pointsAwarded, function (err, result) { 
+    gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.cardType, gamecard.pointsAwarded, function (err, result) {
         if (err)
             log.error(err.message);
     });
 
-    MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for "+gamecard.pointsAwarded+" points." }, null, "won_cards");
+    MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, null, "won_cards");
 
     gamecards.publishWinToUser(gamecard);
 
@@ -1430,19 +1427,19 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
     for (let i = 0; i < conditions.length; i++) {
         let condition = conditions[i];
         let target = condition.target || 0;
-        
+
         let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
 
         if (!isConditionComparative && condition.remaining <= target && condition.conditionNegation && condition.conditionNegation == true)
             continue;
         if (!isConditionComparative && condition.remaining > target && (!condition.conditionNegation || condition.conditionNegation == false))
             continue;
-        if (isConditionComparative && match ) {
-            
+        if (isConditionComparative && match) {
+
             let id1 = condition.playerid || condition.teamid || condition.matchid;
             let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
-            let id1StatItem = _.find(match.stats, {id: id1});
-            let id2StatItem = _.find(match.stats, {id: id2});
+            let id1StatItem = _.find(match.stats, { id: id1 });
+            let id2StatItem = _.find(match.stats, { id: id2 });
             if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                 continue;
             let id1Stat = id1StatItem[condition.stat] || 0;
@@ -1454,7 +1451,7 @@ gamecards.CheckIfTerminates = function (gamecard, match) {
             if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
                 continue;
         }
-        
+
         // if the execution control reached this far, it means that the condition is met
         return true;
     }
@@ -1518,20 +1515,18 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                 parallelCbk(null);
             });
         }
-        
+
         let gamecardChanged = false;
-        
+
         gamecard.terminationConditions.forEach(function (condition) {
             if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
-                if (event.statTotal != null)
-                {
+                if (event.statTotal != null) {
                     if (event.statTotal >= condition.remaining) {
                         condition.remaining = 0;
                         gamecardChanged = true;
                     }
                 }
-                else
-                {
+                else {
                     condition.remaining -= event.incr;
                     if (condition.remaining <= 0) {
                         condition.remaining = 0;
@@ -1541,8 +1536,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
             }
         });
 
-        if (gamecards.CheckIfTerminates(gamecard, match))
-        {
+        if (gamecards.CheckIfTerminates(gamecard, match)) {
             if (gamecards.CheckIfWins(gamecard, true, match)) {
                 // Send an event through Redis pub/sub:
                 // log.info("Detected a winning gamecard: " + gamecard);
@@ -1567,18 +1561,18 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                 gamecardChanged = true;
             }
         }
-        
+
         if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
             gamecard.contributingEventIds.push(event.id);
 
-        
+
         if (gamecardChanged)
             gamecard.save(function (err) {
                 if (err) {
                     log.error(err.message);
                     return parallelCbk(err);
                 }
-                
+
                 parallelCbk(null);
             });
         else
@@ -1591,29 +1585,27 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
 
 
 // Resolve an incoming event against all gamecard definitions appearConditions, and make any matching definitions visible 
-gamecards.GamecardsAppearanceHandle = function(event, match)
-{
-    const CheckAppearConditions = function(gamecard, match)
-    {
+gamecards.GamecardsAppearanceHandle = function (event, match) {
+    const CheckAppearConditions = function (gamecard, match) {
         let conditions = gamecard.appearConditions;
         //const isCardTermination = false;
-        
+
         // If any appearCondition is met, the gamecard definition gets invisible to clients.
         let conditionIsMet = false;
         for (let i = 0; i < conditions.length; i++) {
             let condition = conditions[i];
             let target = condition.target || 0;
-            
+
             let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
             if (condition.conditionNegation == true || condition.remaining > target)
                 continue;
-                
+
             // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
             if (isConditionComparative && match) {
                 let id1 = condition.playerid || condition.teamid || condition.matchid;
                 let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
-                let id1StatItem = _.find(match.stats, {id: id1});
-                let id2StatItem = _.find(match.stats, {id: id2});
+                let id1StatItem = _.find(match.stats, { id: id1 });
+                let id2StatItem = _.find(match.stats, { id: id2 });
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     continue;
                 let id1Stat = id1StatItem[condition.stat] || 0;
@@ -1625,10 +1617,10 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
                 if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
                     continue;
             }
-                
+
             conditionIsMet = true;
         }
-        
+
         return conditionIsMet;
     };
 
@@ -1660,19 +1652,17 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
 
         async.each(mongoGamecards, function (gamecard, cbk) {
             let gamecardChanged = false;
-            
+
             gamecard.appearConditions.forEach(function (condition) {
                 if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
 
-                    if (event.statTotal != null)
-                    {
+                    if (event.statTotal != null) {
                         if (event.statTotal >= condition.remaining) {
                             condition.remaining = 0;
                             gamecardChanged = true;
                         }
                     }
-                    else
-                    {
+                    else {
                         condition.remaining -= event.incr;
                         if (condition.remaining <= 0) {
                             condition.remaining = 0;
@@ -1685,22 +1675,21 @@ gamecards.GamecardsAppearanceHandle = function(event, match)
                 gamecard.markModified('appearConditions');
                 // switch the current visibility state
                 gamecard.isVisible = !gamecard.isVisible;
-                gamecard.save(function(err) {
+                gamecard.save(function (err) {
                     if (err)
                         return cbk(err);
                     cbk();
                 });
             }
             else
-            if (gamecardChanged)
-            {
-                gamecard.markModified('appearConditions');
-                gamecard.save(cbk);
-            }
-            else
-            async.setImmediate(function() {
-                return cbk(null);
-            })
+                if (gamecardChanged) {
+                    gamecard.markModified('appearConditions');
+                    gamecard.save(cbk);
+                }
+                else
+                    async.setImmediate(function () {
+                        return cbk(null);
+                    })
         }, function (err) {
             if (err)
                 return err;
@@ -1782,7 +1771,7 @@ gamecards.ResolveEvent = function (matchEvent) {
             if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) == -1)
                 gamecard.contributingEventIds.push(event.id);
 
-            gamecard.save(function(err) {
+            gamecard.save(function (err) {
                 if (err)
                     return cbk(err);
                 cbk();
@@ -1879,18 +1868,18 @@ gamecards.ResolveEvent = function (matchEvent) {
                             let finalGamecards = _.filter(mongoGamecards, function (gamecard) {
                                 return !(gamecard.wonTime && gamecard.status == 2);
                             });
-                            
-                            db.models.scheduled_matches.findById(event.matchid, function(innerError, match) {
+
+                            db.models.scheduled_matches.findById(event.matchid, function (innerError, match) {
                                 if (innerError)
                                     return callback(innerError);
-                                    
+
                                 // Fire and forget 
                                 gamecards.GamecardsAppearanceHandle(event, match);
-                                
+
                                 return gamecards.GamecardsTerminationHandle(finalGamecards, event, match, callback);
                             });
- 
-                            
+
+
                         });
                     }
                     catch (innerError) {
@@ -1920,26 +1909,26 @@ gamecards.ResolveEvent = function (matchEvent) {
 
 // Take back an event, find all affected user gamecards (both active and resolved), reset any winning/losing property and re-resolve them against all match events from their creation time and on.
 // In progress.
-gamecards.RollbackEvent = function(matchId, eventId, matchSegment, outerCallback) {
-// find match and eventId in its timeline
-    db.models.scheduled_matches.findById(matchId, function(matchError, match) {
+gamecards.RollbackEvent = function (matchId, eventId, matchSegment, outerCallback) {
+    // find match and eventId in its timeline
+    db.models.scheduled_matches.findById(matchId, function (matchError, match) {
         if (matchError)
             return outerCallback(matchError);
-            
+
         if (!match || !match.timeline || _.indexOf(match.timeline.id, eventId) == -1)
             return outerCallback(null);
-        
-        let event = _.find(match.timeline, {'events._id': db.types.ObjectId(eventId)} );
-        
+
+        let event = _.find(match.timeline, { 'events._id': db.types.ObjectId(eventId) });
+
     });
-    
-    
+
+
 };
 
 
 // the match has ended, now check all activated cards pending resolution, and force resolve them (terminate them either by winning or losing).
-gamecards.TerminateMatch = function(match, callback) {
-    
+gamecards.TerminateMatch = function (match, callback) {
+
     let itsNow = moment.utc();
     const gamecardsQuery = {
         status: 1,
@@ -1976,15 +1965,15 @@ gamecards.TerminateMatch = function(match, callback) {
                     }
                 }));
             }
-    
-           gamecard.save(function (err) {
+
+            gamecard.save(function (err) {
                 if (err) {
                     log.error(err.message);
                 }
             });
         });
-    });    
-    
+    });
+
 };
 
 
@@ -2000,7 +1989,7 @@ try {
     module.exports = this;
 } catch (ex) {
     // Start server
-    app =  module.exports = exports.app = express.Router();
+    app = module.exports = exports.app = express.Router();
     var port = process.env.PORT || 8081;
     app.listen(port, function () {
         console.log('Express server listening on port %d in %s mode', port, app.get('env'));
