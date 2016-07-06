@@ -151,6 +151,9 @@ apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
             var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                 expiresIn: 1440 * 60 // expires in 24 hours
             });
+
+             delete user.rankingStats;
+             
             user.token = token;
             user.success = true;
             // return the information including token as JSON
@@ -187,6 +190,9 @@ apiRoutes.post('/v1/users/authenticate', function (req, res) {
                     var token = jsonwebtoken.sign(user, app.get('superSecret'), {
                         expiresIn: 1440 * 60 // expires in 24 hours
                     });
+
+                    delete user.rankingStats;
+
                     user.token = token;
                     user.success = true;
                     // return the information including token as JSON
@@ -310,10 +316,10 @@ apiRoutes.get('/v1/user/:id', function (req, res) {
 // Update specific user (PUT /v1/users)
 apiRoutes.put('/v1/users/:id', function (req, res) {
 
-if(req.body["picture"] != null)
-Scores.update({  user_id: req.params.id }, { $set: { 'pic': req.body["picture"]}},{upsert: true, mult:true}, function(err,result){
-console.log("pictures");
-});
+    if (req.body["picture"] != null)
+        Scores.update({ user_id: req.params.id }, { $set: { 'pic': req.body["picture"] } }, { upsert: true, mult: true }, function (err, result) {
+            console.log("pictures");
+        });
 
     User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
         if (err) {
@@ -357,8 +363,7 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
                     });
 
                     var has = _.sumBy(eachUser.achievements, function (o) {
-                        // if(eachUser.username =="RabidRabbit")
-                        // console.log(o.has+"*"+o.value+"="+(o.value * o.has));
+                        if(o.has == o.total) o.completed = true; else o.completed = false;
                         return _.multiply(o.has, o.value);
                     });
 
@@ -490,54 +495,93 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 
 
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
-    var stats = {}
+    var stats = {};
     User.findById(req.params.uid)
-        .select("username picture level stats achievements")
+        .select("username picture level stats achievements rankingStats")
+        .populate({
+            path: 'rankingStats.bestRankMatch', 
+            select: 'home_team away_team home_score away_score start',
+            model: 'scheduled_matches',
+            populate: {
+                path: 'home_team away_team',
+                model: 'teams',
+                select: 'name logo'
+            }
+        })
         .exec(function (err, result) {
             if (err)
                 return res.status(500).send(err);
             stats.user = result;
+
             Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
-                .limit(5)
-                .sort({ lastActive: -1 })
-                // .populate('away_team', 'name logo')
-                .exec(function (err, scores) {
-                    if (err)
-                        return res.status(500).send(err);
-
-                    stats.lastmatches = _.map(scores, 'score');
-
-                    var sum = 0;
-                    var count = 0;
-                    for (var i = 0; i < stats.lastmatches.length; ++i) {
-                            sum += stats.lastmatches[i];
-                            ++count;
+                .sort({ score: -1 })
+                .populate({
+                    path: 'game_id',
+                    model: 'scheduled_matches',
+                    select: 'home_team away_team home_score away_score start',
+                    populate: {
+                        path: 'home_team away_team',
+                        model: 'teams',
+                        select: 'name logo'
                     }
-                    var avg = Math.round(sum / count);
+                })
+                .limit(1)
+                .exec(function (err, bestscore) {
+                    if (!err && bestscore[0]) {
+                        stats.user.rankingStats.bestScoreMatch = bestscore[0].game_id;
+                        stats.user.rankingStats.bestScore = bestscore[0].score;
+                    }
 
-
-                    UserActivities.aggregate({ $match: {} },
-                        {
-                            $group: {
-                                _id: null,
-                                cardsPlayed: { $sum: "$cardsPlayed" },
-                                cardsWon: { $sum: "$cardsWon" }
-                            }
-                        }, function (err, result) {
+                    Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
+                        .limit(5)
+                        .sort({ lastActive: -1 })
+                        // .populate('away_team', 'name logo')
+                        .exec(function (err, scores) {
                             if (err)
                                 return res.status(500).send(err);
 
-                            stats.all = result[0];
-                            delete stats.all._id;
-                            
-                            stats.all.pointsPerGame = avg || 0;
-                            stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100;
-                            // console.log(result);
+                            stats.lastmatches = _.map(scores, 'score');
 
-                            res.status(200).send(stats);
+                            var sum = 0;
+                            var count = 0;
+                            for (var i = 0; i < stats.lastmatches.length; ++i) {
+                                sum += stats.lastmatches[i];
+                                ++count;
+                            }
+                            var avg = Math.round(sum / count);
+                            stats.pointsPerGame = avg || 0;
+
+                            UserActivities.aggregate({ $match: {} },
+                                {
+                                    $group: {
+                                        _id: null,
+                                        cardsPlayed: { $sum: "$cardsPlayed" },
+                                        cardsWon: { $sum: "$cardsWon" },
+                                        overallCardsPlayed: { $sum: "$overallCardsPlayed" },
+                                        overallCardsWon: { $sum: "$overallCardsWon" },
+                                        instantCardsPlayed: { $sum: "$instantCardsPlayed" },
+                                        instantCardsWon: { $sum: "$instantCardsWon" }
+                                    }
+                                }, function (err, result) {
+                                    if (err)
+                                        return res.status(500).send(err);
+
+                                    stats.all = result[0];
+                                    delete stats.all._id;
+
+
+                                    stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100 || 0;
+                                    stats.all.overallSuccessPercent = (stats.all.overallCardsWon / stats.all.overallCardsPlayed) * 100 || 0;
+                                    stats.all.instantSuccessPercent = (stats.all.instantCardsWon / stats.all.instantCardsPlayed) * 100 || 0;
+                                    console.log( stats.all.instantSuccessPercent);
+
+                                    res.status(200).send(stats);
+                                });
                         });
-                });
+                })
         })
+
+
 
 });
 

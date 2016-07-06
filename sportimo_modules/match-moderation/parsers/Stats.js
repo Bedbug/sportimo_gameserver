@@ -65,7 +65,7 @@ var timelineEvents = {
     "17": "Penalty",
     "18": "Penalty",
     "20": "Shot_on_Goal",
-    "22": "Substitution",
+    // "22": "Substitution",
     "28": "Own_Goal"
 };
 

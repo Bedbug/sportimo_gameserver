@@ -4,6 +4,7 @@ var express = require('express'),
     mongoose = require('mongoose'),
     item = mongoose.models.scheduled_matches,
     competition = mongoose.models.competitions,
+     settings = mongoose.models.settings,
     defaultMatch = require('../config/empty-match'),
     api = {};
 
@@ -86,28 +87,35 @@ api.additem = function (req, res) {
 
     if (req.body.competition == null)
         return res.status(500).json('No competition Provided. Please provide valid competition ID.');
-    
+
     req.body.timeline = [];
     req.body.timeline.push({
         timed: false,
-        text: {en:"Pre Game"}
+        text: { en: "Pre Game" }
     })
-    
+
     competition.findById(req.body.competition).then(function (competition) {
-        
+
         console.log(competition);
         // var defaultData = new defaultMatch();
         var mergedData = _.merge(defaultMatch, req.body);
         var newItem = new item(mergedData);
         newItem.visiblein = competition.visiblein;
-        
-        return newItem.save(function (err, data) {
-            if (!err) {
-                return res.status(200).json(data);
-            } else {
-                return res.status(500).json(err);
-            }
-        });
+
+        settings.find({}, function (err, result) {
+            if (result[0])
+                newItem.settings = result[0].clientdefaults;
+
+            return newItem.save(function (err, data) {
+                if (!err) {
+                    return res.status(200).json(data);
+                } else {
+                    return res.status(500).json(err);
+                }
+            });
+        })
+
+
     })
 
 
