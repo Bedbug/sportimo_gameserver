@@ -573,8 +573,6 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
                                     stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100 || 0;
                                     stats.all.overallSuccessPercent = (stats.all.overallCardsWon / stats.all.overallCardsPlayed) * 100 || 0;
                                     stats.all.instantSuccessPercent = (stats.all.instantCardsWon / stats.all.instantCardsPlayed) * 100 || 0;
-                                    console.log( stats.all.instantSuccessPercent);
-
                                     res.status(200).send(stats);
                                 });
                         });
