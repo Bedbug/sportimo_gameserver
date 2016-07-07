@@ -835,8 +835,11 @@ Parser.UpdateTeams = function (competitionId, callback) {
                                     parsedTeams[player.team.teamId].name[key] = player.team.displayName;
 
                                 if (parsedPlayers[player.playerId]) {
-                                    if (player.firstName)
+                                    if (player.firstName) {
+                                        if (!parsedPlayers[player.playerId].firstName)
+                                            parsedPlayers[player.playerId].firstName = {};
                                         parsedPlayers[player.playerId].firstName[key] = player.firstName;
+                                    }
                                     parsedPlayers[player.playerId].lastName[key] = player.lastName;
                                     parsedPlayers[player.playerId].name[key] = (player.firstName ? player.firstName + " " : "") + player.lastName;
                                 }
