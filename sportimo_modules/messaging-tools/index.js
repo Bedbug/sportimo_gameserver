@@ -6,7 +6,7 @@ var mongoose = require('mongoose'),
     needle = require('needle'),
     redis = require('redis'),
     redisCreds = require.main.require('./config/redisConfig');
-    premessages = require("./config/pre-messages");
+premessages = require("./config/pre-messages");
 
 var PublishChannel = null;
 PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
@@ -101,7 +101,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
             payload =
                 {
                     "request": {
-                        "application": application || PushOptions.application,
+                        "application": PushOptions.application,
                         "auth": PushOptions.auth,
                         "notifications": [
                             {
@@ -142,7 +142,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
             if (!err) {
                 if (callback) {
                     console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
-                    return callback("[UserMessaging] Send push to "+pushTokens.length+" users.");
+                    return callback("[UserMessaging] Send push to " + pushTokens.length + " users.");
                 }
             }
             else {
@@ -164,7 +164,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 MessagingTools.sendSocketMessageToUsers = function (ids, message) {
     PublishChannel.publish("socketServers", JSON.stringify({
         sockets: true,
-        clients: msgData.recipients,
+        clients: ids,
         payload: {
             type: "Message",
             data: {
@@ -177,37 +177,41 @@ MessagingTools.sendSocketMessageToUsers = function (ids, message) {
 MessagingTools.SendMessageToInbox = function (msgData, callback) {
 
     //First create the message and save the instance in database
-    var newMessage = new Message(msgData);
+    var newMessage = new mongoose.models.messages(msgData);
+    // TODO: Send Push Notification
+    if (msgData.push) {
+        MessagingTools.sendPushToUsers(msgData.recipients, msgData.msg, msgData.data, "new_message");
+    }
+    if (msgData.message)
+        newMessage.save(function (err, message) {
 
-    newMessage.save(function (err, message) {
+            if (err) callback(err);
+            else {
+                var querry = {};
+                if (msgData.recipients) querry._id = { $in: msgData.recipients };
+                // if (msgData.id) querry._id = msgData.id;
 
-        if (err) callback(err);
-        else {
-            var querry = {};
-            if (msgData.recipients) querry._id = { $in: msgData.recipients };
-            // if (msgData.id) querry._id = msgData.id;
+                mongoose.models.users.update(querry,
+                    { $push: { inbox: message._id }, $inc: { unread: 1 } },
+                    { safe: true, new: true, multi: true },
+                    function (err, model) {
 
-            mongoose.models.users.update(querry,
-                { $push: { inbox: message._id }, $inc: { unread: 1 } },
-                { safe: true, new: true, multi: true },
-                function (err, model) {
+                        // Send web sockets notice
+                        if (msgData.sockets) {
+                            MessagingTools.sendSocketMessageToUsers(msgData.recipients, { "en": "You have a new message in your inbox." })
+                        }
 
-                    // Send web sockets notice
-                    if (msgData.sockets) {
-                        MessagingTools.sendSocketMessageToUsers(msgData.recipients, { "en": "You have a new message in your inbox." })
+                        if (callback)
+                            callback(err, model);
                     }
-
-                    // TODO: Send Push Notification
-                    if (msgData.push) {
-                        MessagingTools.sendPushToUsers(msgData.recipients, msgData.msg, msgData.data, "new_message");
-                    }
-
-                    if (callback)
-                        callback(err, model);
-                }
-            );
+                );
+            }
+        });
+        else
+        {
+            if (callback)
+                            callback(null, "Success");
         }
-    });
 
 }
 

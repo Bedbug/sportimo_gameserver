@@ -383,9 +383,9 @@ apiRoutes.post('/v1/users/messages', function (req, res) {
 
     return MessagingTools.SendMessageToInbox(req.body, function (err, data) {
         if (!err)
-            res.send(data);
+           return res.send(data);
         else
-            res.sendStatus(500).send(err);
+           return res.sendStatus(500).send(err);
     })
 
 });
