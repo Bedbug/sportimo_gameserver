@@ -564,7 +564,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
 
     // Produce the diff with eventFeedSnapshot
     var eventsDiff = _.filter(events, function(item) {
-        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId] && (ComputeEventMatchTime(item) >= lastMatchTime);
+        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId] && (TranslateMatchSegment(item) != null || item.playEvent.playEventId == 10 || ComputeEventMatchTime(item) >= lastMatchTime);
     });
     _.forEach(events, function(event) {
         // ToDo: Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
