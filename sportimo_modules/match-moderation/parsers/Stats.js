@@ -53,7 +53,7 @@ var localConfiguration = statsComConfigDevelopment;
 var configuration = localConfiguration;
 
 
-var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 22, 28, 30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
+var supportedEventTypes = [2, 5, 6, 7, 8, 9, 11, 12, 14, 15, 16, 17, 18, 19, 20, 28, 30, 31, 32, 33, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53];
 var timelineEvents = {
     "2": "Yellow",
     "5": "Corner",
@@ -443,6 +443,7 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
             sender: configuration.parserIdName,
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: isTimelineEvent,
+            description: parserEvent.playText,
             team: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].matchType : null,
             team_id: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].id : null,
             match_id: this.matchHandler._id,
@@ -492,6 +493,22 @@ var TranslateMatchSegment = function (parserEvent) {
     return true;   // return anything but null
 };
 
+var IsParserEventComplete = function (parserEvent) {
+    if (!parserEvent || !parserEvent.playEvent || !parserEvent.playEvent.playEventId)
+        return false;
+        
+    if (!parserEvent.period || !parserEvent.time || !parserEvent.time.minutes || !parserEvent.time.seconds)
+        return false;
+        
+    if (!parserEvent.teamId)
+        return false;
+    
+    if (!parserEvent.offensivePlayer || !parserEvent.offensivePlayer.playerId)
+        return false;
+    
+    return true;
+}
+
 
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function() {
@@ -522,6 +539,13 @@ Parser.prototype.TickMatchFeed = function() {
 };
 
 
+var ComputeEventMatchTime = function(parsedEvent) {
+    if (!parsedEvent.period || !parsedEvent.time || !parsedEvent.time.minutes || !parsedEvent.time.seconds)
+        return 0;
+    return (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
+};
+
+
 Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     if (error) {
         console.log('error in TickMatchFeed: ' + error.message);
@@ -530,12 +554,21 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     
     var that = this;
 
+    // compute last match time in eventFeedSnapshot
+    var lastMatchTime = 0;
+    _.forEach(that.eventFeedSnapshot, function(parsedEvent) {
+        var itemMatchTime = ComputeEventMatchTime(parsedEvent);
+        if (itemMatchTime > lastMatchTime)
+            lastMatchTime = itemMatchTime;
+    });
+
     // Produce the diff with eventFeedSnapshot
     var eventsDiff = _.filter(events, function(item) {
-        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId];
+        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId] && (ComputeEventMatchTime(item) >= lastMatchTime);
     });
     _.forEach(events, function(event) {
-        that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = true;
+        // ToDo: Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
+        that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = event;
     });
 
     //if (Math.random() < 0.03)
