@@ -506,6 +506,21 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         });
         newDefinition.markModified('winConditions');
     }
+
+    // Added placeholder replacement based on Ari's conditions logic
+     if (newDefinition.appearConditions) {
+          _.forEach(newDefinition.appearConditions, function (condition) {
+              if(!condition.id) return;
+              if(condition.id.indexOf("[[home_team_id]]") > -1)
+              condition.id = match.home_team.id;
+              if(condition.id.indexOf("[[away_team_id]]") > -1)
+              condition.id = match.away_team.id;
+              if(condition.id.indexOf("[[match_id]]") > -1)
+              condition.id = match._id;
+            //   console.log(condition.id);
+          });
+     } 
+
     if (newDefinition.terminationConditions) {
         _.forEach(newDefinition.terminationConditions, function (condition) {
             if (condition.teamid) {
@@ -588,7 +603,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
 gamecards.getUserInstances = function (matchId, userId, cbk) {
     async.waterfall([
         function (callback) {
-            db.models.scheduled_matches.findById(matchId, 'settings', function(error, scheduledMatch) {
+            db.models.scheduled_matches.findById(matchId, 'settings', function (error, scheduledMatch) {
                 if (error)
                     return callback(error);
                 callback(null, scheduledMatch.settings);
@@ -618,14 +633,14 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                 let totalCount = userCards.length;
                 if (settings && settings.gameCards && settings.gameCards.totalcards && settings.gameCards.totalcards <= totalCount)
                     return callback(null, []);
-                
-                _.forEach(userCards, function(usercard) {
+
+                _.forEach(userCards, function (usercard) {
                     if (usercard.cardType == 'Overall')
                         overallCount++;
                     else if (usercard.cardType == 'Instant')
                         instantCount++;
                 });
-                
+
                 let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
                 let definitionIdsToDrop = [];
                 _.forEach(instancesPerDefinition, function (instancePerDefinition) {
@@ -642,17 +657,15 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         //log.info(instancePerDefinition.length);
                     }
                 });
-                
-                if (settings && settings.gameCards && settings.gameCards.overall && settings.gameCards.overall <= overallCount)
-                {
-                    _.forEach(definitions, function(definition) {
+
+                if (settings && settings.gameCards && settings.gameCards.overall && settings.gameCards.overall <= overallCount) {
+                    _.forEach(definitions, function (definition) {
                         if (definition.cardType == 'Overall' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
                             definitionIdsToDrop.push(definition.id);
                     });
                 }
-                if (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount)
-                {
-                    _.forEach(definitions, function(definition) {
+                if (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount) {
+                    _.forEach(definitions, function (definition) {
                         if (definition.cardType == 'Instant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
                             definitionIdsToDrop.push(definition.id);
                     });
@@ -1590,36 +1603,101 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
 
 // Resolve an incoming event against all gamecard definitions appearConditions, and make any matching definitions visible 
 gamecards.GamecardsAppearanceHandle = function (event, match) {
+
+   
+    // TODO: --> ASK: Why is this firing every 100 ms with a minute stat. Is it on purpose or is happening by mistake.
+    // Minute and segments are actual stats in match stats. Can't think of any reason for this to be happening. Please explain.
+
     const CheckAppearConditions = function (gamecard, match) {
         let conditions = gamecard.appearConditions;
         //const isCardTermination = false;
 
-        // If any appearCondition is met, the gamecard definition gets invisible to clients.
-        let conditionIsMet = false;
+        // If any appearCondition is met, the gamecard definition gets invisible to clients. 
+        // TODO: --> ASK: What? Is this a phrasing error? Appear condtitions are conditions to appear. All must be true in order to be visible.
+        // Answered it myself. It isn't a phrasing error.
+        let conditionIsMet = true;
+
+        // NEW LOGIC:
+        // If all conditions are true make the card visible. If any is false make the card invisible. 
         for (let i = 0; i < conditions.length; i++) {
             let condition = conditions[i];
             let target = condition.target || 0;
 
-            let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
-            if (condition.conditionNegation == true || condition.remaining > target)
-                continue;
+            // let isConditionComparative = (condition.comparativeTeamid || condition.comparativePlayerid) && condition.comparisonOperator;
 
-            // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
-            if (isConditionComparative && match) {
-                let id1 = condition.playerid || condition.teamid || condition.matchid;
-                let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
-                let id1StatItem = _.find(match.stats, { id: id1 });
-                let id2StatItem = _.find(match.stats, { id: id2 });
-                if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
-                    continue;
-                let id1Stat = id1StatItem[condition.stat] || 0;
-                let id2Stat = id2StatItem[condition.stat] || 0;
-                if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
-                    continue;
-                if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
-                    continue;
-                if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
-                    continue;
+            // TODO:  --> ASK: What is this? Is there any negation in appear conditions or any use of remaining for them
+            // if (condition.conditionNegation == true || condition.remaining > target)
+            //     continue;
+
+            // // if at least one compatative condition exists in the winConditions, then the whole gamecard will not win unless one of the terminationConditions are met.
+            // if (isConditionComparative && match) {
+            //     let id1 = condition.playerid || condition.teamid || condition.matchid;
+            //     let id2 = condition.comparativePlayerid || condition.comparativeTeamid || condition.comparativeMatchid;
+            //     let id1StatItem = _.find(match.stats, { id: id1 });
+            //     let id2StatItem = _.find(match.stats, { id: id2 });
+            //     if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
+            //         continue;
+            //     let id1Stat = id1StatItem[condition.stat] || 0;
+            //     let id2Stat = id2StatItem[condition.stat] || 0;
+            //     if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
+            //         continue;
+            //     if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
+            //         continue;
+            //     if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+            //         continue;
+            // }
+
+            // Appear conditions with my initial requested logic.
+            let isComparativeCondition = condition.comparisonOperator ? true : false;
+
+            if (isComparativeCondition && match) {
+
+                  
+                // The BY condition
+                if (condition.comparisonOperator == 'by' && condition.remaining == 0)
+                        return false;
+                     
+                // All other condtitions
+                let id1 = condition.id;
+                let id1Stats = _.find(match.stats, function(o){
+                    return (o.id == id1 || o.name == id1);
+                } );
+                let id1Stat = id1Stats?id1Stats[condition.stat] || 0: 0;
+                let id1Target = condition.statTotal;
+
+                let id2 = condition.id2;
+                let id2Stats = _.find(match.stats, function(o){
+                    return (o.id == id2 || o.name == id2);
+                } );
+                let id2Stat = id2Stats?id2Stats[condition.stat] || 0: 0;
+
+                if (id2 == null) {
+                    if (condition.comparisonOperator == 'eq' && id1Stat != id1Target)
+                        return false;
+                    if (condition.comparisonOperator == 'gt' && id1Stat < id1Target)
+                        return false;
+                        // if(gamecard.title.en == "Yellow"){
+                        //     console.log("This is a test to see how many times this method is fired.");
+                        // }
+                    if (condition.comparisonOperator == 'lt' && id1Stat > id1Target)
+                        return false;
+                }
+                else{
+                    if (condition.comparisonOperator == 'eq' && id1Stat != id2Stat)
+                         return false;
+                    if (condition.comparisonOperator == 'gt' && id1Stat < id2Stat)
+                        return false;
+                    if (condition.comparisonOperator == 'lt' && id1Stat > id2Stat)
+                        return false;
+                }
+
+                // Implement the Difference Condition
+                // e.g. Difference in team goals stat should be lower than 2 
+                if(condition.comparisonOperator == 'diff'){
+                    if(Math.abs(id1Stat - id2Stat) >= id1Target)
+                       return false;
+                }
+
             }
 
             conditionIsMet = true;
@@ -1630,12 +1708,27 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
 
     const itsNow = moment.utc();
 
+    // ------------
+    // TODO: Ask: Why are we narrowing our scope on purpose here? It is fundamentaly the opposite of what we want.
+    // ------------
+
+    // --> What Was:
+    // const gamecardsQuery = {
+    //     isVisible: true,
+    //     //creationTime: { $lt: event.time || itsNow },
+    //     cardType: 'Overall',
+    //     matchid: event.matchid
+    // };
+
+    // --> What is:
     const gamecardsQuery = {
-        isVisible: true,
+        // isVisible: true,
         //creationTime: { $lt: event.time || itsNow },
-        cardType: 'Overall',
+        // cardType: 'Overall',
         matchid: event.matchid
     };
+
+
 
     const orPlayerQuery = [{ playerid: null }];
     if (event.playerid != null) {
@@ -1647,7 +1740,9 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
         orTeamQuery.push({ teamid: event.teamid });
     }
 
-    gamecardsQuery.appearConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+    // TODO: --> Ask: Why are we narrowing again?
+   // gamecardsQuery.appearConditions = { $elemMatch: { $and: [{ stat: event.stat }, { remaining: { $ne: 0 } }, { $or: orPlayerQuery }, { $or: orTeamQuery }] } };
+
     db.models.gamecardDefinitions.find(gamecardsQuery, function (error, mongoGamecards) {
         if (error) {
             log.error("Error while resolving event: " + error.message);
@@ -1660,25 +1755,31 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
             gamecard.appearConditions.forEach(function (condition) {
                 if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
 
-                    if (event.statTotal != null) {
-                        if (event.statTotal >= condition.remaining) {
-                            condition.remaining = 0;
+                    if (condition.comparisonOperator == null || condition.comparisonOperator == "by") {
+                        if (event.statTotal != null) {
+                            if (event.statTotal >= condition.remaining) {
+                                condition.remaining = 0;
+                                gamecardChanged = true;
+                            }
+                        }
+                        else {
+                            condition.remaining -= event.incr;
+                            if (condition.remaining <= 0) {
+                                condition.remaining = 0;
+                            }
                             gamecardChanged = true;
                         }
                     }
-                    else {
-                        condition.remaining -= event.incr;
-                        if (condition.remaining <= 0) {
-                            condition.remaining = 0;
-                        }
-                        gamecardChanged = true;
-                    }
                 }
             });
-            if (CheckAppearConditions(gamecard, match)) {
+
+            var AppearConditionsPassed = CheckAppearConditions(gamecard, match);
+
+            if (AppearConditionsPassed != gamecard.isVisible) {
                 gamecard.markModified('appearConditions');
                 // switch the current visibility state
-                gamecard.isVisible = !gamecard.isVisible;
+                console.log("Found gamecard ["+gamecard.title.en +"] requiring change in visiblity and changed it to: "+ AppearConditionsPassed)
+                gamecard.isVisible = AppearConditionsPassed;
                 gamecard.save(function (err) {
                     if (err)
                         return cbk(err);
