@@ -49,7 +49,8 @@ api.getTeamFull = function (id, cb) {
   q.populate('nextmatch.away_team', 'name logo');
   q.populate('lastmatch.home_team', 'name logo');
   q.populate('lastmatch.away_team', 'name logo');
-  q.populate('topscorer', 'name uniformNumber pic stats')
+  q.populate('topscorer', 'name uniformNumber pic stats');
+  q.populate('topassister', 'name uniformNumber pic stats');
 
   q.exec(function (err, team) {
 
