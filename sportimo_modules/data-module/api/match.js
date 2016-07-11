@@ -24,7 +24,7 @@ api.item = function (req, res) {
 
     // First we get the match data
     Matches.findById(gameid)
-        .select('home_team away_team home_score away_score time isTimeCounting stats timeline start settings completed state')
+        .select('home_team away_team home_score away_score time isTimeCounting stats timeline start settings completed state headtohead')
         .populate('home_team', 'name logo stats')
         .populate('away_team', 'name logo stats')
         .exec(function (err, match) {
