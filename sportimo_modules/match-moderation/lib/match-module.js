@@ -471,7 +471,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             thisMatch.timeline.push(newSegment);
             thisMatch.markModified('timeline');
 
-            setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'State', thisMatch.state);
+            setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'Segment', thisMatch.state);
             thisMatch.markModified('stats');
 
             var updateObject = {
@@ -652,7 +652,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             thisMatch.time = calculatedMatchTimeFor(thisMatch);
 
-            setMatchStatForTo(id, thisMatch.stats, 'Time', thisMatch.time);
+            setMatchStatForTo(id, thisMatch.stats, 'Minute', thisMatch.time);
             thisMatch.markModified('stats');
 
             // Inform the system about the stat changes
