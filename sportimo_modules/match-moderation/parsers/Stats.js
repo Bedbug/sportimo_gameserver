@@ -523,14 +523,17 @@ Parser.prototype.TickMatchFeed = function() {
 
         var leagueName = that.league.parserids[that.Name];
         
-        if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
-            GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that), that);
-            that.ticks = 1;
-        } else {
+        // ----------
+        // Requested that possession is removed so no need to create overhead with this
+        // ----------
+        // if (that.ticks % numberOfTicksBeforeBoxscore == 0) {
+        //     GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that), that);
+        //     that.ticks = 1;
+        // } else {
             GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
             // log.info('[Match module] Tick to match stats: '+ (numberOfTicksBeforeBoxscore-that.ticks));
-            that.ticks++;
-        }
+            // that.ticks++;
+        // }
 
     }
     catch (methodError) {
