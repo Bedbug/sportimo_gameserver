@@ -24,7 +24,7 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
         score: { $sum: "$score" },
         name: { $first: '$user_name' },
         pic: { $last: '$pic' },
-         level: { $max: '$level' },
+        level: { $max: '$level' },
         country: { $first: '$country' }
     });
 
@@ -56,7 +56,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
         score: { $sum: "$score" },
         name: { $first: '$user_name' },
         level: { $max: '$level' },
-        pic: {$last: '$pic' },
+        pic: { $last: '$pic' },
         country: { $first: '$country' }
     });
 
@@ -73,21 +73,31 @@ api.getLeaderboardWithRank = function (id, body, cb) {
     var rank;
     var user;
     q.exec(function (err, leaderboard) {
-    
-       if(leaderboard.length == 0)
+
+        if (leaderboard.length == 0)
             return cbf(cb, err, { user: {}, leaderboad: [] });
-    
+
         user = _.find(leaderboard, { _id: uid });
-        
-        if(user){
-        rank = _.size(_.filter(leaderboard, function (o) {
-            if (o._id != user._id && o.score > user.score)
-                return true;
-            else
-                return false;
-        }));
-        user.rank = rank + 1;}
-        return cbf(cb, err, { user: user, leaderboad: leaderboard });
+
+        if (user) {
+            rank = _.size(_.filter(leaderboard, function (o) {
+                if (o._id != user._id && o.score > user.score)
+                    return true;
+                else
+                    return false;
+            }));
+            user.rank = rank + 1;
+        }
+
+        var ldata = {
+            user: user,
+            leaderboad: leaderboard
+        }
+        if (body.sponsor)
+            ldata["sponsor"] = body.sponsor;
+
+
+        return cbf(cb, err, ldata);
     })
 
 
