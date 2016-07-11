@@ -15,7 +15,18 @@ module.exports = function (ModerationModule) {
         log.info("[Update Segment Time] Request for matchid [" + req.body.id + "]");
         ModerationModule.GetMatch(req.body.id).updateTimes(req.body, function (err, result) {
             if (!err)
-                res.send(result);
+                try {
+                    var strippedMatch = _.cloneDeep(match);
+                    if (strippedMatch.Timers)
+                        delete strippedMatch.Timers;
+                    if (strippedMatch.services)
+                        delete strippedMatch.services;
+                    if (!err)
+                        return res.send(strippedMatch);
+                }
+                catch (err) {
+                    return res.send(err);
+                }
             else
                 res.sendStatus(500).send(err);
         });
