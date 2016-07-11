@@ -179,7 +179,7 @@ var polls_module = require('./sportimo_modules/polls');
 
 
 function log(info) {
-    console.log("[" + Date.now() + "] API CALL: " + info);
+  //  console.log("[" + Date.now() + "] API CALL: " + info);
 }
 
 app.use(bodyParser.json());

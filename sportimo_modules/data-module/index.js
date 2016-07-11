@@ -14,7 +14,6 @@ var express = require('express'),
     path = require('path'),
     fs = require('fs'),
     methodOverride = require('method-override'),
-    morgan = require('morgan'),
     bodyParser = require('body-parser'),
     errorhandler = require('errorhandler');
     // cors = require('cors');

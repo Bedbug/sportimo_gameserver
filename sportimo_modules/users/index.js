@@ -3,7 +3,6 @@
 // =======================
 var express = require('express');
 var bodyParser = require('body-parser');
-var morgan = require('morgan');
 var mongoose = require('mongoose');
 
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens

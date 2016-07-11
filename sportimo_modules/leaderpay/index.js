@@ -7,7 +7,6 @@ var express = require('express'),
     path = require('path'),
     fs = require('fs'),
     methodOverride = require('method-override'),
-    morgan = require('morgan'),
     bodyParser = require('body-parser'),
     errorhandler = require('errorhandler'),
     cors = require('cors');
@@ -39,8 +38,6 @@ var accessLogStream = fs.createWriteStream(__dirname + '/../'+app.locals.siteNam
 
 
 app.use(cors());
-app.use(morgan('dev'));
-app.use(morgan('short', { stream: accessLogStream }));
 
 // Connect to database
 // var db = require('./config/db');
