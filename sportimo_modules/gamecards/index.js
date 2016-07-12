@@ -2016,20 +2016,72 @@ gamecards.ResolveEvent = function (matchEvent) {
 
 // Take back an event, find all affected user gamecards (both active and resolved), reset any winning/losing property and re-resolve them against all match events from their creation time and on.
 // In progress.
-gamecards.RollbackEvent = function (matchId, eventId, matchSegment, outerCallback) {
+gamecards.ReEvaluateAll = function (matchId, outerCallback) {
     // find match and eventId in its timeline
     db.models.scheduled_matches.findById(matchId, function (matchError, match) {
         if (matchError)
             return outerCallback(matchError);
+            
+        if (!match || !match.timeline || match.timeline.length == 0)
+            return outerCallback();
+            
+        var home_team_id = match.home_team;
+        var away_team_id = match.away_team;
+        
+        // Reset userGamecards
+        // Reset user stats ?
+        // Reset userActivity ?
 
-        if (!match || !match.timeline || _.indexOf(match.timeline.id, eventId) == -1)
-            return outerCallback(null);
-
-        let event = _.find(match.timeline, { 'events._id': db.types.ObjectId(eventId) });
-
+        // Restore remaining properties in userGamecards
+        db.models.gamecardDefinitions.find({matchid: matchId}, function(defError, definitions) {
+            if (defError)
+                return outerCallback(defError);
+            
+            let definitionsLookup = {};
+            _.forEach(definitions, function(definition) {
+                if (!definitionsLookup[definition.id])
+                    definitionsLookup[definition.id] = definition;
+            });
+                
+        //db.models.userGamecards.update({matchid: matchId}, {$set: {pointsAwarded: null, wonTime: null, status: 1}}, function(error) {
+            db.models.userGamecards.find({matchid: matchId}, function(err, gamecards) {
+                if (err)
+                    return outerCallback(err);
+                
+                _.forEach(gamecards, function(gamecard) {
+                    gamecard.status = 1;
+                    gamecard.pointsAwarded = null;
+                    gamecard.wonTime = null;
+                    
+                    // Restore remaining property in winConditions and terminationConditions
+                })
+                
+                let matchEvents = [];
+                if (match.timeline[1] && match.timeline[1].events)
+                    matchEvents = matchEvents.concat(match.timeline[1].events);
+                if (match.timeline[3] && match.timeline[3].events)
+                    matchEvents = matchEvents.concat(match.timeline[3].events);
+                if (match.timeline[5] && match.timeline[5].events)
+                    matchEvents = matchEvents.concat(match.timeline[5].events);
+                if (match.timeline[7] && match.timeline[7].events)
+                    matchEvents = matchEvents.concat(match.timeline[7].events);
+                    
+                    
+                _.forEach(matchEvents, function(eventData) {
+                    eventData.id = eventData.id;
+                    eventData.matchid = eventData.match_id;
+                    eventData.teamid = !eventData.team ? null : eventData.team == 'home_team' ? home_team_id : away_team_id;
+                    eventData.playerid = !eventData.players || eventData.players.length == 0 ? null : eventData.players[0].id;
+                    eventData.stat = _.keys(eventData.stats)[0];
+                    eventData.incr = _.values(eventData.stats)[0];
+                    
+                    // find matched userGamecards
+                });
+            });
+        });
+        
+        outerCallback();
     });
-
-
 };
 
 
