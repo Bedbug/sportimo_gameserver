@@ -265,7 +265,7 @@ gamecards.getDefinitions = function (state, callback) {
         state = 1; // get active ones
     }
 
-    db.models.gamecardDefinitions.find({ state: state, isVisible: true }, function (error, data) {
+    db.models.gamecardDefinitions.find({ state: state, isVisible: true, isActive: true }, function (error, data) {
         if (error)
             return callback(error);
         callback(null, data);
@@ -610,7 +610,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
             });
         },
         function (settings, callback) {
-            db.models.gamecardDefinitions.find({ matchid: matchId, isVisible: true, status: { $ne: 2 } }, function (error, definitions) {
+            db.models.gamecardDefinitions.find({ matchid: matchId, isVisible: true, isActive: true, status: { $ne: 2 } }, function (error, definitions) {
                 if (error)
                     return callback(error);
                 callback(null, definitions, settings);
@@ -1235,12 +1235,12 @@ gamecards.Tick = function () {
                     // Check for appearance conditions, and set accordingly the visible property
                     //return gamecards.GamecardsTerminationHandle(mongoGamecards, event, matches, cbk);
                     async.parallel([
-                        function (parallelCbk) {
-                            setTimeout(function () {
-                                gamecards.GamecardsAppearanceHandle(event, match);
-                                return parallelCbk(null);
-                            }, 100);
-                        },
+                        // function (parallelCbk) {
+                        //     setTimeout(function () {
+                        //         gamecards.GamecardsAppearanceHandle(event, match);
+                        //         return parallelCbk(null);
+                        //     }, 100);
+                        // },
                         // function(parallelCbk) {
                         //     setTimeout(function() {
                         //         gamecards.GamecardsAppearanceHandle(segment, match);
@@ -1694,7 +1694,7 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
                 // Implement the Difference Condition
                 // e.g. Difference in team goals stat should be lower than 2 
                 if(condition.comparisonOperator == 'diff'){
-                    if(Math.abs(id1Stat - id2Stat) >= id1Target)
+                    if(Math.abs(id1Stat - id2Stat) > id1Target)
                        return false;
                 }
 
@@ -1722,7 +1722,7 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
 
     // --> What is:
     const gamecardsQuery = {
-        // isVisible: true,
+        isActive: true,
         //creationTime: { $lt: event.time || itsNow },
         // cardType: 'Overall',
         matchid: event.matchid
@@ -1804,6 +1804,8 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
 
     });
 };
+
+
 
 
 // Resolve an incoming match event and see if some matching wildcards win

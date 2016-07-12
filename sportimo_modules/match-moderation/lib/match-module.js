@@ -474,6 +474,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             setMatchStatForTo(HookedMatch.id, thisMatch.stats, 'Segment', thisMatch.state);
             thisMatch.markModified('stats');
 
+            HookedMatch.gamecards.GamecardsAppearanceHandle({
+                matchid: match.id,
+                time: null,
+                playerid: null,
+                teamid: null,
+                stat: 'Segment',
+                statTotal: thisMatch.state,
+                incr: 1
+            }, thisMatch);
+
             var updateObject = {
                 state: thisMatch.state,
                 home_score: thisMatch.home_score,
@@ -615,6 +625,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             segment = thisMatch.timeline[thisMatch.state];
             segmentStart = segment.start;
             secondsToMinuteTick = 60 - moment.duration(moment().diff(moment(segment.start))).seconds();
+        
+            HookedMatch.gamecards.GamecardsAppearanceHandle({
+                matchid: match.id,
+                time: null,
+                playerid: null,
+                teamid: null,
+                stat: 'Minute',
+                statTotal: thisMatch.time,
+                incr: 1
+            }, thisMatch);
 
             // Start the match timer update in secondsToMinuteTick;
             HookedMatch.Timers.Timeout = setTimeout(function () {
@@ -654,6 +674,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             setMatchStatForTo(id, thisMatch.stats, 'Minute', thisMatch.time);
             thisMatch.markModified('stats');
+
+            HookedMatch.gamecards.GamecardsAppearanceHandle({
+                matchid: match.id,
+                time: null,
+                playerid: null,
+                teamid: null,
+                stat: 'Minute',
+                statTotal: thisMatch.time,
+                incr: 1
+            }, thisMatch);
 
             // Inform the system about the stat changes
             PubChannel.publish("socketServers", JSON.stringify({
@@ -725,13 +755,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         thisMatch.away_score++;
 
                     useractivities.find({ room: HookedMatch.id })
-                    .select('user')
+                        .select('user')
                         .exec(function (err, users) {
-                           var userids = _.compact(_.map(users, 'user'));
+                            var userids = _.compact(_.map(users, 'user'));
                             // console.log(req.params.matchid);
                             MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "goals");
                         });
-                   
+
                 }
             }
 
@@ -761,6 +791,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             }, thisMatch, "system");
 
             thisMatch.markModified('stats');
+
+            HookedMatch.gamecards.GamecardsAppearanceHandle(event, thisMatch);
 
 
             // Add 'created' property in the socket event data for easier sorting on clients 
@@ -922,23 +954,23 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         // }, this.data);
         this.data.markModified('stats');
 
-            var updateObject = {
-                timeline: this.data.timeline
-            }
+        var updateObject = {
+            timeline: this.data.timeline
+        }
 
-            matches.findOneAndUpdate({ _id: event.match_id }, updateObject, { new: true }, function (err, result) {
-                // thisMatch.save(function (err, done) {
-                    console.log(result.players);
-                if (err)
-                    return log.error(err.message);
-                if (cbk)
-                    cbk(null, eventToUpdate);
+        matches.findOneAndUpdate({ _id: event.match_id }, updateObject, { new: true }, function (err, result) {
+            // thisMatch.save(function (err, done) {
+            console.log(result.players);
+            if (err)
+                return log.error(err.message);
+            if (cbk)
+                cbk(null, eventToUpdate);
 
-                // if (result)
-                //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+            // if (result)
+            //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
 
-                return HookedMatch;
-            });
+            return HookedMatch;
+        });
 
     };
 

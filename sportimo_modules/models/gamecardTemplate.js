@@ -16,19 +16,21 @@ if (mongoose.models.gamecardTemplates)
     module.exports = mongoose.models.gamecardTemplates;
 else {
     var optionTemplate = new mongoose.Schema({
-       optionId: String,
-       text: Schema.Types.Mixed,
-       startPoints: Number,
-       endPoints: Number,
-       pointsPerMinute: Number,
-       activationLatency: Number,
-       duration: Number,
-       winConditions: [Schema.Types.Mixed],
-       terminationConditions: [Schema.Types.Mixed]
-    }, { _id : false });
+        isVisible: Boolean,
+        optionId: String,
+        text: Schema.Types.Mixed,
+        startPoints: Number,
+        endPoints: Number,
+        pointsPerMinute: Number,
+        activationLatency: Number,
+        duration: Number,
+        winConditions: [Schema.Types.Mixed],
+        terminationConditions: [Schema.Types.Mixed]
+    }, { _id: false });
 
-    
+
     var gamecardTemplate = new mongoose.Schema({
+        isActive: Boolean,
         title: Schema.Types.Mixed, // card title
         image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
@@ -40,13 +42,13 @@ else {
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met
         terminationConditions: [Schema.Types.Mixed], // the wildcard is terminated when any of the terminationConditions is met, or the duration is over (if not null).
         options: [optionTemplate],
-        isVisible: {type: Boolean, default: true},
+        isVisible: { type: Boolean, default: true },
         // Awarded points specs
         pointsPerMinute: Number,
         startPoints: Number,
         endPoints: Number,
-        cardType: { type: String, enum: ['Instant', 'Overall']},
+        cardType: { type: String, enum: ['Instant', 'Overall'] },
     });
-    
+
     module.exports = mongoose.model("gamecardTemplates", gamecardTemplate);
 }
