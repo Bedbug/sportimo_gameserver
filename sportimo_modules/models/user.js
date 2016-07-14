@@ -83,6 +83,10 @@ var UserSchema = new Schema({
     },
     resetToken: String,
     country: { type: String, required: false },
+    msisdn: String,
+    subscriptionContractId: String,
+    pinCode: String,
+    birth: String,
     admin: Boolean,
     rankingStats: {
        type: mongoose.Schema.Types.Mixed, 
