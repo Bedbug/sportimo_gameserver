@@ -1,6 +1,7 @@
 // Module dependencies.
 var mongoose = require('mongoose'),
     Score = mongoose.models.scores,
+    Users = mongoose.models.users,
     api = {},
     _ = require('lodash');
 
@@ -12,7 +13,6 @@ var mongoose = require('mongoose'),
 
 // ALL
 api.getLeaderboard = function (conditions, skip, limit, cb) {
-
     var leader_conditions = parseConditons(conditions);
 
     var q = Score.aggregate({
@@ -40,6 +40,84 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
     return q.exec(function (err, leaderboard) {
         cbf(cb, err, leaderboard);
     });
+};
+
+api.getSocialLeaderboardWithRank = function (id, body, mid, cb) {
+
+    var leader_conditions = {}
+    var uid = id;
+
+    var cond = { social_id: { $in: body.friends} };
+
+    Users.find(cond, '_id social_id', function (err, users) {
+
+        leader_conditions = {
+            user_id: {
+                $in: _.map(users, function(o){return o._id.toString()})
+            }
+        }
+
+        if(mid)
+            leader_conditions.game_id = mid;
+
+        console.log(leader_conditions);
+
+        var q = Score.aggregate({
+            $match: leader_conditions
+        });
+
+
+        
+        q.group({
+            _id: "$user_id",
+            score: { $sum: "$score" },
+            name: { $first: '$user_name' },
+            level: { $max: '$level' },
+            pic: { $last: '$pic' },
+            country: { $first: '$country' }
+        });
+
+
+
+        q.sort({ score: -1 });
+
+        var rank;
+        var user;
+        q.exec(function (err, leaderboard) {
+
+            if (leaderboard.length == 0)
+                return cbf(cb, err, { user: {}, leaderboad: [] });
+
+            user = _.find(leaderboard, { _id: uid });
+
+            if (user) {
+                rank = _.size(_.filter(leaderboard, function (o) {
+                    if (o._id != user._id && o.score > user.score)
+                        return true;
+                    else
+                        return false;
+                }));
+                user.rank = rank + 1;
+            }
+
+            var ldata = {
+                user: user,
+                leaderboad: leaderboard
+            }
+            if (body.sponsor)
+                ldata["sponsor"] = body.sponsor;
+
+
+            return cbf(cb, err, ldata);
+        })
+    })
+
+
+
+
+
+
+
 };
 
 api.getLeaderboardWithRank = function (id, body, cb) {
@@ -105,6 +183,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
 
 
 function parseConditons(conditions) {
+
 
     // Conditions is not a Pool Room
     if (conditions.conditions) {

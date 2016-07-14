@@ -143,12 +143,10 @@ api.FriendsWithRank = function (req, res) {
 	if (!req.body.friends)
 		return res.status(404).send("No friends list in the body of the request. Remember to include the user's social id also");
 
-	var poolData = {
-		conditions: {
-			social_id: { $in: req.body.friends }
-		}
-	}
-	leaderboard.getLeaderboardWithRank(req.params.uid, poolData, function (err, data) {
+	var poolData =  req.body; 		
+	
+
+	leaderboard.getSocialLeaderboardWithRank(req.params.uid, poolData, null, function (err, data) {
 		if (err) {
 			res.status(404).json(err);
 		} else {
@@ -161,16 +159,13 @@ router.post('/v1/leaderboards/:uid/friends', api.FriendsWithRank);
 
 
 api.FriendsForMatchWithRank = function (req, res) {
-	if (!req.body.friends)
+
+ if (!req.body.friends)
 		return res.status(404).send("No friends list in the body of the request. Remember to include the user's social id also");
 
-    var poolData = {
-		conditions: {
-			gameid: req.params.mid,
-			social_id: { $in: req.body.friends }
-		}
-	}
-	leaderboard.getLeaderboardWithRank(req.params.uid, poolData, function (err, data) {
+	var poolData =  req.body; 		
+	
+	leaderboard.getSocialLeaderboardWithRank(req.params.uid, poolData, mid, function (err, data) {
 		if (err) {
 			res.status(404).json(err);
 		} else {
