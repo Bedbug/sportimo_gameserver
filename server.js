@@ -56,7 +56,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.7";
+var version = "0.9.8";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
@@ -93,6 +93,7 @@ function onCrossDomainHandler(req, res) {
 // };
 
 var redisCreds = require('./config/redisConfig');
+var mongoCreds = require('./config/mongoConfig');
 
 var PublishChannel = null;
 PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
@@ -125,7 +126,8 @@ app.PublishChannel = PublishChannel;
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
-var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
+// var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
+var mongoConnection = 'mongodb://'+mongoCreds.user+':'+mongoCreds.password+'@'+mongoCreds.url;
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
