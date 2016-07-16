@@ -1365,8 +1365,9 @@ gamecards.HandleUserCardRewards = function (uid, mid, cardType, pointsToGive, ca
 }
 
 
-gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
-    const itsNow = moment.utc();
+gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime, match) {
+    const simulationCheck = !simulatedWinTime ? false : true;
+    const itsNow = simulatedWinTime || moment.utc();
     let conditions = gamecard.winConditions;
 
     // All winConditions have to be met to win the card
@@ -1429,9 +1430,10 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, match) {
             log.error(err.message);
     });
 
-    MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, null, "won_cards");
-
-    gamecards.publishWinToUser(gamecard);
+    if (!simulationCheck) {
+        MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, null, "won_cards");
+        gamecards.publishWinToUser(gamecard);
+    }
 
     return true;
 };
@@ -1495,8 +1497,8 @@ gamecards.publishWinToUser = function (gamecard) {
 };
 
 
-gamecards.CheckIfLooses = function (gamecard, isCardTermination) {
-    const itsNow = moment.utc();
+gamecards.CheckIfLooses = function (gamecard, isCardTermination, lostTime) {
+    const itsNow = lostTime || moment.utc();
     let conditions = gamecard.winConditions;
 
     if (gamecard.cardType == 'Overall')
@@ -1554,7 +1556,7 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
         });
 
         if (gamecards.CheckIfTerminates(gamecard, match)) {
-            if (gamecards.CheckIfWins(gamecard, true, match)) {
+            if (gamecards.CheckIfWins(gamecard, true, null, match)) {
                 // Send an event through Redis pub/sub:
                 // log.info("Detected a winning gamecard: " + gamecard);
                 gamecardChanged = true;
@@ -1850,16 +1852,6 @@ gamecards.ResolveEvent = function (matchEvent) {
             if (gamecards.CheckIfWins(gamecard, false)) {
                 // Send an event through Redis pu/sub:
                 log.debug("Detected a winning gamecard: " + gamecard);
-                // redisPublish.publish("socketServers", JSON.stringify({
-                //     sockets: true,
-                //     clients: [gamecard.userid],
-                //     payload: {
-                //         type: "Card_won",
-                //         client: gamecard.userid,
-                //         room: event.matchid,
-                //         data: gamecards.TranslateUserGamecard(gamecard)
-                //     }
-                // }));
             }
             else
                 if (gamecards.CheckIfLooses(gamecard, false)) {
@@ -2014,9 +2006,66 @@ gamecards.ResolveEvent = function (matchEvent) {
 
 
 
-// Take back an event, find all affected user gamecards (both active and resolved), reset any winning/losing property and re-resolve them against all match events from their creation time and on.
+// After modifying the match timeline and the related stats, this method will re-evaluate and resolve all user gamecards for this match from the match start and on.
 // In progress.
 gamecards.ReEvaluateAll = function (matchId, outerCallback) {
+    var WinHandle = function(gamecards, event) {
+        _.forEach(gamecards, function(gamecard) {
+            gamecard.winConditions.forEach(function (condition) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
+                    condition.remaining -= event.incr;
+                    if (condition.remaining <= 0) {
+                        condition.remaining = 0;
+                    }
+                }
+            });
+            if (gamecards.CheckIfWins(gamecard, false, event.created)) {
+                log.debug("Detected a winning gamecard: " + gamecard);
+            }
+            else
+                if (gamecards.CheckIfLooses(gamecard, false, event.created)) {
+                    log.info("Card lost: " + gamecard);
+                }
+            if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) == -1)
+                gamecard.contributingEventIds.push(event.id);
+        });
+    };
+    
+    var TerminationHandle = function(gamecards, event, match) {
+        _.forEach(gamecards, function(gamecard) {
+            gamecard.terminationConditions.forEach(function (condition) {
+                if (condition.stat == event.stat && (condition.playerid == null || condition.playerid == event.playerid) && (condition.teamid == null || condition.teamid == event.teamid)) {
+                    if (event.statTotal != null) {
+                        if (event.statTotal >= condition.remaining) {
+                            condition.remaining = 0;
+                        }
+                    }
+                    else {
+                        condition.remaining -= event.incr;
+                        if (condition.remaining <= 0) {
+                            condition.remaining = 0;
+                        }
+                    }
+                }
+            });
+    
+            if (gamecards.CheckIfTerminates(gamecard, match)) {
+                if (gamecards.CheckIfWins(gamecard, true, event.created, match)) {
+                    log.info("Detected a winning gamecard: " + gamecard);
+                }
+                else {
+                    gamecard.terminationTime = event.created;
+                    gamecard.status = 2;
+                    gamecard.pointsAwarded = 0;
+                }
+            }
+    
+            if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) > -1)
+                gamecard.contributingEventIds.push(event.id);
+        });
+    };
+    
+    
     // find match and eventId in its timeline
     db.models.scheduled_matches.findById(matchId, function (matchError, match) {
         if (matchError)
@@ -2052,9 +2101,28 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     gamecard.status = 1;
                     gamecard.pointsAwarded = null;
                     gamecard.wonTime = null;
+                    gamecard.winConditions = null;
+                    gamecard.terminationConditions = null;
+                    gamecard.contributingEventIds = [];
                     
                     // Restore remaining property in winConditions and terminationConditions
-                })
+                    if (gamecard.gamecardDefinitionId && definitionsLookup[gamecard.gamecardDefinitionId])
+                    {
+                        let definition = definitionsLookup[gamecard.gamecardDefinitionId];
+                        if (gamecard.optionId)
+                        {
+                            let option = _.find(definition.options, {optionId: gamecard.optionId});
+                            if (option && option.winConditions)
+                                gamecard.winConditions = option.winConditions;
+                            if (option && option.terminationConditions)
+                                gamecard.terminationConditions = option.terminationConditions;
+                        }
+                        if (!gamecard.winConditions && definition.winConditions)
+                            gamecard.winConditions = definition.winConditions;
+                        if (!gamecard.terminationConditions && definition.terminationConditions)
+                            gamecard.terminationConditions = definition.terminationConditions;
+                    }
+                });
                 
                 let matchEvents = [];
                 if (match.timeline[1] && match.timeline[1].events)
@@ -2068,14 +2136,82 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     
                     
                 _.forEach(matchEvents, function(eventData) {
-                    eventData.id = eventData.id;
+                    //eventData.id = eventData.id;
                     eventData.matchid = eventData.match_id;
                     eventData.teamid = !eventData.team ? null : eventData.team == 'home_team' ? home_team_id : away_team_id;
                     eventData.playerid = !eventData.players || eventData.players.length == 0 ? null : eventData.players[0].id;
                     eventData.stat = _.keys(eventData.stats)[0];
                     eventData.incr = _.values(eventData.stats)[0];
+                    //eventData.time = eventData.created;
                     
-                    // find matched userGamecards
+                    let eventRelatedGamecards = null;
+                    
+                    // check for matched terminations before the event's creation time
+                    let segmentEvent = {
+                        matchid: match.id,
+                        time: null,
+                        playerid: null,
+                        teamid: null,
+                        stat: 'Segment',
+                        statTotal: eventData.state,
+                        incr: 1
+                    };
+
+                    let minuteEvent = {
+                        matchid: match.id,
+                        time: null,
+                        playerid: null,
+                        teamid: null,
+                        stat: 'Minute',
+                        statTotal: eventData.time,
+                        incr: 1
+                    };
+                    // find matched userGamecards that have the event stat in their terminationConditions
+                    eventRelatedGamecards = _.find(gamecards, function(gamecard) {
+                        if (gamecard.cardType == 'Overall' && gamecard.status == 1 && gamecard.terminationConditions && gamecard.terminationConditions.length > 0) {
+                            let matchedCondition = _.find(gamecard.terminationConditions, {stat: eventData.stat});
+                            if (matchedCondition && matchedCondition.remaining > 0 && (!matchedCondition.playerid || matchedCondition.playerid == eventData.playerid) && (!matchedCondition.teamid || matchedCondition.teamid == eventData.teamid)) {
+                                return true;
+                            }
+                        }  
+                        return false;
+                    });
+                    TerminationHandle(eventRelatedGamecards, segmentEvent, match);
+                    // find matched userGamecards that have the event stat in their terminationConditions
+                    eventRelatedGamecards = _.find(gamecards, function(gamecard) {
+                        if (gamecard.cardType == 'Overall' && gamecard.status == 1 && gamecard.terminationConditions && gamecard.terminationConditions.length > 0) {
+                            let matchedCondition = _.find(gamecard.terminationConditions, {stat: eventData.stat});
+                            if (matchedCondition && matchedCondition.remaining > 0 && (!matchedCondition.playerid || matchedCondition.playerid == eventData.playerid) && (!matchedCondition.teamid || matchedCondition.teamid == eventData.teamid)) {
+                                return true;
+                            }
+                        }  
+                        return false;
+                    });
+                    TerminationHandle(eventRelatedGamecards, minuteEvent, match);
+                    
+                    
+                    // find matched userGamecards that have the event stat in their winConditions
+                    eventRelatedGamecards = _.find(gamecards, function(gamecard) {
+                        if (gamecard.status == 1 && gamecard.winConditions && gamecard.winConditions.length > 0) {
+                            let matchedCondition = _.find(gamecard.winConditions, {stat: eventData.stat});
+                            if (matchedCondition && matchedCondition.remaining > 0 && (!matchedCondition.playerid || matchedCondition.playerid == eventData.playerid) && (!matchedCondition.teamid || matchedCondition.teamid == eventData.teamid)) {
+                                return true;
+                            }
+                        }  
+                        return false;
+                    });
+                    WinHandle(eventRelatedGamecards, eventData);
+                    // find matched userGamecards that have the event stat in their terminationConditions
+                    eventRelatedGamecards = _.find(gamecards, function(gamecard) {
+                        if (gamecard.status == 1 && gamecard.terminationConditions && gamecard.terminationConditions.length > 0) {
+                            let matchedCondition = _.find(gamecard.terminationConditions, {stat: eventData.stat});
+                            if (matchedCondition && matchedCondition.remaining > 0 && (!matchedCondition.playerid || matchedCondition.playerid == eventData.playerid) && (!matchedCondition.teamid || matchedCondition.teamid == eventData.teamid)) {
+                                return true;
+                            }
+                        }  
+                        return false;
+                    });
+                    TerminationHandle(eventRelatedGamecards, eventData, match);
                 });
             });
         });
