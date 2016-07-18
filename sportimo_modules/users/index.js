@@ -381,6 +381,16 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
 
 });
 
+// Search users abses on string and return list of mini user objects
+apiRoutes.get('/v1/users/search/:val', function (req, res) {
+     User.find({$or:[ { "username": { "$regex": req.params.val, "$options": "i" }},{ "email": { "$regex": req.params.val, "$options": "i" }}]} )
+     .select('username email')
+     .limit(20)
+     .exec(function(err,docs){
+         res.send(docs);
+     })
+});
+
 //Sends message to routers
 apiRoutes.post('/v1/users/messages', function (req, res) {
 

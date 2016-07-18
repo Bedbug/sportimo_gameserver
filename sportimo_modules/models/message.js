@@ -22,6 +22,7 @@ else {
         msg: {type:mongoose.Schema.Types.Mixed, required:true},
         data: {type:String},
         read: {type:Number},
+        link: {type:String},
         created: { type: Date, default: Date.now }
     };
     

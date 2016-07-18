@@ -165,7 +165,7 @@ api.FriendsForMatchWithRank = function (req, res) {
 
 	var poolData =  req.body; 		
 	
-	leaderboard.getSocialLeaderboardWithRank(req.params.uid, poolData, mid, function (err, data) {
+	leaderboard.getSocialLeaderboardWithRank(req.params.uid, poolData, req.params.mid, function (err, data) {
 		if (err) {
 			res.status(404).json(err);
 		} else {

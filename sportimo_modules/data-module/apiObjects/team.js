@@ -87,11 +87,12 @@ api.teamFavoriteData = function (id, cb) {
   q.populate('lastmatch.home_team', 'name logo');
   q.populate('lastmatch.away_team', 'name logo');
   q.populate('competitionid', 'name parserids');
-  q.populate('topscorer', 'name uniformNumber pic stats')
+  q.populate('topscorer', 'name uniformNumber pic stats');
+  q.populate('topassister', 'name uniformNumber pic stats');
 
   q.exec(function (err, team) {
 
-    // if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
+    if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
 
       if (!team.competitionid.parserids.Stats && !team.league && !team.leagueids)
         return cbf(cb, '404: There is no league id for this team. Please contact platform administrator to ask for a free soda.', null);
@@ -100,8 +101,8 @@ api.teamFavoriteData = function (id, cb) {
       Stats_parser.UpdateTeamStatsFull(leagueId, team.parserids.Stats, null, function (error, response) {
         cbf(cb, error, response);
       })
-    // } else
-    //   cbf(cb, err, team);
+    } else
+      cbf(cb, err, team);
   });
 
 };

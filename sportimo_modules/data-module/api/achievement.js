@@ -7,7 +7,7 @@ l=require('../config/lib');
 var api = {};
 // ALL
 api.achievements = function (req, res) {
-	var skip=null,limit=10;
+	var skip=null, limit = 10;
 
 	if(req.query.skip!=undefined)
 		skip=req.query.skip;
