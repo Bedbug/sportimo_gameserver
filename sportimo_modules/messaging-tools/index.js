@@ -78,6 +78,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
         conditions._id = {
             $in: userids
         };
+
     conditions['pushSettings.all'] = true;
     conditions['pushSettings.' + type] = true;
     // console.log(conditions);
@@ -140,13 +141,13 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
         return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
 
             if (!err) {
+                 console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
                 if (callback) {
-                    console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
                     return callback("[UserMessaging] Send push to " + pushTokens.length + " users.");
                 }
             }
             else {
-                // console.log(err);
+                console.log(err);
                 if (callback)
                     return callback.send(err);
             }
@@ -182,6 +183,7 @@ MessagingTools.SendMessageToInbox = function (msgData, callback) {
     if (msgData.push) {
         MessagingTools.sendPushToUsers(msgData.recipients, msgData.msg, msgData.data, "new_message");
     }
+
     if (msgData.message)
         newMessage.save(function (err, message) {
 

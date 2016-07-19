@@ -87,6 +87,7 @@ var UserSchema = new Schema({
     subscriptionContractId: String,
     pinCode: String,
     birth: String,
+    gender: String,
     admin: Boolean,
     rankingStats: {
        type: mongoose.Schema.Types.Mixed, 
