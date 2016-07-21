@@ -87,9 +87,9 @@ api.teamFavoriteData = function (id, cb) {
   q.populate('lastmatch.home_team', 'name logo');
   q.populate('lastmatch.away_team', 'name logo');
   q.populate('competitionid', 'name parserids');
-  q.populate('topscorer', 'name uniformNumber pic stats');
-  q.populate('topassister', 'name uniformNumber pic stats');
-
+  q.populate('topscorer', 'name uniformNumber pic stats.season.goalsTotal');
+  q.populate('topassister', 'name uniformNumber pic stats.season.assistsTotal');
+ 
   q.exec(function (err, team) {
 
     if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
