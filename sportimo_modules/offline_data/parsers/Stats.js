@@ -1303,7 +1303,9 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                         });
                     else {
                         log.info('Now on to updating full stats for team %s', team.name.en);
-                        return Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, innerCallback);
+                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function(teamStatsError) {
+                            innerCallback(null);
+                        });
                     }
                 }, callback);
             },
@@ -1312,7 +1314,8 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     return Parser.UpdateTeamPlayersCareerStats(team.id, season, innerCallback);
                 }, function (seriesError) {
                     if (seriesError)
-                        return callback(seriesError);
+                        log.error(seriesError.message);
+                        //return callback(seriesError);
                     callback(null);
                 });
             },
