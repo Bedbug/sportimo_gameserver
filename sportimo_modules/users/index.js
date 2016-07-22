@@ -320,7 +320,7 @@ apiRoutes.get('/v1/user/:id', function (req, res) {
 apiRoutes.put('/v1/users/:id', function (req, res) {
 
     if (req.body["picture"] != null)
-        Scores.update({ user_id: req.params.id }, { $set: { 'pic': req.body["picture"] } }, { upsert: true, mult: true }, function (err, result) {
+        Scores.update({ user_id: req.params.id }, { $set: { 'pic': req.body["picture"] } }, {multi: true }, function (err, result) {
             console.log("users.index.js:320 Pic changed");
         });
 
