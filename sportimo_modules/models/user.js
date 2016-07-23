@@ -68,7 +68,10 @@ var UserSchema = new Schema({
         ref: 'messages'
     }],
     unread: Number,
-    social_id: String,
+    social_id: {
+        type:String, 
+        unique:true
+    },
     pushToken: { type: String, default: "NoPustTokenYet" },
     pushSettings: {
         type: mongoose.Schema.Types.Mixed, default: {

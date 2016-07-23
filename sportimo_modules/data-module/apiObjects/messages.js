@@ -12,6 +12,8 @@ api.getAll = function (skip, limit, cb) {
   if (limit != undefined)
     q.limit(limit * 1);
 
+    q.sort({"created": -1});
+
   return q.exec(function (err, achievements) {
     cbf(cb, err, achievements);
   });
