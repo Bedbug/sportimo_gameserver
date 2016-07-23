@@ -147,7 +147,7 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
         if (error)
             return callback(error);
         try {
-            if (response.statusCode != 200 || response.statusCode != 404)
+            if (response.statusCode != 200 && response.statusCode != 404)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
             var teamStats = response.statusCode == 404 ? 
@@ -241,9 +241,9 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             // if (response.statusCode == 404)
                             //     return callback(null, team);
 
-                            var teamStanding = response.statusCode == 400 ? null : response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
+                            var teamStanding = response.statusCode == 404 ? null : response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
                             team.standing = {
-                                "rank": teamStanding && teamStanding.league ? teamStanding.league.rank : teamStanding.division ? teamStanding.division.rank : -1,
+                                "rank": teamStanding && teamStanding.league ? teamStanding.league.rank : teamStanding && teamStanding.division ? teamStanding.division.rank : -1,
                                 "teamName": team.name,
                                 "teamId": team._id.toString(),
                                 "points": teamStanding ? teamStanding.teamPoints : 0,
