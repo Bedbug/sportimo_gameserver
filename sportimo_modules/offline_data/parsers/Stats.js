@@ -147,10 +147,12 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
         if (error)
             return callback(error);
         try {
-            if (response.statusCode != 200)
+            if (response.statusCode != 200 || response.statusCode != 404)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
-            var teamStats = TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
+            var teamStats = response.statusCode == 404 ? 
+                TranslateTeamStats(null) :
+                TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
 
             return mongoDb.teams.findOne({ "parserids.Stats": teamId }, function (err, team) {
                 if (err)
@@ -213,10 +215,12 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                     if (error)
                         return callback(error, team);
                     try {
-                        if (response.statusCode == 404)
-                            return callback(null, team);
+                        // if (response.statusCode == 404)
+                        //     return callback(null, team);
 
-                        var teamStats = TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
+                        var teamStats = response.statusCode == 404 ? 
+                            TranslateTeamStats(null) :
+                            TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
                         team.stats = teamStats;
 
                         callback(null, team);
@@ -234,23 +238,23 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         if (error)
                             return callback(error, team);
                         try {
-                            if (response.statusCode == 404)
-                                return callback(null, team);
+                            // if (response.statusCode == 404)
+                            //     return callback(null, team);
 
-                            var teamStanding = response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
+                            var teamStanding = response.statusCode == 400 ? null : response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams[0];
                             team.standing = {
-                                "rank": teamStanding.league ? teamStanding.league.rank : teamStanding.division ? teamStanding.division.rank : -1,
+                                "rank": teamStanding && teamStanding.league ? teamStanding.league.rank : teamStanding.division ? teamStanding.division.rank : -1,
                                 "teamName": team.name,
                                 "teamId": team._id.toString(),
-                                "points": teamStanding.teamPoints,
-                                "pointsPerGame": teamStanding.teamPointsPerGame,
-                                "penaltyPoints": teamStanding.penaltyPoints,
-                                "wins": teamStanding.record.wins,
-                                "losses": teamStanding.record.losses,
-                                "ties": teamStanding.record.ties,
-                                "gamesPlayed": teamStanding.record.gamesPlayed,
-                                "goalsFor": teamStanding.goalsFor.overall,
-                                "goalsAgainst": teamStanding.goalsAgainst.overall
+                                "points": teamStanding ? teamStanding.teamPoints : 0,
+                                "pointsPerGame": teamStanding && teamStanding.teamPointsPerGame ? teamStanding.teamPointsPerGame : 0,
+                                "penaltyPoints": teamStanding ? teamStanding.penaltyPoints : 0,
+                                "wins": teamStanding ? teamStanding.record.wins : 0,
+                                "losses": teamStanding ? teamStanding.record.losses : 0,
+                                "ties": teamStanding ? teamStanding.record.ties : 0,
+                                "gamesPlayed": teamStanding ? teamStanding.record.gamesPlayed : 0,
+                                "goalsFor": teamStanding ? teamStanding.goalsFor.overall : 0,
+                                "goalsAgainst": teamStanding ? teamStanding.goalsAgainst.overall : 0
                             };
 
                             callback(null, team);
@@ -439,6 +443,8 @@ Parser.GetPlayerStats = function (leagueName, playerId, season, callback) {
         if (error)
             return callback(error);
         try {
+            if (response.statusCode == 404)
+                return callback(null, null);
             if (response.statusCode != 200)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
@@ -460,6 +466,8 @@ Parser.GetPlayerInTeamStats = function (leagueName, teamId, playerId, callback) 
         if (error)
             return callback(error);
         try {
+            if (response.statusCode == 404)
+                return callback(null, null);
             if (response.statusCode != 200)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
@@ -507,9 +515,9 @@ Parser.GetLeagueTeams = function (leagueName, callback) {
     });
 };
 
-Parser.GetLeagueStandings = function (leagueName, callback) {
+Parser.GetLeagueStandings = function (leagueName, season, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + signature;
+    const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + (season ? "season=" + season + "&" : "") + signature;
 
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
@@ -900,7 +908,7 @@ var GetLeagueFromMongo = function (leagueId, callback) {
 };
 
 
-Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, outerCallback) {
+Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, outerCallback) {
     leagueId = competitionDocument ? competitionDocument.id : leagueId;
     //statsLeagueId = competitionDocument.parserids[Parser.Name] || statsLeagueId;
 
@@ -943,7 +951,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, outerCal
             function (competition, existingTeamIds, callback) {
                 var statsLeagueId = competition.parserids[Parser.Name];
 
-                Parser.GetLeagueStandings(statsLeagueId, function (error, standings, seasonYear) {
+                Parser.GetLeagueStandings(statsLeagueId, season, function (error, standings, seasonYear) {
                     if (error)
                         return callback(error);
 
@@ -983,7 +991,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, outerCal
                         teamName: existingTeamIds[teamStanding.teamId].name,
                         teamId: existingTeamIds[teamStanding.teamId].id,
                         points: teamStanding.teamPoints,
-                        pointsPerGame: teamStanding.teamPointsPerGame,
+                        pointsPerGame: teamStanding.teamPointsPerGame || 0,
                         penaltyPoints: teamStanding.penaltyPoints,
                         wins: teamStanding.record.wins,
                         losses: teamStanding.record.losses,
@@ -1019,7 +1027,7 @@ Parser.UpdateStandings = function (callback) {
 
         async.each(leagues, function (league, cbk) {
             // Get all teams foreach competition
-            Parser.UpdateLeagueStandings(league, league.id, function (error) {
+            Parser.UpdateLeagueStandings(league, league.id, null, function (error) {
                 if (error)
                     return cbk(error);
 
@@ -1205,6 +1213,8 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
                             }
 
                             let playerDocInstance = playersLookup[playerId];
+                            if (!playerDocInstance.stats)
+                                playerDocInstance.stats = {};
                             playerDocInstance.stats["team"] = TranslatePlayerStats(stats);
 
                             callback(null);
@@ -1241,6 +1251,8 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
                             }
 
                             let playerDocInstance = playersLookup[playerId];
+                            if (!playerDocInstance.stats)
+                                playerDocInstance.stats = {};
                             playerDocInstance.stats["season"] = TranslatePlayerStats(stats);
 
                             callback(null);
@@ -1296,6 +1308,18 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 });
             },
             function (callback) {
+                if (!competition.parserids || !competition.parserids.Stats)
+                    async.setImmediate(function () {
+                        callback(null);
+                    });
+                else {
+                    log.info('Now on to updating team standings for competition %s', competition.name.en);
+                    Parser.UpdateLeagueStandings(competition, competition.id, season, function(standingsError) {
+                        callback(null);
+                    });
+                }
+            },
+            function (callback) {
                 async.eachSeries(competitionTeams, function (team, innerCallback) {
                     if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
                         async.setImmediate(function () {
@@ -1334,56 +1358,56 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
 
 var TranslatePlayerStats = function (stats) {
     return {
-        gamesPlayed: stats.gamesPlayed,
-        gamesStarted: stats.gamesStarted,
-        minutesPlayed: stats.minutesPlayed,
-        goalsTotal: stats.goals && stats.goals.total ? stats.goals.total : 0,
-        goalsGameWinning: stats.goals && stats.goals.gameWinning ? stats.goals.gameWinning : 0,
-        goalsOwn: stats.goals && stats.goals.goalsOwn ? stats.goals.goalsOwn : 0,
-        goalsHeaded: stats.goals && stats.goals.headed ? stats.goals.headed : 0,
-        goalsKicked: stats.goals && stats.goals.kicked ? stats.goals.kicked : 0,
-        assistsTotal: stats.assists && stats.assists.total ? stats.assists.total : 0,
-        assistsGameWinning: stats.assists && stats.assists.gameWinning ? stats.assists.gameWinning : 0,
-        shots: stats.shots,
-        shotsOnGoal: stats.shotsOnGoal,
-        crosses: stats.crosses,
-        penaltyKicksShots: stats.penaltyKicks && stats.penaltyKicks.shots ? stats.penaltyKicks.shots : 0,
-        penaltyKicksGoals: stats.penaltyKicks && stats.penaltyKicks.goals ? stats.penaltyKicks.goals : 0,
-        foulsCommitted: stats.foulsCommitted,
-        foulsSuffered: stats.foulsSuffered,
-        yellowCards: stats.yellowCards,
-        redCards: stats.redCards,
-        offsides: stats.offsides,
-        cornerKicks: stats.cornerKicks,
-        clears: stats.clears,
-        goalMouthBlocks: stats.goalMouthBlocks,
-        touchesTotal: stats.touches && stats.touches.total ? stats.touches.total : 0,
-        touchesPasses: stats.touches && stats.touches.passes ? stats.touches.passes : 0,
-        touchesInterceptions: stats.touches && stats.touches.interceptions ? stats.touches.interceptions : 0,
-        touchesBlocks: stats.touches && stats.touches.blocks ? stats.touches.blocks : 0,
-        tackles: stats.tackles,
-        attacks: stats.attacks,
-        overtimeShots: stats.overtime && stats.overtime.shots ? stats.overtime.shots : 0,
-        overtimeGoals: stats.overtime && stats.overtime.goals ? stats.overtime.goals : 0,
-        overtimeAssists: stats.overtime && stats.overtime.assists ? stats.overtime.assists : 0,
-        suspensions: stats.suspensions
+        gamesPlayed: stats ? stats.gamesPlayed : 0,
+        gamesStarted: stats ? stats.gamesStarted : 0,
+        minutesPlayed: stats ? stats.minutesPlayed : 0,
+        goalsTotal: stats && stats.goals && stats.goals.total ? stats.goals.total : 0,
+        goalsGameWinning: stats && stats.goals && stats.goals.gameWinning ? stats.goals.gameWinning : 0,
+        goalsOwn: stats && stats.goals && stats.goals.goalsOwn ? stats.goals.goalsOwn : 0,
+        goalsHeaded: stats && stats.goals && stats.goals.headed ? stats.goals.headed : 0,
+        goalsKicked: stats && stats.goals && stats.goals.kicked ? stats.goals.kicked : 0,
+        assistsTotal: stats && stats.assists && stats.assists.total ? stats.assists.total : 0,
+        assistsGameWinning: stats && stats.assists && stats.assists.gameWinning ? stats.assists.gameWinning : 0,
+        shots: stats ? stats.shots : 0,
+        shotsOnGoal: stats ? stats.shotsOnGoal : 0,
+        crosses: stats ? stats.crosses : 0,
+        penaltyKicksShots: stats && stats.penaltyKicks && stats.penaltyKicks.shots ? stats.penaltyKicks.shots : 0,
+        penaltyKicksGoals: stats && stats.penaltyKicks && stats.penaltyKicks.goals ? stats.penaltyKicks.goals : 0,
+        foulsCommitted: stats ? stats.foulsCommitted : 0,
+        foulsSuffered: stats ? stats.foulsSuffered : 0,
+        yellowCards: stats ? stats.yellowCards : 0,
+        redCards: stats ? stats.redCards : 0,
+        offsides: stats ? stats.offsides : 0,
+        cornerKicks: stats ? stats.cornerKicks : 0,
+        clears: stats ? stats.clears : 0,
+        goalMouthBlocks: stats ? stats.goalMouthBlocks : 0,
+        touchesTotal: stats && stats.touches && stats.touches.total ? stats.touches.total : 0,
+        touchesPasses: stats && stats.touches && stats.touches.passes ? stats.touches.passes : 0,
+        touchesInterceptions: stats && stats.touches && stats.touches.interceptions ? stats.touches.interceptions : 0,
+        touchesBlocks: stats && stats.touches && stats.touches.blocks ? stats.touches.blocks : 0,
+        tackles: stats ? stats.tackles : 0,
+        attacks: stats ? stats.attacks : 0,
+        overtimeShots: stats && stats.overtime && stats.overtime.shots ? stats.overtime.shots : 0,
+        overtimeGoals: stats && stats.overtime && stats.overtime.goals ? stats.overtime.goals : 0,
+        overtimeAssists: stats && stats.overtime && stats.overtime.assists ? stats.overtime.assists : 0,
+        suspensions: stats ? stats.suspensions : 0
     };
 };
 
 // TODO: Team stat names should be the same as the events referenced through out the game.
 var TranslateTeamStats = function (stats) {
     return {
-        gamesPlayed: stats.gamesPlayed ? stats.gamesPlayed : 0,
-        Goal: stats.goals.total ? stats.goals.total : 0,
-        Shot_On_Goal: stats.shotsOnGoal ? stats.shotsOnGoal : 0,
-        Crosses: stats.crosses ? stats.crosses : 0,
-        Penalty: stats.penaltyKicks && stats.penaltyKicks.shots ? stats.penaltyKicks.shots : 0,
-        Foul: stats.foulsCommitted ? stats.foulsCommitted : 0,
-        Yellow: stats.yellowCards ? stats.yellowCards : 0,
-        Red: stats.redCards ? stats.redCards : 0,
-        Offside: stats.offsides ? stats.offsides : 0,
-        Corner: stats.cornerKicks ? stats.cornerKicks : 0,
-        Clear: stats.clears ? stats.clears : 0
+        gamesPlayed: stats && stats.gamesPlayed ? stats.gamesPlayed : 0,
+        Goal: stats && stats.goals.total ? stats.goals.total : 0,
+        Shot_On_Goal: stats && stats.shotsOnGoal ? stats.shotsOnGoal : 0,
+        Crosses: stats && stats.crosses ? stats.crosses : 0,
+        Penalty: stats && stats.penaltyKicks && stats.penaltyKicks.shots ? stats.penaltyKicks.shots : 0,
+        Foul: stats && stats.foulsCommitted ? stats.foulsCommitted : 0,
+        Yellow: stats && stats.yellowCards ? stats.yellowCards : 0,
+        Red: stats && stats.redCards ? stats.redCards : 0,
+        Offside: stats && stats.offsides ? stats.offsides : 0,
+        Corner: stats && stats.cornerKicks ? stats.cornerKicks : 0,
+        Clear: stats && stats.clears ? stats.clears : 0
     };
 };
 

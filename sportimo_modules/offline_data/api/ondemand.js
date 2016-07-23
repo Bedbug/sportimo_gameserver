@@ -304,6 +304,8 @@ api.UpdateLeagueStandings = function (req, res) {
         return res.status(400).json({ error: "No 'competition' id parameter defined in the request path." });
 
     var leagueId = req.params.competitionId;
+    
+    var season = req.body.season;
 
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
@@ -311,7 +313,7 @@ api.UpdateLeagueStandings = function (req, res) {
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateLeagueStandings(null, leagueId, function (error, teamsIncluded) {
+            parser.UpdateLeagueStandings(null, leagueId, season, null, function (error, teamsIncluded) {
                 if (!error) {
                     response.parsers[parser.Name] = {
                         error: null,
