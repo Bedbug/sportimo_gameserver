@@ -48,7 +48,8 @@ var express = require("express"),
     redis = require('redis'),
     mongoose = require('mongoose'),
     winston = require('winston'),
-    settings = require('./models/settings');
+    settings = require('./models/settings'),
+    morgan = require('morgan');
 
 
 var TestSuite = {
@@ -67,6 +68,7 @@ app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
 });
 
+app.use(morgan('dev'));
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
 
