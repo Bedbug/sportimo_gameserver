@@ -7,7 +7,7 @@ var mongoose = require('mongoose'),
 var eventstat = new Schema({
     home_team: { type: String, ref: 'teams' },
     away_team: { type: String, ref: 'teams' },
-    start: { type: Date},
+    start: { type: Date },
     homescore: 0,
     awayscore: 0,
 });
@@ -31,15 +31,28 @@ else {
         recentform: [String], // an array of String of type "W","L","D"
         nextmatch: Schema.Types.Mixed,
         lastmatch: Schema.Types.Mixed,
-        standing: { type: Schema.Types.Mixed },
+        standing: {
+            type: Schema.Types.Mixed, default: {
+                "rank": 0,
+                "points": 0,
+                "pointsPerGame": "0",
+                "penaltyPoints": 0,
+                "wins": 0,
+                "losses": 0,
+                "ties": 0,
+                "gamesPlayed": 0,
+                "goalsFor": 0,
+                "goalsAgainst": 0
+            }
+        },
         topscorer: { type: String, ref: 'players' },
         topassister: { type: String, ref: 'players' },
         players: [Schema.Types.Mixed],
         created: { type: Date, default: Date.now }
     };
-    
+
     var teamSchema = new Schema(team);
-    
+
     module.exports = mongoose.model('teams', teamSchema);
 }
 
@@ -48,7 +61,7 @@ else {
 /**
  *  Definition of team Leicester
  */
- 
+
 // {
 //     "_id": {
 //         "$oid": "56e81b7c30345c282c01b2d1"
