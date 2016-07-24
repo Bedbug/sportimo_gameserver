@@ -103,14 +103,21 @@ setTimeout(function () {
 // Approximate calculation of season Year from current date
 Parser.GetSeasonYear = function () {
     const now = new Date();
-    if (now.getMonth() > 6)
+
+    if (now.getMonth() > 5)
         return now.getFullYear();
     else return now.getFullYear() - 1;
 };
 
 // Helper method to retrieve a team based on the parser id
-Parser.FindMongoTeamId = function (parserid, fieldProjection, callback) {
-    var q = mongoDb.teams.findOne({ "parserids.Stats": parserid });
+Parser.FindMongoTeamId = function (parserid, fieldProjection, callback, teamId) {
+
+    var findConditions = { "parserids.Stats": parserid };
+
+    if (teamId)
+        findConditions._id = teamId;
+
+    var q = mongoDb.teams.findOne(findConditions);
 
     if (fieldProjection)
         q.select(fieldProjection);
@@ -150,7 +157,7 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
             if (response.statusCode != 200 && response.statusCode != 404)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
-            var teamStats = response.statusCode == 404 ? 
+            var teamStats = response.statusCode == 404 ?
                 TranslateTeamStats(null) :
                 TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
 
@@ -180,9 +187,9 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
 };
 
 // Get team stats. Always return the season stats.
-Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback) {
+Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback, mongoTeamId) {
 
-    season = season || Parser.GetSeasonYear();
+    season = Parser.GetSeasonYear();
 
     //soccer/epl/stats/players/345879?enc=true&
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
@@ -201,7 +208,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
     async.waterfall(
         [
             function (callback) {
-                return Parser.FindMongoTeamId(teamId, false, callback);
+                return Parser.FindMongoTeamId(teamId, false, callback, mongoTeamId);
             },
 
             // First let's update the stats for use in the client gamecard infos
@@ -218,7 +225,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         // if (response.statusCode == 404)
                         //     return callback(null, team);
 
-                        var teamStats = response.statusCode == 404 ? 
+                        var teamStats = response.statusCode == 404 ?
                             TranslateTeamStats(null) :
                             TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
                         team.stats = teamStats;
@@ -269,6 +276,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             // Now let's do the difficult stuff and get the schedule
             function (team, callback) {
                 setTimeout(function () {
+                    // console.log(schedule_url);
                     needle.get(schedule_url, { timeout: 50000 }, function (error, response) {
                         if (error)
                             return callback(error, team);
@@ -369,8 +377,8 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, callback) {
 
-                try {                   
-                    var q = mongoDb.players.find({ "teamId": team._id});
+                try {
+                    var q = mongoDb.players.find({ "teamId": team._id });
                     q.sort({ "stats.season.assistsTotal": -1 });
                     q.limit(1);
                     q.select('name uniformNumber pic stats.season.assistsTotal');
@@ -390,8 +398,8 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             },
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, assistPlayer, callback) {
-               try {                   
-                    var q = mongoDb.players.find({ "teamId": team._id});
+                try {
+                    var q = mongoDb.players.find({ "teamId": team._id });
                     q.sort({ "stats.season.goalsTotal": -1 });
                     q.limit(1);
                     q.select('name uniformNumber pic stats.season.goalsTotal');
@@ -417,8 +425,17 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                 if (err)
                     return outerCallback(err);
 
-                result.topscorer = player;
-                result.topassister = assistPlayer;
+                result = result.toObject();
+
+                if (!player.stats || !player.stats.season || !player.stats.season.goalsTotal)
+                    delete result.topscorer;
+                else
+                    result.topscorer = player;
+
+                if (!assistPlayer.stats || !assistPlayer.stats.season || !assistPlayer.stats.season.assistsTotal)
+                    delete result.topassister;
+                else
+                    result.topassister = assistPlayer;
                 return outerCallback(null, result);
             });
         }
@@ -1010,7 +1027,8 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 if (err)
                     return outerCallback(err);
 
-                outerCallback(null, leagueId);
+                if (outerCallback)
+                    outerCallback(null, leagueId);
             });
         });
 
@@ -1314,7 +1332,7 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     });
                 else {
                     log.info('Now on to updating team standings for competition %s', competition.name.en);
-                    Parser.UpdateLeagueStandings(competition, competition.id, season, function(standingsError) {
+                    Parser.UpdateLeagueStandings(competition, competition.id, season, function (standingsError) {
                         callback(null);
                     });
                 }
@@ -1327,7 +1345,7 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                         });
                     else {
                         log.info('Now on to updating full stats for team %s', team.name.en);
-                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function(teamStatsError) {
+                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
                             innerCallback(null);
                         });
                     }
@@ -1339,7 +1357,7 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 }, function (seriesError) {
                     if (seriesError)
                         log.error(seriesError.message);
-                        //return callback(seriesError);
+                    //return callback(seriesError);
                     callback(null);
                 });
             },
