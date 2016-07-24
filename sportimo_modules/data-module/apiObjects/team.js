@@ -80,7 +80,9 @@ api.getTeamFull = function (id, cb) {
 
 api.teamFavoriteData = function (id, cb) {
 
-  var q = Team.findById(id);
+  var q = Team.findOne({_id:id});
+
+  console.log(id);
 
   q.populate('nextmatch.home_team', 'name logo');
   q.populate('nextmatch.away_team', 'name logo');
@@ -89,20 +91,30 @@ api.teamFavoriteData = function (id, cb) {
   q.populate('competitionid', 'name parserids');
   q.populate('topscorer', 'name uniformNumber pic stats.season.goalsTotal');
   q.populate('topassister', 'name uniformNumber pic stats.season.assistsTotal');
- 
+
+
   q.exec(function (err, team) {
 
+console.log(team.competitionid.parserids.Stats);
     if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
-
-      if (!team.competitionid.parserids.Stats && !team.league && !team.leagueids)
+ 
+      if (!team.competitionid && !team.league && !team.leagueids)
         return cbf(cb, '404: There is no league id for this team. Please contact platform administrator to ask for a free soda.', null);
 
       var leagueId = (team.competitionid.parserids.Stats || team.league || team.leagueids[0]);
       Stats_parser.UpdateTeamStatsFull(leagueId, team.parserids.Stats, null, function (error, response) {
         cbf(cb, error, response);
-      })
-    } else
+      }, id)
+    } else {
+      team = team.toObject();
+      if (!team.topscorer.stats || !team.topscorer.stats.season || !team.topscorer.stats.season.goalsTotal)
+        delete team.topscorer;
+
+      if (!team.topassister.stats || !team.topassister.stats.season || !team.topassister.stats.season.assistsTotal)
+        delete team.topassister;
+
       cbf(cb, err, team);
+    }
   });
 
 };
