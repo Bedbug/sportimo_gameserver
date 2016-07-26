@@ -283,7 +283,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         try {
                             if (response.statusCode == 404) {
                                 team.nextmatch = {
-                                    "eventdate": moment().utc().add(1, 'd').format(),
+                                    "eventdate": ISODate(moment().utc().add(1, 'd').format()),
                                 };
                                 return callback(null, team);
                             }
@@ -293,7 +293,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             team.nextmatch = {
                                 "home": "",
                                 "away": "",
-                                "eventdate": nextMatch.startDate[1].full,
+                                "eventdate":  ISODate(nextMatch.startDate[1].full),
                                 "homescore": 0,
                                 "awayscore": 0
                             };
@@ -338,7 +338,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             team.lastmatch = {
                                 "home": "",
                                 "away": "",
-                                "eventdate": lastEvent.startDate[1].full,
+                                "eventdate": ISODate(lastEvent.startDate[1].full),
                                 "homescore": 0,
                                 "awayscore": 0
                             };
@@ -1305,6 +1305,8 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
 
 // Execute all update functions that bring back team and player stats for a given competition and season
 Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallback) {
+
+    // TODO: We should check if next match date < Date.now and then call for stats update to team and players, otherwise it is not needed.
     var competitionTeams = [];
     var competition;
     async.waterfall(
@@ -1345,9 +1347,11 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                         });
                     else {
                         log.info('Now on to updating full stats for team %s', team.name.en);
+                        
                         Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
                             innerCallback(null);
                         });
+                        
                     }
                 }, callback);
             },
