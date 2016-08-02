@@ -188,6 +188,16 @@ module.exports = function (gamecardModule) {
             return res.status(200).json({ error: null, data: data });
         });
     });
+    
+    /* ReEvaluate UserGamecards */
+    router.put('/v1/gamecards/:matchId/users/reload', function(req, res) {
+        var matchId = req.params.matchId;
+        gamecardModule.ReEvaluateAll(matchId, function(error, success) {
+            if (error)
+                return res.status(500).json({ error: error.message });
+            return res.status(200).json({ error: null, data: success });
+       });
+    });
 
 
     return router;

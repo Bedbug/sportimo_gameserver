@@ -1,7 +1,7 @@
 var express = require('express'),
     router = express.Router(),
-    log = require('winston');
-_ = require('lodash');
+    log = require('winston'),
+    _ = require('lodash');
 
 module.exports = function (ModerationModule) {
 
@@ -16,7 +16,7 @@ module.exports = function (ModerationModule) {
         ModerationModule.GetMatch(req.body.id).updateTimes(req.body, function (err, result) {
             if (!err)
                 try {
-                    var strippedMatch = _.cloneDeep(match);
+                    var strippedMatch = _.cloneDeep(result);
                     if (strippedMatch.Timers)
                         delete strippedMatch.Timers;
                     if (strippedMatch.services)
