@@ -1425,13 +1425,14 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
     // console.log("Card Won");
     log.info('Detected a winning gamecard: %s', gamecard.id);
 
-    // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
-    gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.cardType, gamecard.pointsAwarded, function (err, result) {
-        if (err)
-            log.error(err.message);
-    });
 
     if (!simulationCheck) {
+        // Give Platform Rewards (update scores for leaderboards, user score, stats, achievements)
+        gamecards.HandleUserCardRewards(gamecard.userid, gamecard.matchid, gamecard.cardType, gamecard.pointsAwarded, function (err, result) {
+            if (err)
+                log.error(err.message);
+        });
+        
         MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, null, "won_cards");
         gamecards.publishWinToUser(gamecard);
     }
@@ -2070,6 +2071,79 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
         });
     };
     
+    var MatchStatsHandler = function(event, match) {
+        var stats = match.stats;
+        
+        var matchId = event.matchid;
+        var teamId = event.teamid;
+        var playerId = event.playerId;
+        var stat = event.stat;
+        var index = null;
+        
+        // Match stat
+        if (stat && matchId) {
+            index = _.findIndex(stats, {id: matchId});
+            if (index > -1)
+            {
+                if (!stats[index][stat])
+                    stats[index][stat] = event.incr;
+                else
+                    stats[index][stat] += event.incr;
+            }
+            else
+            {
+                let newStat = {
+                    id: matchId,
+                    name: 'match'
+                };
+                newStat[stat] = event.incr;
+                stats.push(newStat);
+            }
+        }
+        
+        // Team stat
+        if (stat && teamId) {
+            index = _.findIndex(stats, {id: teamId});
+            if (index > -1)
+            {
+                if (!stats[index][stat])
+                    stats[index][stat] = event.incr;
+                else
+                    stats[index][stat] += event.incr;
+            }
+            else
+            {
+                let newStat = {
+                    id: teamId,
+                    name: event.team
+                };
+                newStat[stat] = event.incr;
+                stats.push(newStat);
+            }
+        }
+        
+        // Player stat
+        if (stat && playerId) {
+            index = _.findIndex(stats, {id: playerId});
+            if (index > -1)
+            {
+                if (!stats[index][stat])
+                    stats[index][stat] = event.incr;
+                else
+                    stats[index][stat] += event.incr;
+            }
+            else
+            {
+                let newStat = {
+                    id: playerId,
+                    name: event.players && event.players[0] && event.players[0].name ? event.players[0].name : playerId
+                };
+                newStat[stat] = event.incr;
+                stats.push(newStat);
+            }
+        }
+    };
+    
     
     // find match and eventId in its timeline
     db.models.scheduled_matches.findById(matchId, function (matchError, match) {
@@ -2084,7 +2158,9 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
         
         // Reset userGamecards
         // Reset user stats ?
-        // Reset userActivity ?
+        
+        // Reset match stats
+        match.stats = [];
 
         // Restore remaining properties in userGamecards
         db.models.gamecardDefinitions.find({ matchid: matchId }, function(defError, definitionCards) {
@@ -2097,7 +2173,6 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     definitionsLookup[definition.id] = definition;
             });
                 
-        //db.models.userGamecards.update({matchid: matchId}, {$set: {pointsAwarded: null, wonTime: null, status: 1}}, function(error) {
             db.models.userGamecards.find({matchid: matchId}, function(err, userGamecards) {
                 if (err)
                     return outerCallback(err);
@@ -2117,8 +2192,6 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     gamecard.winConditions = null;
                     gamecard.terminationConditions = null;
                     gamecard.contributingEventIds = [];
-                    // Adjust creation time to counter delay injected while the event was waiting in the match module queue
-                    gamecard.created = moment.utc(gamecard.created).add(5, 'seconds').toDate();
                     
                     // Restore remaining property in winConditions and terminationConditions
                     if (gamecard.gamecardDefinitionId && definitionsLookup[gamecard.gamecardDefinitionId])
@@ -2159,7 +2232,11 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     eventData.playerid = !eventData.players || eventData.players.length == 0 ? null : eventData.players[0].id;
                     eventData.stat = _.keys(eventData.stats)[0];
                     eventData.incr = _.values(eventData.stats)[0];
-                    //eventData.time = eventData.created;
+
+                    // Adjust creation time to counter delay injected while the event was waiting in the match module queue
+                    //eventData.created = moment.utc(eventData.created).add(5, 'seconds').toDate();
+                    
+                    MatchStatsHandler(eventData, match);
                     
                     let eventRelatedGamecards = null;
                     
@@ -2228,24 +2305,6 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                         return false;
                     });
                     TerminationHandle(eventRelatedGamecards, minuteEvent, match);
-                    // // Find all instant gameCards that terminate, and decide if they have won or lost
-                    // eventRelatedGamecards = _.filter(userGamecards, function(gamecard) {
-                    //     if (gamecard.cardType == 'Instant' && gamecard.status == 1 && gamecard.terminationTime && gamecard.terminationTime < eventData.created) {
-                    //         return true;
-                    //     }  
-                    //     return false;
-                    // });
-                    // _.forEach(eventRelatedGamecards, function(gamecard) {
-                    //     if (gamecards.CheckIfWins(gamecard, true, moment.utc(eventData.created), match)) {
-                    //         //log.info("Detected a winning gamecard: " + gamecard.id);
-                    //     }
-                    //     else {
-                    //         gamecard.terminationTime = eventData.created;
-                    //         gamecard.status = 2;
-                    //         gamecard.pointsAwarded = 0;
-                    //         //log.info("Card lost: " + gamecard);                        
-                    //     }
-                    // });
                     
                     
                     // Find matched userGamecards that have the event stat in their winConditions
@@ -2310,6 +2369,29 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                 //     gamecard.markModified('terminationConditions');
                 //     gamecard.save(cbk);
                 // }, outerCallback);
+                
+                // Save the updated scores collection for user scores in this match
+                // ToDo
+                let userGroups = _.groupBy(userGamecards, 'userid');
+                let userPoints = 0;
+                let userCardsWon = 0;
+                let userInstantsWon = 0;
+                let userOverallWon = 0;
+                _.forEach(userGroups, function(userGroup) {
+                    userPoints = _.sumBy(userGroup, 'pointsAwarded');
+                    userCardsWon = _.sumBy(userGroup, function(usercard) {
+                        return usercard.pointsAwarded && usercard.pointsAwarded > 0 ? 1 : 0; 
+                    });
+                    userInstantsWon = _.sumBy(userGroup, function(usercard) {
+                        return usercard.pointsAwarded && usercard.pointsAwarded > 0 && usercard.cardType == 'Instant' ? 1 : 0;
+                    });
+                    userOverallWon = _.sumBy(userGroup, function(usercard) {
+                        return usercard.pointsAwarded && usercard.pointsAwarded > 0 && usercard.cardType == 'Overall' ? 1 : 0;
+                    });
+                })
+                // Save the updated users collection about total cards and points won by each user
+                // ToDo
+                
                 outerCallback(userGamecards);
             });
         });
@@ -2336,7 +2418,7 @@ gamecards.TerminateMatch = function (match, callback) {
         }
 
         mongoGamecards.forEach(function (gamecard) {
-            if (gamecards.CheckIfWins(gamecard, true)) {
+            if (gamecards.CheckIfWins(gamecard, true, null, match)) {
                 // Send an event through Redis pub/sub:
                 log.info("Detected a winning gamecard: " + gamecard);
             }
