@@ -422,6 +422,27 @@ apiRoutes.get('/v1/users/:id/messages', function (req, res) {
     })
 });
 
+// Delete message from user
+apiRoutes.delete('/v1/users/:id/messages/:mid', function (req, res) {
+
+    var q = User.findById(req.params.id);
+
+    q.exec(function (err, user) {
+        if (!err) {
+
+            user.inbox = _.without(user.inbox, req.params.mid);
+            res.status(200).send(user.inbox);
+
+            user.unread = 0;
+            user.save(function (err, result) {
+                if (err) console.log(err);
+                 res.status(200).send(result);
+            });
+        } else
+            res.status(500).send(err);
+    })
+});
+
 //Get user messages
 apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 
@@ -490,6 +511,16 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 // }
 
 
+// This is a route used by clients to set the eligility of the user for match prizes 
+// apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', jwtMiddle, function (req, res) {
+apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', function (req, res) {
+    Scores.findOne({game_id:req.params.mid, user_id:req.params.uid}, function (err, scoreEntry) {
+        scoreEntry.prize_eligible = req.params.prelbool;
+        scoreEntry.save(function(err,result){
+            res.send(result);
+        })
+    });
+});
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@ 

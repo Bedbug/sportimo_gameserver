@@ -52,8 +52,12 @@ api.item = function (req, res) {
                                 if (err)
                                     return res.status(500).json(err);
 
-                                if (result[0])
+                                if (result[0]) {
                                     game.userScore = result[0].score;
+                                    if (result[0].prize_eligible)
+                                        game.prize_eligible = result[0].prize_eligible;
+
+                                }
 
                                 UserGamecards.find({ matchid: gameid, userid: userid }, function (cardsError, userCards) {
                                     if (cardsError)
@@ -196,7 +200,7 @@ api.updateHeadToHead = function (req, res) {
         return res.status(500).json('No item Provided. Please provide valid team data.');
     }
 
-    return Matches.findOneAndUpdate({ _id: req.params.gameid }, {headtohead: req.body}, function (err, result) {
+    return Matches.findOneAndUpdate({ _id: req.params.gameid }, { headtohead: req.body }, function (err, result) {
         if (!err) {
             return res.status(200).json(result);
         } else {

@@ -12,6 +12,9 @@ var express = require('express'),
 
 api.findPollByTag = function (req, res) {
 	var q = polls.find({ 'tags._id': req.params.tag });
+
+	q.sort({"created":-1});
+
     q.exec(function (err, polls) {
 		if (!err) {
 
