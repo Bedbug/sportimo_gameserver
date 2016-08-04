@@ -24,6 +24,7 @@ else {
         pointsPerMinute: Number,
         activationLatency: Number,
         duration: Number,
+        specialActivationLatency: {DoublePoints: Number, DoubleTime: Number},
         winConditions: [Schema.Types.Mixed],
         terminationConditions: [Schema.Types.Mixed]
     }, { _id: false });
@@ -36,7 +37,8 @@ else {
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
         primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
         // Trigger specifications
-        activationLatency: Number, // seconds between the wildcard's creation and activation
+        activationLatency: Number, // seconds between the gamecard's creation and activation
+        specialActivationLatency: Number, // seconds between the gamecard's special ability creation (double time, double points) and activation
         duration: Number,   // seconds between the wildcard's activation and termination
         appearConditions: [Schema.Types.Mixed], // the wildcard will appear (start its lifetime in a pending state 0) when all the conditionsToAppear are met.
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met

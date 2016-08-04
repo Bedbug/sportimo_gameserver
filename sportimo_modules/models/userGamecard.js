@@ -57,6 +57,11 @@ else {
         creationTime: Date,
         activationTime: Date,
         terminationTime: Date,
+        specialActivationLatency: Schema.Types.Mixed,
+        specialCreationTime: Date,
+        specialActivationTime: Date,
+		specialType: { type: String, enum: ['None', 'DoubleTime', 'DoublePoints'], default: 'None' },
+        specialStatus: 0, // 0: not enabled, 1: pending activation 2: activated
         isDoubleTime: { type: Boolean, default: false },
         isDoublePoints: { type: Boolean, default: false },
         wonTime: Date,

@@ -33,6 +33,7 @@ else {
         primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
         // Trigger specifications
         activationLatency: Number,
+        specialActivationLatency: Number,
         duration: Number,  // instant gamecards only;
         appearConditions: [Schema.Types.Mixed],
         winConditions: [Schema.Types.Mixed],
