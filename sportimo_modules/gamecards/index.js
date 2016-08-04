@@ -1177,8 +1177,8 @@ gamecards.Tick = function () {
             return db.models.gamecardDefinitions.update({ status: 0, activationTime: { $lt: itsNow } }, { $set: { status: 1 } }, { multi: true }, callback);
         },
         function(callback) {
-            // Update all special gamecards (power-ups) that should be activated
-            db.models.userGamecards.find({specialStatus: 1, specialActivationTime: { $lt: itsNow } }, function(error, userGamecards) {
+            // Update all special gamecards (power-ups) still in play that should be activated
+            db.models.userGamecards.find({status: 1, specialStatus: 1, specialActivationTime: { $lt: itsNow } }, function(error, userGamecards) {
                 if (error)
                     return callback(error);
                 return async.each(userGamecards, function(userGamecard, cbk) {
