@@ -1073,7 +1073,7 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         isDoubleTime: userGamecard.isDoubleTime || false,
         isDoublePoints: userGamecard.isDoublePoints || false,
         status: userGamecard.status || 0,
-        specialType: userGamecard.specialType || 0,
+        specialType: userGamecard.specialType || 'None',
         specialStatus: userGamecard.specialStatus || 0
     };
 
@@ -1191,6 +1191,8 @@ gamecards.Tick = function () {
         				}
         				else
         					userGamecard.startPoints = userGamecard.startPoints * 2;
+        					
+        				userGamecard.isDoublePoints = true;
                     }
                     if (userGamecard.specialType == 'DoubleTime') {
         				if (userGamecard.duration) {

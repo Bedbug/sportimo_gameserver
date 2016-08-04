@@ -89,22 +89,24 @@ api.item = function (req, res) {
 };
 
 
-var TranslateUserGamecard = function (userGamecard) {
-    var retValue = {
-        id: userGamecard.id,
-        userid: userGamecard.userid,
-        matchid: userGamecard.matchid,
-        gamecardDefinitionId: userGamecard.gamecardDefinitionId,
-        title: userGamecard.title,
-        image: userGamecard.image,
-        text: userGamecard.text,
-        minute: userGamecard.minute,
-        segment: userGamecard.segment,
-        primaryStatistic: userGamecard.primaryStatistic,
-        cardType: userGamecard.cardType,
-        isDoublePoints: userGamecard.isDoublePoints,
-        isDoubleTime: userGamecard.isDoubleTime,
-        status: userGamecard.status
+gamecards.TranslateUserGamecard = function (userGamecard) {
+    let retValue = {
+        id: userGamecard.id || null,
+        userid: userGamecard.userid || null,
+        matchid: userGamecard.matchid || null,
+        gamecardDefinitionId: userGamecard.gamecardDefinitionId || null,
+        title: userGamecard.title || null,
+        image: userGamecard.image || null,
+        text: userGamecard.text || null,
+        minute: userGamecard.minute || 0,
+        segment: userGamecard.segment || 0,
+        primaryStatistic: userGamecard.primaryStatistic || null,
+        cardType: userGamecard.cardType || null,
+        isDoubleTime: userGamecard.isDoubleTime || false,
+        isDoublePoints: userGamecard.isDoublePoints || false,
+        status: userGamecard.status || 0,
+        specialType: userGamecard.specialType || 'None',
+        specialStatus: userGamecard.specialStatus || 0
     };
 
     if (userGamecard.startPoints)
@@ -116,6 +118,8 @@ var TranslateUserGamecard = function (userGamecard) {
 
     if (userGamecard.activationLatency)
         retValue.activationLatency = userGamecard.activationLatency;
+    if (userGamecard.specialActivationLatency)
+        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
     if (userGamecard.pointsAwarded)
         retValue.pointsAwarded = userGamecard.pointsAwarded;
     if (userGamecard.duration)
@@ -132,10 +136,15 @@ var TranslateUserGamecard = function (userGamecard) {
         retValue.terminationTime = userGamecard.terminationTime;
     if (userGamecard.wonTime)
         retValue.wonTime = userGamecard.wonTime;
+    if (userGamecard.specialActivationLatency)
+        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
+    if (userGamecard.specialCreationTime)
+        retValue.specialCreationTime = userGamecard.specialCreationTime;
+    if (userGamecard.specialActivationTime)
+        retValue.specialActivationTime = userGamecard.specialActivationTime;
 
     return retValue;
 };
-
 // api.items = function(req, res) {
 
 //     var skip = null, limit = null;
