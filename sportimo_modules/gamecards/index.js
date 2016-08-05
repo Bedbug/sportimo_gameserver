@@ -478,6 +478,9 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         status: 1
     });
 
+    if (newDefinition.specialActivationLatency)
+        newDefinition.markModified('specialActivationLatency');
+
     // ToDo: replace text placeholders [[home_team_name]], [[away_team_name]], [[player_name]]
     if (newDefinition.winConditions) {
         _.forEach(newDefinition.winConditions, function (condition) {
@@ -895,8 +898,10 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                         newCard.pointsPerMinute = optionsIndex.pointsPerMinute;
                     if (optionsIndex.activationLatency)
                         newCard.activationLatency = optionsIndex.activationLatency;
-                    if (optionsIndex.specialActivationLatency)
+                    if (optionsIndex.specialActivationLatency) {
                         newCard.specialActivationLatency = optionsIndex.specialActivationLatency;
+                        newCard.markModified('specialActivationLatency');
+                    }
                     if (optionsIndex.duration)
                         newCard.duration = optionsIndex.duration;
                     newCard.optionId = optionsIndex.optionId;
