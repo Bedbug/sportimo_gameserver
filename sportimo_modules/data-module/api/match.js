@@ -89,7 +89,7 @@ api.item = function (req, res) {
 };
 
 
-gamecards.TranslateUserGamecard = function (userGamecard) {
+var TranslateUserGamecard = function (userGamecard) {
     let retValue = {
         id: userGamecard.id || null,
         userid: userGamecard.userid || null,
