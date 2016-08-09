@@ -522,6 +522,37 @@ apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', function (re
     });
 });
 
+
+
+// This is a route used by clients to taunt other users 
+apiRoutes.get('/v1/taunts', function (req, res) {
+    mongoose.models.taunts.find({},function(err,result){
+       if(!err){
+           res.send(result);
+       }
+       else
+        res.status(500).send(err);
+   })
+});
+
+// This is a route used by clients to taunt other users 
+apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
+    var tauntData = req.body;
+    var usertaunt = mongoose.models.usertaunts(tauntData);
+   
+   usertaunt.save(function(err,result){
+       if(!err){
+           MessagingTools.SendTauntToUser(tauntData);
+           res.send(result);
+       }
+       else
+        res.status(500).send(err);
+   })
+
+   
+});
+
+
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 // @@ 
 // @@   User Activities
