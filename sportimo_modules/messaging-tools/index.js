@@ -175,6 +175,19 @@ MessagingTools.sendSocketMessageToUsers = function (ids, message) {
     }));
 }
 
+MessagingTools.SendTauntToUser = function (tauntData) {
+
+    PublishChannel.publish("socketServers", JSON.stringify({
+        sockets: true,
+        clients: [tauntData.recipient._id],
+        payload: {
+            type: "Taunt",
+            data: tauntData
+        }
+    }));
+}
+
+
 MessagingTools.SendMessageToInbox = function (msgData, callback) {
 
     //First create the message and save the instance in database
