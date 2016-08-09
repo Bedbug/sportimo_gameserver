@@ -11,6 +11,13 @@ if (mongoose.models.userGamecards)
     module.exports = mongoose.models.userGamecards;
 else {
     
+    var special = new mongoose.Schema({
+        creationTime: Date,
+        activationTime: Date,
+        activationLatency: Number,
+        status: { type: Number, default: 0 }    // 0: not enabled, 1: pending activation 2: activated
+    });
+    
     var condition = new mongoose.Schema({
        text: Schema.Types.Mixed,
        stat: String,
@@ -57,11 +64,12 @@ else {
         creationTime: Date,
         activationTime: Date,
         terminationTime: Date,
-        specialActivationLatency: Schema.Types.Mixed,
-        specialCreationTime: Date,
-        specialActivationTime: Date,
-		specialType: { type: String, enum: ['None', 'DoubleTime', 'DoublePoints'], default: 'None' },
-        specialStatus: 0, // 0: not enabled, 1: pending activation 2: activated
+        specials: { DoublePoints: special, DoubleTime: special },
+//         specialActivationLatency: Schema.Types.Mixed,
+//         specialCreationTime: Date,
+//         specialActivationTime: Date,
+// 		specialType: { type: String, enum: ['None', 'DoubleTime', 'DoublePoints'], default: 'None' },
+//         specialStatus: 0, // 0: not enabled, 1: pending activation 2: activated
         isDoubleTime: { type: Boolean, default: false },
         isDoublePoints: { type: Boolean, default: false },
         wonTime: Date,

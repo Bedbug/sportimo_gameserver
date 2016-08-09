@@ -15,6 +15,11 @@ var mongoose = require('mongoose'),
 if (mongoose.models.gamecardTemplates)
     module.exports = mongoose.models.gamecardTemplates;
 else {
+    var specialActivationLatencyType = new mongoose.Schema({
+        DoublePoints: Number, 
+        DoubleTime: Number
+    });
+    
     var optionTemplate = new mongoose.Schema({
         isVisible: Boolean,
         optionId: String,
@@ -24,7 +29,7 @@ else {
         pointsPerMinute: Number,
         activationLatency: Number,
         duration: Number,
-        specialActivationLatency: {DoublePoints: Number, DoubleTime: Number},
+        specialActivationLatency: specialActivationLatencyType,
         winConditions: [Schema.Types.Mixed],
         terminationConditions: [Schema.Types.Mixed]
     }, { _id: false });
@@ -38,7 +43,7 @@ else {
         primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
         // Trigger specifications
         activationLatency: Number, // seconds between the gamecard's creation and activation
-        specialActivationLatency: Number, // seconds between the gamecard's special ability creation (double time, double points) and activation
+        specialActivationLatency: specialActivationLatencyType, // seconds between the gamecard's special ability creation (double time, double points) and activation
         duration: Number,   // seconds between the wildcard's activation and termination
         appearConditions: [Schema.Types.Mixed], // the wildcard will appear (start its lifetime in a pending state 0) when all the conditionsToAppear are met.
         winConditions: [Schema.Types.Mixed], // the wildcard wins when all win conditions are met

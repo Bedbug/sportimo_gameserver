@@ -89,8 +89,8 @@ api.item = function (req, res) {
 };
 
 
-gamecards.TranslateUserGamecard = function (userGamecard) {
-    let retValue = {
+var TranslateUserGamecard = function (userGamecard) {
+    var retValue = {
         id: userGamecard.id || null,
         userid: userGamecard.userid || null,
         matchid: userGamecard.matchid || null,
@@ -105,8 +105,7 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         isDoubleTime: userGamecard.isDoubleTime || false,
         isDoublePoints: userGamecard.isDoublePoints || false,
         status: userGamecard.status || 0,
-        specialType: userGamecard.specialType || 'None',
-        specialStatus: userGamecard.specialStatus || 0
+        specials: userGamecard.specials
     };
 
     if (userGamecard.startPoints)
@@ -118,8 +117,6 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
 
     if (userGamecard.activationLatency)
         retValue.activationLatency = userGamecard.activationLatency;
-    if (userGamecard.specialActivationLatency)
-        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
     if (userGamecard.pointsAwarded)
         retValue.pointsAwarded = userGamecard.pointsAwarded;
     if (userGamecard.duration)
@@ -136,12 +133,6 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         retValue.terminationTime = userGamecard.terminationTime;
     if (userGamecard.wonTime)
         retValue.wonTime = userGamecard.wonTime;
-    if (userGamecard.specialActivationLatency)
-        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
-    if (userGamecard.specialCreationTime)
-        retValue.specialCreationTime = userGamecard.specialCreationTime;
-    if (userGamecard.specialActivationTime)
-        retValue.specialActivationTime = userGamecard.specialActivationTime;
 
     return retValue;
 };

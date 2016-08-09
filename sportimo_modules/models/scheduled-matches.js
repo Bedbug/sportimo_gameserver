@@ -10,6 +10,7 @@ else {
 
   var matchEvent = new mongoose.Schema({
     match_id: String,
+    parser_id: String,
     type: String,
     stats: mongoose.Schema.Types.Mixed,
     playerscount: Number,

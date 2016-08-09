@@ -859,7 +859,6 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 segment: gamecard.segment,
                 duration: gamecardDefinition.duration || null,
                 activationLatency: gamecardDefinition.activationLatency || null,
-                specialActivationLatency: gamecardDefinition.specialActivationLatency || null,
                 winConditions: gamecardDefinition.winConditions,
                 terminationConditions: gamecardDefinition.terminationConditions,
                 pointsPerMinute: gamecardDefinition.pointsPerMinute || 0,
@@ -872,9 +871,22 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 //terminationTime: gamecardDefinition.terminationTime,
                 wonTime: null,
                 pointsAwarded: null,
+                specials: { 
+                    "DoublePoints": {
+                        status: 0,
+                        creationTime: null,
+                        activationTime: null,
+                        activationLatency: gamecardDefinition.specialActivationLatency && gamecardDefinition.specialActivationLatency['DoublePoints'] ? gamecardDefinition.specialActivationLatency['DoublePoints'] : 0,
+                    },
+                    "DoubleTime": {
+                        status: 0,
+                        creationTime: null,
+                        activationTime: null,
+                        activationLatency: gamecardDefinition.specialActivationLatency && gamecardDefinition.specialActivationLatency['DoubleTime'] ? gamecardDefinition.specialActivationLatency['DoubleTime'] : 0,
+                    }
+                },
 
-                status: 0, //gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 0)
-                specialStatus: 0
+                status: 0 //gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 0)
             });
 
             if (newCard.duration && newCard.duration > 0)
@@ -899,8 +911,10 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                     if (optionsIndex.activationLatency)
                         newCard.activationLatency = optionsIndex.activationLatency;
                     if (optionsIndex.specialActivationLatency) {
-                        newCard.specialActivationLatency = optionsIndex.specialActivationLatency;
-                        newCard.markModified('specialActivationLatency');
+                        if (optionsIndex.specialActivationLatency['DoublePoints'])
+                            newCard.specials.DoublePoints.activationLatency = optionsIndex.specialActivationLatency['DoublePoints'];
+                        if (optionsIndex.specialActivationLatency['DoubleTime'])
+                            newCard.specials.DoubleTime.activationLatency = optionsIndex.specialActivationLatency['DoubleTime'];
                     }
                     if (optionsIndex.duration)
                         newCard.duration = optionsIndex.duration;
@@ -961,39 +975,53 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
                     return callback(error);
 
                 if (!userGamecard)
-                    return callback(null, "The userGamecardId " + userGamecardId + " is not found");
+                    return callback(null, "The userGamecardId " + userGamecardId + " is not found", null);
 
                 if (userGamecard.status > 1)
-                    return callback(null, "The userGamecardId " + userGamecard.id + " is completed, no specials can be played.");
+                    return callback(null, "The userGamecardId " + userGamecard.id + " is completed, no specials can be played.", null);
 
                 if (options.doubleTime && userGamecard.cardType == 'Overall')
-                    return callback(null, "Cannot add double time in an Overall gamecard " + userGamecard.id);
+                    return callback(null, "Cannot add double time in an Overall gamecard " + userGamecard.id, null);
 				
-				if (userGamecard.isDoublePoints == true || userGamecard.isDoubleTime == true)
-					return callback(null, "A special power-up is already played on this userGamecard " + userGamecard.id);
+				if (userGamecard.isDoublePoints == true && userGamecard.isDoubleTime == true)
+					return callback(null, "All available special power-ups are already played on this userGamecard " + userGamecard.id, null);
+					
+				if (options.doublePoints && options.doublePoints == true && userGamecard.isDoublePoints && userGamecard.isDoublePoints == true)
+					return callback(null, "The Double Points power-up is already played on this userGamecard " + userGamecard.id, null);
+
+				if (options.doubleTime && options.doubleTime == true && userGamecard.isDoubleTime && userGamecard.isDoubleTime == true)
+					return callback(null, "The Double Time power-up is already played on this userGamecard " + userGamecard.id, null);
 
                 callback(null, null, userGamecard);
             });
         },
         function (validationError, userGamecard, callback) {
+            if (validationError)
+                return callback(null, validationError, null, null);
+                
             db.models.scheduled_matches.findById(userGamecard.matchid, function (error, match) {
                 if (error)
                     return callback(error);
-
-                if (validationError)
-                    return callback(null, validationError);
 
                 callback(null, null, userGamecard, match);
             });
         },
         function (validationError, userGamecard, match, callback) {
-            db.models.userGamecards.count({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: [{ isDoublePoints: true }, { isDoubleTime: true }] }, function (error, count) {
+            if (validationError)
+                return callback(null, validationError, null, null);
+                
+            db.models.userGamecards.find({ userid: userGamecard.userid, matchid: userGamecard.matchid, $or: [{ isDoublePoints: true }, { isDoubleTime: true }] }, 'isDoublePoints isDoubleTime', function (error, userGamecards) {
                 if (error)
                     return callback(error);
+                    
+                let count = 0;
+                count = _.sumBy(userGamecards, function(gamecard) {
+                    return gamecard.isDoublePoints == true && gamecard.isDoubleTime == true ? 2 : gamecard.isDoublePoints == true || gamecard.isDoubleTime == true ? 1 : 0;
+                });
 
                 if (match.settings && match.settings.gameCards && match.settings.gameCards.specials) {
                     if (count >= match.settings.gameCards.specials)
-                        return callback(null, 'This user has played already the allowed number of special Gamecards');
+                        return callback(null, 'This user has played already the allowed number of special Gamecards', null, null);
                 }
 
                 callback(null, null, userGamecard, match);
@@ -1004,17 +1032,21 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
             return outerCallback(error);
 
         if (validationError)
-            return outerCallback(null, validationError);
+            return outerCallback(null, validationError, null);
 		
 		let itsNow = moment.utc();
 
         if (options.doublePoints && options.doublePoints == true) {
-			userGamecard.specialCreationTime = itsNow.toDate();
-			userGamecard.specialType = 'DoublePoints';
-			
-			if (!userGamecard.specialActivationLatency || !userGamecard.specialActivationLatency[userGamecard.specialType] || userGamecard.specialActivationLatency[userGamecard.specialType] == 0 ) {
-				userGamecard.specialActivationTime = itsNow.toDate();
-				userGamecard.specialStatus = 2;
+            let special = userGamecard.specials['DoublePoints'];
+            
+            if (special.status != 0)
+				return outerCallback(null, "The Double Points power-up is already played on this userGamecard " + userGamecard.id, null);
+            
+			special.creationTime = itsNow.clone().toDate();
+
+			if (!special.activationLatency || special.activationLatency == 0 ) {
+				special.activationTime = itsNow.toDate();
+				special.status = 2;
 				
 				if (userGamecard.cardType == "Instant") {
 					userGamecard.startPoints = userGamecard.startPoints * 2;
@@ -1026,29 +1058,33 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 				userGamecard.isDoublePoints = true;
 			}
 			else {
-				userGamecard.specialActivationTime = itsNow.add(userGamecard.specialActivationLatency[userGamecard.specialType], 'ms').toDate();
-				userGamecard.specialStatus = 1;
+				special.activationTime = itsNow.clone().add(special.activationLatency, 'milliseconds').toDate();
+				special.status = 1;
 			}
         }
         if (options.doubleTime && options.doubleTime == true) {
-			userGamecard.specialCreationTime = itsNow.toDate();
-			userGamecard.specialType = 'DoubleTime';
+            let special = userGamecard.specials['DoubleTime'];
+            
+            if (special.status != 0)
+				return outerCallback(null, "The Double Time power-up is already played on this userGamecard " + userGamecard.id, null);
 
-			if (!userGamecard.specialActivationLatency || !userGamecard.specialActivationLatency[userGamecard.specialType] || userGamecard.specialActivationLatency[userGamecard.specialType] == 0 ) {
-				userGamecard.specialActivationTime = itsNow.toDate();
-				userGamecard.specialStatus = 2;
+			special.creationTime = itsNow.toDate();
+
+			if (!special.activationLatency || special.activationLatency == 0 ) {
+				special.activationTime = itsNow.toDate();
+				special.status = 2;
 				
 				if (userGamecard.duration) {
 					if (userGamecard.terminationTime)
-						userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).add(userGamecard.duration, 'ms').toDate();
+						userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).clone().add(userGamecard.duration, 'milliseconds').toDate();
 					userGamecard.duration = userGamecard.duration * 2;
 
 					userGamecard.isDoubleTime = true;
 				}
 			}
 			else {
-				userGamecard.specialActivationTime = itsNow.add(userGamecard.specialActivationLatency[userGamecard.specialType], 'ms').toDate();
-				userGamecard.specialStatus = 1;
+				special.activationTime = itsNow.clone().add(special.activationLatency, 'milliseconds').toDate();
+				special.status = 1;
 			}
         }
 
@@ -1078,8 +1114,7 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         isDoubleTime: userGamecard.isDoubleTime || false,
         isDoublePoints: userGamecard.isDoublePoints || false,
         status: userGamecard.status || 0,
-        specialType: userGamecard.specialType || 'None',
-        specialStatus: userGamecard.specialStatus || 0
+        specials: userGamecard.specials
     };
 
     if (userGamecard.startPoints)
@@ -1091,8 +1126,6 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
 
     if (userGamecard.activationLatency)
         retValue.activationLatency = userGamecard.activationLatency;
-    if (userGamecard.specialActivationLatency)
-        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
     if (userGamecard.pointsAwarded)
         retValue.pointsAwarded = userGamecard.pointsAwarded;
     if (userGamecard.duration)
@@ -1109,12 +1142,6 @@ gamecards.TranslateUserGamecard = function (userGamecard) {
         retValue.terminationTime = userGamecard.terminationTime;
     if (userGamecard.wonTime)
         retValue.wonTime = userGamecard.wonTime;
-    if (userGamecard.specialActivationLatency)
-        retValue.specialActivationLatency = userGamecard.specialActivationLatency;
-    if (userGamecard.specialCreationTime)
-        retValue.specialCreationTime = userGamecard.specialCreationTime;
-    if (userGamecard.specialActivationTime)
-        retValue.specialActivationTime = userGamecard.specialActivationTime;
 
     return retValue;
 };
@@ -1183,13 +1210,24 @@ gamecards.Tick = function () {
         },
         function(callback) {
             // Update all special gamecards (power-ups) still in play that should be activated
-            db.models.userGamecards.find({status: 1, specialStatus: 1, specialActivationTime: { $lt: itsNow } }, function(error, userGamecards) {
+            db.models.userGamecards.find({status: 1, $or: [ {'specials.DoublePoints.status': 1, 'specials.DoublePoints.activationTime': {$lt: itsNow}}, {'specials.DoubleTime.status': 1, 'specials.DoubleTime.activationTime': {$lt: itsNow}}] }, function(error, userGamecards) {
                 if (error)
                     return callback(error);
+                    
                 return async.each(userGamecards, function(userGamecard, cbk) {
-                    userGamecard.specialStatus = 2;
+                    let keys = ['DoublePoints', 'DoubleTime'];
+                    let special = null;
+                    let specialKey = null;
+                    _.forEach(keys, function(key) {
+                        if (userGamecard.specials[key].status == 1 && userGamecard.specials[key].activationTime < itsNow) {
+                            special = userGamecard.specials[key];
+                            specialKey = key;
+                        }
+                    });
+                    
+                    special.status = 2;
 
-                    if (userGamecard.specialType == 'DoublePoints') {
+                    if (specialKey && specialKey == 'DoublePoints') {
         				if (userGamecard.cardType == "Instant") {
         					userGamecard.startPoints = userGamecard.startPoints * 2;
         					userGamecard.endPoints = userGamecard.endPoints * 2;
@@ -1199,10 +1237,10 @@ gamecards.Tick = function () {
         					
         				userGamecard.isDoublePoints = true;
                     }
-                    if (userGamecard.specialType == 'DoubleTime') {
+                    if (specialKey && specialKey == 'DoubleTime') {
         				if (userGamecard.duration) {
         					if (userGamecard.terminationTime)
-        						userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).add(userGamecard.duration, 'ms').toDate();
+        						userGamecard.terminationTime = moment.utc(userGamecard.terminationTime).clone().add(userGamecard.duration, 'ms').toDate();
         					userGamecard.duration = userGamecard.duration * 2;
         
         					userGamecard.isDoubleTime = true;
