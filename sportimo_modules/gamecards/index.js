@@ -874,14 +874,14 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 specials: { 
                     "DoublePoints": {
                         status: 0,
-                        creationTime: null,
-                        activationTime: null,
+                        // creationTime: null,
+                        // activationTime: null,
                         activationLatency: gamecardDefinition.specialActivationLatency && gamecardDefinition.specialActivationLatency['DoublePoints'] ? gamecardDefinition.specialActivationLatency['DoublePoints'] : 0,
                     },
                     "DoubleTime": {
                         status: 0,
-                        creationTime: null,
-                        activationTime: null,
+                        // creationTime: null,
+                        // activationTime: null,
                         activationLatency: gamecardDefinition.specialActivationLatency && gamecardDefinition.specialActivationLatency['DoubleTime'] ? gamecardDefinition.specialActivationLatency['DoubleTime'] : 0,
                     }
                 },
@@ -1087,13 +1087,15 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 				special.status = 1;
 			}
         }
-
-        userGamecard.save(function (err,result) {
+        // userGamecard.save(function (err,result) {
+        db.models.userGamecards.findByIdAndUpdate(userGamecard._id, gamecards.TranslateUserGamecard(userGamecard),{new: true},
+        function (err,result) {
             if (err)
                 return outerCallback(err);
             
-            console.log(result);
-            outerCallback(null, null, gamecards.TranslateUserGamecard(result));
+            console.log(result.specials);
+
+            outerCallback(null, null, result);
         });
     });
 };
