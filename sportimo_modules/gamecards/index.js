@@ -1088,11 +1088,12 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 			}
         }
 
-        userGamecard.save(function (err) {
+        userGamecard.save(function (err,result) {
             if (err)
                 return outerCallback(err);
-
-            outerCallback(null, null, gamecards.TranslateUserGamecard(userGamecard));
+            
+            console.log(result);
+            outerCallback(null, null, gamecards.TranslateUserGamecard(result));
         });
     });
 };
