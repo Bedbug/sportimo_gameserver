@@ -104,6 +104,7 @@ var UserSchema = new Schema({
     stats: mongoose.Schema.Types.Mixed,
     level: { type: Number, default: 0 },
     achievements: [achievement],
+    blockedusers: [String],
     favoriteteams: [String]
 }, {
         timestamps: { updatedAt: 'lastActive' },

@@ -151,8 +151,8 @@ apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
                 expiresIn: 1440 * 60 // expires in 24 hours
             });
 
-             delete user.rankingStats;
-             
+            delete user.rankingStats;
+
             user.token = token;
             user.success = true;
             // return the information including token as JSON
@@ -212,13 +212,13 @@ apiRoutes.get('/v1/users', jwtMiddle, function (req, res) {
 
 // Route to return specific user (GET http://localhost:8080/api/users)
 apiRoutes.get('/v1/users/:id', jwtMiddle, function (req, res) {
-// apiRoutes.get('/v1/users/:id',  function (req, res) {
+    // apiRoutes.get('/v1/users/:id',  function (req, res) {
     var token = req.body.token || req.query.token || req.headers['x-access-token'];
 
     var decoded = {};
 
-    if(jwtDecode && token)
-    decoded = jwtDecode(token);
+    if (jwtDecode && token)
+        decoded = jwtDecode(token);
     console.log(decoded);
     if (decoded.admin) {
         // Full user Profile
@@ -320,7 +320,7 @@ apiRoutes.get('/v1/user/:id', function (req, res) {
 apiRoutes.put('/v1/users/:id', function (req, res) {
 
     if (req.body["picture"] != null)
-        Scores.update({ user_id: req.params.id }, { $set: { 'pic': req.body["picture"] } }, {multi: true }, function (err, result) {
+        Scores.update({ user_id: req.params.id }, { $set: { 'pic': req.body["picture"] } }, { multi: true }, function (err, result) {
             console.log("users.index.js:320 Pic changed");
         });
 
@@ -366,7 +366,7 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
                     });
 
                     var has = _.sumBy(eachUser.achievements, function (o) {
-                        if(o.has == o.total) o.completed = true; else o.completed = false;
+                        if (o.has == o.total) o.completed = true; else o.completed = false;
                         return _.multiply(o.has, o.value);
                     });
 
@@ -383,12 +383,12 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
 
 // Search users abses on string and return list of mini user objects
 apiRoutes.get('/v1/users/search/:val', function (req, res) {
-     User.find({$or:[ { "username": { "$regex": req.params.val, "$options": "i" }},{ "email": { "$regex": req.params.val, "$options": "i" }}]} )
-     .select('username email')
-     .limit(20)
-     .exec(function(err,docs){
-         res.send(docs);
-     })
+    User.find({ $or: [{ "username": { "$regex": req.params.val, "$options": "i" } }, { "email": { "$regex": req.params.val, "$options": "i" } }] })
+        .select('username email')
+        .limit(20)
+        .exec(function (err, docs) {
+            res.send(docs);
+        })
 });
 
 //Sends message to routers
@@ -396,9 +396,9 @@ apiRoutes.post('/v1/users/messages', function (req, res) {
 
     return MessagingTools.SendMessageToInbox(req.body, function (err, data) {
         if (!err)
-           return res.send(data);
+            return res.send(data);
         else
-           return res.sendStatus(500).send(err);
+            return res.sendStatus(500).send(err);
     })
 
 });
@@ -436,7 +436,7 @@ apiRoutes.delete('/v1/users/:id/messages/:mid', function (req, res) {
             user.unread = 0;
             user.save(function (err, result) {
                 if (err) console.log(err);
-                 res.status(200).send(result);
+                res.status(200).send(result);
             });
         } else
             res.status(500).send(err);
@@ -514,43 +514,96 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 // This is a route used by clients to set the eligility of the user for match prizes 
 // apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', jwtMiddle, function (req, res) {
 apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', function (req, res) {
-    Scores.findOne({game_id:req.params.mid, user_id:req.params.uid}, function (err, scoreEntry) {
+    Scores.findOne({ game_id: req.params.mid, user_id: req.params.uid }, function (err, scoreEntry) {
         scoreEntry.prize_eligible = req.params.prelbool;
-        scoreEntry.save(function(err,result){
+        scoreEntry.save(function (err, result) {
             res.send(result);
         })
     });
 });
 
-
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@ 
+// @@   User Taunts
 
 // This is a route used by clients to taunt other users 
 apiRoutes.get('/v1/taunts', function (req, res) {
-    mongoose.models.taunts.find({},function(err,result){
-       if(!err){
-           res.send(result);
-       }
-       else
-        res.status(500).send(err);
-   })
+    mongoose.models.taunts.find({}, function (err, result) {
+        if (!err) {
+            res.send(result);
+        }
+        else
+            res.status(500).send(err);
+    })
 });
 
 // This is a route used by clients to taunt other users 
 apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
     var tauntData = req.body;
-    var usertaunt = mongoose.models.usertaunts(tauntData);
-   
-   usertaunt.save(function(err,result){
-       if(!err){
-           MessagingTools.SendTauntToUser(tauntData);
-           res.send(result);
-       }
-       else
-        res.status(500).send(err);
-   })
 
-   
+    var q = User.findById(req.params.uid);
+    q.exec(function (err, result) {
+        if (!err) {
+
+            var exists = _.find(result.blockedusers, function (o) {
+                return o === tauntData.sender._id;
+            });
+
+            // Check first if the user is blocked
+            if (exists)
+                return res.send("Sender has been blocked by this user");
+            else {
+                var usertaunt = mongoose.models.usertaunts(tauntData);
+
+                usertaunt.save(function (err, result) {
+                    if (!err) {
+                        MessagingTools.SendTauntToUser(tauntData);
+                        res.send(result);
+                    }
+                    else
+                        res.status(500).send(err);
+                })
+            }
+        }
+    });
 });
+
+apiRoutes.get('/v1/users/:uid/block/:buid/:state', function (req, res) {
+    var q = User.findById(req.params.uid);
+
+    q.exec(function (err, result) {
+        if (!err) {
+
+            // if set block to true
+            if (req.params.state === "true") {
+                var exists = _.find(result.blockedusers, function (o) {
+                    return o === req.params.buid;
+                });
+                if (exists)
+                    return res.send("User already blocked");
+                else
+                    result.blockedusers.push(req.params.buid);
+            } else {
+                result.blockedusers = _.without(result.blockedusers, req.params.buid);
+            }
+
+            result.save(function (err, result) {
+
+                if (!err)
+                    return res.send({ "blocked": req.params.state })
+                else
+                    return res.status(500).send(err);
+            })
+
+
+        } else
+            res.status(500).send(err);
+    })
+
+
+
+});
+
 
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -574,7 +627,7 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     User.findById(req.params.uid)
         .select("username picture level stats achievements rankingStats")
         .populate({
-            path: 'rankingStats.bestRankMatch', 
+            path: 'rankingStats.bestRankMatch',
             select: 'home_team away_team home_score away_score start',
             model: 'scheduled_matches',
             populate: {
