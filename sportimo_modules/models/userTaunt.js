@@ -18,8 +18,7 @@ else {
             ref: 'users'
         },
         taunt: {
-            type: String,
-            ref: 'usertaunts'
+            type: mongoose.Schema.Types.Mixed
         },
         created: { type: Date, default: Date.now }
     };

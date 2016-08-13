@@ -10,6 +10,7 @@ if (mongoose.models.taunts)
 else {
     var fields = {
         type: { type: String },
+        term: { type: String},
         imgurl: { type: String },
         sprite: { type: String },
         text: { type: mongoose.Schema.Types.Mixed },

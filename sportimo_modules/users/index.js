@@ -540,7 +540,10 @@ apiRoutes.get('/v1/taunts', function (req, res) {
 // This is a route used by clients to taunt other users 
 apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
     var tauntData = req.body;
-
+    
+    if(!tauntData.sender._id || tauntData.recipient._id)
+        return res.status(500).send("Sender and/or recipient is missing.");
+    
     var q = User.findById(req.params.uid);
     q.exec(function (err, result) {
         if (!err) {
@@ -551,7 +554,7 @@ apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
 
             // Check first if the user is blocked
             if (exists)
-                return res.send("Sender has been blocked by this user");
+                return res.status(500).send("The user has blocked your taunts");
             else {
                 var usertaunt = mongoose.models.usertaunts(tauntData);
 
@@ -580,7 +583,7 @@ apiRoutes.get('/v1/users/:uid/block/:buid/:state', function (req, res) {
                     return o === req.params.buid;
                 });
                 if (exists)
-                    return res.send("User already blocked");
+                    return res.status(500).send("User already blocked");
                 else
                     result.blockedusers.push(req.params.buid);
             } else {
