@@ -3,10 +3,10 @@ var mongoose = require('mongoose');
 
 var config = {
   "db": "sportimov2",  
-  "host": "ds027835.mongolab.com",  
+  "host": "ds021165-a1.mlab.com", //"ds027835.mongolab.com",  
   "user": "bedbug",
   "pw": "a21th21",
-  "port": "27835"
+  "port": "21165" //"27835"
 };
 
 var port = (config.port.length > 0) ? ":" + config.port : '';
