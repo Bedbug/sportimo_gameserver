@@ -746,8 +746,33 @@ Parser.UpdateTeams = function (competitionId, callback) {
                         let teamsToUpdate = [];
                         let playersToAdd = [];
                         let playersToUpdate = [];
+                        //let playersToRemove = [];
 
                         let creationDate = new Date();
+                        
+                        // Find the players that exist in existingPlayersLookup but not in languageData["en"].players and add them to playersToUpdate after unlinking them from their team
+                        // Similarly find the teams that exist in existingTeamsLookup but not in languageData["en"].players and add them to teamsToUpdate after unlinking them from their competition
+                        let updatedPlayersLookup = {};
+                        let updatedTeamsLookup = {};
+                        _.forEach(languageData["en"].players, function(player) {
+                            if (!updatedPlayersLookup[player.playerId])
+                                updatedPlayersLookup[player.playerId] = true;
+                            if (!updatedTeamsLookup[player.team.teamId])
+                                updatedTeamsLookup[player.team.teamId] = true;
+                        });
+                        _.forEach(existingTeams, function(team) {
+                            if (!updatedTeamsLookup[team.parserids[Parser.Name]]) {
+                                team.competitionId = null;    
+                                teamsToUpdate.push(team);
+                            }
+                        });
+                        _.forEach(_.values(existingPlayersLookup), function(lookup) {
+                            if (!updatedPlayersLookup[lookup.parserids[Parser.Name]]) {
+                                lookup.teamId = null;
+                                playersToUpdate.push(lookup);
+                                //playersToRemove.push(lookup);
+                            }
+                        });
 
                         // Scan the english data to get all teams
                         _.forEach(languageData["en"].players, function (player) {
