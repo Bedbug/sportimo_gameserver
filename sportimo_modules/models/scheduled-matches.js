@@ -10,7 +10,7 @@ else {
 
   var matchEvent = new mongoose.Schema({
     match_id: String,
-    parser_id: String,
+    parserids: mongoose.Schema.Types.Mixed,
     type: String,
     stats: mongoose.Schema.Types.Mixed,
     playerscount: Number,
@@ -20,6 +20,7 @@ else {
     sender: String,
     time: Number,
     team: String,
+    description: String,
     // extra info property to store general references
     extrainfo: String,
     team_id: String,
