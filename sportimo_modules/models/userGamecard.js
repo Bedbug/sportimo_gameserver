@@ -63,17 +63,14 @@ else {
         //remainingUserInstances: Number,
         creationTime: Date,
         activationTime: Date,
+        pauseTime: Date, // when the gamecard is suspended because the current segment ends
+        resumeTime: Date, // when the gamecard is resumed with the next segment start, after being paused
         terminationTime: Date,
         specials: { DoublePoints: special, DoubleTime: special },
-//         specialActivationLatency: Schema.Types.Mixed,
-//         specialCreationTime: Date,
-//         specialActivationTime: Date,
-// 		specialType: { type: String, enum: ['None', 'DoubleTime', 'DoublePoints'], default: 'None' },
-//         specialStatus: 0, // 0: not enabled, 1: pending activation 2: activated
         isDoubleTime: { type: Boolean, default: false },
         isDoublePoints: { type: Boolean, default: false },
         wonTime: Date,
-        status: 0,  // 0: pending activation, 1: active, 2: terminated (dead)
+        status: { type: Number, default: 0 },  // 0: pending activation, 1: active, 2: terminated (dead), 3: paused
         // finally an array of event ids that have modified this userGamecard document since its instantiation, useful for modifying its state when an event is updated/removed
         contributingEventIds: [String]
     });
