@@ -404,7 +404,7 @@ Parser.prototype.GetMatchStatus = function (leagueName, matchId, callback) {
 
 Parser.prototype.TranslateMatchEvent = function(parserEvent)
 {
-    if (!parserEvent)
+    if (!parserEvent || !this.matchHandler)
         return null;
 
     //Not supported event types

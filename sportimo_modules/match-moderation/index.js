@@ -184,6 +184,9 @@ var ModerationModule = {
             match.timeline[0].events = [];
             match.state = 0;
             match.time = 1;
+            match.completed = false;
+            match.away_score = 0;
+            match.home_score = 0;
             match.save(function (err, result) {
                 feedstatuses.find({ matchid: matchid }).remove().exec(function (err, opResult) {
                     cbk(opResult);
