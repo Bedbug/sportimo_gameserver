@@ -106,13 +106,24 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return callback(null);
                 }
                 else {
-                    // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
-                    return HookedMatch.AddEvent(matchEvent, function () {
-                        setTimeout(function () {
-                            log.info('Dequeuing event ' + matchEvent.data.type);
-                            return callback();
-                        }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
-                    });
+                    if (matchEvent.type == 'Update') {
+                        // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
+                        return HookedMatch.UpdateEvent(matchEvent, function () {
+                            setTimeout(function () {
+                                log.info('Dequeuing event ' + matchEvent.data.type);
+                                return callback();
+                            }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
+                        });
+                    }
+                    else {
+                        // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
+                        return HookedMatch.AddEvent(matchEvent, function () {
+                            setTimeout(function () {
+                                log.info('Dequeuing event ' + matchEvent.data.type);
+                                return callback();
+                            }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
+                        });
+                    }
                 }
         }, HookedMatch.queueDelay);
 
@@ -733,7 +744,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 else
                     return console.log(err);
 
-            event.data = new matchEvents(event.data);
+            event.data = new matchEvents(event.data);   // this truncates the match event to the properties present in the matchEvent model. All other properties in event object are discarded.
 
             // console.log("Linked: "+ StatsHelper.Parse(event, match, log));
 
@@ -902,9 +913,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         });
         
         // If the event cannot be found based on its id, try finding it based on the id that the parser puts on it, on the parserids object property
-        if (!eventToUpdate && event.sender && event.parserids[event.sender]) {
+        if (!eventToUpdate && event.data.sender && event.data.parserids[event.data.sender]) {
             eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
-                return o.parserids[event.sender] == event.data.parserids[event.sender];
+                return o.parserids && o.parserids[event.data.sender] && o.parserids[event.data.sender] == event.data.parserids[event.data.sender];
             });
         }
 
@@ -914,7 +925,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             eventToUpdate.players = event.data.players;
         }
 
-
+        if (!eventToUpdate)
+            if (cbk)
+                return cbk(null);
+            else
+                return;
 
         // // Parses the event based on sport and makes changes in the match instance
         // StatsHelper.Parse(event, match);
@@ -964,9 +979,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         var updateObject = {
             timeline: this.data.timeline
-        }
+        };
 
-        matches.findOneAndUpdate({ _id: event.match_id }, updateObject, { new: true }, function (err, result) {
+        matches.findOneAndUpdate({ _id: eventToUpdate.match_id }, updateObject, { new: true }, function (err, result) {
             // thisMatch.save(function (err, done) {
             console.log(result.players);
             if (err)

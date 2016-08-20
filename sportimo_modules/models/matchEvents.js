@@ -6,6 +6,7 @@ var mongoose = require('mongoose'),
 
 var matchevent = new mongoose.Schema({
     match_id: String,
+    parserids: mongoose.Schema.Types.Mixed, // one id per sender parser
     type: String,
     stats: mongoose.Schema.Types.Mixed,
     playerscount: Number,
@@ -16,6 +17,7 @@ var matchevent = new mongoose.Schema({
     time: Number,
     team: String,
     team_id: String,
+    description: mongoose.Schema.Types.Mixed, // one description per language
     complete: Boolean,
     playerSelected: String,
     extrainfo: String,

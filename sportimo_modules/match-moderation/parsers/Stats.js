@@ -88,6 +88,7 @@ function Parser(matchContext, feedServiceContext){
     
     // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
     this.eventFeedSnapshot = { };
+    this.incompleteEventsLookup = {};
     
     // the parser upon initialization will inquire about all team players and their parserids.
     this.matchPlayersLookup = {};
@@ -430,20 +431,22 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
     var isTimelineEvent = timelineEvents[parserEvent.playEvent.playEventId] ? true : false
     var eventName = isTimelineEvent == true ? timelineEvents[parserEvent.playEvent.playEventId] : parserEvent.playEvent.name;
     eventName = eventName.replace(/ /g, "_").replace(/-/g, "_"); // global string replacement
+    var eventId = ComputeEventId(parserEvent);
 
 
     var translatedEvent = {
         type: 'Add',
         time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes,   // Make sure what time represents. Here we assume time to be the match minute from the match start.
         data: {
-            id: parserEvent.sequenceNumber,
+            id: eventId,
+            parserids: {},
             status: 'active',
             type: eventName,
             state: TranslateMatchPeriod(parserEvent.period, parserEvent.playEvent.playEventId),
-            sender: configuration.parserIdName,
+            sender: this.Name,
             time: parserEvent.time.additionalMinutes ? parserEvent.time.minutes + parserEvent.time.additionalMinutes : parserEvent.time.minutes, // ToDo: replace with a translateTime method (take into acount additionalMinutes)
             timeline_event: isTimelineEvent,
-            description: parserEvent.playText,
+            description: {},
             team: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].matchType : null,
             team_id: this.matchTeamsLookup[parserEvent.teamId] ? this.matchTeamsLookup[parserEvent.teamId].id : null,
             match_id: this.matchHandler._id,
@@ -452,6 +455,8 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
         },
         created: moment.utc().toDate() // ToDo: Infer creation time from match minute
     };
+    
+    translatedEvent.data.description['en'] = parserEvent.playText;
 
     // ToDo: In certain match events, we may want to split the event in two (or three)
     if (offensivePlayer)
@@ -463,6 +468,13 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
 
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
     translatedEvent.data.stats[eventName] = 1;
+    translatedEvent.data.parserids[this.Name] = eventId;
+    
+    var incompleteKeys = _.keys(this.incompleteEventsLookup);
+    if (IsParserEventComplete(parserEvent) == true && _.indexOf(incompleteKeys, translatedEvent.data.parserids[this.Name].toString()) > -1) {
+        translatedEvent.type = 'Update';
+        this.incompleteEventsLookup[eventId] = null;
+    }
 
     return translatedEvent;
 };
@@ -497,7 +509,7 @@ var IsParserEventComplete = function (parserEvent) {
     if (!parserEvent || !parserEvent.playEvent || !parserEvent.playEvent.playEventId)
         return false;
         
-    if (!parserEvent.period || !parserEvent.time || !parserEvent.time.minutes || !parserEvent.time.seconds)
+    if (!parserEvent.period || !parserEvent.time || parserEvent.time.minutes == null || parserEvent.time.minutes === undefined || parserEvent.time.seconds == null || parserEvent.time.seconds === undefined)
         return false;
         
     if (!parserEvent.teamId)
@@ -507,8 +519,23 @@ var IsParserEventComplete = function (parserEvent) {
         return false;
     
     return true;
-}
+};
 
+var IsTimelineEvent = function(parserEvent) {
+    // Return true if not a timeline event
+    if (_.indexOf(_.keys(timelineEvents), parserEvent.playEvent.playEventId.toString()) > -1)
+        return true;    
+    else 
+        return false;
+};
+
+
+var IsSegmentEvent = function(parserEvent) {
+    if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) > -1 || parserEvent.playEvent.playEventId == 10)
+        return true;
+    else
+        return false;
+};
 
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function() {
@@ -548,6 +575,25 @@ var ComputeEventMatchTime = function(parsedEvent) {
     return (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
 };
 
+var ComputeEventId = function(parsedEvent) {
+    // var idObject = {
+    //     type: parsedEvent.playEvent.playEventId,
+    //     state: parsedEvent.period,
+    //     min: parsedEvent.time.minutes + parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes : 0,
+    //     sec: parsedEvent.time.seconds
+    // };
+    
+    // return JSON.stringify(idObject);
+    
+    
+    var eventTypeFactor = 1000000 * parsedEvent.playEvent.playEventId;
+
+    if (!parsedEvent.period || !parsedEvent.time || !parsedEvent.time.minutes || !parsedEvent.time.seconds)
+        return eventTypeFactor;
+    return eventTypeFactor + (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
+};
+
+
 
 Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     if (error) {
@@ -565,13 +611,26 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
             lastMatchTime = itemMatchTime;
     });
 
-    // Produce the diff with eventFeedSnapshot
+    // Produce the diff with eventFeedSnapshot, select all from events that do not exist in eventFeedSnapshot
+    var eventId = null;
+    var incompleteKeys = _.keys(that.incompleteEventsLookup);
     var eventsDiff = _.filter(events, function(item) {
-        return !that.eventFeedSnapshot[item.sequenceNumber + ":" + item.playEvent.playEventId] && (TranslateMatchSegment(item) != null || item.playEvent.playEventId == 10 || ComputeEventMatchTime(item) >= lastMatchTime);
+        eventId = ComputeEventId(item);
+        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) >= lastMatchTime || (IsParserEventComplete(item) == true && _.indexOf(incompleteKeys, eventId.toString()) > -1));
     });
+    var isTimelineEvent = false;
     _.forEach(events, function(event) {
-        // ToDo: Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
-        that.eventFeedSnapshot[event.sequenceNumber + ":" + event.playEvent.playEventId] = event;
+        // Check if event is timeline event.
+        isTimelineEvent = IsTimelineEvent(event);
+        eventId = ComputeEventId(event);
+        
+        // Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
+        if (IsSegmentEvent(event) == true || IsTimelineEvent(event) == false || IsParserEventComplete(event) == true)
+            that.eventFeedSnapshot[eventId] = event;
+        else {
+            if (!that.incompleteEventsLookup[eventId])
+                that.incompleteEventsLookup[eventId] = event;
+        }
     });
 
     //if (Math.random() < 0.03)
@@ -582,10 +641,10 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         return;
         
     _.orderBy(eventsDiff, function(ev) {
-        return ev.time.minute + ev.time.seconds * 60;
+        return ev.time.minute * 60 + ev.time.seconds;
     });
 
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff);
+    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events);
         
     if (that.isPaused != true)
     {

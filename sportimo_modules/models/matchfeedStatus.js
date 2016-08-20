@@ -9,7 +9,8 @@ else {
     var matchfeedStatus = new mongoose.Schema({
         matchid: String,
         parsed_eventids: [String],
-        diffed_events: [mongoose.Schema.Types.Mixed]
+        diffed_events: [mongoose.Schema.Types.Mixed],
+        all_events: [mongoose.Schema.Types.Mixed]
       });
 
     module.exports = mongoose.model("matchfeedStatuses", matchfeedStatus);

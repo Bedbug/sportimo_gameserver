@@ -20,7 +20,7 @@ else {
     sender: String,
     time: Number,
     team: String,
-    description: mongoose.Schema.Types.Mixed, // one description per sender parser
+    description: mongoose.Schema.Types.Mixed, // one description per language
     // extra info property to store general references
     extrainfo: String,
     team_id: String,

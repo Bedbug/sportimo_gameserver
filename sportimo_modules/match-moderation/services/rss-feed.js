@@ -240,13 +240,13 @@ feedService.prototype.LoadCompetition = function(competitionId, callback)
     }
 };
 
-feedService.prototype.SaveParsedEvents = function(matchId, events, diffedEvents)
+feedService.prototype.SaveParsedEvents = function(matchId, events, diffedEvents, allEvents)
 {
     if (!mongoose)
         return;
         
     try {
-        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events}, $push: { diffed_events: diffedEvents } }, { upsert: true }, function(err, result) {
+        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events}, $push: { diffed_events: diffedEvents, all_events: allEvents } }, { upsert: true }, function(err, result) {
             if (err)
             {
                 log.error("Error while saving parser eventIds in match moderation: %s", err.message);
