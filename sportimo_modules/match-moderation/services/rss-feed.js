@@ -138,6 +138,9 @@ feedService.prototype.isActive = function()
 
 // Manage match events, simple proxy to match module
 feedService.prototype.AddEvent = function(event) {
+    if (this.active == false)
+        return;
+        
     feedService.prototype.queueCount++;
      log.info('[Feed service]: Sent a match event: %s\' %s ', event.data.time, event.data.type);
     this.emitter.emit('matchEvent', event);
@@ -145,18 +148,25 @@ feedService.prototype.AddEvent = function(event) {
 
 // Manage match events, simple proxy to match module
 feedService.prototype.emitStats = function(matchid, stats) {
+    if (this.active == false)
+        return;
 
     this.emitter.emit('emitStats', matchid, stats);
 };
 
 // Manage match segment advances, simple proxy to match module
 feedService.prototype.AdvanceMatchSegment = function(matchInstance) {
+    if (this.active == false)
+        return;
+        
     feedService.prototype.queueCount++;
     log.info('[Feed service]: Sent a nextMatchSegment event');
     this.emitter.emit('nextMatchSegment', matchInstance);
 };
 
 feedService.prototype.EndOfMatch = function(matchInstance) {
+    if (this.active == false)
+        return;
     
     this.emitter.emit('endOfMatch', matchInstance);   
     log.info('[Feed service]: Sent an endOfMatch event');
@@ -173,6 +183,8 @@ feedService.prototype.queueCount = 0;
 feedService.prototype.Terminate = function(callback)
 {
     var that = this;
+    that.active = false;
+    
     if (that.parser)
     {
         that.parser.Terminate( function() {

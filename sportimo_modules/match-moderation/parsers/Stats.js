@@ -261,9 +261,12 @@ Parser.prototype.Terminate = function(callback)
 {
     // End recurring task
     clearInterval(this.recurringTask);
+    
     // Cancel scheduled task, if existent
     if (this.scheduledTask)
         this.scheduledTask.cancel();
+        
+    this.isPaused = true;
         
     log.info('[Stats parser]: Terminated and closed down parser');
 
@@ -404,7 +407,7 @@ Parser.prototype.GetMatchStatus = function (leagueName, matchId, callback) {
 
 Parser.prototype.TranslateMatchEvent = function(parserEvent)
 {
-    if (!parserEvent || !this.matchHandler)
+    if (!parserEvent || !this.matchHandler || this.isPaused == true)
         return null;
 
     //Not supported event types
