@@ -642,7 +642,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         return;
         
     _.orderBy(eventsDiff, function(ev) {
-        return ev.time.minute * 60 + ev.time.seconds;
+        return (ev.period * 100 + ev.time.minutes + (ev.time.additionalMinutes || 0) ) * 60 + ev.time.seconds;
     });
 
     that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
