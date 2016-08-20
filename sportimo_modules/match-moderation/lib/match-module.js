@@ -48,8 +48,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         }
     };
 
-    // Boolean that informs the service if this instance should initialize feed services
-    HookedMatch.shouldInitAutoFeed = shouldInitAutoFeed;
+    // Boolean that informs the service if this instance should initialize feed services. If ommitted, default is true
+    HookedMatch.shouldInitAutoFeed = shouldInitAutoFeed || true;
 
     // Time spacing bewtween events 
     HookedMatch.queueDelay = 100;
@@ -109,6 +109,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                     return HookedMatch.AddEvent(matchEvent, function () {
                         setTimeout(function () {
+                            log.info('Dequeuing event ' + matchEvent.data.type);
                             return callback();
                         }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
                     });
@@ -164,7 +165,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     HookedMatch.StartService = function (service, callback) {
         var that = this;
 
-        if (!that.shouldInitAutoFeed) return callback(null);
+        if (that.shouldInitAutoFeed == false) return callback(null);
 
         var foundService = _.find(that.services, { type: service.type });
         if (foundService) {
@@ -899,6 +900,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
             return o._id == event.data._id;
         });
+        
+        // If the event cannot be found based on its id, try finding it based on the id that the parser puts on it, on the parserids object property
+        if (!eventToUpdate && event.sender && event.parserids[event.sender]) {
+            eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
+                return o.parserids[event.sender] == event.data.parserids[event.sender];
+            });
+        }
 
         // We have an update to players
         if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
@@ -1002,7 +1010,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         // 2. Rank achievements
         Achievements.Reward.rank_achievements(HookedMatch.id);
 
-        setInterval(function () {
+        setTimeout(function () {
             HookedMatch.Terminate();
         }, 1000);
     };
