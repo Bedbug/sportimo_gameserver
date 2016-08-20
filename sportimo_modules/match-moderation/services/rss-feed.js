@@ -161,10 +161,10 @@ feedService.prototype.EndOfMatch = function(matchInstance) {
     this.emitter.emit('endOfMatch', matchInstance);   
     log.info('[Feed service]: Sent an endOfMatch event');
 
-    // Try disposing all parser objects
+    // Try disposing all parser objects: This part is obsolete since cleaning up is now a task of the Terminate method
     //for (var key in this.parser.keys(require.cache)) {delete require.cache[key];}
-    this.parsername = null;
-    this.parser = null;
+    //this.parsername = null;
+    //this.parser = null;
 };
 
 // The count of events added to queue
@@ -175,14 +175,15 @@ feedService.prototype.Terminate = function(callback)
     var that = this;
     if (that.parser)
     {
-        that.parser.Terminate(callback);
-        setTimeout(function() { 
-            that.parsername = null;
-            that.parser = null;
-
-            if (callback)
-                return callback(null); 
-        }, 300);
+        that.parser.Terminate( function() {
+            setTimeout(function() { 
+                that.parsername = null;
+                that.parser = null;
+    
+                if (callback)
+                    return callback(null); 
+            }, 300);
+        });
     }
     else
     {
