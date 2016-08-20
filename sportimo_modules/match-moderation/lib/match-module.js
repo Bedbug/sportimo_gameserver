@@ -908,6 +908,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // console.log(event.data._id);
         //  console.log(this.data.timeline[event.data.state]);
+        
+        if (!this.data.timeline[event.data.state])
+            if (cbk)
+                return cbk(null);
+            else
+                return HookedMatch;
+        
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
             return o._id == event.data._id;
         });
@@ -929,7 +936,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             if (cbk)
                 return cbk(null);
             else
-                return;
+                return HookedMatch;
 
         // // Parses the event based on sport and makes changes in the match instance
         // StatsHelper.Parse(event, match);
@@ -962,7 +969,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             sockets: true,
             payload: {
                 type: "Stats_changed",
-                room: event.matchid,
+                room: eventToUpdate.match_id,
                 data: match.stats
             }
         }
@@ -981,18 +988,19 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             timeline: this.data.timeline
         };
 
-        matches.findOneAndUpdate({ _id: eventToUpdate.match_id }, updateObject, { new: true }, function (err, result) {
+        matches.findOneAndUpdate({ _id: HookedMatch.data._id }, updateObject, { new: true }, function (err, result) {
             // thisMatch.save(function (err, done) {
             console.log(result.players);
             if (err)
                 return log.error(err.message);
-            if (cbk)
-                cbk(null, eventToUpdate);
-
+                
             // if (result)
             //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
-
-            return HookedMatch;
+            
+            if (cbk)
+                return cbk(null, eventToUpdate);
+            else
+                return HookedMatch;
         });
 
     };

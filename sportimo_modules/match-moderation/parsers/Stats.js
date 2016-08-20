@@ -153,6 +153,8 @@ Parser.prototype.init = function(cbk)
                     _.forEach(response.parsed_eventids, function(eventid) {
                         that.eventFeedSnapshot[eventid] = true;
                     });
+                    if (response.incomplete_eventids)
+                        that.incompleteEventsLookup = response.incomplete_eventids;
                 }
                 callback(null);
             });
@@ -584,11 +586,10 @@ var ComputeEventId = function(parsedEvent) {
     // };
     
     // return JSON.stringify(idObject);
-    
-    
+
     var eventTypeFactor = 1000000 * parsedEvent.playEvent.playEventId;
 
-    if (!parsedEvent.period || !parsedEvent.time || !parsedEvent.time.minutes || !parsedEvent.time.seconds)
+    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === undefined || parsedEvent.time.seconds == null || parsedEvent.time.seconds === undefined)
         return eventTypeFactor;
     return eventTypeFactor + (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
 };
@@ -644,7 +645,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         return ev.time.minute * 60 + ev.time.seconds;
     });
 
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events);
+    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
         
     if (that.isPaused != true)
     {
