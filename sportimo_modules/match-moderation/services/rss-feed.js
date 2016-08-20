@@ -74,6 +74,7 @@ feedService.prototype.init = function (matchHandler, cbk) {
     try
     {
         var selectedParser = new parsers[that.parsername](matchHandler, that);
+        that.parser = selectedParser;
         selectedParser.init(function(error) {
             if (error)
                 return cbk(error);
@@ -88,7 +89,6 @@ feedService.prototype.init = function (matchHandler, cbk) {
             that.emitter = new MyEmitter();
             return cbk(null, that);
         });
-        that.parser = selectedParser;
     }
     catch(error)
     {
