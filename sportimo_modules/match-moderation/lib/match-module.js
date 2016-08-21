@@ -106,7 +106,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return callback(null);
                 }
                 else {
-                    if (eventName == 'Update') {
+                    if ( matchEvent && matchEvent.type && matchEvent.type == 'Update') {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.UpdateEvent(matchEvent, function () {
                             setTimeout(function () {
@@ -115,7 +115,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                             }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
                     }
-                    else if (eventName == 'Add') {
+                    else if (matchEvent && matchEvent.type && matchEvent.type == 'Add') {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.AddEvent(matchEvent, function () {
                             setTimeout(function () {
