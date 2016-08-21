@@ -845,13 +845,14 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
                 if (err)
                     return log.error(err.message);
-                if (cbk)
-                    cbk(null, evtObject);
 
                 if (result)
                     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
 
-                return HookedMatch;
+                if (cbk)
+                    return cbk(null, evtObject);
+                else
+                    return HookedMatch;
             });
         });
 

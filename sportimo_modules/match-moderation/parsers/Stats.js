@@ -575,7 +575,7 @@ Parser.prototype.TickMatchFeed = function() {
 
 
 var ComputeEventMatchTime = function(parsedEvent) {
-    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === undefined || parsedEvent.time.seconds == null || parsedEvent.time.seconds === undefined)
+    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === 'undefined' || parsedEvent.time.seconds == null || parsedEvent.time.seconds === 'undefined')
         return 0;
     return (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
 };
@@ -592,7 +592,7 @@ var ComputeEventId = function(parsedEvent) {
 
     var eventTypeFactor = 1000000 * parsedEvent.playEvent.playEventId;
 
-    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === undefined || parsedEvent.time.seconds == null || parsedEvent.time.seconds === undefined)
+    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === 'undefined' || parsedEvent.time.seconds == null || parsedEvent.time.seconds === 'undefined')
         return eventTypeFactor;
     return eventTypeFactor + (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
 };
@@ -620,7 +620,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     var incompleteKeys = _.keys(that.incompleteEventsLookup);
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
-        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) >= lastMatchTime || (IsParserEventComplete(item) == true && _.indexOf(incompleteKeys, eventId.toString()) > -1));
+        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) > lastMatchTime || (IsParserEventComplete(item) == true && _.indexOf(incompleteKeys, eventId.toString()) > -1));
     });
     var isTimelineEvent = false;
     _.forEach(events, function(event) {
