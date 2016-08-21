@@ -618,7 +618,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     var eventId = null;
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
-        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) > lastMatchTime || (IsParserEventComplete(item) == true && that.incompleteEventsLookup[eventId]));
+        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || (ComputeEventMatchTime(item) > lastMatchTime && !that.incompleteEventsLookup[eventId]) || (IsParserEventComplete(item) == true && that.incompleteEventsLookup[eventId]));
     });
     var isTimelineEvent = false;
     _.forEach(events, function(event) {
