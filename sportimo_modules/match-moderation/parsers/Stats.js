@@ -153,8 +153,8 @@ Parser.prototype.init = function(cbk)
                     _.forEach(response.parsed_eventids, function(eventid) {
                         that.eventFeedSnapshot[eventid] = true;
                     });
-                    if (response.incomplete_eventids)
-                        that.incompleteEventsLookup = response.incomplete_eventids;
+                    if (response.incomplete_events)
+                        that.incompleteEventsLookup = response.incomplete_events;
                 }
                 callback(null);
             });
