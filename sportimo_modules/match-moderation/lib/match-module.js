@@ -106,23 +106,26 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return callback(null);
                 }
                 else {
-                    if (matchEvent.type == 'Update') {
+                    if (eventName == 'Update') {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.UpdateEvent(matchEvent, function () {
                             setTimeout(function () {
                                 log.info('Dequeuing event ' + matchEvent.data.type);
                                 return callback();
-                            }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
+                            }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
                     }
-                    else {
+                    else if (eventName == 'Add') {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.AddEvent(matchEvent, function () {
                             setTimeout(function () {
                                 log.info('Dequeuing event ' + matchEvent.data.type);
                                 return callback();
-                            }, matchEvent.data.timeline_event ? HookedMatch.queueEventsSpace : 100);
+                            }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
+                    }
+                    else {
+                        return callback();
                     }
                 }
         }, HookedMatch.queueDelay);

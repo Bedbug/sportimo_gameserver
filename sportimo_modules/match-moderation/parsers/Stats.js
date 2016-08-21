@@ -647,8 +647,9 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     _.orderBy(eventsDiff, function(ev) {
         return ComputeEventMatchTime(ev);
     });
-
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
+    
+    if (that.matchHandler)
+        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
         
     if (that.isPaused != true)
     {
@@ -677,13 +678,15 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
                         var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
-                        translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
-                        translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
-                        if (translatedGoalEvent.players.length > 0) {
-                            if (translatedGoalEvent.players[0].name)
-                                translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
-                        } 
-                        that.feedService.AddEvent(translatedGoalEvent);
+                        if (translatedGoalEvent) {
+                            translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
+                            translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
+                            if (translatedGoalEvent.players.length > 0) {
+                                if (translatedGoalEvent.players[0].name)
+                                    translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
+                            } 
+                            that.feedService.AddEvent(translatedGoalEvent);
+                        }
                     }, 500);
                 }
                 // Determine if the event includes a deflected post, in this case create a deflected post event
@@ -694,7 +697,8 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         goalEvent.playEvent.playEventId = 53; // out of the timeline id range
                         goalEvent.playEvent.name = 'Deflected_on_Post';
                         var translatedDeflectionEvent = that.TranslateMatchEvent(goalEvent);
-                        that.feedService.AddEvent(translatedDeflectionEvent);
+                        if (translatedDeflectionEvent)
+                            that.feedService.AddEvent(translatedDeflectionEvent);
                     }, 500);
                     
                 }
