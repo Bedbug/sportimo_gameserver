@@ -475,10 +475,9 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
     translatedEvent.data.stats[eventName] = 1;
     translatedEvent.data.parserids[this.Name] = eventId;
     
-    var incompleteKeys = _.keys(this.incompleteEventsLookup);
-    if (IsParserEventComplete(parserEvent) == true && _.indexOf(incompleteKeys, translatedEvent.data.parserids[this.Name].toString()) > -1) {
+    if (IsParserEventComplete(parserEvent) == true && this.incompleteEventsLookup[eventId]) {
         translatedEvent.type = 'Update';
-        this.incompleteEventsLookup[eventId] = null;
+        delete this.incompleteEventsLookup[eventId];
     }
 
     return translatedEvent;
@@ -617,10 +616,9 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
 
     // Produce the diff with eventFeedSnapshot, select all from events that do not exist in eventFeedSnapshot
     var eventId = null;
-    var incompleteKeys = _.keys(that.incompleteEventsLookup);
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
-        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) > lastMatchTime || (IsParserEventComplete(item) == true && _.indexOf(incompleteKeys, eventId.toString()) > -1));
+        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || ComputeEventMatchTime(item) > lastMatchTime || (IsParserEventComplete(item) == true && that.incompleteEventsLookup[eventId]));
     });
     var isTimelineEvent = false;
     _.forEach(events, function(event) {
