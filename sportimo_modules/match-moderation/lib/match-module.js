@@ -926,17 +926,17 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             });
         }
 
-        // We have an update to players
-        if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
-            event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
-            eventToUpdate.players = event.data.players;
-        }
-
         if (!eventToUpdate)
             if (cbk)
                 return cbk(null);
             else
                 return HookedMatch;
+                
+        // We have an update to players
+        if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
+            event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
+            eventToUpdate.players = event.data.players;
+        }
 
         // // Parses the event based on sport and makes changes in the match instance
         // StatsHelper.Parse(event, match);
@@ -988,14 +988,17 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             timeline: this.data.timeline
         };
 
-        matches.findOneAndUpdate({ _id: HookedMatch.data._id }, updateObject, { new: true }, function (err, result) {
+        matches.findOneAndUpdate({ _id: this.data._id }, updateObject, { new: true }, function (err, result) {
             // thisMatch.save(function (err, done) {
-            console.log(result.players);
+            // console.log(result.players);
             if (err)
                 return log.error(err.message);
                 
             // if (result)
             //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+            
+            // ToDo: When ready, uncomment the following:
+            // HookedMatch.gamecards.ReEvaluateAll();
             
             if (cbk)
                 return cbk(null, eventToUpdate);

@@ -575,7 +575,7 @@ Parser.prototype.TickMatchFeed = function() {
 
 
 var ComputeEventMatchTime = function(parsedEvent) {
-    if (!parsedEvent.period || !parsedEvent.time || !parsedEvent.time.minutes || !parsedEvent.time.seconds)
+    if (!parsedEvent.period || !parsedEvent.time || parsedEvent.time.minutes == null || parsedEvent.time.minutes === undefined || parsedEvent.time.seconds == null || parsedEvent.time.seconds === undefined)
         return 0;
     return (parsedEvent.period * 100 + parsedEvent.time.minutes)*60 + (parsedEvent.time.additionalMinutes ? parsedEvent.time.additionalMinutes * 60 : 0) + parsedEvent.time.seconds;  
 };
@@ -645,7 +645,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         return;
         
     _.orderBy(eventsDiff, function(ev) {
-        return (ev.period * 100 + ev.time.minutes + (ev.time.additionalMinutes || 0) ) * 60 + ev.time.seconds;
+        return ComputeEventMatchTime(ev);
     });
 
     that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
