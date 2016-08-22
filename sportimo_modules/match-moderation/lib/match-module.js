@@ -1002,7 +1002,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
             
             // ToDo: When ready, uncomment the following:
-            // HookedMatch.gamecards.ReEvaluateAll();
+            // HookedMatch.gamecards.ReEvaluateAll(HookedMatch.id, function(gamecardsError) {
+            //     if (gamecardsError)
+            //         log.error(gamecardsError);
+                    
+            //     if (cbk)
+            //         return cbk(null, eventToUpdate);
+            //     else
+            //         return HookedMatch;
+            // });
             
             if (cbk)
                 return cbk(null, eventToUpdate);
