@@ -626,8 +626,8 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
         // Debugging code follows:
-        //  if (IsSegmentEvent(item) == false && IsParserEventComplete(item) == false && IsTimelineEvent(item) == true)
-        //      log.info('Ha!');
+          if (IsSegmentEvent(item) == false && IsParserEventComplete(item) == false && IsTimelineEvent(item) == true)
+              log.info('Incomplete event with eventId ' + eventId);
         return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || (ComputeEventMatchTime(item) > lastMatchTime && !that.incompleteEventsLookup[eventId]) || (IsParserEventComplete(item) == true && (!that.incompleteEventsLookup[eventId]) == false));
     });
     var isTimelineEvent = false;
@@ -675,8 +675,19 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
-                        var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
-                        that.feedService.AddEvent(translatedGoalEvent);
+                        
+                        eventId = ComputeEventId(goalEvent);
+                        if (!that.eventFeedSnapshot[eventId]) {
+                            // Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
+                            if (IsSegmentEvent(goalEvent) == true || IsTimelineEvent(goalEvent) == false || IsParserEventComplete(goalEvent) == true)
+                                that.eventFeedSnapshot[eventId] = goalEvent;
+                            else {
+                                if (!that.incompleteEventsLookup[eventId])
+                                    that.incompleteEventsLookup[eventId] = goalEvent;
+                            }
+                            var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                            that.feedService.AddEvent(translatedGoalEvent);
+                        }
                     }, 500);
                 }
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
@@ -685,15 +696,27 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
-                        var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
-                        if (translatedGoalEvent) {
-                            translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
-                            translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
-                            if (translatedGoalEvent.players.length > 0) {
-                                if (translatedGoalEvent.players[0].name)
-                                    translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
-                            } 
-                            that.feedService.AddEvent(translatedGoalEvent);
+                        
+                        eventId = ComputeEventId(goalEvent);
+                        if (!that.eventFeedSnapshot[eventId]) {
+                            // Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
+                            if (IsSegmentEvent(goalEvent) == true || IsTimelineEvent(goalEvent) == false || IsParserEventComplete(goalEvent) == true)
+                                that.eventFeedSnapshot[eventId] = goalEvent;
+                            else {
+                                if (!that.incompleteEventsLookup[eventId])
+                                    that.incompleteEventsLookup[eventId] = goalEvent;
+                            }
+                            var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                            
+                            if (translatedGoalEvent) {
+                                translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
+                                translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
+                                if (translatedGoalEvent.players.length > 0) {
+                                    if (translatedGoalEvent.players[0].name)
+                                        translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
+                                } 
+                                that.feedService.AddEvent(translatedGoalEvent);
+                            }
                         }
                     }, 500);
                 }
