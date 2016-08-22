@@ -117,6 +117,9 @@ function Parser(matchContext, feedServiceContext){
 Parser.prototype.init = function(cbk)
 {
     var that = this;
+    var isActive = null;
+    var startDate = null;
+    
     // Execute multiple async functions in parallel getting the player ids and parserids mapping
     async.parallel([
         function(callback) {
@@ -167,49 +170,13 @@ Parser.prototype.init = function(cbk)
                 that.league = response;
 
                 // Get the state of the match, and accordingly try to schedule the timers for polling for the match events
-                that.GetMatchStatus(that.league.parserids[that.Name], that.matchParserId, function(err, isActive, startDate) {
+                that.GetMatchStatus(that.league.parserids[that.Name], that.matchParserId, function(err, feedIsActive, matchStartDate) {
                     if (err)
                         return callback(err);
                     
-                    var scheduleDate = that.matchHandler.start || startDate;  
-                    if (!scheduleDate)
-                        return callback(new Error('No start property defined on the match to denote its start time. Aborting.'));
-
-                    var formattedScheduleDate = moment.utc(scheduleDate);
-                    formattedScheduleDate.subtract(300, 'seconds');
-
-                    var interval = that.feedService.interval || configuration.eventsInterval;
-                    if (interval < 1000)
-                        interval = 1000;
-                        
-                    var itsNow = moment.utc();
-
-                    // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
-                    if ((moment.utc(scheduleDate) < itsNow && isActive) || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)))
-                    {
-                        log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
-                        that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
-                    }
-                    else {
-                        // Schedule match feed event calls
-                        if (scheduleDate)
-                        {
-                            that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
-                            {
-                                log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
-                                that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
-                            });
-                            if (that.scheduledTask)
-                                log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
-                            else
-                                if (!that.matchHandler.completed|| that.matchHandler.completed == false)
-                                {
-                                    log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
-                                    that.TickMatchFeed();
-                                }
-                        }
-                    }
-
+                    isActive = feedIsActive;
+                    startDate = matchStartDate;
+                    
                     callback(null);
                 });
             });
@@ -250,6 +217,46 @@ Parser.prototype.init = function(cbk)
         if (error) {
             console.log(error.message);
             return cbk(error);
+        }
+
+
+        var scheduleDate = that.matchHandler.start || startDate;  
+        if (!scheduleDate)
+            return cbk(new Error('No start property defined on the match to denote its start time. Aborting.'));
+
+        var formattedScheduleDate = moment.utc(scheduleDate);
+        formattedScheduleDate.subtract(300, 'seconds');
+
+        var interval = that.feedService.interval || configuration.eventsInterval;
+        if (interval < 1000)
+            interval = 1000;
+            
+        var itsNow = moment.utc();
+
+        // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
+        if ((moment.utc(scheduleDate) < itsNow && isActive) || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)))
+        {
+            log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
+            that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
+        }
+        else {
+            // Schedule match feed event calls
+            if (scheduleDate)
+            {
+                that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
+                {
+                    log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
+                    that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
+                });
+                if (that.scheduledTask)
+                    log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
+                else
+                    if (!that.matchHandler.completed|| that.matchHandler.completed == false)
+                    {
+                        log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
+                        that.TickMatchFeed();
+                    }
+            }
         }
 
         cbk(null);
@@ -475,7 +482,7 @@ Parser.prototype.TranslateMatchEvent = function(parserEvent)
     translatedEvent.data.stats[eventName] = 1;
     translatedEvent.data.parserids[this.Name] = eventId;
     
-    if (IsParserEventComplete(parserEvent) == true && this.incompleteEventsLookup[eventId]) {
+    if (IsParserEventComplete(parserEvent) == true && (!this.incompleteEventsLookup[eventId]) == false) {
         translatedEvent.type = 'Update';
         delete this.incompleteEventsLookup[eventId];
     }
@@ -618,7 +625,10 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     var eventId = null;
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
-        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || (ComputeEventMatchTime(item) > lastMatchTime && !that.incompleteEventsLookup[eventId]) || (IsParserEventComplete(item) == true && that.incompleteEventsLookup[eventId]));
+        // Debugging code follows:
+        //  if (IsSegmentEvent(item) == false && IsParserEventComplete(item) == false && IsTimelineEvent(item) == true)
+        //      log.info('Ha!');
+        return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || (ComputeEventMatchTime(item) > lastMatchTime && !that.incompleteEventsLookup[eventId]) || (IsParserEventComplete(item) == true && (!that.incompleteEventsLookup[eventId]) == false));
     });
     var isTimelineEvent = false;
     _.forEach(events, function(event) {
