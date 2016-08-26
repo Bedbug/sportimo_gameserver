@@ -655,7 +655,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                             definitionIdsToDrop.push(key);
                         // From the definitions, remove those where an existing user gamecacrd is currently pending or active and is pending for resolution.
                         _.forEach(instancePerDefinition, function (userGamecard) {
-                            if (userGamecard.status < 2 && _.indexOf(definitionIdsToDrop, key) == -1)
+                            if (userGamecard.status != 2 && _.indexOf(definitionIdsToDrop, key) == -1)
                                 definitionIdsToDrop.push(key);
                         });
                         //log.info(instancePerDefinition.length);
@@ -772,7 +772,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                     return cbk(error);
                 sameInstanceCount = sameDefinitionUsercards.length || 0;
 
-                if (_.some(sameDefinitionUsercards, { status: 1 }) == true)
+                if (_.some(sameDefinitionUsercards, { status: 1 }) == true || _.some(sameDefinitionUsercards, { status: 3 }) == true)
                     return cbk(new Error("There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state"));
 
                 cbk(null, sameInstanceCount);
@@ -977,7 +977,7 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
                 if (!userGamecard)
                     return callback(null, "The userGamecardId " + userGamecardId + " is not found", null);
 
-                if (userGamecard.status > 1)
+                if (userGamecard.status == 2)
                     return callback(null, "The userGamecardId " + userGamecard.id + " is completed, no specials can be played.", null);
 
                 if (options.doubleTime && userGamecard.cardType == 'Overall')
@@ -1512,8 +1512,8 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
                 let id2StatItem = _.find(match.stats, { id: id2 });
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     return false;
-                let id1Stat = id1StatItem[condition.stat] || 0;
-                let id2Stat = id2StatItem[condition.stat] || 0;
+                let id1Stat = !id1StatItem ? 0 : id1StatItem[condition.stat] || 0;
+                let id2Stat = !id1StatItem ? 0 : id2StatItem[condition.stat] || 0;
                 if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
                     return false;
                 if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
@@ -1910,10 +1910,11 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
                     gamecard.markModified('appearConditions');
                     gamecard.save(cbk);
                 }
-                else
+                else {
                     async.setImmediate(function () {
                         return cbk(null);
-                    })
+                    });
+                }
         }, function (err) {
             if (err)
                 return err;
@@ -1925,6 +1926,56 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
 };
 
 
+
+// Resolve an incoming segment change. The result may be that some cards may be paused (status = 3), or some cards may be resumed (status = 1).
+// segmentIndex is the recently modified match state
+gamecards.ResolveSegment = function (matchId, segmentIndex) {
+    var itsNow = moment.utc();
+    
+    if (!matchId || !segmentIndex || _.indexOf([2, 4, 3, 5], segmentIndex) == -1)
+        return;
+        
+    // First half or second half or overtime ends. Pending userGamecards (status = 0) should be switched to paused (status = 3) and resume as activated after the pause
+    var systemTime = itsNow.toDate();
+    if (segmentIndex == 2 || segmentIndex == 4) {
+        db.models.userGamecards.update({ matchid: matchId, cardType: 'Instant', status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
+            if (error) {
+                log.error('Failed to pause user gamecards after segment ' + (segmentIndex - 1) + ' ends on match id %s !!!', matchId);
+                return error;
+            }
+        });
+    }
+    else
+    // Second half or Overtime starts
+    if (segmentIndex == 3 || segmentIndex == 5) {
+        db.models.userGamecards.find({ matchid: matchId, cardType: 'Instant', status: 3 }, function(error, userGamecards) {
+            if (error) {
+                log.error('Failed to resume paused cards after segment ' + segmentIndex + ' starts again on match id %s !!!', matchId);
+                return error;
+            }
+            
+            async.each(userGamecards, function(userGamecard, callback) {
+               userGamecard.status = 1;
+               userGamecard.resumeTime = systemTime;
+               if (userGamecard.terminationTime && userGamecard.creationTime && userGamecard.pauseTime && (!userGamecard.duration == false)) {
+                    let start = moment.utc(userGamecard.creationTime);
+                    let pause = moment.utc(userGamecard.pauseTime);
+                    let pauseDuration = pause.diff(start);
+                    let remainingDuration = userGamecard.duration - pauseDuration;
+                    userGamecard.terminationTime = itsNow.add(remainingDuration, 'ms');
+                    return db.models.userGamecards.findAndUpdate({ _id: userGamecard._id }, { $set: { status: userGamecard.status, resumeTime: userGamecard.resumeTime, terminationTime: userGamecard.terminationTime } }, callback);
+               }
+               else {
+                   async.setImmediate(function() {
+                      callback(null); 
+                   });
+               }
+            });
+       });
+    }        
+    
+
+};
 
 
 // Resolve an incoming match event and see if some matching wildcards win
@@ -2477,7 +2528,20 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                 });
                 //log.info('Gamecards diffed:   ' + gamecardsDiffed);
                 
-
+                _.parallel([
+                    function(callback) {
+                        async.each(userGamecards, function (gamecard, cbk) {
+                            gamecard.markModified('winConditions');
+                            gamecard.markModified('terminationConditions');
+                            gamecard.save(cbk);
+                        }, callback);
+                    }
+                    ], function(error) {
+                    if (error)
+                        outerCallback(error);
+                            
+                    outerCallback(null, userGamecards);
+                });
                 // Finally, save all userGamecards back
                 // async.each(userGamecards, function (gamecard, cbk) {
                 //     gamecard.markModified('winConditions');
@@ -2507,7 +2571,7 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                 // Save the updated users collection about total cards and points won by each user
                 // ToDo
                 
-                outerCallback(userGamecards);
+                outerCallback(null, userGamecards);
             });
         });
         
@@ -2520,7 +2584,7 @@ gamecards.TerminateMatch = function (match, callback) {
 
     let itsNow = moment.utc();
     const gamecardsQuery = {
-        status: 1,
+        status: { $in: [1, 3] },
         //cardType: "Overall",
         creationTime: { $lt: itsNow },
         matchid: match.id

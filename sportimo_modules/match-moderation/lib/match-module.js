@@ -577,6 +577,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 // };
 
                 // HookedMatch.gamecards.ResolveEvent(segmentEvent);
+                HookedMatch.gamecards.ResolveSegment(HookedMatch.id, thisMatch.state);
 
                 // Check if we should initiate a match timer to change the main TIME property.
                 startMatchTimer();
