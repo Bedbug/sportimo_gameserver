@@ -1962,7 +1962,7 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
                     let pause = moment.utc(userGamecard.pauseTime);
                     let pauseDuration = pause.diff(start);
                     let remainingDuration = userGamecard.duration - pauseDuration;
-                    userGamecard.terminationTime = itsNow.add(remainingDuration, 'ms');
+                    userGamecard.terminationTime = itsNow.clone().add(remainingDuration, 'ms').toDate();
                     
                     // Notify clients through socket server
                     redisPublish.publish("socketServers", JSON.stringify({
