@@ -1957,12 +1957,25 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
             async.each(userGamecards, function(userGamecard, callback) {
                userGamecard.status = 1;
                userGamecard.resumeTime = systemTime;
-               if (userGamecard.terminationTime && userGamecard.creationTime && userGamecard.pauseTime && (!userGamecard.duration == false)) {
-                    let start = moment.utc(userGamecard.creationTime);
+               if (userGamecard.terminationTime && userGamecard.activationTime && userGamecard.pauseTime && (!userGamecard.duration == false)) {
+                    let start = moment.utc(userGamecard.activationTime);
                     let pause = moment.utc(userGamecard.pauseTime);
                     let pauseDuration = pause.diff(start);
                     let remainingDuration = userGamecard.duration - pauseDuration;
                     userGamecard.terminationTime = itsNow.add(remainingDuration, 'ms');
+                    
+                    // Notify clients through socket server
+                    redisPublish.publish("socketServers", JSON.stringify({
+                        sockets: true,
+                        clients: [userGamecard.userid],
+                        payload: {
+                            type: "Card_resumed",
+                            client: userGamecard.userid,
+                            room: userGamecard.matchid,
+                            data: gamecards.TranslateUserGamecard(userGamecard)
+                        }
+                    }));
+                    
                     return db.models.userGamecards.findAndUpdate({ _id: userGamecard._id }, { $set: { status: userGamecard.status, resumeTime: userGamecard.resumeTime, terminationTime: userGamecard.terminationTime } }, callback);
                }
                else {
