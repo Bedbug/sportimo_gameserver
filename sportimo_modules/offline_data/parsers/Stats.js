@@ -1343,6 +1343,7 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
     // TODO: We should check if next match date < Date.now and then call for stats update to team and players, otherwise it is not needed.
     var competitionTeams = [];
     var competition;
+    var itsNow = moment.utc();
     async.waterfall(
         [
             function (callback) {
@@ -1357,7 +1358,11 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
                     if (error)
                         return callback(error);
-                    competitionTeams = teams;
+                        
+                    // Filter teams for the ones that should be updated, the ones that their next match date has already passed.
+                    competitionTeams = _.filter(teams, function(ateam) {
+                        return (!ateam.nextmatch || !ateam.nextmatch.eventdate || moment.utc(ateam.nextmatch.eventdate).isBefore(itsNow));
+                    });
                     callback(null);
                 });
             },
