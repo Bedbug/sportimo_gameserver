@@ -233,7 +233,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         callback(null, team);
                     }
                     catch (err) {
-                        return callback(err.errosta, team);
+                        return callback(err, team);
                     }
                 });
             },
@@ -283,32 +283,41 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         try {
                             if (response.statusCode == 404) {
                                 team.nextmatch = {
-                                    "eventdate": ISODate(moment().utc().add(1, 'd').format()),
+                                    "eventdate": moment().utc().add(1, 'd').toDate(),
                                 };
                                 return callback(null, team);
                             }
-
-                            var nextMatch = response.body.apiResults[0].league.season.eventType[0].events[0];
-
-                            team.nextmatch = {
-                                "home": "",
-                                "away": "",
-                                "eventdate":  ISODate(nextMatch.startDate[1].full),
-                                "homescore": 0,
-                                "awayscore": 0
-                            };
-
-                            Parser.FindMongoTeamId(nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
-                                if (!err)
-                                    team.nextmatch.home = home_team ? home_team : { name: { en: nextMatch.teams[0].displayName } };
-
-                                Parser.FindMongoTeamId(nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
-                                    if (!err)
-                                        team.nextmatch.away = away_team ? away_team : { name: { en: nextMatch.teams[1].displayName } };
-
-                                    callback(null, team);
-                                });
+                            
+                            var itsNow = moment.utc();
+                            var nextEvents = _.filter(response.body.apiResults[0].league.season.eventType[0].events, function(match) {
+                                return itsNow.isBefore(moment.utc(match.startDate[1].full));
                             });
+                            
+                            if (nextEvents.length > 0) {
+                                var nextMatch = nextEvents[0];
+    
+                                team.nextmatch = {
+                                    "home": "",
+                                    "away": "",
+                                    "eventdate":  moment.utc(nextMatch.startDate[1].full).toDate(),
+                                    "homescore": 0,
+                                    "awayscore": 0
+                                };
+    
+                                Parser.FindMongoTeamId(nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
+                                    if (!err)
+                                        team.nextmatch.home = home_team ? home_team : { name: { en: nextMatch.teams[0].displayName } };
+    
+                                    Parser.FindMongoTeamId(nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
+                                        if (!err)
+                                            team.nextmatch.away = away_team ? away_team : { name: { en: nextMatch.teams[1].displayName } };
+    
+                                        callback(null, team);
+                                    });
+                                });
+                            }
+                            else
+                                callback(null, team);
                         }
                         catch (err) {
                             return callback(err, team);
@@ -338,7 +347,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                             team.lastmatch = {
                                 "home": "",
                                 "away": "",
-                                "eventdate": ISODate(lastEvent.startDate[1].full),
+                                "eventdate": moment.utc(lastEvent.startDate[1].full).toDate(),
                                 "homescore": 0,
                                 "awayscore": 0
                             };
