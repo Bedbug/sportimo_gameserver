@@ -394,6 +394,9 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                     q.exec(function (err, players) {
                         if (err)
                             return callback(err, team);
+                            
+                        if (players.length == 0)
+                            return callback(null, team, null);
 
                         team.topassister = players[0]._id.toString();
 
@@ -416,6 +419,9 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                         if (err)
                             return callback(err, team);
 
+                        if (players.length == 0)
+                            return callback(null, team, assistPlayer, null);
+                            
                         team.topscorer = players[0]._id.toString();
 
                         return callback(null, team, assistPlayer, players[0]);
@@ -436,12 +442,12 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
                 result = result.toObject();
 
-                if (!player.stats || !player.stats.season || !player.stats.season.goalsTotal)
+                if (!player || !player.stats || !player.stats.season || !player.stats.season.goalsTotal)
                     delete result.topscorer;
                 else
                     result.topscorer = player;
 
-                if (!assistPlayer.stats || !assistPlayer.stats.season || !assistPlayer.stats.season.assistsTotal)
+                if (!assistPlayer || !assistPlayer.stats || !assistPlayer.stats.season || !assistPlayer.stats.season.assistsTotal)
                     delete result.topassister;
                 else
                     result.topassister = assistPlayer;
