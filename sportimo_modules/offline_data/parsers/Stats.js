@@ -549,6 +549,9 @@ Parser.GetTeamPlayers = function (leagueName, languageId, callback) {
         if (error)
             return callback(error);
         try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
+                
             var players = response.body.apiResults[0].league;
             callback(null, players);
         }
@@ -941,37 +944,57 @@ Parser.UpdateTeams = function (competitionId, callback) {
 
                         // Try Upserting in mongo all teams and players
                         try {
-                            if (teamsToAdd && teamsToAdd.length > 0) {
-                                _.forEach(teamsToAdd, function (team) {
-                                    team.save();
-                                });
-                            }
-
-                            if (playersToAdd && playersToAdd.length > 0) {
-                                _.forEach(playersToAdd, function (player) {
-                                    player.save();
-                                });
-                            }
-
-                            if (teamsToUpdate && teamsToUpdate.length > 0) {
-                                _.forEach(teamsToUpdate, function (team) {
-                                    team.save();
-                                });
-                            }
-
-                            if (playersToUpdate && playersToUpdate.length > 0) {
-                                _.forEach(playersToUpdate, function (player) {
-                                    player.save();
-                                });
-                            }
+                            async.parallel([
+                                function(innerCallback) {
+                                    if (teamsToAdd && teamsToAdd.length > 0) {
+                                        async.each(teamsToAdd, function(teamToAdd, cbk1) {
+                                            return teamToAdd.save(cbk1);
+                                        }, innerCallback);
+                                    }
+                                    else
+                                        innerCallback(null);
+                                },
+                                function(innerCallback) {
+                                    if (playersToAdd && playersToAdd.length > 0) {
+                                        async.each(playersToAdd, function(playerToAdd, cbk2) {
+                                            return playerToAdd.save(cbk2);
+                                        }, innerCallback);
+                                    }
+                                    else
+                                        innerCallback(null);
+                                },
+                                function(innerCallback) {
+                                    if (teamsToUpdate && teamsToUpdate.length > 0) {
+                                        async.each(teamsToUpdate, function(teamToUpdate, cbk3) {
+                                            return teamToUpdate.save(cbk3);
+                                        }, innerCallback);
+                                    }
+                                    else
+                                        innerCallback(null);
+                                },
+                                function(innerCallback) {
+                                    if (playersToUpdate && playersToUpdate.length > 0) {
+                                        async.each(playersToUpdate, function(playerToUpdate, cbk4) {
+                                            return playerToUpdate.save(cbk4);
+                                        }, innerCallback);
+                                    }
+                                    else
+                                        innerCallback(null);
+                                }
+                            ], function(parallelError, parallelResults) {
+                                if (parallelError)
+                                    return callback(parallelError);
+                                    
+                                callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                            });
 
                         }
                         catch (err) {
-                            return callback(error);
+                            return callback(err);
                         }
 
 
-                        callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                        //callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
                     });
             });
 
@@ -1387,6 +1410,9 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     competition = comp;
                     callback(null);
                 });
+            },
+            function(callback) {
+                return Parser.UpdateTeams(competitionId, callback);
             },
             function (callback) {
                 Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
