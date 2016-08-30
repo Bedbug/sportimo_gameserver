@@ -541,7 +541,7 @@ apiRoutes.get('/v1/taunts', function (req, res) {
 apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
     var tauntData = req.body;
     
-    if(!tauntData.sender._id || tauntData.recipient._id)
+    if(!tauntData.sender._id || !tauntData.recipient._id)
         return res.status(500).send("Sender and/or recipient is missing.");
     
     var q = User.findById(req.params.uid);
