@@ -109,10 +109,27 @@ Parser.GetSeasonYear = function () {
     else return now.getFullYear() - 1;
 };
 
-// Helper method to retrieve a team based on the parser id
-Parser.FindMongoTeamId = function (parserid, fieldProjection, callback, teamId) {
 
-    var findConditions = { "parserids.Stats": parserid };
+Parser.FindCompetitionByParserid = function (leagueName, callback) {
+    var findQuery = { 'parserids.Stats' : leagueName };
+    
+    var q = mongoDb.competitions.findOne(findQuery);
+    
+    q.exec(function (error, competition) {
+        if (error)
+            return callback(error);
+            
+        if (!competition)
+            return callback(new Error('No competition found in database with this Id:' + leagueName));
+            
+        return callback(null, competition);
+    });
+}
+
+// Helper method to retrieve a team based on the parser id
+Parser.FindMongoTeamId = function (competitionId, parserid, fieldProjection, callback, teamId) {
+
+    var findConditions = { competitionid: competitionId, "parserids.Stats": parserid };
 
     if (teamId)
         findConditions._id = teamId;
@@ -127,7 +144,7 @@ Parser.FindMongoTeamId = function (parserid, fieldProjection, callback, teamId) 
             return callback(err);
 
         if (!team)
-            return callback(new Error('No team found in database with this Id'));
+            return callback(new Error('No team found in database with this parserId:' + parserid));
 
         return callback(null, team);
     });
@@ -204,11 +221,22 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
     const events_url = configuration.urlPrefix + leagueName + "/stats/teams/" + teamId + "/events/?accept=json&season=" + season + "&" + signature;
     // API Endpoint for top scorer
     const scorer_url = configuration.urlPrefix + leagueName + "/leaders/?teamId=" + teamId + "&accept=json&" + signature;
+    
+    var competitionId = null;
 
     async.waterfall(
         [
             function (callback) {
-                return Parser.FindMongoTeamId(teamId, false, callback, mongoTeamId);
+                Parser.FindCompetitionByParserid(leagueName, function(error, competition) {
+                    if (error)
+                        return callback(error);
+                    
+                    competitionId = competition.id;
+                    callback(null);
+                });
+            },
+            function (callback) {
+                return Parser.FindMongoTeamId(competitionId, teamId, false, callback, mongoTeamId);
             },
 
             // First let's update the stats for use in the client gamecard infos
@@ -304,11 +332,11 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                     "awayscore": 0
                                 };
     
-                                Parser.FindMongoTeamId(nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
+                                Parser.FindMongoTeamId(competitionId, nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
                                     if (!err)
                                         team.nextmatch.home = home_team ? home_team : { name: { en: nextMatch.teams[0].displayName } };
     
-                                    Parser.FindMongoTeamId(nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
+                                    Parser.FindMongoTeamId(competitionId, nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
                                         if (!err)
                                             team.nextmatch.away = away_team ? away_team : { name: { en: nextMatch.teams[1].displayName } };
     
@@ -352,7 +380,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 "awayscore": 0
                             };
 
-                            Parser.FindMongoTeamId(lastEvent.opponentTeam.teamId, 'name logo', function (teamError, opponent_team) {
+                            Parser.FindMongoTeamId(competitionId, lastEvent.opponentTeam.teamId, 'name logo', function (teamError, opponent_team) {
                                 if (teamError)
                                     return callback(teamError, team);
 
@@ -387,7 +415,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             function (team, callback) {
 
                 try {
-                    var q = mongoDb.players.find({ "teamId": team._id });
+                    var q = mongoDb.players.find({ "teamId": team.id });
                     q.sort({ "stats.season.assistsTotal": -1 });
                     q.limit(1);
                     q.select('name uniformNumber pic stats.season.assistsTotal');
@@ -411,7 +439,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
             // Ok, now let's finish it with a drumroll. Get that awesome top scorer dude!
             function (team, assistPlayer, callback) {
                 try {
-                    var q = mongoDb.players.find({ "teamId": team._id });
+                    var q = mongoDb.players.find({ "teamId": team.id });
                     q.sort({ "stats.season.goalsTotal": -1 });
                     q.limit(1);
                     q.select('name uniformNumber pic stats.season.goalsTotal');

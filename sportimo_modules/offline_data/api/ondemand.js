@@ -67,6 +67,7 @@ api.UpdateTeamStats = function (req, res) {
     }
 };
 
+
 // POST //function(competitionId, season, schedulePattern, callback)
 api.UpdateAllTeamsAddSchedule = function(req, res) {
     if (!req.params.competitionId)  
@@ -151,13 +152,19 @@ api.UpdateAllTeamsGetSchedule = function(req, res) {
     }    
 };
 
-// POST //function(leagueName, teamId, season, callback)
-api.UpdateTeamStatsFull = function (req, res) {
-    if (!req.params.competitionId)
-        return res.status(400).json({ error: "No 'competitionId' id parameter defined in the request path." });
 
 
-        api.GetTeamFullData(req.params.competitionId, req.body.teamid, req.body.season, function(err,response){
+// POST //function(leagueName, teamId, season, callback) UpdateOneTeamStats
+api.UpdateOneTeamStats = function (req, res) {
+    if (!req.body.leagueName)
+        return res.status(400).json({ error: "No 'leagueName' parameter defined in the request body." });
+    if (!req.body.teamid)
+        return res.status(400).json({ error: "No 'teamid' Stats team id parameter defined in the request body." });
+    if (!req.body.season)
+        return res.status(400).json({ error: "No 'season' parameter defined in the request body." });
+
+
+        api.GetTeamFullData(req.body.leagueName, req.body.teamid, req.body.season, function(err,response){
              if (err) {
                 response.error = err.message;
                 return res.status(500).json(response);
@@ -168,14 +175,14 @@ api.UpdateTeamStatsFull = function (req, res) {
 
 };
 
-api.GetTeamFullData = function (competitionId, teamid, season, outerCallback ) {
+api.GetTeamFullData = function (leagueName, teamid, season, outerCallback ) {
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
 
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateTeamStatsFull(competitionId, teamid, season, function (error, result) {
+            parser.UpdateTeamStatsFull(leagueName, teamid, season, function (error, result) {
                 if (!error) {
                     response.parsers[parser.Name] = result;
 
@@ -443,14 +450,13 @@ router.get('/', api.Welcome);
 router.post('/:competitionId/teams', api.UpdateAllTeams);
 
 
-// update team stats
 router.post('/teamstats/:competitionId/update', api.UpdateTeamStats);
 router.get('/teamstats/:competitionId/schedule', api.UpdateAllTeamsGetSchedule);
 router.post('/teamstats/:competitionId/schedule', api.UpdateAllTeamsAddSchedule);
 //router.delete('/teamstats/:competitionId/schedule', api.UpdateAllTeamsDeleteSchedule);
 
 // update team stats full
-router.post('/teamstats/:competitionId/update/full', api.UpdateTeamStatsFull);
+router.post('/teamstats/teamUpdate', api.UpdateOneTeamStats);
 
 // update all player career stats for all players in teamId
 router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);
