@@ -1037,6 +1037,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 MessagingTools.sendPushToUsers({}, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "final_result");
                 if (err)
                     log.error(err.message);
+
+                // Inform Clients for the match completion
+                PubChannel.publish("socketServers", JSON.stringify({
+                    sockets: true,
+                    payload: {
+                        type: "Match_full_time",
+                        room: HookedMatch.id.toString(),
+                    }
+                }));
             });
         });
 
