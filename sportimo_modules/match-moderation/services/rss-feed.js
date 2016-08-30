@@ -55,6 +55,8 @@ function feedService(service) {
     
     this.active = service.active === 'undefined' || service.active == null ?  true : service.active;
     
+    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ?  false : service.logAllEvents;
+    
     this.parser = null;
 }
 
@@ -258,6 +260,9 @@ feedService.prototype.SaveParsedEvents = function(matchId, events, diffedEvents,
         return;
         
     try {
+        if (this.logAllEvents == false)
+            incompleteEvents = null;
+            
         mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({matchid: matchId}, { $set: { matchid: matchId, parsed_eventids: events, incomplete_events: incompleteEvents}, $push: { diffed_events: diffedEvents, all_events: allEvents } }, { upsert: true }, function(err, result) {
             if (err)
             {
