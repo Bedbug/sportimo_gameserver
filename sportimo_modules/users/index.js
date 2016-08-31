@@ -13,6 +13,7 @@ var config = require('./config'), // get our config file
     UserActivities = mongoose.models.useractivities, // get our mongoose model
     Scores = mongoose.models.scores,
     Achievements = mongoose.models.achievements,
+    Subscriptions = mongoose.models.subscriptions,
     CryptoJS = require("crypto-js");
 _ = require('lodash');
 
@@ -455,8 +456,6 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
         } else
             res.status(500).send(err);
     })
-
-
 });
 
 // tools.SendMessageToInbox = function (msgData, callback) {
@@ -606,6 +605,38 @@ apiRoutes.get('/v1/users/:uid/block/:buid/:state', function (req, res) {
 
 
 });
+
+
+// @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+// @@ 
+// @@   User Subscriptions
+
+//Get user subscription
+apiRoutes.get('/v1/users/:id/subscription', function (req, res) {
+
+    var q = Subscriptions.find({userid: req.params.id});
+    q.exec(function (err, result) {
+        // console.log(unreadCount);
+        if (!err) {
+            res.status(200).send({result});
+        } else
+            res.status(500).send(err);
+    })
+});
+
+// Insert / Update user subscription
+apiRoutes.post('/v1/users/:id/subscription', function (req, res) {
+    
+    var q = Subscriptions.findAndUpdate({userid: req.params.id, receiptid: req.body.receiptid }, req.body,{upsert: true, new: true});
+    q.exec(function (err, result) {
+        // console.log(unreadCount);
+        if (!err) {
+            res.status(200).send({result});
+        } else
+            res.status(500).send(err);
+    })
+});
+
 
 
 
