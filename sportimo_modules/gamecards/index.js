@@ -1290,6 +1290,13 @@ gamecards.Tick = function () {
                         gamecard.terminationTime = moment.utc().toDate();
                         gamecard.status = 2;
                         gamecard.pointsAwarded = 0;
+
+                        // Before saving, reset any pending specials waiting to be activated: they will never will
+                        if (gamecard.specials && gamecard.specials.DoublePoints && gamecard.specials.DoublePoints.status == 1)
+                            gamecard.specials.DoublePoints.status = 0;
+                        if (gamecard.specials && gamecard.specials.DoubleTime && gamecard.specials.DoubleTime.status == 1)
+                            gamecard.specials.DoubleTime.status = 0;
+
                         // Send an event through Redis pu/sub:
                         log.info("Card lost: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
@@ -1539,6 +1546,12 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
     // console.log("-----------------------------------");
     // console.log("Card Won");
     log.info('Detected a winning gamecard: %s', gamecard.id);
+    
+    // Before saving, reset any pending specials waiting to be activated: they will never will
+    if (gamecard.specials && gamecard.specials.DoublePoints && gamecard.specials.DoublePoints.status == 1)
+        gamecard.specials.DoublePoints.status = 0;
+    if (gamecard.specials && gamecard.specials.DoubleTime && gamecard.specials.DoubleTime.status == 1)
+        gamecard.specials.DoubleTime.status = 0;
 
 
     if (!simulationCheck) {
@@ -1639,6 +1652,13 @@ gamecards.CheckIfLooses = function (gamecard, isCardTermination, lostTime) {
         gamecard.terminationTime = itsNow.toDate();
     // Award points
     gamecard.pointsAwarded = 0;
+    
+    // Before saving, reset any pending specials waiting to be activated: they will never will
+    if (gamecard.specials && gamecard.specials.DoublePoints && gamecard.specials.DoublePoints.status == 1)
+        gamecard.specials.DoublePoints.status = 0;
+    if (gamecard.specials && gamecard.specials.DoubleTime && gamecard.specials.DoubleTime.status == 1)
+        gamecard.specials.DoubleTime.status = 0;
+    
     return true;
 };
 
@@ -1682,6 +1702,13 @@ gamecards.GamecardsTerminationHandle = function (mongoGamecards, event, match, c
                 gamecard.terminationTime = moment.utc().toDate();
                 gamecard.status = 2;
                 gamecard.pointsAwarded = 0;
+                
+                // Before saving, reset any pending specials waiting to be activated: they will never will
+                if (gamecard.specials && gamecard.specials.DoublePoints && gamecard.specials.DoublePoints.status == 1)
+                    gamecard.specials.DoublePoints.status = 0;
+                if (gamecard.specials && gamecard.specials.DoubleTime && gamecard.specials.DoubleTime.status == 1)
+                    gamecard.specials.DoubleTime.status = 0;
+
                 // Send an event through Redis pu/sub:
                 // log.info("Card lost: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
