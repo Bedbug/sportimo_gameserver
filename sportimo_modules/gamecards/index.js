@@ -1319,7 +1319,7 @@ gamecards.Tick = function () {
             // Find all live match time in minutes, and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
 
             let itsNow = moment.utc();
-            db.models.scheduled_matches.find({ completed: { $ne: true }, start: { $lt: itsNow.toDate() } }, function (error, matches) {
+            db.models.scheduled_matches.find({ completed: { $ne: true }, start: { $lt: itsNow.toDate() } }, '_id state time stats', function (error, matches) {
                 if (error)
                     return callback(error);
 
@@ -1369,6 +1369,22 @@ gamecards.Tick = function () {
                         //         return parallelCbk(null);
                         //     }, 200);
                         // },
+                        // If we are in a not timed segment, pause all user gamecards that are not terminated (if any left)
+                        function(parallelCbk) {
+                            var systemTime = itsNow.toDate();
+                            if (match.state == 2 || match.state == 4) {
+                                db.models.userGamecards.update({ matchid: match.id, cardType: 'Instant', status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
+                                    if (error) {
+                                        log.error('Failed to pause user gamecards after segment ' + (match.state - 1) + ' ends on match id %s !!!', match.id);
+                                        return error;
+                                    }
+                                });  
+                            }
+                            else
+                                return async.setImmediate(function() {
+                                    return parallelCbk(null);
+                                });
+                        },
                         // Check match state and minute against user gamecards' terminationConditions
                         function (parallelCbk) {
                             const wildcardsQuery = {
