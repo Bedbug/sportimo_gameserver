@@ -1998,9 +1998,11 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
             }
             
             async.each(userGamecards, function(userGamecard, callback) {
-               userGamecard.status = 1;
-               userGamecard.resumeTime = systemTime;
-               if (userGamecard.terminationTime && userGamecard.activationTime && userGamecard.pauseTime && (!userGamecard.duration == false)) {
+                userGamecard.status = 1;
+                userGamecard.resumeTime = systemTime;
+                if (!userGamecard.activationTime || userGamecard.activationTime > userGamecard.pauseTime)
+                    userGamecard.activationTime = userGamecard.pauseTime; //  set it like this so as to conclude with a correct new terminationTime (see below)
+                if (userGamecard.terminationTime && userGamecard.activationTime && userGamecard.pauseTime && (!userGamecard.duration == false)) {
                     let start = moment.utc(userGamecard.activationTime);
                     let pause = moment.utc(userGamecard.pauseTime);
                     let pauseDuration = pause.diff(start);
