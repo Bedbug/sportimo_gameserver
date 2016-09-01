@@ -2003,7 +2003,7 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
                         }
                     }));
                     
-                    return db.models.userGamecards.findAndUpdate({ _id: userGamecard._id }, { $set: { status: userGamecard.status, resumeTime: userGamecard.resumeTime, terminationTime: userGamecard.terminationTime } }, callback);
+                    return db.models.userGamecards.update({ _id: userGamecard._id }, { $set: { status: userGamecard.status, resumeTime: userGamecard.resumeTime, terminationTime: userGamecard.terminationTime } }, callback);
                }
                else {
                    async.setImmediate(function() {
