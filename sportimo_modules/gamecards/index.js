@@ -108,7 +108,7 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
     // Check if match has gamecardDefinitions written in mongo from the gamecardTemplates and if their appearanceConditions are met, if not, create them.
     async.waterfall([
         function (callback) {
-            db.models.gamecardTemplates.find({}, function (error, templates) {
+            db.models.gamecardTemplates.find({isActive: true}, function (error, templates) {
                 if (error)
                     return callback(error);
                 callback(null, templates);
