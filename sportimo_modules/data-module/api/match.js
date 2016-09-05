@@ -36,7 +36,7 @@ api.item = function (req, res) {
                     if (!err) {
                         // And the answers
                         Answers.find({ userid: userid, matchid: gameid }, function (err, answers) {
-                            // Now that we have both we should marry them 
+                            // Now that we have both we should marry them
                             _.each(questions, function (question) {
                                 var answer = _.find(answers, function (o) {
                                     return o.questionid == question._id
@@ -108,6 +108,8 @@ var TranslateUserGamecard = function (userGamecard) {
         specials: userGamecard.specials
     };
 
+
+
     if (userGamecard.startPoints)
         retValue.startPoints = userGamecard.startPoints;
     if (userGamecard.endPoints)
@@ -133,6 +135,11 @@ var TranslateUserGamecard = function (userGamecard) {
         retValue.terminationTime = userGamecard.terminationTime;
     if (userGamecard.wonTime)
         retValue.wonTime = userGamecard.wonTime;
+
+        if (userGamecard.pauseTime)
+            retValue.pauseTime = userGamecard.pauseTime;
+            if (userGamecard.resumeTime)
+                retValue.resumeTime = userGamecard.resumeTime;
 
     return retValue;
 };
