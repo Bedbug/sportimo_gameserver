@@ -1104,7 +1104,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                         wins: teamStanding.record.wins,
                         losses: teamStanding.record.losses,
                         ties: teamStanding.record.ties,
-                        gamesPlayed: teamStanding.record.ties,
+                        gamesPlayed: teamStanding.record.gamesPlayed,
                         goalsFor: teamStanding.goalsFor.overall,
                         goalsAgainst: teamStanding.goalsAgainst.overall
                     };
