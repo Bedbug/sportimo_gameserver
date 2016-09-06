@@ -1469,7 +1469,22 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 });
             },
             function (callback) {
-                return Parser.UpdateCompetitionTeamsStats(competitionId, season, callback);
+                //return Parser.UpdateCompetitionTeamsStats(competitionId, season, callback);
+                async.eachSeries(competitionTeams, function (team, cbk) {
+                    setTimeout(function () {
+                        Parser.UpdateTeamStats(competition.parserids[Parser.Name], team.parserids[Parser.Name], season, function (teamError, updateOutcome) {
+                            if (teamError)
+                                log.error(teamError.message);
+                            cbk(null);
+                        })
+                    }, 1000);
+                }, function (seriesErr) {
+                    if (seriesErr)
+                        log.error(seriesErr.message);
+    
+                    callback(null);
+                });
+
             }
         ], function (error) {
             if (error) {
