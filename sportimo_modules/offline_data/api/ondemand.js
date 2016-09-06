@@ -357,11 +357,13 @@ api.UpdateLeagueStandings = function (req, res) {
 api.UpdateAllStandings = function (req, res) {
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
+    if (!req.body.season)
+        return res.status(400).json({ error: "No 'season' id parameter defined in the request path." });
 
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
         async.eachSeries(parsers, function (parser, callback) {
-            parser.UpdateStandings(function (error, teamsIncluded) {
+            parser.UpdateStandings(req.body.season, function (error, teamsIncluded) {
                 if (!error) {
                     response.parsers[parser.Name] = {
                         error: null,
@@ -461,11 +463,11 @@ router.post('/teamstats/teamUpdate', api.UpdateOneTeamStats);
 // update all player career stats for all players in teamId
 router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);
 
-// update all competition standings
-router.post('/standings', api.UpdateAllStandings);
-
 // update the team standings of the selected competition (id)
 router.post('/standings/:competitionId', api.UpdateLeagueStandings);
+
+// update all competition standings
+router.post('/standings/all', api.UpdateAllStandings);
 
 // return the future fixtures for the selected competition (id)
 router.get('/fixtures/:competitionId/:season', api.GetCompetitionFixtures);

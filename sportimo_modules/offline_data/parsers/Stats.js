@@ -1125,7 +1125,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
 
 };
 
-Parser.UpdateStandings = function (callback) {
+Parser.UpdateStandings = function (season, callback) {
 
     let leagueStandingsUpdated = [];
 
@@ -1136,7 +1136,7 @@ Parser.UpdateStandings = function (callback) {
 
         async.each(leagues, function (league, cbk) {
             // Get all teams foreach competition
-            Parser.UpdateLeagueStandings(league, league.id, null, function (error) {
+            Parser.UpdateLeagueStandings(league, league.id, season, function (error) {
                 if (error)
                     return cbk(error);
 
@@ -1412,7 +1412,11 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 });
             },
             function(callback) {
-                return Parser.UpdateTeams(competitionId, callback);
+                Parser.UpdateTeams(competitionId, function(error, teamsAdded, playersAdded, teamsUpdated, playersUpdated) {
+                    if (error)
+                        return callback(error);
+                    callback(null);
+                });
             },
             function (callback) {
                 Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
