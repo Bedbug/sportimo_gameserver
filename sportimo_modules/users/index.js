@@ -659,7 +659,7 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     var stats = {};
     User.findById(req.params.uid)
-        .select("username picture level stats achievements rankingStats")
+        .select("username picture level stats achievements rankingStats isOnline")
         .populate({
             path: 'rankingStats.bestRankMatch',
             select: 'home_team away_team home_score away_score start',

@@ -105,7 +105,8 @@ var UserSchema = new Schema({
     level: { type: Number, default: 0 },
     achievements: [achievement],
     blockedusers: [String],
-    favoriteteams: [String]
+    favoriteteams: [String],
+    isOnline: {type: Boolean}
 }, {
         timestamps: { updatedAt: 'lastActive' },
         toObject: {
