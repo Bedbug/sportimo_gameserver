@@ -19,6 +19,8 @@ var poolroom = {
     starts: {type:Date},
     ends: {type:Date},
     
+    competition: { type: String},
+    
     // A sponsor object containing all sponsor's information and resources
     sponsor: {type: Schema.Types.Mixed},
     
@@ -33,6 +35,12 @@ var poolroom = {
     minparticipants: Number,
     
     maxparticipants: Number,
+
+    // The number of best scores per user. If null leaderboard is somprised by all user scores.  
+    bestscores: Number,
+
+    // If bestscores is supplied, shouldUseScores returns each score used in an array. 
+    shouldUseScores: Boolean,
     
     // prizetype: "Prizetype.Gift | Prizetype.Pool"
     prizetype:{type:String},
