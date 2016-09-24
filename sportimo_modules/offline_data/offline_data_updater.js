@@ -35,8 +35,9 @@ var offlineDataUpdater = {};
 
 offlineDataUpdater.Init = function()
 {
-    
 };
+    // var stats = require("./parsers/Stats.js");
+    // stats.TestGuruStats(function() {});
 
 
 

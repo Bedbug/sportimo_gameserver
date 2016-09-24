@@ -97,6 +97,23 @@ setTimeout(function () {
     });
 }, 5000);
 
+setTimeout(function() {
+    setInterval(function() {
+        var cutOffTime = moment.utc().subtract(3, 'hours').toDate();
+        mongoDb.scheduled_matches.find({ completed: false, guruStats: null, start: {$gte: cutOffTime} }, function(error, matches) {
+            if (error)
+                return;
+            
+            _.forEach(matches, function(match) {
+                Parser.UpdateGuruStats(match, function(err) {
+                    if (err)
+                        return;
+                });
+            });
+        });
+    }, 60000);
+}, 5000);
+
 
 // Helper Methods
 
@@ -622,6 +639,55 @@ Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
 
 };
 
+
+Parser.GetTeamSeasonFixtures = function (leagueName, teamId, seasonYear, callback) {
+    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    const url = configuration.urlPrefix + leagueName + "/scores/teams/" + teamId + "?" + signature + "&season=" + seasonYear + "&linescore=false"; 
+
+    needle.get(url, { timeout: 60000 }, function (error, response) {
+        if (error)
+            return callback(error);
+
+        if (response.body.status != 'OK' || response.body.recordCount == 0)
+            return callback(new Error('Invalid response from Parser'));
+
+        try {
+            let fixtures = [];
+            _.forEach(response.body.apiResults[0].league.season.eventType, function (category) {
+                fixtures = _.concat(fixtures, category.events);
+            });
+            callback(null, fixtures);
+        }
+        catch (err) {
+            return callback(err);
+        }
+    });
+
+};
+
+
+Parser.GetMatchEvents = function (leagueName, matchId, callback) {
+    var signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
+    var url = configuration.urlPrefix + leagueName + "/events/" + matchId + "?pbp=true&" + signature; // &box=true for boxing statistics
+
+    needle.get(url, { timeout: 50000 }, function (error, response) {
+        if (error)
+            return callback(error);
+        try {
+            if (response.statusCode != 200)
+                return callback(new Error("Response code from " + url + " : " + response.statusCode));
+            var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
+            var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
+            var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
+            callback(null, events, teams, matchStatus);
+        }
+        catch (err) {
+            console.log(err);
+            if(callback)
+            return callback(err);
+        }
+    });
+};
 
 // Parser methods that other modules may call:
 
@@ -1493,6 +1559,261 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
             }
             outerCallback(null);
         });
+};
+
+
+Parser.TestGuruStats = function(callback)
+{
+    mongoDb.scheduled_matches.findById('57c73907c4786a4821957c42', function(err, match) {
+        if (err)
+            return callback(err);
+        return Parser.UpdateGuruStats(match, callback);
+    });
+};
+
+// Used properties from scheduledMatch: competition, home_team, away_team
+Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
+    if (
+        !scheduledMatch.moderation || scheduledMatch.moderation.length == 0 || !scheduledMatch.moderation[0].parserid
+        || !scheduledMatch.home_team || !scheduledMatch.away_team)
+        return outerCallback(null);
+        
+    //let parserid = scheduledMatch.moderation[0].parserid;
+    let competitionid = scheduledMatch.competition;
+    let homeTeamId = scheduledMatch.home_team;
+    let awayTeamId = scheduledMatch.away_team;
+    
+    let leagueName;
+    let homeTeamParserId, awayTeamParserId;
+    let season;
+    // Get competition parser id, and the parser ids from the 2 teams
+    async.parallel([
+        function(callback) {
+            mongoDb.competitions.findById(competitionid, 'parserids season', function(compError, competition) {
+                if (compError)
+                    return callback(compError);
+                leagueName = competition.parserids[Parser.Name];
+                season = competition.season;
+                callback(null, leagueName);
+            });
+        },
+        function(callback) {
+            mongoDb.teams.findById(homeTeamId, 'parserids', function(teamError, team) {
+                if (teamError)
+                    return callback(teamError);
+                homeTeamParserId = team.parserids[Parser.Name];
+                callback(null, homeTeamParserId);
+            });
+        },
+        function(callback) {
+            mongoDb.teams.findById(awayTeamId, 'parserids', function(teamError, team) {
+                if (teamError)
+                    return callback(teamError);
+                awayTeamParserId = team.parserids[Parser.Name];
+                callback(null, awayTeamParserId);
+            });
+        }
+        ], function(error) {
+        if (error)
+            return outerCallback(error);
+        
+        async.parallel([
+            function(callback) {
+                return Parser.GetTeamSeasonFixtures(leagueName, homeTeamParserId, season, callback);
+            },
+            function(callback) {
+                setTimeout(function() {
+                    return Parser.GetTeamSeasonFixtures(leagueName, awayTeamParserId, season, callback);
+                }, 400);
+            }
+            ], function(innerError, results) {
+            if (innerError)
+                return outerCallback(innerError);
+                
+            let cutOffTime = moment.utc().add(3, 'hours');
+            
+            let homeTeamMatches = _.take(_.orderBy(_.filter(results[0], function(result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }) , ['startDate[1].full'], ['desc']), 10);
+            let awayTeamMatches = _.take(_.orderBy(_.filter(results[1], function(result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }) , ['startDate[1].full'], ['desc']), 10);
+            let homeTeamMatchParserIds = _.map(homeTeamMatches, 'eventId');
+            let awayTeamMatchParserIds = _.map(awayTeamMatches, 'eventId');
+            
+            let index = 0;
+            let interestingEventIds = [2, 5, 11, 20];
+                // "2": "Yellow",
+                // "5": "Corner",
+                // "7": "Red",
+                // "8": "Foul",
+                // "11": "Goal",
+                // "14": "Injury",
+                // "16": "Offside",
+                // "17": "Penalty",
+                // "18": "Penalty",
+                // "20": "Shot_on_Goal",
+                // // "22": "Substitution",
+                // "28": "Own_Goal"
+
+            let guruStats = {
+                Yellow: {
+                    homeTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    awayTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    total: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                },
+                Corner: {
+                    homeTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    awayTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    total: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                },
+                Goal: {
+                    homeTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    awayTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    total: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                },
+                Shot_On_Goal: {
+                    homeTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    awayTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
+                    total: [0, 0, 0, 0, 0, 0, 0, 0, 0]
+                }
+            };    
+            
+            let homeTeamMatchesCount = 0;
+            let awayTeamMatchesCount = 0;
+            // first dimension is 0 for the total stats for both teams, 1 for home team, 2 for away team.
+            // second dimension is the 10 minutes match period.
+            // each cell holds the average per event type (0 for Yellow, 1 for Corner, 2 for Goal, 3 for Shot on Goal)
+            async.series([
+                function(s1cbk) {
+                    async.each(homeTeamMatchParserIds, function(parserId, callback) {
+                        setTimeout(function() {
+                            Parser.GetMatchEvents(leagueName, parserId, function(err, events, teams, matchStatus) {
+                                if (err) {
+                                    log.warn(err.message + '\nError while getting match %s events while computing Guru stats. Continuing with next one...', parserId);
+                                    return callback(null);
+                                }
+                                
+                                homeTeamMatchesCount++;
+                                let interestingEvents = _.filter(events, function(event) {
+                                    return _.indexOf(interestingEventIds, event.playEvent.playEventId) > -1 && (event.teamId == homeTeamParserId);
+                                });
+                                _.forEach(interestingEvents, function(event) {
+                                    if (!event.time || !event.time.minutes)
+                                        return;
+                                        
+                                    let timeIndex = Math.floor(event.time.minutes/10);
+                                    
+                                    switch (event.playEvent.playEventId) {
+                                        case 2:
+                                            if (!guruStats.Yellow.homeTeam[timeIndex])
+                                                guruStats.Yellow.homeTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Yellow.homeTeam[timeIndex]++;
+                                                break;
+                                        case 5:
+                                            if (!guruStats.Corner.homeTeam[timeIndex])
+                                                guruStats.Corner.homeTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Corner.homeTeam[timeIndex]++;
+                                                break;
+                                        case 11:
+                                            if (!guruStats.Goal.homeTeam[timeIndex])
+                                                guruStats.Goal.homeTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Goal.homeTeam[timeIndex]++;
+                                                break;
+                                        case 20:
+                                            if (!guruStats.Shot_On_Goal.homeTeam[timeIndex])
+                                                guruStats.Shot_On_Goal.homeTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Shot_On_Goal.homeTeam[timeIndex]++;
+                                                break;
+                                    }
+                                });
+                                callback(null);
+                            });
+                        }, index++ * 500);
+                    }, s1cbk);
+                },
+                function(s2cbk) {
+                    async.each(awayTeamMatchParserIds, function(parserId, callback) {
+                        setTimeout(function() {
+                            Parser.GetMatchEvents(leagueName, parserId, function(err, events, teams, matchStatus) {
+                                if (err) {
+                                    log.warn(err.message + '\nError while getting match %s events while computing Guru stats. Continuing with next one...', parserId);
+                                    return callback(null);
+                                }
+                                
+                                awayTeamMatchesCount++;
+                                let interestingEvents = _.filter(events, function(event) {
+                                    return _.indexOf(interestingEventIds, event.playEvent.playEventId) > -1 && (event.teamId == homeTeamParserId);
+                                });
+                                _.forEach(interestingEvents, function(event) {
+                                    if (!event.time || !event.time.minutes)
+                                        return;
+                                        
+                                    let timeIndex = Math.floor(event.time.minutes/10);
+                                    
+                                    switch (event.playEvent.playEventId) {
+                                        case 2:
+                                            if (!guruStats.Yellow.awayTeam[timeIndex])
+                                                guruStats.Yellow.awayTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Yellow.awayTeam[timeIndex]++;
+                                                break;
+                                        case 5:
+                                            if (!guruStats.Corner.awayTeam[timeIndex])
+                                                guruStats.Corner.awayTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Corner.awayTeam[timeIndex]++;
+                                                break;
+                                        case 11:
+                                            if (!guruStats.Goal.awayTeam[timeIndex])
+                                                guruStats.Goal.awayTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Goal.awayTeam[timeIndex]++;
+                                                break;
+                                        case 20:
+                                            if (!guruStats.Shot_On_Goal.awayTeam[timeIndex])
+                                                guruStats.Shot_On_Goal.awayTeam[timeIndex] = 1;
+                                            else
+                                                guruStats.Shot_On_Goal.awayTeam[timeIndex]++;
+                                                break;
+                                    }
+                                });
+                                callback(null);
+                            });
+                        }, index++ * 500);
+                    }, s2cbk);
+                }
+                ], function(seriesError) {
+                    if (seriesError)
+                        return outerCallback(seriesError);
+                        
+                    // Calc totals and averages
+                    for(let i = 0; i < 9; i++) {
+                        guruStats.Yellow.total[i] = (guruStats.Yellow.homeTeam[i] + guruStats.Yellow.awayTeam[i]) / (homeTeamMatchesCount + awayTeamMatchesCount);
+                        guruStats.Corner.total[i] = (guruStats.Corner.homeTeam[i] + guruStats.Corner.awayTeam[i]) / (homeTeamMatchesCount + awayTeamMatchesCount);
+                        guruStats.Goal.total[i] = (guruStats.Goal.homeTeam[i] + guruStats.Goal.awayTeam[i]) / (homeTeamMatchesCount + awayTeamMatchesCount);
+                        guruStats.Shot_On_Goal.total[i] = (guruStats.Shot_On_Goal.homeTeam[i] + guruStats.Shot_On_Goal.awayTeam[i]) / (homeTeamMatchesCount + awayTeamMatchesCount)
+                        
+                        guruStats.Yellow.homeTeam[i] = guruStats.Yellow.homeTeam[i] / homeTeamMatchesCount;
+                        guruStats.Corner.homeTeam[i] = guruStats.Corner.homeTeam[i] / homeTeamMatchesCount;
+                        guruStats.Goal.homeTeam[i] = guruStats.Goal.homeTeam[i] / homeTeamMatchesCount;
+                        guruStats.Shot_On_Goal.homeTeam[i] = guruStats.Shot_On_Goal.homeTeam[i] / homeTeamMatchesCount;
+
+                        guruStats.Yellow.awayTeam[i] = guruStats.Yellow.awayTeam[i] / awayTeamMatchesCount;
+                        guruStats.Corner.awayTeam[i] = guruStats.Corner.awayTeam[i] / awayTeamMatchesCount;
+                        guruStats.Goal.awayTeam[i] = guruStats.Goal.awayTeam[i] / awayTeamMatchesCount;
+                        guruStats.Shot_On_Goal.awayTeam[i] = guruStats.Shot_On_Goal.awayTeam[i] / awayTeamMatchesCount;
+                    }
+                    
+                    mongoDb.scheduled_matches.update({ _id: scheduledMatch._id }, { guruStats: guruStats }, function(updateError) {
+                        outerCallback(null, guruStats); 
+                    });
+                }
+                );
+
+        });
+           
+    });
 };
 
 

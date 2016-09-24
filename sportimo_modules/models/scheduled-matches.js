@@ -84,6 +84,7 @@ else {
     state: {type:Number, default:0},
     completed: {type: Boolean, default: false},
     stats: [mongoose.Schema.Types.Mixed],
+    guruStats: mongoose.Schema.Types.Mixed,
     headtohead: {type:Array, default: ["W","W","D","L","L"]},
     timeline: [segment],
     settings: mongoose.Schema.Types.Mixed,
