@@ -263,7 +263,7 @@ apiRoutes.post('/v1/users/reset', function (req, res) {
                     to: req.body.email, // list of receivers
                     subject: 'Reset link from Sportimo ✔', // Subject line
                     // text: 'Hello world 🐴', // plaintext body
-                    html: '<b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
+                    html: 'Hello '+ user.username +'. <br/><b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
                 };
 
                 // send mail with defined transport object
@@ -659,7 +659,7 @@ apiRoutes.get('/v1/users/activity/:matchid', function (req, res) {
 apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
     var stats = {};
     User.findById(req.params.uid)
-        .select("username picture level stats achievements rankingStats")
+        .select("username picture level stats achievements rankingStats isOnline")
         .populate({
             path: 'rankingStats.bestRankMatch',
             select: 'home_team away_team home_score away_score start',
