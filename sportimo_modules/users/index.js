@@ -673,8 +673,12 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
         .exec(function (err, result) {
             if (err)
                 return res.status(500).send(err);
-            stats.user = result;
+                
+             if (!result)
+                return res.status(500).send("User not found in database");
 
+            stats.user = result;
+          
             Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
                 .sort({ score: -1 })
                 .populate({

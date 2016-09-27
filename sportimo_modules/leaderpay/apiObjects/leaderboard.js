@@ -186,12 +186,12 @@ api.getLeaderboardWithRank = function (id, body, cb) {
                         "country": value[0].country
                     }
 
-                    if(shouldUseScores)
+                    if (shouldUseScores)
                         leadItem["scores"] = scores;
-                        
+
                     return leadItem;
                 })
-               .sortBy(function (value) { // sort the array descending
+                .sortBy(function (value) { // sort the array descending
                     return -value.score;
                 })
                 .value();
@@ -319,6 +319,9 @@ function parseConditons(conditions) {
     }
     if (conditions.country.length > 0 && conditions.country[0] != "All")
         parsed_conditions.country = { "$in": conditions.country };
+
+    if (conditions.competition)
+        parsed_conditions.competition = conditions.competition;
 
     return parsed_conditions;
 
