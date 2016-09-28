@@ -8,10 +8,8 @@ var express = require('express'),
 /*
 ========= [ CORE METHODS ] =========
 */
-
-
-api.findPollByTag = function (req, res) {
-	var q = polls.find({ 'tags._id': req.params.tag });
+api.getAllPolls = function (req, res) {
+	var q = polls.find();
 
 	q.sort({"created":-1});
 
@@ -23,10 +21,11 @@ api.findPollByTag = function (req, res) {
 
 				if (req.params.uid) {
 					var hasAlreadyVoted = _.find(poll.voters, function (o) {
-						return o == req.params.uid;
+						return o.uid == req.params.uid;
 					});
 
 					if (hasAlreadyVoted) poll.hasAlreadyVoted = 1;
+					poll.hasAnswered = hasAlreadyVoted.answer;
 				}
 
 				poll = poll.toObject();
@@ -44,7 +43,81 @@ api.findPollByTag = function (req, res) {
 		else
 			return res.status(500).send(err);
     });
+};
 
+
+api.getGeneralPolls = function (req, res) {
+	var q = polls.find({ 'tags': {$size: 0}});
+
+	q.sort({"created":-1});
+
+    q.exec(function (err, polls) {
+		if (!err) {
+
+			var trimmedPolls = [];
+			_.each(polls, function (poll) {
+
+				if (req.params.uid) {
+					var hasAlreadyVoted = _.find(poll.voters, function (o) {
+						return o.uid == req.params.uid;
+					});
+
+					if (hasAlreadyVoted){ poll.hasAlreadyVoted = 1;
+					poll.hasAnswered = hasAlreadyVoted.answer;}
+				}
+
+				poll = poll.toObject();
+
+				if (poll.voters)
+					delete poll.voters;
+
+				trimmedPolls.push(poll);
+			})
+
+
+			return res.send(trimmedPolls);
+		}
+
+		else
+			return res.status(500).send(err);
+    });
+};
+
+api.findPollByTag = function (req, res) {
+	var q = polls.find({ 'tags._id': req.params.tag });
+
+	q.sort({"created":-1});
+
+    q.exec(function (err, polls) {
+		if (!err) {
+
+			var trimmedPolls = [];
+			_.each(polls, function (poll) {
+
+				if (req.params.uid) {
+					var hasAlreadyVoted = _.find(poll.voters, function (o) {
+						return o.uid == req.params.uid;
+					});
+
+					if (hasAlreadyVoted) {poll.hasAlreadyVoted = 1;
+					poll.hasAnswered = hasAlreadyVoted.answer;}
+				}
+
+				poll = poll.toObject();
+
+				if (poll.voters)
+					delete poll.voters;
+
+				trimmedPolls.push(poll);
+			})
+
+
+			return res.send(trimmedPolls);
+		}
+
+		else
+			return res.status(500).send(err);
+    });
 };
 
 
@@ -65,13 +138,13 @@ api.addpoll = function (req, res) {
 api.uservote = function (req, res) {
 
 	polls.findOne({ '_id': req.params.pollid }, function (err, poll) {
-		if (poll)
+		if (poll){
 			if (poll.status == 1)
 				return res.status(200).send('Poll has been closed.');
 			else {
 
 				var hasAlreadyVoted = _.find(poll.voters, function (o) {
-					return o == req.body.userid;
+					return o.uid == req.body.userid;
 				});
 
 				if (hasAlreadyVoted)
@@ -81,9 +154,11 @@ api.uservote = function (req, res) {
 					return o._id == req.body.answerid;
 				});
 
+				if(!answer)
+				return res.status(404).send('Answer ID not found.');
 
 				answer.votes++;
-				poll.voters.push(req.body.userid);
+				poll.voters.push({uid:req.body.userid, answer: req.body.answerid} );
 
 				poll.save(function (err, result) {
 					if (err)
@@ -92,7 +167,7 @@ api.uservote = function (req, res) {
 					return res.send(result);
 				});
 			}
-		else
+		}else
 			return res.status(404).send('Poll not found.');
 
 	});
@@ -113,8 +188,9 @@ api.editpoll = function (req, res) {
 		delete req.body.__v;
 		
 		poll.answers = newData.answers;
+		poll.tags = newData.tags;
 		poll = _.merge(poll, req.body);
-
+		
 		poll.save(function (err, result) {
 			if (err)
 				return res.status(500).send(err);
@@ -191,6 +267,9 @@ var cbf = function (cb, err, data) {
 /*
 =====================  ROUTES  =====================
 */
+router.get('/v1/polls/', api.getAllPolls);
+router.get('/v1/polls/general', api.getGeneralPolls);
+router.get('/v1/polls/general/:uid', api.getGeneralPolls);
 
 router.get('/v1/polls/:tag/tag', api.findPollByTag);
 router.get('/v1/polls/:tag/tag/:uid/user', api.findPollByTag);
