@@ -156,7 +156,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
 
 
     var leader_conditions = parseConditons(body);
-    leader_conditions.score = { $gt: 0 };
+    // leader_conditions.score = { $gt: 0 };
 
     var uid = id;
 
@@ -168,7 +168,11 @@ api.getLeaderboardWithRank = function (id, body, cb) {
     var rank;
     var user;
     return q.exec(function (err, leaderboard) {
-        var result =
+        var result;
+        // if(leader_conditions.game_id)
+        // result = leaderboard;
+        // else
+        result =
             _.chain(leaderboard)
                 .sortBy(function (value) { // sort the array descending
                     return -value.score;
