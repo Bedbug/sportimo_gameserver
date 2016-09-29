@@ -163,7 +163,8 @@ api.uservote = function (req, res) {
 				poll.save(function (err, result) {
 					if (err)
 						return res.status(500).send(err);
-					result.hasAlreadyVoted = 1;
+					result.hasAlreadyVoted = 1;						
+					result.hasAnswered = req.body.answerid;
 					return res.send(result);
 				});
 			}
