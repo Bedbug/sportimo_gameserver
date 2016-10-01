@@ -863,7 +863,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
         var created = creationMoment.toISOString();
         // console.log("Created: " + created);
-        var activated = creationMoment.add(gamecardDefinition.activationLatency, 'ms').toISOString();
+        var activated = gamecardDefinition.cardType == 'PresetInstant' ? null : creationMoment.add(gamecardDefinition.activationLatency, 'ms').toISOString();
         if (gamecardDefinition.cardType == 'PresetInstant') {
             if (gamecard.minute >= 45)
                 gamecard.segment = 3;
@@ -918,7 +918,7 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 status: 0 //gamecardDefinition.cardType == "Instant" ? 0 : (gamecardDefinition.status || 0)
             });
 
-            if (newCard.duration && newCard.duration > 0)
+            if (newCard.duration && newCard.duration > 0 && newCard.cardType != 'PresetInstant')
                 newCard.terminationTime = terminated;
 
             if (gamecardDefinition.options && gamecard.optionId) {
