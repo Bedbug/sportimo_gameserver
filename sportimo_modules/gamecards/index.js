@@ -607,22 +607,22 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
 gamecards.getUserInstances = function (matchId, userId, cbk) {
     async.waterfall([
         function (callback) {
-            db.models.scheduled_matches.findById(matchId, 'settings', function (error, scheduledMatch) {
+            db.models.scheduled_matches.findById(matchId, 'settings start', function (error, scheduledMatch) {
                 if (error)
                     return callback(error);
-                callback(null, scheduledMatch.settings);
+                callback(null, scheduledMatch.settings, scheduledMatch.start);
             });
         },
-        function (settings, callback) {
+        function (settings, start, callback) {
             db.models.gamecardDefinitions.find({ matchid: matchId, isVisible: true, isActive: true, status: { $ne: 2 } }, function (error, definitions) {
                 if (error)
                     return callback(error);
-                callback(null, definitions, settings);
+                callback(null, definitions, settings, start);
             });
         },
-        function (definitions, settings, callback) {
+        function (definitions, settings, start, callback) {
             // from the definitions, filter out those that the user has played maxUserInstances
-            db.models.userGamecards.find({ matchid: matchId, userid: userId }, function (error, userCards) {
+            db.models.userGamecards.find({ matchid: matchId, userid: userId }, 'cardType status gamecardDefinitionId', function (error, userCards) {
                 if (error)
                     return callback(error);
 
@@ -633,6 +633,7 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                 });
 
                 let instantCount = 0;
+                let presetInstantCount = 0;
                 let overallCount = 0;
                 let totalCount = userCards.length;
                 if (settings && settings.gameCards && settings.gameCards.totalcards && settings.gameCards.totalcards <= totalCount)
@@ -643,6 +644,8 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         overallCount++;
                     else if (usercard.cardType == 'Instant')
                         instantCount++;
+                    else if (usercard.cardType == 'PresetInstant')
+                        presetInstantCount++;
                 });
 
                 let instancesPerDefinition = _.groupBy(userCards, 'gamecardDefinitionId');
@@ -668,9 +671,18 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                             definitionIdsToDrop.push(definition.id);
                     });
                 }
-                if (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount) {
+                let itsNow = moment.utc();
+                // If the match has not yet started, drop all Instant card definitions
+                if ( moment.utc(start).isAfter(itsNow) || (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount) ) {
                     _.forEach(definitions, function (definition) {
                         if (definition.cardType == 'Instant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
+                            definitionIdsToDrop.push(definition.id);
+                    });
+                }
+                // If the match has started already, drop all PresetInstant card definitions
+                if ( moment.utc(start).isBefore(itsNow) || (settings && settings.gameCards && settings.gameCards.presetInstant && settings.gameCards.presetInstant <= presetInstantCount) ) {
+                    _.forEach(definitions, function (definition) {
+                        if (definition.cardType == 'PresetInstant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
                             definitionIdsToDrop.push(definition.id);
                     });
                 }
@@ -753,14 +765,22 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                     if (!referencedDefinition.matchid || matchId != referencedDefinition.matchid)
                         return cbk(new Error("The referenced gamecardDefinitionId document either does not include a matchid reference or is not related to the matchid in the body"));
 
-                    if (data.status != 1)
+                    if (referencedDefinition.status != 1)
                         return cbk(new Error("The referenced gamecardDefinitionId document is not in an active state"));
 
-                    if (data.options && data.options.length > 0 && !userGamecard.optionId)
+                    if (referencedDefinition.options && referencedDefinition.options.length > 0 && !userGamecard.optionId)
                         return cbk(new Error("The references gamecardDefinitionId document contains options, but no optionId property for the selected option is included in the Body"));
 
                     if (moment.utc(userGamecard.creationTime).isBefore(moment.utc(referencedDefinition.creationTime)))
                         return cbk(new Error("The creationTime in the body is before the creationTime in the gamecardDefinitionId document"));
+                        
+                    if (referencedDefinition.cardType == 'PresetInstant') { 
+                        if (!userGamecard.minute)
+                            return cbk(new Error("Body is lacking of the minute property for a definition of type 'PresetInstant'"));
+                            
+                        if (userGamecard.minute < 0 || userGamecard.minute > 90)
+                            return cbk(new Error("The minute property in the body for a definition of type 'PresetInstant' should be between 0 and 90"));
+                    }
                 }
 
                 cbk(null, referencedDefinition);
@@ -779,7 +799,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
             });
         },
         function (cbk) {
-            db.models.scheduled_matches.findById(matchId, function (error, match) {
+            db.models.scheduled_matches.findById(matchId, 'home_team away_team competition start completed state time settings', function (error, match) {
                 if (error)
                     return cbk(error);
 
@@ -800,6 +820,9 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (!referencedDefinition)
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
+
+        if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.start && itsNow.isAfter(moment.utc(scheduledMatch.start)))
+            return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is PresetInstant and it is not available since the referenced match has started (its start time is earlier than NOW in UTC)" });
 
         if (referencedDefinition.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))
             return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet (its start time is later than NOW in UTC)" });
@@ -841,6 +864,12 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
         var created = creationMoment.toISOString();
         // console.log("Created: " + created);
         var activated = creationMoment.add(gamecardDefinition.activationLatency, 'ms').toISOString();
+        if (gamecardDefinition.cardType == 'PresetInstant') {
+            if (gamecard.minute >= 45)
+                gamecard.segment = 3;
+            else
+                gamecard.segment = 1;
+        }
         // console.log("Activated: " + activated);
         var terminated = creationMoment.add(gamecardDefinition.duration, 'ms').toISOString();
         // console.log("Terminated: " + terminated);
@@ -1048,7 +1077,7 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
 				special.activationTime = itsNow.toDate();
 				special.status = 2;
 				
-				if (userGamecard.cardType == "Instant") {
+				if (userGamecard.cardType == "Instant" || userGamecard.cardType == "PresetInstant") {
 					userGamecard.startPoints = userGamecard.startPoints * 2;
 					userGamecard.endPoints = userGamecard.endPoints * 2;
 				}
@@ -1231,7 +1260,7 @@ gamecards.Tick = function () {
                     special.status = 2;
 
                     if (specialKey && specialKey == 'DoublePoints') {
-        				if (userGamecard.cardType == "Instant") {
+        				if (userGamecard.cardType == "Instant" || userGamecard.cardType == 'PresetInstant') {
         					userGamecard.startPoints = userGamecard.startPoints * 2;
         					userGamecard.endPoints = userGamecard.endPoints * 2;
         				}
@@ -1264,7 +1293,7 @@ gamecards.Tick = function () {
 
             const cardsQuery = {
                 status: 1,
-                cardType: "Instant",
+                cardType: {$in: ["Instant", "PresetInstant"]},
                 activationTime: { $lt: itsNow },
                 terminationTime: { $lt: itsNow },
                 //matchid : event.matchid
@@ -1316,7 +1345,9 @@ gamecards.Tick = function () {
             });
         },
         function (callback) {
-            // Find all live match time in minutes, and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
+            // Find all live match time in minutes, 
+            // and activate all PresetInstant cards that should be activated based on the match minute
+            // and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
 
             let itsNow = moment.utc();
             db.models.scheduled_matches.find({ completed: { $ne: true }, start: { $lt: itsNow.toDate() } }, '_id state time stats', function (error, matches) {
@@ -1369,14 +1400,36 @@ gamecards.Tick = function () {
                         //         return parallelCbk(null);
                         //     }, 200);
                         // },
+                        function(parallelCbk) {
+                            db.models.userGamecards.find( { matchid: match.id, status: 0, cardType: 'PresetInstant', minute: {$lte: match.time} }, function(error, userGamecards) {
+                                if (error) {
+                                    log.error('Failed to activate PresetInstant user gamecards at match minute ' + match.minute + ' of match id %s !!!', match.id);
+                                    return parallelCbk(null);
+                                }
+                                
+                                if (!userGamecards || userGamecards.length == 0)
+                                    return parallelCbk(null);
+                            
+
+                                _.forEach(userGamecards, function(userGamecard) {
+                                    userGamecard.status = 1; // activated
+                                    userGamecard.activationTime = itsNow.toDate();
+                                    userGamecard.terminationTime = itsNow.add(userGamecard.duration || 0, 'ms');
+                                });
+                                
+                                async.each(userGamecards, function(userGamecard, cardCbk) {
+                                    return userGamecard.save(cardCbk);
+                                }, parallelCbk);
+                            });
+                        },
                         // If we are in a not timed segment, pause all user gamecards that are not terminated (if any left)
                         function(parallelCbk) {
                             var systemTime = itsNow.toDate();
                             if (match.state == 2 || match.state == 4) {
-                                db.models.userGamecards.update({ matchid: match.id, cardType: 'Instant', status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
+                                db.models.userGamecards.update({ matchid: match.id, cardType: {$in: ['Instant', 'PresetInstant']}, status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
                                     if (error) {
                                         log.error('Failed to pause user gamecards after segment ' + (match.state - 1) + ' ends on match id %s !!!', match.id);
-                                        return error;
+                                        return parallelCbk(null);
                                     }
                                 });  
                             }
@@ -1551,7 +1604,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
         gamecard.terminationTime = itsNow.toDate();
     gamecard.wonTime = itsNow.toDate();
     // Award points
-    if (gamecard.cardType == "Instant") {
+    if (gamecard.cardType == "Instant" || gamecard.cardType == "PresetInstant") {
         let startInt = moment.utc(gamecard.activationTime);
         let endInt = itsNow;
         gamecard.pointsAwarded = gamecard.startPoints + Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.diff(startInt, 'milliseconds', true) / gamecard.duration));
@@ -1981,7 +2034,7 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
     // First half or second half or overtime ends. Pending userGamecards (status = 0) should be switched to paused (status = 3) and resume as activated after the pause
     var systemTime = itsNow.toDate();
     if (segmentIndex == 2 || segmentIndex == 4) {
-        db.models.userGamecards.update({ matchid: matchId, cardType: 'Instant', status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
+        db.models.userGamecards.update({ matchid: matchId, cardType: {$in: ['Instant', 'PresetInstant']}, status: {$in: [0, 1]} }, { $set: {status: 3, pauseTime: systemTime} }, function(error, results) {
             if (error) {
                 log.error('Failed to pause user gamecards after segment ' + (segmentIndex - 1) + ' ends on match id %s !!!', matchId);
                 return error;
@@ -1991,7 +2044,7 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
     else
     // Second half or Overtime starts
     if (segmentIndex == 3 || segmentIndex == 5) {
-        db.models.userGamecards.find({ matchid: matchId, cardType: 'Instant', status: 3 }, function(error, userGamecards) {
+        db.models.userGamecards.find({ matchid: matchId, cardType: {$in: ['Instant', 'PresetInstant']}, status: 3 }, function(error, userGamecards) {
             if (error) {
                 log.error('Failed to resume paused cards after segment ' + segmentIndex + ' starts again on match id %s !!!', matchId);
                 return error;
@@ -2494,7 +2547,7 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     // Find all instant gameCards that terminate, and decide if they have won or lost
                     eventRelatedGamecards = _.filter(userGamecards, function(gamecard) {
                         //return (gamecard.cardType == 'Instant' && gamecard.status == 1 && moment.utc(gamecard.activationTime).add(gamecard.activationLatency ? gamecard.activationLatency : 0, 'milliseconds').add(gamecard.duration, 'milliseconds').toDate() < eventData.created);
-                        return (gamecard.cardType == 'Instant' && gamecard.status == 1 && gamecard.terminationTime < eventData.created);
+                        return ((gamecard.cardType == 'Instant' || gamecard.cardType == 'PresetInstant') && gamecard.status == 1 && gamecard.terminationTime < eventData.created);
                     });
                     _.forEach(eventRelatedGamecards, function(gamecard) {
                         if (gamecards.CheckIfWins(gamecard, true, moment.utc(gamecard.terminationTime), match)) {
@@ -2613,6 +2666,7 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                 let userPoints = 0;
                 let userCardsWon = 0;
                 let userInstantsWon = 0;
+                let userPresetInstantsWon = 0;
                 let userOverallWon = 0;
                 _.forEach(userGroups, function(userGroup) {
                     userPoints = _.sumBy(userGroup, 'pointsAwarded');
@@ -2621,6 +2675,9 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
                     });
                     userInstantsWon = _.sumBy(userGroup, function(usercard) {
                         return usercard.pointsAwarded && usercard.pointsAwarded > 0 && usercard.cardType == 'Instant' ? 1 : 0;
+                    });
+                    userPresetInstantsWon = _.sumBy(userGroup, function(usercard) {
+                        return usercard.pointsAwarded && usercard.pointsAwarded > 0 && usercard.cardType == 'PresetInstant' ? 1 : 0;
                     });
                     userOverallWon = _.sumBy(userGroup, function(usercard) {
                         return usercard.pointsAwarded && usercard.pointsAwarded > 0 && usercard.cardType == 'Overall' ? 1 : 0;
