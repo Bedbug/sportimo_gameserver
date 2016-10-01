@@ -54,7 +54,7 @@ else {
         pointsPerMinute: Number,
         startPoints: Number,
         endPoints: Number,
-        cardType: { type: String, enum: ['Instant', 'Overall'] },
+        cardType: { type: String, enum: ['Instant', 'Overall', 'PresetInstant'] },
     });
 
     module.exports = mongoose.model("gamecardTemplates", gamecardTemplate);

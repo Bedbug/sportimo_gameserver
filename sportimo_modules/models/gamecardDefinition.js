@@ -44,7 +44,7 @@ else {
         startPoints: Number,
         endPoints: Number,
         // States and state times
-        cardType: { type: String, enum: ['Instant', 'Overall'] },
+        cardType: { type: String, enum: ['Instant', 'Overall', 'PresetInstant'] },
         maxUserInstances: Number,   // maximum number of times a user may play this card
         creationTime: Date,
         activationTime: Date,
