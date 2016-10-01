@@ -25,10 +25,8 @@ var fields = {
     img: { type: String },
     total_votes: {type:Number, default: 0},
     hasAlreadyVoted: Number,
-    voters: [{
-            type:String,
-            ref:'users'
-        }],
+    hasAnswered: String,
+    voters: [Schema.Types.Mixed],
     status: Number,
     tags: { type: Schema.Types.Mixed },
     sponsor: { type: Schema.Types.Mixed },
