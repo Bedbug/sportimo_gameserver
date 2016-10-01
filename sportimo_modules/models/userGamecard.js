@@ -83,10 +83,10 @@ else {
         {
             if (!this.creationTime)
                 this.creationTime = now.toDate();
-            if (!this.activationTime && !this.activationLatency)
-                this.activationTime = now.add(this.activationLatency, 'ms').toDate(); // add activates_in seconds
-            if (!this.terminationTime && !this.duration)
-                this.terminationTime = now.add(this.activationLatency, 'ms').add(this.duration, 'ms').toDate();
+            // if (!this.activationTime && !this.activationLatency)
+            //     this.activationTime = now.add(this.activationLatency, 'ms').toDate(); // add activates_in seconds
+            // if (!this.terminationTime && !this.duration)
+            //     this.terminationTime = now.add(this.activationLatency, 'ms').add(this.duration, 'ms').toDate();
         }
       
         next();
