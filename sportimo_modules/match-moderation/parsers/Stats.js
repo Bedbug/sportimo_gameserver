@@ -626,8 +626,8 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
     var eventsDiff = _.filter(events, function(item) {
         eventId = ComputeEventId(item);
         // Debugging code follows:
-          if (IsSegmentEvent(item) == false && IsParserEventComplete(item) == false && IsTimelineEvent(item) == true)
-              log.info('Incomplete event with eventId ' + eventId);
+        //   if (IsSegmentEvent(item) == false && IsParserEventComplete(item) == false && IsTimelineEvent(item) == true)
+        //       log.info('Incomplete event with eventId ' + eventId);
         return !that.eventFeedSnapshot[eventId] && (IsSegmentEvent(item) == true || (ComputeEventMatchTime(item) >= lastMatchTime && !that.incompleteEventsLookup[eventId]) || (IsParserEventComplete(item) == true && (!that.incompleteEventsLookup[eventId]) == false));
     });
     var isTimelineEvent = false;
@@ -711,7 +711,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                             if (translatedGoalEvent) {
                                 translatedGoalEvent.team = translatedGoalEvent.team == 'home_team' ? 'away_team' : 'home_team';
                                 translatedGoalEvent.team_id = translatedGoalEvent.team == 'home_team' ? that.matchHandler.home_team.id : that.matchHandler.away_team.id;
-                                if (translatedGoalEvent.players.length > 0) {
+                                if (translatedGoalEvent.players && translatedGoalEvent.players.length > 0) {
                                     if (translatedGoalEvent.players[0].name)
                                         translatedGoalEvent.players[0].name = translatedGoalEvent.players[0].name + " (own)";
                                 } 
