@@ -1589,7 +1589,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
                 if ((!id1StatItem || !id2StatItem) && condition.comparisonOperator != 'eq')
                     return false;
                 let id1Stat = !id1StatItem ? 0 : id1StatItem[condition.stat] || 0;
-                let id2Stat = !id1StatItem ? 0 : id2StatItem[condition.stat] || 0;
+                let id2Stat = !id2StatItem ? 0 : id2StatItem[condition.stat] || 0;
                 if (condition.comparisonOperator == 'gt' && id1Stat <= id2Stat)
                     return false;
                 if (condition.comparisonOperator == 'lt' && id1Stat >= id2Stat)
