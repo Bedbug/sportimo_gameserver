@@ -55,7 +55,7 @@ function feedService(service) {
     
     this.active = service.active === 'undefined' || service.active == null ?  true : service.active;
     
-    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ?  false : service.logAllEvents;
+    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ?  true : service.logAllEvents;
     
     this.parser = null;
 }
