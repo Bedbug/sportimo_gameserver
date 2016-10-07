@@ -141,7 +141,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
         return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
 
             if (!err) {
-                 console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
+                console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
                 if (callback) {
                     return callback("[UserMessaging] Send push to " + pushTokens.length + " users.");
                 }
@@ -197,7 +197,7 @@ MessagingTools.SendMessageToInbox = function (msgData, callback) {
         MessagingTools.sendPushToUsers(msgData.recipients, msgData.msg, msgData.data, "new_message");
     }
 
-    if (msgData.message)
+    if (msgData.message) {
         newMessage.save(function (err, message) {
 
             if (err) callback(err);
@@ -222,11 +222,14 @@ MessagingTools.SendMessageToInbox = function (msgData, callback) {
                 );
             }
         });
-        else
-        {
-            if (callback)
-                            callback(null, "Success");
-        }
+    } else if (!msgData.push && !msgData.message) {
+        MessagingTools.sendSocketMessageToUsers(msgData.recipients, msgData.msg);
+         if (callback)
+            callback(null, "Message send successfuly through sockets");
+    } else {
+        if (callback)
+            callback(null, "Nothing Happened");
+    }
 
 }
 
