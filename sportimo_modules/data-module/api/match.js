@@ -16,14 +16,46 @@ var express = require('express'),
 api.item = function (req, res) {
     var gameid = req.params.gameid;
     var userid = req.params.userid;
+
+    var trimBy = req.params.trimby;
+    
     var game = {
         userScore: 0,
         questions: [],
         playedCards: []
     };
 
-    // First we get the match data
-    Matches.findById(gameid)
+    if (trimBy && trimBy === "gamecards"){
+     
+    return Scores.find({ game_id: gameid, user_id: userid }, function (err, result) {
+                                if (err)
+                                    return res.status(500).json(err);
+
+                                if (result[0]) {
+                                    game.userScore = result[0].score;
+                                    if (result[0].prize_eligible)
+                                        game.prize_eligible = result[0].prize_eligible;
+
+                                }
+
+                                UserGamecards.find({ matchid: gameid, userid: userid }, function (cardsError, userCards) {
+                                    if (cardsError)
+                                        return res.status(500).json(cardsError);
+
+                                    if (userCards) {
+                                        // Translate each userGamecard document into a filtered DTO version
+                                        game.playedCards = _.map(userCards, function (userCard) {
+                                            return TranslateUserGamecard(userCard);
+                                        });
+                                    }
+
+                                    return res.status(200).json(game);
+                                });
+                            })
+    }else
+
+    // Return full match data
+    return Matches.findById(gameid)
         .select('home_team away_team home_score away_score time isTimeCounting stats timeline start settings completed state headtohead guruStats')
         .populate('home_team', 'name logo stats')
         .populate('away_team', 'name logo stats')
@@ -288,7 +320,10 @@ api.updateHeadToHead = function (req, res) {
 =====================  ROUTES  =====================
 */
 
-router.route('/v1/data/match/:gameid/user/:userid')
+router.route('/v1/data/match/:gameid/user/:userid/')
+    .get(api.item);
+
+router.route('/v1/data/match/:gameid/user/:userid/:trimby')
     .get(api.item);
 
 router.route('/v1/data/match/:gameid/headtohead')
