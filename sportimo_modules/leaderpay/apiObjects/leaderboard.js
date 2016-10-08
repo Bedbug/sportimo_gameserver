@@ -154,81 +154,154 @@ api.getSocialLeaderboardWithRank = function (id, body, mid, cb) {
 
 api.getLeaderboardWithRank = function (id, body, cb) {
 
-
     var leader_conditions = parseConditons(body);
     // leader_conditions.score = { $gt: 0 };
-
     var uid = id;
-
-    var q = Score.find(leader_conditions);
 
     var bestscores = body.bestscores ? body.bestscores : 50;
     var shouldUseScores = body.shouldUseScores ? shouldUseScores : false;
 
     var rank;
     var user;
-    return q.exec(function (err, leaderboard) {
-        var result;
-        // if(leader_conditions.game_id)
-        // result = leaderboard;
-        // else
-        result =
-            _.chain(leaderboard)
-                .sortBy(function (value) { // sort the array descending
-                    return -value.score;
-                })
-                .groupBy("user_name")
-                .map(function (value, key) {
-                    var scores = _.chain(value).take(bestscores).map("score").value();
-                    var score = _.sum(scores);
-                    var leadItem = {
-                        "_id": value[0].user_id,
-                        "score": score,
-                        "name": value[0].user_name,
-                        "level": value[0].level,
-                        "pic": value[0].pic,
-                        "country": value[0].country
-                    }
 
-                    if (shouldUseScores)
-                        leadItem["scores"] = scores;
+    if (body.friends) {
+        var cond = { social_id: { $in: body.friends } };
 
-                    return leadItem;
-                })
-                .sortBy(function (value) { // sort the array descending
-                    return -value.score;
-                })
-                .value();
+        Users.find(cond, '_id social_id', function (err, users) {
 
+            leader_conditions = {
+                user_id: {
+                    $in: _.map(users, function (o) { return o._id.toString() })
+                }
+            }
 
-        if (result.length == 0)
-            return cbf(cb, err, { user: {}, leaderboad: [] });
+            var q = Score.find(leader_conditions);
+            return q.exec(function (err, leaderboard) {
+                var result;
+                // if(leader_conditions.game_id)
+                // result = leaderboard;
+                // else
+                result =
+                    _.chain(leaderboard)
+                        .sortBy(function (value) { // sort the array descending
+                            return -value.score;
+                        })
+                        .groupBy("user_name")
+                        .map(function (value, key) {
+                            var scores = _.chain(value).take(bestscores).map("score").value();
+                            var score = _.sum(scores);
+                            var leadItem = {
+                                "_id": value[0].user_id,
+                                "score": score,
+                                "name": value[0].user_name,
+                                "level": value[0].level,
+                                "pic": value[0].pic,
+                                "country": value[0].country
+                            }
 
-        user = _.find(result, { _id: uid });
+                            if (shouldUseScores)
+                                leadItem["scores"] = scores;
 
-        if (user) {
-            rank = _.size(_.filter(result, function (o) {
-                if (o._id != user._id && o.score > user.score)
-                    return true;
-                else
-                    return false;
-            }));
-            user.rank = rank + 1;
-        }
-
-        var ldata = {
-            user: user,
-            leaderboad: result
-        }
-        if (body.sponsor)
-            ldata["sponsor"] = body.sponsor;
+                            return leadItem;
+                        })
+                        .sortBy(function (value) { // sort the array descending
+                            return -value.score;
+                        })
+                        .value();
 
 
-        return cbf(cb, err, ldata);
+                if (result.length == 0)
+                    return cbf(cb, err, { user: {}, leaderboad: [] });
 
-    });
+                user = _.find(result, { _id: uid });
+
+                if (user) {
+                    rank = _.size(_.filter(result, function (o) {
+                        if (o._id != user._id && o.score > user.score)
+                            return true;
+                        else
+                            return false;
+                    }));
+                    user.rank = rank + 1;
+                }
+
+                var ldata = {
+                    user: user,
+                    leaderboad: result
+                }
+                if (body.sponsor)
+                    ldata["sponsor"] = body.sponsor;
 
 
+                return cbf(cb, err, ldata);
+
+            });
+        });
+    } else {
+
+        var q = Score.find(leader_conditions);
+        return q.exec(function (err, leaderboard) {
+            var result;
+            // if(leader_conditions.game_id)
+            // result = leaderboard;
+            // else
+            result =
+                _.chain(leaderboard)
+                    .sortBy(function (value) { // sort the array descending
+                        return -value.score;
+                    })
+                    .groupBy("user_name")
+                    .map(function (value, key) {
+                        var scores = _.chain(value).take(bestscores).map("score").value();
+                        var score = _.sum(scores);
+                        var leadItem = {
+                            "_id": value[0].user_id,
+                            "score": score,
+                            "name": value[0].user_name,
+                            "level": value[0].level,
+                            "pic": value[0].pic,
+                            "country": value[0].country
+                        }
+
+                        if (shouldUseScores)
+                            leadItem["scores"] = scores;
+
+                        return leadItem;
+                    })
+                    .sortBy(function (value) { // sort the array descending
+                        return -value.score;
+                    })
+                    .value();
+
+
+            if (result.length == 0)
+                return cbf(cb, err, { user: {}, leaderboad: [] });
+
+            user = _.find(result, { _id: uid });
+
+            if (user) {
+                rank = _.size(_.filter(result, function (o) {
+                    if (o._id != user._id && o.score > user.score)
+                        return true;
+                    else
+                        return false;
+                }));
+                user.rank = rank + 1;
+            }
+
+            var ldata = {
+                user: user,
+                leaderboad: result
+            }
+            if (body.sponsor)
+                ldata["sponsor"] = body.sponsor;
+
+
+            return cbf(cb, err, ldata);
+
+        });
+
+    }
 
 
     // var leader_conditions = parseConditons(body);
@@ -257,35 +330,35 @@ api.getLeaderboardWithRank = function (id, body, cb) {
 
     // q.sort({ score: -1 });
 
-    var rank;
-    var user;
-    q.exec(function (err, leaderboard) {
+    // var rank;
+    // var user;
+    // q.exec(function (err, leaderboard) {
 
-        if (leaderboard.length == 0)
-            return cbf(cb, err, { user: {}, leaderboad: [] });
+    //     if (leaderboard.length == 0)
+    //         return cbf(cb, err, { user: {}, leaderboad: [] });
 
-        user = _.find(leaderboard, { _id: uid });
+    //     user = _.find(leaderboard, { _id: uid });
 
-        if (user) {
-            rank = _.size(_.filter(leaderboard, function (o) {
-                if (o._id != user._id && o.score > user.score)
-                    return true;
-                else
-                    return false;
-            }));
-            user.rank = rank + 1;
-        }
+    //     if (user) {
+    //         rank = _.size(_.filter(leaderboard, function (o) {
+    //             if (o._id != user._id && o.score > user.score)
+    //                 return true;
+    //             else
+    //                 return false;
+    //         }));
+    //         user.rank = rank + 1;
+    //     }
 
-        var ldata = {
-            user: user,
-            leaderboad: leaderboard
-        }
-        if (body.sponsor)
-            ldata["sponsor"] = body.sponsor;
+    //     var ldata = {
+    //         user: user,
+    //         leaderboad: leaderboard
+    //     }
+    //     if (body.sponsor)
+    //         ldata["sponsor"] = body.sponsor;
 
 
-        return cbf(cb, err, ldata);
-    })
+    //     return cbf(cb, err, ldata);
+    // })
 
 
 };

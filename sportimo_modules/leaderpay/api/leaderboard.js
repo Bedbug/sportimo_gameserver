@@ -41,7 +41,8 @@ api.leaderboardWithRank = function (req, res) {
 
     var skip = req.body.skip;
     var limit = req.body.limit;
-
+	if(!req.body._id) return res.status(404).json("A valid Pool Object is required in order to receive a leaderboard");
+	
 	leaderboard.getLeaderboardWithRank(req.params.uid, req.body, function (err, data) {
 		if (err) {
 			res.status(404).json(err);
