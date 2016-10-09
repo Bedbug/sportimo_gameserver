@@ -1418,6 +1418,17 @@ gamecards.Tick = function () {
                                 });
                                 
                                 async.each(userGamecards, function(userGamecard, cardCbk) {
+                                    redisPublish.publish("socketServers", JSON.stringify({
+                                        sockets: true,
+                                        clients: [userGamecard.userid],
+                                        payload: {
+                                            type: "Card_PresetInstant_activated",
+                                            client: userGamecard.userid,
+                                            room: userGamecard.matchid,
+                                            data: gamecards.TranslateUserGamecard(userGamecard)
+                                        }
+                                    }));
+
                                     return userGamecard.save(cardCbk);
                                 }, parallelCbk);
                             });
