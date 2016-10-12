@@ -1574,8 +1574,8 @@ Parser.TestGuruStats = function(callback)
 // Used properties from scheduledMatch: competition, home_team, away_team
 Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
     if (
-        !scheduledMatch.moderation || scheduledMatch.moderation.length == 0 || !scheduledMatch.moderation[0].parserid
-        || !scheduledMatch.home_team || !scheduledMatch.away_team)
+        //!scheduledMatch.moderation || scheduledMatch.moderation.length == 0 || !scheduledMatch.moderation[0].parserid
+        !scheduledMatch.home_team || !scheduledMatch.away_team)
         return outerCallback(null);
         
     //let parserid = scheduledMatch.moderation[0].parserid;
