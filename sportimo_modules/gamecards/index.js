@@ -607,20 +607,20 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
 gamecards.getUserInstances = function (matchId, userId, cbk) {
     async.waterfall([
         function (callback) {
-            db.models.scheduled_matches.findById(matchId, 'settings start', function (error, scheduledMatch) {
+            db.models.scheduled_matches.findById(matchId, 'settings state', function (error, scheduledMatch) {
                 if (error)
                     return callback(error);
-                callback(null, scheduledMatch.settings, scheduledMatch.start);
+                callback(null, scheduledMatch.settings, scheduledMatch.state);
             });
         },
-        function (settings, start, callback) {
+        function (settings, matchState, callback) {
             db.models.gamecardDefinitions.find({ matchid: matchId, isVisible: true, isActive: true, status: { $ne: 2 } }, function (error, definitions) {
                 if (error)
                     return callback(error);
-                callback(null, definitions, settings, start);
+                callback(null, definitions, settings, matchState);
             });
         },
-        function (definitions, settings, start, callback) {
+        function (definitions, settings, matchState, callback) {
             // from the definitions, filter out those that the user has played maxUserInstances
             db.models.userGamecards.find({ matchid: matchId, userid: userId }, 'cardType status gamecardDefinitionId', function (error, userCards) {
                 if (error)
@@ -673,14 +673,14 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                 }
                 let itsNow = moment.utc();
                 // If the match has not yet started, drop all Instant card definitions
-                if ( moment.utc(start).isAfter(itsNow) || (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount) ) {
+                if ( matchState == 0 || (settings && settings.gameCards && settings.gameCards.instant && settings.gameCards.instant <= instantCount) ) {
                     _.forEach(definitions, function (definition) {
                         if (definition.cardType == 'Instant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
                             definitionIdsToDrop.push(definition.id);
                     });
                 }
                 // If the match has started already, drop all PresetInstant card definitions
-                if ( moment.utc(start).isBefore(itsNow) || (settings && settings.gameCards && settings.gameCards.presetInstant && settings.gameCards.presetInstant <= presetInstantCount) ) {
+                if ( matchState > 0 || (settings && settings.gameCards && settings.gameCards.presetInstant && settings.gameCards.presetInstant <= presetInstantCount) ) {
                     _.forEach(definitions, function (definition) {
                         if (definition.cardType == 'PresetInstant' && _.indexOf(definitionIdsToDrop, definition.id) == -1)
                             definitionIdsToDrop.push(definition.id);
