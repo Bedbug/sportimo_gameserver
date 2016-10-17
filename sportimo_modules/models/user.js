@@ -66,7 +66,7 @@ var UserSchema = new Schema({
     inbox: [{
         type: String,
         ref: 'messages',
-        default: ['578f65b748def8d8836b7094']
+        default: ['573844e048def82b6bfdb594']
     }],
     unread: {type: Number, default: 1},
     social_id: {
