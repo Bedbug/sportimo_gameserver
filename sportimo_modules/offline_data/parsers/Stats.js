@@ -1698,7 +1698,7 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                                     if (!event.time || !event.time.minutes)
                                         return;
                                         
-                                    let timeIndex = Math.floor(event.time.minutes/10);
+                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes/10);
                                     
                                     switch (event.playEvent.playEventId) {
                                         case 2:
@@ -1750,7 +1750,7 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                                     if (!event.time || !event.time.minutes)
                                         return;
                                         
-                                    let timeIndex = Math.floor(event.time.minutes/10);
+                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes/10);
                                     
                                     switch (event.playEvent.playEventId) {
                                         case 2:
