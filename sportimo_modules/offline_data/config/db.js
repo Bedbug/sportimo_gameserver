@@ -7,7 +7,7 @@ var config = {
 //   "user": "bedbug",
 //   "pw": "a21th21",
 //   "port": "27835"
-   "db": "sportimo2",  
+   "db": "sportimo2?replicaSet=rs-ds021165",  
    "host": "ds021165-a0.mlab.com",  
    "user": "bedbug",
    "pw": "a21th21",
