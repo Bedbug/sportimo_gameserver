@@ -57,8 +57,8 @@ api.poolbygameid = function (req, res) {
  */
 api.timedpools = function (req, res) {
     
-    if (!req.params.country)
-        return res.status(404).send("You didn't leave the user's country code empty on purpose, did you?");
+    // if (!req.params.country)
+    //     return res.status(404).send("You didn't leave the user's country code empty on purpose, did you?");
 
     var querry = { gameid: { "$exists": false } };
 

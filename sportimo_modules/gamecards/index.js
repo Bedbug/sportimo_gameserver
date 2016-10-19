@@ -821,8 +821,8 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         if (!referencedDefinition)
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
 
-        if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.start && itsNow.isAfter(moment.utc(scheduledMatch.start)))
-            return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is PresetInstant and it is not available since the referenced match has started (its start time is earlier than NOW in UTC)" });
+        // if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.start && itsNow.isAfter(moment.utc(scheduledMatch.start)))
+        //     return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is PresetInstant and it is not available since the referenced match has started (its start time is earlier than NOW in UTC)" });
 
         if (referencedDefinition.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))
             return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet (its start time is later than NOW in UTC)" });

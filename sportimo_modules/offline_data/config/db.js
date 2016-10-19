@@ -12,6 +12,11 @@ var config = {
    "user": "bedbug",
    "pw": "a21th21",
    "port": "21165"
+//      "db": "sportimo_mbc",  
+//    "host": "ds059726-a0.mlab.com",  
+//    "user": "bedbug",
+//    "pw": "a21th21",
+//    "port": "59726"
 };
 
 var port = (config.port.length > 0) ? ":" + config.port : '';
