@@ -1785,8 +1785,10 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                     }, s2cbk);
                 }
                 ], function(seriesError) {
-                    if (seriesError)
+                    if (seriesError) {
+                        log.error('Failed to save Guru stats due to: %s', seriesError.message);
                         return outerCallback(seriesError);
+                    }
                         
                     // Calc totals and averages
                     for(let i = 0; i < 9; i++) {
