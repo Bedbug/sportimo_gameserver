@@ -846,7 +846,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function(otherPresetInstant) {
             return (otherPresetInstant.minute >= userGamecard.minute && (otherPresetInstant.minute <= userGamecard.minute + (otherPresetInstant.duration / 60000)))
             || (otherPresetInstant.minute <= userGamecard.minute && (otherPresetInstant.minute + (otherPresetInstant.duration / 60000) >= userGamecard.minute ));
-        }) == false) 
+        }) == true) 
             return callback({ isValid: false, error: "The user gamecard of type PresetInstant coincides in time with another user gamecard of the same type" });
         
 
