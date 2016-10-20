@@ -743,6 +743,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
     // search for the referenced wildcardDefinitionId in the defaultDefinitions first, then to the mongo collection
     let referencedDefinition = null;
     let sameInstanceCount = 0;
+    let otherPresetInstants = null;
     let scheduledMatch = null;
 
     async.parallel([
@@ -792,8 +793,11 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                     return cbk(error);
                 sameInstanceCount = sameDefinitionUsercards.length || 0;
 
-                if (_.some(sameDefinitionUsercards, { status: 1 }) == true || _.some(sameDefinitionUsercards, { status: 3 }) == true)
+                if (sameInstanceCount > 0 && _.head(sameDefinitionUsercards).cardType != 'PresetInstant' && (_.some(sameDefinitionUsercards, { status: 1 }) == true || _.some(sameDefinitionUsercards, { status: 3 }) == true))
                     return cbk(new Error("There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state"));
+                    
+                if (sameInstanceCount > 0 && _.head(sameDefinitionUsercards).cardType == 'PresetInstant')
+                    otherPresetInstants = sameDefinitionUsercards;
 
                 cbk(null, sameInstanceCount);
             });
@@ -820,12 +824,13 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (!referencedDefinition)
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
+            
 
         // if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.start && itsNow.isAfter(moment.utc(scheduledMatch.start)))
         //     return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is PresetInstant and it is not available since the referenced match has started (its start time is earlier than NOW in UTC)" });
 
-        if (referencedDefinition.cardType == 'Instant' && scheduledMatch.start && itsNow.isBefore(moment.utc(scheduledMatch.start)))
-            return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet (its start time is later than NOW in UTC)" });
+        if (referencedDefinition.cardType == 'Instant' && scheduledMatch.state == 0)
+            return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet" });
 
         if (scheduledMatch.completed && scheduledMatch.completed == true)
             return callback({ isValid: false, error: "The referenced match is completed. No more gamecards can be played past the match's completion." });
@@ -835,6 +840,13 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (referencedDefinition.maxUserInstances && referencedDefinition.maxUserInstances <= sameInstanceCount)
             return callback({ isValid: false, error: "The gamecardDefinitionId document's maxUserInstances have been reached already, no more cards of the same type can be played by this user" });
+
+        if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function(otherPresetInstant) {
+            return (otherPresetInstant.minute >= userGamecard.minute && (otherPresetInstant.minute <= userGamecard.minute + (otherPresetInstant.duration / 60000)))
+            || (otherPresetInstant.minute <= userGamecard.minute && (otherPresetInstant.minute + (otherPresetInstant.duration / 60000) >= userGamecard.minute ));
+        }) == false) 
+            return callback({ isValid: false, error: "The user gamecard of type PresetInstant coincides in time with another user gamecard of the same type" });
+        
 
         return callback({ isValid: true, error: null }, referencedDefinition, scheduledMatch);
     });
