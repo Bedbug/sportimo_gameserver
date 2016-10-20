@@ -7,6 +7,8 @@ var mongoose = require('mongoose'),
 var poolroom = {
     
     title: {type:Schema.Types.Mixed},
+    info: {type:Schema.Types.Mixed},
+
     // roomtype: Season, Week, Game, Custom
     // Season And Week should always have Starting and Ending Dates, Game
     // must have a gameid and Custom must have at least one.

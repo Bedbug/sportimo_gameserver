@@ -173,9 +173,9 @@ api.edititem = function (req, res) {
 
         returnedItem.photo = updateData.photo;
         returnedItem.tags = updateData.tags;
-        areturnedItemrt.publishDate = updateData.publishDate;
+        returnedItem.publishDate = updateData.publishDate;
         returnedItem.type = updateData.type;
-        returnedItemart.publication = updateData.publication;
+        returnedItem.publication = updateData.publication;
         // art.markModified('tags');
 
         return returnedItem.save(function (err, data) {

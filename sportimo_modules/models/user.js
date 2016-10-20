@@ -65,8 +65,7 @@ var UserSchema = new Schema({
     picture: String,
     inbox: [{
         type: String,
-        ref: 'messages',
-        default: ['573844e048def82b6bfdb594']
+        ref: 'messages'
     }],
     unread: {type: Number, default: 1},
     social_id: {
@@ -127,6 +126,8 @@ UserSchema.pre('save', function (next) {
     if (this.isNew) {
         Achievements.find({}, function (err, achievs) {
             user.achievements = achievs;
+            user.inbox = ['578f65b748def8d8836b7094'];
+            
             bcrypt.genSalt(10, function (err, salt) {
                 if (err) {
                     return next(err);
@@ -137,6 +138,7 @@ UserSchema.pre('save', function (next) {
                         return next(err);
                     }
                     user.password = hash;
+                    
                     next();
                 });
             });

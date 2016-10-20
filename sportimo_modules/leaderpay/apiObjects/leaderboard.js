@@ -232,6 +232,9 @@ api.getLeaderboardWithRank = function (id, body, cb) {
                 if (body.sponsor)
                     ldata["sponsor"] = body.sponsor;
 
+                if(body.info)
+                    ldata["info"] = body.info;
+
 
                 return cbf(cb, err, ldata);
 
@@ -295,6 +298,9 @@ api.getLeaderboardWithRank = function (id, body, cb) {
             }
             if (body.sponsor)
                 ldata["sponsor"] = body.sponsor;
+
+                  if(body.info)
+                    ldata["info"] = body.info;
 
 
             return cbf(cb, err, ldata);
@@ -363,6 +369,63 @@ api.getLeaderboardWithRank = function (id, body, cb) {
 
 };
 
+
+api.getMiniMatchLeaderboard = function (id, body, cb) {
+
+    var leader_conditions = parseConditons(body);
+    // leader_conditions.score = { $gt: 0 };
+    var uid = id;
+
+    var rank;
+    var user;
+
+        var q = Score.find(leader_conditions);
+        q.select('user_id user_name pic score level');
+        q.sort({"score":"-1"});
+
+        return q.exec(function (err, leaderboard) {
+          
+            user = _.find(leaderboard, { user_id: uid }).toObject();
+            user._id = user.user_id;
+            delete user.user_id;
+            userIndex = _.findIndex(leaderboard, {user_id: uid});
+            user.rank = userIndex+1;
+
+            var start = userIndex - 2;
+            var count = 5;
+            if(start < 0) {
+                count = count + start;
+                start = 0;
+            }
+            var end = start + count;
+
+            var result = [];
+
+            for(var i = start; i < end; i++){
+                if(leaderboard[i]){
+                    var leadItem = leaderboard[i].toObject();
+                    leadItem._id = leadItem.user_id;
+                    delete leadItem.user_id;
+                    leadItem.rank = i+1;
+                    result.push(leadItem);
+                }
+                
+            }
+
+            user.index = _.findIndex(result, {_id: user._id});
+            
+            var ldata = {
+                user: user,
+                leaderboad: result
+            }
+          
+
+
+            return cbf(cb, err, ldata);
+
+        });
+
+};
 
 function parseConditons(conditions) {
 
