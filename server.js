@@ -64,7 +64,7 @@ var server = http.createServer(app);
 var port = (process.env.PORT || 3030)
 app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
-    console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version,port);
+    console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
     console.log("------------------------------------------------------------------------------------");
 });
 
@@ -98,38 +98,45 @@ var redisCreds = require('./config/redisConfig');
 var mongoCreds = require('./config/mongoConfig');
 
 var PublishChannel = null;
-PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
-PublishChannel.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log(err);
-    }
-});
 var SubscribeChannel = null;
-SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
-SubscribeChannel.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log(err);
-    }
-    // else
-    //     console.log("[Game Server] Redis Authenticated.")
-});
 
-PublishChannel.on("error", function (err) {
-    console.error("{''Error'': ''" + err + "''}");
-    console.error(err.stack);
-});
+try {
+    PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+    PublishChannel.auth(redisCreds.secret, function (err) {
+        if (err) {
+            console.log(err);
+        }
+    });
 
-SubscribeChannel.on("error", function (err) {
-    console.error("{''Error'': ''" + err + "''}");
-    console.error(err.stack);
-});
+    SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
+
+    SubscribeChannel.auth(redisCreds.secret, function (err) {      
+        if (err) {
+            console.log(err);
+        }       
+    });
+
+
+    PublishChannel.on("error", function (err) {
+        console.error("{''Error'': ''" + err + "''}");
+        console.error(err.stack);
+    });
+
+    SubscribeChannel.on("error", function (err) {
+        console.error("{''Error'': ''" + err + "''}");
+        console.error(err.stack);
+    });
+}
+catch (err) {
+    console.log(err);
+}
 
 app.PublishChannel = PublishChannel;
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
-var mongoConnection = 'mongodb://'+mongoCreds.user+':'+mongoCreds.password+'@'+mongoCreds.url;
+var mongoConnection = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@' + mongoCreds.url;
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
@@ -146,7 +153,7 @@ mongoose.connect(mongoConnection, function (err, res) {
 var liveMatches = require('./sportimo_modules/match-moderation');
 if (PublishChannel && SubscribeChannel)
     liveMatches.SetupRedis(PublishChannel, SubscribeChannel, redisCreds.channel);
-    
+
 liveMatches.SetupMongoDB(mongoose);
 liveMatches.SetupAPIRoutes(app);
 liveMatches.init(TestSuite.done);
@@ -183,7 +190,7 @@ var polls_module = require('./sportimo_modules/polls');
 
 
 function log(info) {
-  //  console.log("[" + Date.now() + "] API CALL: " + info);
+    //  console.log("[" + Date.now() + "] API CALL: " + info);
 }
 
 app.use(bodyParser.json());
@@ -255,9 +262,9 @@ if (process.env.NODE_ENV == "production") {
 
 // Central Error Handling for all Express router endpoints: for Express this should be the last middleware declared:
 // See http://expressjs.com/en/guide/error-handling.html
-app.use(function(error, request, response, next) {
+app.use(function (error, request, response, next) {
     logger.error('Error: %s \nStack: %s', error.message, error.stack);
-    
+
     // In Development environment return the exact error message and stack:
     return response.status(500).json({
         error: {
@@ -265,7 +272,7 @@ app.use(function(error, request, response, next) {
             stack: error.stack
         }
     });
-    
+
     // In Production environment, return a generic error message:
     //return response.status(500).json({error: 'Oops! The service is experiencing some unexpected issues. Please try again later.'});
 });
@@ -277,12 +284,12 @@ TestSuite.server = app;
 // =============================================================================
 var router = express.Router();              // get an instance of the express Router
 
-router.get('/', function(req, res) {
-    settings.find({},function(err,result){
-            if(result[0])
+router.get('/', function (req, res) {
+    settings.find({}, function (err, result) {
+        if (result[0])
             return res.status(200).send(result[0]);
-            else return res.status(200).send(result);
-        })  
+        else return res.status(200).send(result);
+    })
 });
 
 app.use('/settings', router);
