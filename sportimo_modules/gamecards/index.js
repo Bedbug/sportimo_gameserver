@@ -843,11 +843,28 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         if (referencedDefinition.maxUserInstances && referencedDefinition.maxUserInstances <= sameInstanceCount)
             return callback({ isValid: false, error: "The gamecardDefinitionId document's maxUserInstances have been reached already, no more cards of the same type can be played by this user" });
 
+        let conflictedCardLowerMinute = null;
+        let conflictedCardUpperMinute = null;
         if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function(otherPresetInstant) {
-            return (otherPresetInstant.minute >= userGamecard.minute && (otherPresetInstant.minute <= userGamecard.minute + (otherPresetInstant.duration / 60000)))
-            || (otherPresetInstant.minute <= userGamecard.minute && (otherPresetInstant.minute + (otherPresetInstant.duration / 60000) >= userGamecard.minute ));
+            let cardDuration = otherPresetInstant.duration ? otherPresetInstant.duration / 60000 : 0;     // converted in minutes from milliseconds
+            if (otherPresetInstant.minute <= userGamecard.minute && (userGamecard.minute <= otherPresetInstant.minute + cardDuration))
+            {
+                if (conflictedCardLowerMinute == null)
+                    conflictedCardLowerMinute = otherPresetInstant.minute;
+                else if (otherPresetInstant.minute < conflictedCardLowerMinute)
+                    conflictedCardLowerMinute = otherPresetInstant.minute;
+
+                if (conflictedCardUpperMinute == null)
+                    conflictedCardUpperMinute = otherPresetInstant.minute + cardDuration;
+                else if (otherPresetInstant.minute + cardDuration > conflictedCardUpperMinute)
+                    conflictedCardUpperMinute = otherPresetInstant.minute + cardDuration;
+                    
+                return true;
+            }
+            
+            return false;
         }) == true) 
-            return callback({ isValid: false, error: "The user gamecard of type PresetInstant coincides in time with another user gamecard of the same type" });
+            return callback({ isValid: false, error: "No more '" + referencedDefinition.title + "' PresetInstant cards can be played bewtween minutes " + conflictedCardLowerMinute + " and " + conflictedCardUpperMinute });
         
 
         return callback({ isValid: true, error: null }, referencedDefinition, scheduledMatch);
