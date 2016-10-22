@@ -658,9 +658,9 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
                         // From the definitions, remove those that have as usercards equal or more instances than maxUserInstances
                         if (definitionsLookup[key] && definitionsLookup[key].maxUserInstances && instancePerDefinition.length >= definitionsLookup[key].maxUserInstances)
                             definitionIdsToDrop.push(key);
-                        // From the definitions, remove those where an existing user gamecacrd is currently pending or active and is pending for resolution.
+                        // From the definitions, remove those where an existing user gamecacrd is currently pending or active and is pending for resolution, for all card types except PresetInstant.
                         _.forEach(instancePerDefinition, function (userGamecard) {
-                            if (userGamecard.status != 2 && _.indexOf(definitionIdsToDrop, key) == -1)
+                            if (userGamecard.status != 2 && userGamecard.cardType != 'PresetInstant' && _.indexOf(definitionIdsToDrop, key) == -1)
                                 definitionIdsToDrop.push(key);
                         });
                         //log.info(instancePerDefinition.length);
