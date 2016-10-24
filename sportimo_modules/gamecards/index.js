@@ -828,11 +828,11 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
             
 
-        // if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.start && itsNow.isAfter(moment.utc(scheduledMatch.start)))
-        //     return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is PresetInstant and it is not available since the referenced match has started (its start time is earlier than NOW in UTC)" });
+        if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.state > 0)
+            return callback({ isValid: false, error: "A PresetInstant game card cannot be played after the match starts" });
 
         if (referencedDefinition.cardType == 'Instant' && scheduledMatch.state == 0)
-            return callback({ isValid: false, error: "The gamecardDefinitionId document's cardType is Instant but the referenced match has not started yet" });
+            return callback({ isValid: false, error: "An Instant game card cannot be played before the match starts" });
 
         if (scheduledMatch.completed && scheduledMatch.completed == true)
             return callback({ isValid: false, error: "The referenced match is completed. No more gamecards can be played past the match's completion." });
@@ -1649,7 +1649,10 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
     if (gamecard.cardType == "Instant" || gamecard.cardType == "PresetInstant") {
         let startInt = moment.utc(gamecard.activationTime);
         let endInt = itsNow;
-        gamecard.pointsAwarded = gamecard.startPoints + Math.round((gamecard.endPoints - gamecard.startPoints) * (endInt.diff(startInt, 'milliseconds', true) / gamecard.duration));
+        let realDuration = endInt.diff(startInt, 'milliseconds', true);
+        if (gamecard.pauseTime && gamecard.resumeTime)
+            realDuration = moment.utc(gamecard.pauseTime).diff(startInt, 'milliseconds', true) + endInt.diff(moment.utc(gamecard.resumeTime), 'milliseconds', true);
+        gamecard.pointsAwarded = gamecard.startPoints + Math.round((gamecard.endPoints - gamecard.startPoints) * (realDuration / gamecard.duration));
     }
     else
         gamecard.pointsAwarded = gamecard.startPoints;
