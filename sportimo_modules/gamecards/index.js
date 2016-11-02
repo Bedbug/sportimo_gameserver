@@ -847,7 +847,8 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         let conflictedCardUpperMinute = null;
         if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function(otherPresetInstant) {
             let cardDuration = otherPresetInstant.duration ? otherPresetInstant.duration / 60000 : 0;     // converted in minutes from milliseconds
-            if (otherPresetInstant.minute <= userGamecard.minute && (userGamecard.minute <= otherPresetInstant.minute + cardDuration))
+            if ( (otherPresetInstant.minute <= userGamecard.minute && (userGamecard.minute <= otherPresetInstant.minute + cardDuration))
+                || (otherPresetInstant.minute <= (userGamecard.minute + cardDuration) && userGamecard.minute <= otherPresetInstant.minute) )
             {
                 if (conflictedCardLowerMinute == null)
                     conflictedCardLowerMinute = otherPresetInstant.minute;
@@ -861,7 +862,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                     
                 return true;
             }
-            
+
             return false;
         }) == true) 
             return callback({ isValid: false, error: "No more '" + referencedDefinition.title + "' PresetInstant cards can be played bewtween minutes " + conflictedCardLowerMinute + " and " + conflictedCardUpperMinute });
@@ -1381,7 +1382,7 @@ gamecards.Tick = function () {
             // and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
 
             let itsNow = moment.utc();
-            db.models.scheduled_matches.find({ completed: { $ne: true }, start: { $lt: itsNow.toDate() } }, '_id state time stats', function (error, matches) {
+            db.models.scheduled_matches.find({ completed: { $ne: true }, state: { $gt: 0 }, start: { $lt: itsNow.toDate() } }, '_id state time stats', function (error, matches) {
                 if (error)
                     return callback(error);
 
