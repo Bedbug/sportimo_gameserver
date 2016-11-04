@@ -313,6 +313,7 @@ gamecards.addMatchDefinition = function (gamecard, callback) {
         pointsPerMinute: gamecard.pointsPerMinute,
         maxUserInstances: gamecard.maxUserInstances,
         isVisible: gamecard.isVisible || false,
+        isActive: gamecard.isActive || false,
         cardType: gamecard.cardType,
         status: 0
     });
@@ -374,6 +375,7 @@ gamecards.upsertDefinition = function (gamecard, callback) {
             processedDefinition.pointsPerMinute = gamecard.pointsPerMinute;
             processedDefinition.maxUserInstances = gamecard.maxUserInstances;
             processedDefinition.isVisible = gamecard.isVisible || false;
+            processedDefinition.isActive = gamecard.isActive || false;
             processedDefinition.cardType = gamecard.cardType;
         }
         else {
@@ -398,6 +400,7 @@ gamecards.upsertDefinition = function (gamecard, callback) {
                 pointsPerMinute: gamecard.pointsPerMinute,
                 maxUserInstances: gamecard.maxUserInstances,
                 isVisible: gamecard.isVisible || false,
+                 isActive: gamecard.isActive || false,
                 cardType: gamecard.cardType,
                 status: 0
             });
@@ -476,6 +479,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         pointsPerMinute: template.pointsPerMinute,
         maxUserInstances: template.maxUserInstances,
         isVisible: template.isVisible,
+        isActive: template.isActive,
         cardType: template.cardType,
         status: 1
     });
