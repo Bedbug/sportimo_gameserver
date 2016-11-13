@@ -388,6 +388,8 @@ api.getMiniMatchLeaderboard = function (id, body, cb) {
         user = _.find(leaderboard, { user_id: uid }).toObject();
         user._id = user.user_id;
         delete user.user_id;
+        user.name = user.user_name;
+        delete user.user_name;
         userIndex = _.findIndex(leaderboard, { user_id: uid });
         user.rank = userIndex + 1;
 
@@ -403,6 +405,8 @@ api.getMiniMatchLeaderboard = function (id, body, cb) {
                 var leadItem = leaderboard[i].toObject();
                 leadItem._id = leadItem.user_id;
                 delete leadItem.user_id;
+                leadItem.name = leadItem.user_name;
+                delete leadItem.user_name;
                 leadItem.rank = i + 1;
                 result.push(leadItem);
             } else {

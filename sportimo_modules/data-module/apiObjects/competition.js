@@ -54,12 +54,12 @@ api.addCompetition = function (competition,cb) {
 api.editCompetition = function (id,updateData, cb) {
   Competition.findByIdAndUpdate(id, updateData, function (err, competition) {
    
-   
-    return Matches.update({ competition: id }, updateData,function(err,data){
+    Matches.update({ competition: id }, updateData,function(err,data){
         if(!err)
          Standings.update({ competitionid: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
              if(!err)
                 return cbf(cb,err,competition.toObject()); 
+                
          });
     });
 
