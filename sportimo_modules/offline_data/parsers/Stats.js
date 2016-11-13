@@ -97,6 +97,7 @@ setTimeout(function () {
     });
 }, 5000);
 
+
 setTimeout(function() {
     setInterval(function() {
         var cutOffTime = moment.utc().subtract(3, 'hours').toDate();
@@ -1517,22 +1518,6 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
             },
             function (callback) {
                 async.eachSeries(competitionTeams, function (team, innerCallback) {
-                    if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
-                        async.setImmediate(function () {
-                            innerCallback(null);
-                        });
-                    else {
-                        log.info('Now on to updating full stats for team %s', team.name.en);
-                        
-                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
-                            innerCallback(null);
-                        });
-                        
-                    }
-                }, callback);
-            },
-            function (callback) {
-                async.eachSeries(competitionTeams, function (team, innerCallback) {
                     return Parser.UpdateTeamPlayersCareerStats(team.id, season, innerCallback);
                 }, function (seriesError) {
                     if (seriesError)
@@ -1558,6 +1543,22 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     callback(null);
                 });
 
+            },
+            function (callback) {
+                async.eachSeries(competitionTeams, function (team, innerCallback) {
+                    if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
+                        async.setImmediate(function () {
+                            innerCallback(null);
+                        });
+                    else {
+                        log.info('Now on to updating full stats for team %s', team.name.en);
+                        
+                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
+                            innerCallback(null);
+                        });
+                        
+                    }
+                }, callback);
             }
         ], function (error) {
             if (error) {
