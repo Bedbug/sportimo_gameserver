@@ -64,11 +64,14 @@ api.timedpools = function (req, res) {
 
     if (req.params.country)
         querry.$or = [{ country: { "$size": 0 } }, { country: req.params.country.toUpperCase() }];
+    
+    if (req.params.shouldHavePrizes)
+        querry["prizes.0"] = {"$exists":true};
 
     var q = Pool.find(querry);
 
     q.exec(function (err, pools) {
-        if (err) res.satus(500).send(err);
+        if (err) res.status(500).send(err);
         else {
             var uniqueArray = ['Season', 'Week'];
             if (req.params.country)
@@ -148,6 +151,7 @@ router.delete('/v1/pools/:id', api.deletePool);
 router.get('/v1/pools/forgame/:id', api.poolbygameid);
 router.get('/v1/pools/forgame/:id/:country', api.poolbygameid);
 
+router.get('/v1/pools/for/country/:country/:shouldHavePrizes', api.timedpools);
 router.get('/v1/pools/for/country/:country', api.timedpools);
 router.get('/v1/pools/for/country/', api.timedpools);
 

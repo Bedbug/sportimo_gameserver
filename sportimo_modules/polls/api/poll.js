@@ -188,14 +188,17 @@ api.editpoll = function (req, res) {
 		delete req.body._id;
 		delete req.body.__v;
 		
+		poll.text = newData.text;
 		poll.answers = newData.answers;
 		poll.tags = newData.tags;
 		poll = _.merge(poll, req.body);
+		
 		
 		poll.save(function (err, result) {
 			if (err)
 				return res.status(500).send(err);
 
+			console.log(result);
 			return res.send(result);
 		})
 

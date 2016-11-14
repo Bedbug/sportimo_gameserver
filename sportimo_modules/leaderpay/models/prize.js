@@ -7,7 +7,7 @@ l=require('../config/lib');
 
 var fields = {
 	name: { type: Schema.Types.Mixed },
-	text: { type: Schema.Types.Mixed, required: true },
+	text: { type: Schema.Types.Mixed },
 	picture: { type: String },
 	created: { type: Date , default: Date.now }
 };

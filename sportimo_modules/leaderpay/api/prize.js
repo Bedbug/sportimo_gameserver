@@ -57,7 +57,7 @@ api.editPrize = function (req, res) {
 		} else {
 			return res.status(500).json(err);
 		}
-		return res.status(200).json(data);   
+		
 	});
 
 };

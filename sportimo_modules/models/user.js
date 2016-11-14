@@ -85,7 +85,7 @@ var UserSchema = new Schema({
         }
     },
     resetToken: String,
-    country: { type: String, required: false },
+    country: { type: String, required: false, default: "GR" },
     msisdn: String,
     customerType: {type: String, default:"free"},
     subscriptionContractId: String,

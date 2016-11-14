@@ -35,11 +35,7 @@ api.getPrize = function (id,cb) {
 
 // POST
 api.addPrize = function (prize,cb) {
-
-  if(prize == 'undefined'){
-    cb('No Prize Provided. Please provide valid prize data.');
-  }
-
+  console.log(prize);
   prize = new Prize(prize);
 
   prize.save(function (err) {

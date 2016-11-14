@@ -1386,7 +1386,7 @@ gamecards.Tick = function () {
             // and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
 
             let itsNow = moment.utc();
-            db.models.scheduled_matches.find({ completed: { $ne: true }, state: { $gt: 0 }, start: { $lt: itsNow.toDate() } }, '_id state time stats', function (error, matches) {
+            db.models.scheduled_matches.find({ completed: { $ne: true }, state: { $gt: 0 } }, '_id state time stats', function (error, matches) { // cannot test matches in the future , start: { $lt: itsNow.toDate() }
                 if (error)
                     return callback(error);
 
@@ -1449,8 +1449,8 @@ gamecards.Tick = function () {
 
                                 _.forEach(userGamecards, function (userGamecard) {
                                     userGamecard.status = 1; // activated
-                                    userGamecard.activationTime = itsNow.toDate();
-                                    userGamecard.terminationTime = itsNow.add(userGamecard.duration || 0, 'ms');
+                                    userGamecard.activationTime = itsNow.clone().toDate();
+                                    userGamecard.terminationTime = itsNow.clone().add(userGamecard.duration || 0, 'ms');
                                 });
 
                                 async.each(userGamecards, function (userGamecard, cardCbk) {
