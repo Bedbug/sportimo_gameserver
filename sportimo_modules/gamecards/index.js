@@ -616,6 +616,10 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
             db.models.scheduled_matches.findById(matchId, 'settings state', function (error, scheduledMatch) {
                 if (error)
                     return callback(error);
+                
+                if (scheduledMatch == null)
+                    return callback(new Error("Match id " + matchId + " was not found."));
+                    
                 callback(null, scheduledMatch.settings, scheduledMatch.state);
             });
         },
