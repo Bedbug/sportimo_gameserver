@@ -801,7 +801,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
             db.models.userGamecards.find({ matchid: matchId, userid: userGamecard.userid, gamecardDefinitionId: userGamecard.gamecardDefinitionId }, 'status cardType duration minute', function (error, sameDefinitionUsercards) {
                 if (error)
                     return cbk(error);
-                sameInstanceCount = sameDefinitionUsercards.length || 0;
+                sameInstanceCount = !sameDefinitionUsercards ? 0 : sameDefinitionUsercards.length;
 
                 if (sameInstanceCount > 0 && _.head(sameDefinitionUsercards).cardType != 'PresetInstant' && (_.some(sameDefinitionUsercards, { status: 1 }) == true || _.some(sameDefinitionUsercards, { status: 3 }) == true))
                     return cbk(new Error("There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state"));
@@ -834,7 +834,9 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (!referencedDefinition)
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
-            
+        
+        if (!scheduledMatch)    
+            return callback({ isValid: false, error: "The matchId " + matchId + " is not found" });
 
         if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.state > 0)
             return callback({ isValid: false, error: "A PresetInstant game card cannot be played after the match starts" });
