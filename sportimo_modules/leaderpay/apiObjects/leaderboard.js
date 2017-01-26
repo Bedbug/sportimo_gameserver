@@ -45,7 +45,20 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
                 .orderBy(["score"], ["desc"])
                 .value();
 
-        cbf(cb, err, result);
+        // for (var key in result)
+        //     result[key].sort(function (a, b) { var x = a.DisplayName, y = b.DisplayName; return x === y ? 0 : x < y ? -1 : 1; });
+
+        // console.log(result);
+        // var rank = 1;
+        // var last_score = 0;
+
+        // _.each(result, function(userEntry){
+
+        // })
+
+
+
+        cbf(cb, err, Ranked(result));
     });
 
     // var q = Score.aggregate([
@@ -73,6 +86,36 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
     //     cbf(cb, err, result);
     // });
 };
+
+function Ranked(leaderboard) {
+
+    var rank = 1;
+
+    var rankedLeaderboard = [];
+
+    var result =
+        _.chain(leaderboard)
+            .groupBy("score")
+            .map(function (value, key) {
+                var score_group = {
+                    "score": parseInt(key),
+                    "entries": _.orderBy(value, "level", 'desc')
+                }
+                return score_group;
+            })
+            .orderBy(["score"], ["desc"])
+            .value();
+
+    _.each(result, function (s) {
+        _.each(s.entries, function (e) {
+            e.rank = rank;
+            rank++;
+            rankedLeaderboard.push(e);
+        });
+    })
+
+    return rankedLeaderboard;
+}
 
 api.getSocialLeaderboardWithRank = function (id, body, mid, cb) {
 
@@ -213,17 +256,21 @@ api.getLeaderboardWithRank = function (id, body, cb) {
                 if (result.length == 0)
                     return cbf(cb, err, { user: {}, leaderboad: [] });
 
+
+                // SPI-28 | Create Rankings based on Scores and then Levels
+                result = Ranked(result);
+
                 user = _.find(result, { _id: uid });
 
-                if (user) {
-                    rank = _.size(_.filter(result, function (o) {
-                        if (o._id != user._id && o.score > user.score)
-                            return true;
-                        else
-                            return false;
-                    }));
-                    user.rank = rank + 1;
-                }
+                // if (user) {
+                //     rank = _.size(_.filter(result, function (o) {
+                //         if (o._id != user._id && o.score > user.score)
+                //             return true;
+                //         else
+                //             return false;
+                //     }));
+                //     user.rank = rank + 1;
+                // }
 
                 var ldata = {
                     user: user,
@@ -280,17 +327,21 @@ api.getLeaderboardWithRank = function (id, body, cb) {
             if (result.length == 0)
                 return cbf(cb, err, { user: {}, leaderboad: [] });
 
+
+            // SPI-28 | Create Rankings based on Scores and then Levels
+            result = Ranked(result);
+
             user = _.find(result, { _id: uid });
 
-            if (user) {
-                rank = _.size(_.filter(result, function (o) {
-                    if (o._id != user._id && o.score > user.score)
-                        return true;
-                    else
-                        return false;
-                }));
-                user.rank = rank + 1;
-            }
+            // if (user) {
+            //     rank = _.size(_.filter(result, function (o) {
+            //         if (o._id != user._id && o.score > user.score)
+            //             return true;
+            //         else
+            //             return false;
+            //     }));
+            //     user.rank = rank + 1;
+            // }
 
             var ldata = {
                 user: user,

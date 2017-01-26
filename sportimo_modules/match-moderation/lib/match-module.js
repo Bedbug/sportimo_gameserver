@@ -229,8 +229,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             });
 
             initService.emitter.on('endOfMatch', function (matchEvent) {
-                if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                    console.log(HookedMatch.queue.length());
+                // if (matchEvent && matchEvent.id == HookedMatch.data.id)
+                //     console.log(HookedMatch.queue.length());
 
                 var StateEvent = { data: {} };
                 StateEvent.data.type = 'TerminateMatch';
@@ -713,6 +713,12 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             ));
 
             thisMatch.save().then(function () { console.log("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
+
+            // SPI 201 - Auto-Terminate leftover matches 
+            if(thisMatch.time > 160 ){
+                console.log("-- Terminating leftover mactch");
+                HookedMatch.TerminateMatch();
+            }
         })
     }
 
@@ -911,8 +917,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     */
     HookedMatch.UpdateEvent = function (event, cbk) {
 
-        // console.log(event.data._id);
-        //  console.log(this.data.timeline[event.data.state]);
+        console.log(event.data._id);
+         console.log(this.data.timeline[event.data.state]);
         
         if (!this.data.timeline[event.data.state])
             if (cbk)
@@ -921,6 +927,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return HookedMatch;
         
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
+            console.log(o);
+            console.log(event.data);
             return o._id == event.data._id;
         });
         

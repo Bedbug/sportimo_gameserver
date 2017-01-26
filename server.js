@@ -57,7 +57,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.8";
+var version = "0.9.9.1";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
@@ -66,6 +66,15 @@ app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
     console.log("------------------------------------------------------------------------------------");
+    console.log("---");
+    console.log("---     9.9.1");
+    console.log("---     --- login with email along with username [SPI-230]");
+    console.log("---     --- now possible to change password from client");
+    console.log("---     --- removed unique email for early access");
+    console.log("---     9.9.0");
+    console.log("---     --- added Early Access API");
+    console.log("---     --- added method to remove leftover matches");
+    console.log("---");
 });
 
 app.use(morgan('dev'));
@@ -110,10 +119,10 @@ try {
 
     SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
 
-    SubscribeChannel.auth(redisCreds.secret, function (err) {      
+    SubscribeChannel.auth(redisCreds.secret, function (err) {
         if (err) {
             console.log(err);
-        }       
+        }
     });
 
 
@@ -184,6 +193,8 @@ var users_module = require('./sportimo_modules/users');
 var data_module = require('./sportimo_modules/data-module');
 
 var polls_module = require('./sportimo_modules/polls');
+
+var early_access_module = require('./sportimo_modules/early-access');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;

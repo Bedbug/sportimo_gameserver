@@ -30,6 +30,7 @@
     "object-assign": "^4.0.1",
     "redis": "",
     "request": "latest",
+    "shortid": "^2.2.6",
     "underscore": "^1.8.3",
     "winston": "^2.1.1",
     "ws": ""

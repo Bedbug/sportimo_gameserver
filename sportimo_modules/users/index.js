@@ -4,6 +4,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+var bcrypt = require("bcryptjs");
 
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var jwtDecode = require('jwt-decode');
@@ -169,7 +170,7 @@ apiRoutes.post('/v1/users/authenticate', function (req, res) {
 
     // find the user
     User.findOne({
-        username: req.body.username
+        $or: [{username: req.body.username},{email: req.body.username}]
     }, function (err, user) {
 
         if (err) throw err;
@@ -252,30 +253,32 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
 apiRoutes.post('/v1/users/reset', function (req, res) {
 
     User.findOne({ email: req.body.email }, function (err, user) {
-        var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
-        user.resetToken = token;
-        user.save(function (err, result) {
-            if (!err) {
-                res.json({ "success": true, "redirect": false, "text": { en: "An email with a link to reset your password will be sent to you shortly." }, "token": token });
-                // setup e-mail data with unicode symbols
-                var mailOptions = {
-                    from: 'info@sportimo.com', // sender address
-                    to: req.body.email, // list of receivers
-                    subject: 'Reset link from Sportimo ✔', // Subject line
-                    // text: 'Hello world 🐴', // plaintext body
-                    html: 'Hello '+ user.username +'. <br/><b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
-                };
+        if (user) {
+            var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
+            user.resetToken = token;
+            user.save(function (err, result) {
+                if (!err) {
+                    res.json({ "success": true, "redirect": false, "text": { en: "An email with a link to reset your password will be sent to you shortly." }, "token": token });
+                    // setup e-mail data with unicode symbols
+                    var mailOptions = {
+                        from: 'info@sportimo.com', // sender address
+                        to: req.body.email, // list of receivers
+                        subject: 'Reset link from Sportimo', // Subject line
+                        // text: 'Hello world 🐴', // plaintext body
+                        html: 'You are receiving this email because you requested to reset the password of ' + user.username + '. <br/><br/><b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
+                    };
 
-                // send mail with defined transport object
-                MessagingTools.sendEmailToUser(mailOptions, function (error, info) {
-                    if (error) {
-                        return console.log(error);
-                    }
-                    console.log('Message sent: ' + info.response);
-                });
-            } else
-                res.json({ "success": false });
-        })
+                    // send mail with defined transport object
+                    MessagingTools.sendEmailToUser(mailOptions, function (error, info) {
+                        if (error) {
+                            return console.log(error);
+                        }
+                        console.log('Message sent: ' + info.response);
+                    });
+                } else
+                    res.json({ "success": false });
+            })
+        }
     });
 });
 
@@ -325,13 +328,41 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
             console.log("users.index.js:320 Pic changed");
         });
 
-    User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.send({ success: true });
-        }
-    });
+    if (req.body["password"] != null) {
+        console.log("IS NEW PASSWORD?: true");
+        bcrypt.genSalt(10, function (err, salt) {
+            if (err) {
+                return next(err);
+            }
+
+            bcrypt.hash(req.body["password"], salt, function (err, hash) {
+                if (err) {
+                    return next(err);
+                }
+                req.body["password"] = hash;
+
+                User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
+                    if (err) {
+                        res.status(500).send(err);
+                    } else {
+                        res.send({ success: true });
+                    }
+                });
+            });
+        });
+    }
+    else {
+        User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
+            if (err) {
+                res.status(500).send(err);
+            } else {
+                res.send({ success: true });
+            }
+        });
+    }
+
+
+
 });
 
 //Get user messages
@@ -432,12 +463,12 @@ apiRoutes.delete('/v1/users/:id/messages/:mid', function (req, res) {
         if (!err) {
 
             user.inbox = _.without(user.inbox, req.params.mid);
-            res.status(200).send(user.inbox);
+            // res.status(200).send(user.inbox);
 
             user.unread = 0;
             user.save(function (err, result) {
                 if (err) console.log(err);
-                res.status(200).send(result);
+                res.status(200).send(user.inbox);
             });
         } else
             res.status(500).send(err);
@@ -514,11 +545,16 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 // apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', jwtMiddle, function (req, res) {
 apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', function (req, res) {
     Scores.findOne({ game_id: req.params.mid, user_id: req.params.uid }, function (err, scoreEntry) {
-        scoreEntry.prize_eligible = req.params.prelbool;
-        scoreEntry.save(function (err, result) {
-            res.send(result);
-        })
+        if (scoreEntry) {
+            scoreEntry.prize_eligible = req.params.prelbool;
+            scoreEntry.save(function (err, result) {
+                res.send(result);
+            })
+        }
+        else
+            res.status(200).send();
     });
+
 });
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -539,10 +575,10 @@ apiRoutes.get('/v1/taunts', function (req, res) {
 // This is a route used by clients to taunt other users 
 apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
     var tauntData = req.body;
-    
-    if(!tauntData.sender._id || !tauntData.recipient._id)
+
+    if (!tauntData.sender._id || !tauntData.recipient._id)
         return res.status(500).send("Sender and/or recipient is missing.");
-    
+
     var q = User.findById(req.params.uid);
     q.exec(function (err, result) {
         if (!err) {
@@ -614,11 +650,11 @@ apiRoutes.get('/v1/users/:uid/block/:buid/:state', function (req, res) {
 //Get user subscription
 apiRoutes.get('/v1/users/:id/subscription', function (req, res) {
 
-    var q = Subscriptions.find({userid: req.params.id});
+    var q = Subscriptions.find({ userid: req.params.id });
     q.exec(function (err, result) {
         // console.log(unreadCount);
         if (!err) {
-            res.status(200).send({result});
+            res.status(200).send({ result });
         } else
             res.status(500).send(err);
     })
@@ -626,12 +662,12 @@ apiRoutes.get('/v1/users/:id/subscription', function (req, res) {
 
 // Insert / Update user subscription
 apiRoutes.post('/v1/users/:id/subscription', function (req, res) {
-    
-    var q = Subscriptions.findAndUpdate({userid: req.params.id, receiptid: req.body.receiptid }, req.body,{upsert: true, new: true});
+
+    var q = Subscriptions.findAndUpdate({ userid: req.params.id, receiptid: req.body.receiptid }, req.body, { upsert: true, new: true });
     q.exec(function (err, result) {
         // console.log(unreadCount);
         if (!err) {
-            res.status(200).send({result});
+            res.status(200).send({ result });
         } else
             res.status(500).send(err);
     })
@@ -673,12 +709,12 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
         .exec(function (err, result) {
             if (err)
                 return res.status(500).send(err);
-                
-             if (!result)
+
+            if (!result)
                 return res.status(500).send("User not found in database");
 
             stats.user = result;
-          
+
             Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
                 .sort({ score: -1 })
                 .populate({

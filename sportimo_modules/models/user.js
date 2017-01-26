@@ -87,7 +87,8 @@ var UserSchema = new Schema({
     resetToken: String,
     country: { type: String, required: false, default: "GR" },
     msisdn: String,
-    customerType: {type: String, default:"free"},
+    customerType: {type: String, default:"paid"},
+    subscriptionEnd: {type:Date, default: "02/28/2017"},
     subscriptionContractId: String,
     pinCode: String,
     birth: String,
@@ -146,7 +147,7 @@ UserSchema.pre('save', function (next) {
         })
     }
     else if (this.isModified('password')) {
-        // console.log('Password was modified');
+        console.log('Password was modified');
         bcrypt.genSalt(10, function (err, salt) {
             if (err) {
                 return next(err);
@@ -241,8 +242,8 @@ UserSchema.statics.addAchievementPoint = function (uid, achievementChange, cb) {
             cb(null, "Success. Achievement completed.", achievement);
 
             user.save(function (err, result) {
-                if (!err)
-                    console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
+                // if (!err)
+                //     console.log("User [%s] has raised their achievement count for achievement [%s]", uid, achievementChange.uniqueid);
             })
         }
 
@@ -257,8 +258,8 @@ UserSchema.statics.updateRank = function (uid, newRank, cb) {
 
         if (user.rankingStats.bestRank > newRank.rank) {
             mongoose.model('users').findByIdAndUpdate(uid, { rankingStats: { bestRank: newRank.rank, bestRankMatch: newRank.matchid } }, function (err, result) {
-                if (!err)
-                    console.log("User [%s] has a new best rank", uid);
+                // if (!err)
+                //     console.log("User [%s] has a new best rank", uid);
             })
         }
 
