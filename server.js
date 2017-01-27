@@ -71,6 +71,7 @@ app.listen(port, function () {
     console.log("---     --- login with email along with username [SPI-230]");
     console.log("---     --- now possible to change password from client");
     console.log("---     --- removed unique email for early access");
+    console.log("---     --- fixed a bug where messages not found crashed the server");
     console.log("---     9.9.0");
     console.log("---     --- added Early Access API");
     console.log("---     --- added method to remove leftover matches");
