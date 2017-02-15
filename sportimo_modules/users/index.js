@@ -137,7 +137,7 @@ apiRoutes.post('/v1/users', function (req, res) {
 
 //Route to authenticate a user (POST /v1/users/authenticate)
 apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
-
+    console.log(req.body);
     // find the user
     User.findOne({
         social_id: req.body.social_id

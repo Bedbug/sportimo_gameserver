@@ -70,7 +70,8 @@ var UserSchema = new Schema({
     unread: {type: Number, default: 1},
     social_id: {
         type: String,
-        unique: true
+        unique: true,
+        required: false
     },
     pushToken: { type: String, default: "NoPustTokenYet" },
     pushSettings: {

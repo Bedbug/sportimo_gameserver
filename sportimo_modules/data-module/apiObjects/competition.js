@@ -17,11 +17,11 @@ api.getAllCompetitions = function (skip,limit,cb) {
  
   var q=Competition.find();
   
-  if(skip!=undefined)
-    q.skip(skip*1);
+  // if(skip!=undefined)
+  //   q.skip(skip*1);
 
-  if(limit!=undefined)
-    q.limit(limit*1);
+  // if(limit!=undefined)
+  //   q.limit(limit*1);
 
   return q.exec(function(err, competitions) {
     cbf(cb,err,competitions);    
