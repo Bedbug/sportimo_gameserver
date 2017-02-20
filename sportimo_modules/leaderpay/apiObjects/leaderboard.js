@@ -436,7 +436,14 @@ api.getMiniMatchLeaderboard = function (id, body, cb) {
 
     return q.exec(function (err, leaderboard) {
 
-        user = _.find(leaderboard, { user_id: uid }).toObject();
+        user = _.find(leaderboard, { user_id: uid })
+        if(user)
+        user = user.toObject();
+        else{
+            console.log("Could not find user with id:"+ uid+" in leaderboard. Please investigate.")
+            return cbf(cb, "Could not find user in leaderboard" , null);
+        }
+        
         user._id = user.user_id;
         delete user.user_id;
         user.name = user.user_name;
