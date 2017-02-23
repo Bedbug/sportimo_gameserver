@@ -19,8 +19,35 @@ var path = require('path'),
     mongoose = require('../config/db.js'),
     EventEmitter = require('events'),
     util = require('util'),
-    log = require('winston'),
+    winston = require('winston'),
     _ = require('lodash');
+
+
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 var parsers = {};
 

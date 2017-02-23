@@ -24,9 +24,35 @@ var path = require('path'),
     express = require('express'),
     moment = require('moment'),
     async = require('async'),
-    log = require('winston'),
+    winston = require('winston'),
     _ = require('lodash'),
     bodyParser = require('body-parser');
+
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 /* Module to handle user feedback */
 var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');

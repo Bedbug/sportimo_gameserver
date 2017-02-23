@@ -7,13 +7,39 @@ var crypto = require("crypto-js");
 var async = require('async');
 var _ = require('lodash');
 var mongoose = require('../config/db.js');
-var log = require('winston');
+var winston = require('winston');
 var objectId = mongoose.mongoose.Schema.ObjectId;
 var moment = require('moment');
 
 // Settings for the development environment
 var mongoDb = mongoose.mongoose.models;
 //var mongoConn = mongoose.mongoose.connections[0];
+
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 // languageMapping maps Sportimo langage locale to Stats.com language Ids. For a list of ISO codes, see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 var languageMapping = {

@@ -11,11 +11,35 @@ var path = require('path'),
     fs = require('fs'),
     _ = require('lodash'),
     bodyParser = require('body-parser'),
-    log = require('winston'),
+    winston = require('winston'),
     mongoose = require('mongoose');
 
 
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
 
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 // Sportimo Moderation sub-Modules
 var match_module = require('./lib/match-module.js');
