@@ -10,7 +10,7 @@ var Sports = require('./sports-settings');
 var StatsHelper = require('./StatsHelper');
 
 var moment = require('moment'),
-    log = require('winston'),
+    winston = require('winston'),
     _ = require('lodash'),
     mongoConnection = require('../config/db.js'),
     StatMods = require('../../models/stats-mod'),
@@ -21,6 +21,33 @@ var moment = require('moment'),
     Achievements = require('../../bedbugAchievements');
 
 var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
+
+
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 
 var path = require('path'),
