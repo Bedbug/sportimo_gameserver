@@ -57,7 +57,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.9.1";
+var version = "0.9.10.0";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
@@ -67,6 +67,9 @@ app.listen(port, function () {
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
     console.log("------------------------------------------------------------------------------------");
     console.log("---");
+    console.log("---     9.10.0");
+    console.log("---     --- New emails for early access & reset email");
+    console.log("---     --- leaderboard entry fix");   
     console.log("---     9.9.1");
     console.log("---     --- login with email along with username [SPI-230]");
     console.log("---     --- now possible to change password from client");
