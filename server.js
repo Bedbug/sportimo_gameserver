@@ -65,6 +65,7 @@ var port = (process.env.PORT || 3030)
 app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
+    console.log("-------       Environment: "+ process.env.NODE_ENV);
     console.log("------------------------------------------------------------------------------------");
     console.log("---");
     console.log("---     9.10.0");
@@ -146,10 +147,14 @@ catch (err) {
 
 app.PublishChannel = PublishChannel;
 
+
+if(!process.env.NODE_ENV)
+    process.env.NODE_ENV = "development";
+
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
-var mongoConnection = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@' + mongoCreds.url;
+var mongoConnection = 'mongodb://' + mongoCreds[process.env.NODE_ENV].user + ':' + mongoCreds[process.env.NODE_ENV].password + '@' + mongoCreds[process.env.NODE_ENV].url;
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
