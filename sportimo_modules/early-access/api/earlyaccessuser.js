@@ -48,13 +48,10 @@ api.addentry = function (req, res) {
 
 // DELETE
 api.deleteentry = function (req, res) {
-    return eau.findById(req.params.eauid, function (err, entry) {
-        return eau.remove(function (err) {
+    return eau.findByIdAndRemove(req.params.eauid, function (err, entry) {        
             if (err)
                 return res.status(500).send(err);
-            return res.send('Delete ' + req.params.eauid + ': Done');
-        })
-
+            return res.send('Delete ' + req.params.eauid + ': Done');        
     });
 };
 
