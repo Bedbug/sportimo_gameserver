@@ -4,6 +4,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
+var bcrypt = require("bcryptjs");
 
 var jsonwebtoken = require('jsonwebtoken'); // used to create, sign, and verify tokens
 var jwtDecode = require('jwt-decode');
@@ -136,7 +137,7 @@ apiRoutes.post('/v1/users', function (req, res) {
 
 //Route to authenticate a user (POST /v1/users/authenticate)
 apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
-
+    console.log(req.body);
     // find the user
     User.findOne({
         social_id: req.body.social_id
@@ -169,7 +170,7 @@ apiRoutes.post('/v1/users/authenticate', function (req, res) {
 
     // find the user
     User.findOne({
-        username: req.body.username
+        $or: [{username: req.body.username},{email: req.body.username}]
     }, function (err, user) {
 
         if (err) throw err;
@@ -252,30 +253,38 @@ apiRoutes.get('/v1/users/:id/reset', function (req, res) {
 apiRoutes.post('/v1/users/reset', function (req, res) {
 
     User.findOne({ email: req.body.email }, function (err, user) {
-        var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
-        user.resetToken = token;
-        user.save(function (err, result) {
-            if (!err) {
-                res.json({ "success": true, "redirect": false, "text": { en: "An email with a link to reset your password will be sent to you shortly." }, "token": token });
-                // setup e-mail data with unicode symbols
-                var mailOptions = {
-                    from: 'info@sportimo.com', // sender address
-                    to: req.body.email, // list of receivers
-                    subject: 'Reset link from Sportimo ✔', // Subject line
-                    // text: 'Hello world 🐴', // plaintext body
-                    html: 'Hello '+ user.username +'. <br/><b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
-                };
+        if (user) {
+            var token = CryptoJS.SHA1(req.params.id + user.username + Date.now()).toString();
+            user.resetToken = token;
+            user.save(function (err, result) {
+                if (!err) {
+                    res.json({ "success": true, "redirect": false, "text": { en: "An email with a link to reset your password will be sent to you shortly." }, "token": token });
+                    // setup e-mail data with unicode symbols
+                    var mailOptions = {
+                        from: 'info@sportimo.com', // sender address
+                        to: req.body.email, // list of receivers
+                        subject: 'Reset link from Sportimo', // Subject line
+                        // text: 'Hello world 🐴', // plaintext body
+                        html: '<!doctype html><html xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><!-- NAME: 1 COLUMN --><!--[if gte mso 15]><xml><o:OfficeDocumentSettings><o:AllowPNG/><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml><![endif]--><meta charset="UTF-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"> <meta name="viewport" content="width=device-width, initial-scale=1"><title>*|MC:SUBJECT|*</title> <style type="text/css">p{margin:10px 0;padding:0;}table{border-collapse:collapse;}h1,h2,h3,h4,h5,h6{display:block;margin:0;padding:0;}img,a img{border:0;height:auto;outline:none;text-decoration:none;}body,#bodyTable,#bodyCell{height:100%;margin:0;padding:0;width:100%;}#outlook a{padding:0;}img{-ms-interpolation-mode:bicubic;}table{mso-table-lspace:0pt;mso-table-rspace:0pt;}.ReadMsgBody{width:100%;}.ExternalClass{width:100%;}p,a,li,td,blockquote{mso-line-height-rule:exactly;}a[href^=tel],a[href^=sms]{color:inherit;cursor:default;text-decoration:none;}p,a,li,td,body,table,blockquote{-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%;}.ExternalClass,.ExternalClass p,.ExternalClass td,.ExternalClass div,.ExternalClass span,.ExternalClass font{line-height:100%;}a[x-apple-data-detectors]{color:inherit !important;text-decoration:none !important;font-size:inherit !important;font-family:inherit !important;font-weight:inherit !important;line-height:inherit !important;}#bodyCell{padding:10px;}.templateContainer{max-width:600px !important;}a.mcnButton{display:block;}.mcnImage{vertical-align:bottom;}.mcnTextContent{word-break:break-word;}.mcnTextContent img{height:auto !important;}.mcnDividerBlock{table-layout:fixed !important;}/*@tab Page@section Background Style@tip Set the background color and top border for your email. You may want to choose colors that match your company\'s branding.*/body,#bodyTable{/*@editable*/background-color:#FAFAFA;}/*@tab Page@section Background Style@tip Set the background color and top border for your email. You may want to choose colors that match your company\'s branding.*/#bodyCell{/*@editable*/border-top:0;}/*@tab Page@section Email Border@tip Set the border for your email.*/.templateContainer{/*@editable*/border:0;}/*@tab Page@section Heading 1@tip Set the styling for all first-level headings in your emails. These should be the largest of your headings.@style heading 1*/h1{/*@editable*/color:#38433d;/*@editable*/font-family:\'Open Sans\', \'Helvetica Neue\', Helvetica, Arial, sans-serif;/*@editable*/font-size:26px;/*@editable*/font-style:normal;/*@editable*/font-weight:bold;/*@editable*/line-height:125%;/*@editable*/letter-spacing:normal;/*@editable*/text-align:left;}/*@tab Page@section Heading 2@tip Set the styling for all second-level headings in your emails.@style heading 2*/h2{/*@editable*/color:#38433d;/*@editable*/font-family:Helvetica;/*@editable*/font-size:22px;/*@editable*/font-style:normal;/*@editable*/font-weight:bold;/*@editable*/line-height:125%;/*@editable*/letter-spacing:normal;/*@editable*/text-align:left;}/*@tab Page@section Heading 3@tip Set the styling for all third-level headings in your emails.@style heading 3*/h3{/*@editable*/color:#38433d;/*@editable*/font-family:Helvetica;/*@editable*/font-size:20px;/*@editable*/font-style:normal;/*@editable*/font-weight:bold;/*@editable*/line-height:125%;/*@editable*/letter-spacing:normal;/*@editable*/text-align:left;}/*@tab Page@section Heading 4@tip Set the styling for all fourth-level headings in your emails. These should be the smallest of your headings.@style heading 4*/h4{/*@editable*/color:#38433d;/*@editable*/font-family:Helvetica;/*@editable*/font-size:18px;/*@editable*/font-style:normal;/*@editable*/font-weight:bold;/*@editable*/line-height:125%;/*@editable*/letter-spacing:normal;/*@editable*/text-align:left;}/*@tab Preheader@section Preheader Style@tip Set the background color and borders for your email\'s preheader area.*/#templatePreheader{/*@editable*/background-color:#fafafa;/*@editable*/background-image:none;/*@editable*/background-repeat:no-repeat;/*@editable*/background-position:center;/*@editable*/background-size:cover;/*@editable*/border-top:0;/*@editable*/border-bottom:0;/*@editable*/padding-top:9px;/*@editable*/padding-bottom:9px;}/*@tab Preheader@section Preheader Text@tip Set the styling for your email\'s preheader text. Choose a size and color that is easy to read.*/#templatePreheader .mcnTextContent,#templatePreheader .mcnTextContent p{/*@editable*/color:#656565;/*@editable*/font-family:Helvetica;/*@editable*/font-size:12px;/*@editable*/line-height:150%;/*@editable*/text-align:left;}/*@tab Preheader@section Preheader Link@tip Set the styling for your email\'s preheader links. Choose a color that helps them stand out from your text.*/#templatePreheader .mcnTextContent a,#templatePreheader .mcnTextContent p a{/*@editable*/color:#656565;/*@editable*/font-weight:normal;/*@editable*/text-decoration:underline;}/*@tab Header@section Header Style@tip Set the background color and borders for your email\'s header area.*/#templateHeader{/*@editable*/background-color:#ffc631;/*@editable*/background-image:none;/*@editable*/background-repeat:no-repeat;/*@editable*/background-position:center;/*@editable*/background-size:cover;/*@editable*/border-top:0;/*@editable*/border-bottom:0;/*@editable*/padding-top:9px;/*@editable*/padding-bottom:0;}/*@tab Header@section Header Text@tip Set the styling for your email\'s header text. Choose a size and color that is easy to read.*/#templateHeader .mcnTextContent,#templateHeader .mcnTextContent p{/*@editable*/color:#202020;/*@editable*/font-family:Helvetica;/*@editable*/font-size:16px;/*@editable*/line-height:150%;/*@editable*/text-align:left;}/*@tab Header@section Header Link@tip Set the styling for your email\'s header links. Choose a color that helps them stand out from your text.*/#templateHeader .mcnTextContent a,#templateHeader .mcnTextContent p a{/*@editable*/color:#2BAADF;/*@editable*/font-weight:normal;/*@editable*/text-decoration:underline;}/*@tab Body@section Body Style@tip Set the background color and borders for your email\'s body area.*/#templateBody{/*@editable*/background-color:#ffffff;/*@editable*/background-image:none;/*@editable*/background-repeat:no-repeat;/*@editable*/background-position:center;/*@editable*/background-size:cover;/*@editable*/border-top:0;/*@editable*/border-bottom:2px solid #EAEAEA;/*@editable*/padding-top:0;/*@editable*/padding-bottom:9px;}/*@tab Body@section Body Text@tip Set the styling for your email\'s body text. Choose a size and color that is easy to read.*/#templateBody .mcnTextContent,#templateBody .mcnTextContent p{/*@editable*/color:#202020;/*@editable*/font-family:Helvetica;/*@editable*/font-size:16px;/*@editable*/line-height:150%;/*@editable*/text-align:left;}/*@tab Body@section Body Link@tip Set the styling for your email\'s body links. Choose a color that helps them stand out from your text.*/#templateBody .mcnTextContent a,#templateBody .mcnTextContent p a{/*@editable*/color:#2BAADF;/*@editable*/font-weight:normal;/*@editable*/text-decoration:underline;}/*@tab Footer@section Footer Style@tip Set the background color and borders for your email\'s footer area.*/#templateFooter{/*@editable*/background-color:#fafafa;/*@editable*/background-image:none;/*@editable*/background-repeat:no-repeat;/*@editable*/background-position:center;/*@editable*/background-size:cover;/*@editable*/border-top:0;/*@editable*/border-bottom:0;/*@editable*/padding-top:9px;/*@editable*/padding-bottom:9px;}/*@tab Footer@section Footer Text@tip Set the styling for your email\'s footer text. Choose a size and color that is easy to read.*/#templateFooter .mcnTextContent,#templateFooter .mcnTextContent p{/*@editable*/color:#656565;/*@editable*/font-family:Helvetica;/*@editable*/font-size:12px;/*@editable*/line-height:150%;/*@editable*/text-align:center;}/*@tab Footer@section Footer Link@tip Set the styling for your email\'s footer links. Choose a color that helps them stand out from your text.*/#templateFooter .mcnTextContent a,#templateFooter .mcnTextContent p a{/*@editable*/color:#656565;/*@editable*/font-weight:normal;/*@editable*/text-decoration:underline;}@media only screen and (min-width:768px){.templateContainer{width:600px !important;}}@media only screen and (max-width: 480px){body,table,td,p,a,li,blockquote{-webkit-text-size-adjust:none !important;}}@media only screen and (max-width: 480px){body{width:100% !important;min-width:100% !important;}}@media only screen and (max-width: 480px){#bodyCell{padding-top:10px !important;}}@media only screen and (max-width: 480px){.mcnImage{width:100% !important;}}@media only screen and (max-width: 480px){.mcnCartContainer,.mcnCaptionTopContent,.mcnRecContentContainer,.mcnCaptionBottomContent,.mcnTextContentContainer,.mcnBoxedTextContentContainer,.mcnImageGroupContentContainer,.mcnCaptionLeftTextContentContainer,.mcnCaptionRightTextContentContainer,.mcnCaptionLeftImageContentContainer,.mcnCaptionRightImageContentContainer,.mcnImageCardLeftTextContentContainer,.mcnImageCardRightTextContentContainer{max-width:100% !important;width:100% !important;}}@media only screen and (max-width: 480px){.mcnBoxedTextContentContainer{min-width:100% !important;}}@media only screen and (max-width: 480px){.mcnImageGroupContent{padding:9px !important;}}@media only screen and (max-width: 480px){.mcnCaptionLeftContentOuter .mcnTextContent,.mcnCaptionRightContentOuter .mcnTextContent{padding-top:9px !important;}}@media only screen and (max-width: 480px){.mcnImageCardTopImageContent,.mcnCaptionBlockInner .mcnCaptionTopContent:last-child .mcnTextContent{padding-top:18px !important;}}@media only screen and (max-width: 480px){.mcnImageCardBottomImageContent{padding-bottom:9px !important;}}@media only screen and (max-width: 480px){.mcnImageGroupBlockInner{padding-top:0 !important;padding-bottom:0 !important;}}@media only screen and (max-width: 480px){.mcnImageGroupBlockOuter{padding-top:9px !important;padding-bottom:9px !important;}}@media only screen and (max-width: 480px){.mcnTextContent,.mcnBoxedTextContentColumn{padding-right:18px !important;padding-left:18px !important;}}@media only screen and (max-width: 480px){.mcnImageCardLeftImageContent,.mcnImageCardRightImageContent{padding-right:18px !important;padding-bottom:0 !important;padding-left:18px !important;}}@media only screen and (max-width: 480px){.mcpreview-image-uploader{display:none !important;width:100% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Heading 1@tip Make the first-level headings larger in size for better readability on small screens.*/h1{/*@editable*/font-size:22px !important;/*@editable*/line-height:125% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Heading 2@tip Make the second-level headings larger in size for better readability on small screens.*/h2{/*@editable*/font-size:20px !important;/*@editable*/line-height:125% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Heading 3@tip Make the third-level headings larger in size for better readability on small screens.*/h3{/*@editable*/font-size:18px !important;/*@editable*/line-height:125% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Heading 4@tip Make the fourth-level headings larger in size for better readability on small screens.*/h4{/*@editable*/font-size:16px !important;/*@editable*/line-height:150% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Boxed Text@tip Make the boxed text larger in size for better readability on small screens. We recommend a font size of at least 16px.*/.mcnBoxedTextContentContainer .mcnTextContent,.mcnBoxedTextContentContainer .mcnTextContent p{/*@editable*/font-size:14px !important;/*@editable*/line-height:150% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Preheader Visibility@tip Set the visibility of the email\'s preheader on small screens. You can hide it to save space.*/#templatePreheader{/*@editable*/display:block !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Preheader Text@tip Make the preheader text larger in size for better readability on small screens.*/#templatePreheader .mcnTextContent,#templatePreheader .mcnTextContent p{/*@editable*/font-size:14px !important;/*@editable*/line-height:150% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Header Text@tip Make the header text larger in size for better readability on small screens.*/#templateHeader .mcnTextContent,#templateHeader .mcnTextContent p{/*@editable*/font-size:16px !important;/*@editable*/line-height:150% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Body Text@tip Make the body text larger in size for better readability on small screens. We recommend a font size of at least 16px.*/#templateBody .mcnTextContent,#templateBody .mcnTextContent p{/*@editable*/font-size:16px !important;/*@editable*/line-height:150% !important;}}@media only screen and (max-width: 480px){/*@tab Mobile Styles@section Footer Text@tip Make the footer content text larger in size for better readability on small screens.*/#templateFooter .mcnTextContent,#templateFooter .mcnTextContent p{/*@editable*/font-size:14px !important;/*@editable*/line-height:150% !important;}}</style></head> <body> <center> <table align="center" border="0" cellpadding="0" cellspacing="0" height="100%" width="100%" id="bodyTable"> <tr> <td align="center" valign="top" id="bodyCell"> <!-- BEGIN TEMPLATE // --><!--[if gte mso 9]><table align="center" border="0" cellspacing="0" cellpadding="0" width="600" style="width:600px;"><tr><td align="center" valign="top" width="600" style="width:600px;"><![endif]--> <table border="0" cellpadding="0" cellspacing="0" width="100%" class="templateContainer"> <tr> <td valign="top" id="templatePreheader"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="390" style="width:390px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:390px;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-left:18px; padding-bottom:9px; padding-right:18px;"> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]><td valign="top" width="210" style="width:210px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:210px;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-left:18px; padding-bottom:9px; padding-right:18px;"> <a href="*|ARCHIVE|*" target="_blank">View this email in your browser</a> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table></td> </tr> <tr> <td valign="top" id="templateHeader"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnImageBlock" style="min-width:100%;"> <tbody class="mcnImageBlockOuter"> <tr> <td valign="top" style="padding:9px" class="mcnImageBlockInner"> <table align="left" width="100%" border="0" cellpadding="0" cellspacing="0" class="mcnImageContentContainer" style="min-width:100%;"> <tbody><tr> <td class="mcnImageContent" valign="top" style="padding-right: 9px; padding-left: 9px; padding-top: 0; padding-bottom: 0;"> <img align="left" alt="" src="https://gallery.mailchimp.com/edb5ef3c28289aa28d32465a1/images/94e943f4-3d9d-4d83-b9ca-5a67decbc4f9.png" width="40" style="max-width:40px; padding-bottom: 0; display: inline !important; vertical-align: bottom;" class="mcnImage"> </td> </tr> </tbody></table> </td> </tr> </tbody></table></td> </tr> <tr> <td valign="top" id="templateBody"><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <h1 class="null" style="text-align: right;"><span style="font-family:open sans,helvetica neue,helvetica,arial,sans-serif">&nbsp;!'+user.username +' مرحبا </span><br>&nbsp;</h1><p style="text-align: right;">لقد وصلتك هذه الرسالة لأنك طلبت إعادة تعيين كلمة السر الخاصة بتطبيق Sportimo<br>لتغيير كلمة السر الخاصة بك أضغط على الرابط التالي واتبع التعليمات<br>&nbsp;</p> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnButtonBlock" style="min-width:100%;"> <tbody class="mcnButtonBlockOuter"> <tr> <td style="padding-top:0; padding-right:18px; padding-bottom:18px; padding-left:18px;" valign="top" align="center" class="mcnButtonBlockInner"> <table border="0" cellpadding="0" cellspacing="0" class="mcnButtonContentContainer" style="border-collapse: separate !important;border: 1px solid #FAD24E;border-radius: 3px;background-color: #FFC631;"> <tbody> <tr> <td align="center" valign="middle" class="mcnButtonContent" style="font-family: &quot;Open Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 14px;"> <a class="mcnButton " title="reset_password" href="http://sportimo_reset_password.mod.bz/#/reset/' + token+'" target="_blank" style="font-weight: bold;letter-spacing: normal;line-height: 100%;text-align: center;text-decoration: none;color: #38433D;">تغيير كلمة السر</a> </td> </tr> </tbody> </table> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <table border="0" cellpadding="0" cellspacing="0"><tbody><tr><td dir="RTL" style="text-align: right;">إذا لم تطلب إعادة تعيين كلمة السر الخاصة بك لا تقلق! من الممكن ان يكون أحد اللاعبين الآخرين أدخل بريدك الالكتروني بالخطأ خلال طلبه إعاده تعيين كلمة السر الخاصة به. حسابك في أمان، يمكنك تجاهل هذه الرسالة.</td></tr></tbody></table><div style="text-align: right;">&nbsp;</div> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <div style="text-align: right;">Sportimo&nbsp;فريق</div> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <h1 class="null"><span style="font-family:open sans,helvetica neue,helvetica,arial,sans-serif">Hello '+ user.username +'!</span></h1><p><span style="font-size:14px"><span style="font-family:open sans,helvetica neue,helvetica,arial,sans-serif">You\'re receiving this e-mail because you requested to reset you Sportimo password. To&nbsp;reset&nbsp;your&nbsp;password, click the following link and follow the instructions:&nbsp;</span></span></p> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnButtonBlock" style="min-width:100%;"> <tbody class="mcnButtonBlockOuter"> <tr> <td style="padding-top:0; padding-right:18px; padding-bottom:18px; padding-left:18px;" valign="top" align="center" class="mcnButtonBlockInner"> <table border="0" cellpadding="0" cellspacing="0" class="mcnButtonContentContainer" style="border-collapse: separate !important;border: 1px solid #FAD24E;border-radius: 3px;background-color: #FFC631;"> <tbody> <tr> <td align="center" valign="middle" class="mcnButtonContent" style="font-family: &quot;Open Sans&quot;, &quot;Helvetica Neue&quot;, Helvetica, Arial, sans-serif; font-size: 16px; padding: 14px;"> <a class="mcnButton " title="reset_password" href="http://sportimo_reset_password.mod.bz/#/reset/' + token+'" target="_blank" style="font-weight: bold;letter-spacing: normal;line-height: 100%;text-align: center;text-decoration: none;color: #38433D;">RESET PASSWORD</a> </td> </tr> </tbody> </table> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <p dir="ltr"><span style="font-size:14px"><font face="arial, helvetica, sans-serif">If you didn\'t ask to reset your password, don\'t worry! It\'s possible that another user entered your email address by mistake when trying to&nbsp;reset&nbsp;their own&nbsp;password.&nbsp;Your account is safe, and you can ignore this email</font></span></p> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table><table border="0" cellpadding="0" cellspacing="0" width="100%" class="mcnTextBlock" style="min-width:100%;"> <tbody class="mcnTextBlockOuter"> <tr> <td valign="top" class="mcnTextBlockInner" style="padding-top:9px;"> <!--[if mso]><table align="left" border="0" cellspacing="0" cellpadding="0" width="100%" style="width:100%;"><tr><![endif]--> <!--[if mso]><td valign="top" width="600" style="width:600px;"><![endif]--> <table align="left" border="0" cellpadding="0" cellspacing="0" style="max-width:100%; min-width:100%;" width="100%" class="mcnTextContentContainer"> <tbody><tr> <td valign="top" class="mcnTextContent" style="padding-top:0; padding-right:18px; padding-bottom:9px; padding-left:18px;"> <span style="font-size:14px"><span style="font-family:open sans,helvetica neue,helvetica,arial,sans-serif">Team Sportimo</span></span> </td> </tr> </tbody></table><!--[if mso]></td><![endif]--> <!--[if mso]></tr></table><![endif]--> </td> </tr> </tbody></table></td> </tr> <tr> <td valign="top" id="templateFooter"></td> </tr> </table><!--[if gte mso 9]></td></tr></table><![endif]--> <!-- // END TEMPLATE --> </td> </tr> </table> </center> </body></html>'
+                        
+                        // 'You are receiving this email because you requested to reset the password of ' + user.username + '. <br/><br/><b>Here is your link:</b><br>http://sportimo_reset_password.mod.bz/#/reset/' + token // html body
+                    };
 
-                // send mail with defined transport object
-                MessagingTools.sendEmailToUser(mailOptions, function (error, info) {
-                    if (error) {
-                        return console.log(error);
-                    }
-                    console.log('Message sent: ' + info.response);
-                });
-            } else
-                res.json({ "success": false });
-        })
+                    // send mail with defined transport object
+                    MessagingTools.sendEmailToUser(mailOptions, function (error, info) {
+                        if (error) {
+                            return console.log(error);
+                        }
+                        console.log('Message sent: ' + info.response);
+                    });
+                } else
+                    res.json({ "success": false });
+            })
+        }
+        else{
+            console.log("User Email Reset: Email not found");
+            res.status(404).send({"en":"Email not found","ar":"Arabic: Email not found"});
+        }
     });
 });
 
@@ -325,13 +334,41 @@ apiRoutes.put('/v1/users/:id', function (req, res) {
             console.log("users.index.js:320 Pic changed");
         });
 
-    User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
-        if (err) {
-            res.status(500).send(err);
-        } else {
-            res.send({ success: true });
-        }
-    });
+    if (req.body["password"] != null) {
+        console.log("IS NEW PASSWORD?: true");
+        bcrypt.genSalt(10, function (err, salt) {
+            if (err) {
+                return next(err);
+            }
+
+            bcrypt.hash(req.body["password"], salt, function (err, hash) {
+                if (err) {
+                    return next(err);
+                }
+                req.body["password"] = hash;
+
+                User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
+                    if (err) {
+                        res.status(500).send(err);
+                    } else {
+                        res.send({ success: true });
+                    }
+                });
+            });
+        });
+    }
+    else {
+        User.findOneAndUpdate({ _id: req.params.id }, req.body, function (err) {
+            if (err) {
+                res.status(500).send(err);
+            } else {
+                res.send({ success: true });
+            }
+        });
+    }
+
+
+
 });
 
 //Get user messages
@@ -432,12 +469,12 @@ apiRoutes.delete('/v1/users/:id/messages/:mid', function (req, res) {
         if (!err) {
 
             user.inbox = _.without(user.inbox, req.params.mid);
-            res.status(200).send(user.inbox);
+            // res.status(200).send(user.inbox);
 
             user.unread = 0;
             user.save(function (err, result) {
                 if (err) console.log(err);
-                res.status(200).send(result);
+                res.status(200).send(user.inbox);
             });
         } else
             res.status(500).send(err);
@@ -514,11 +551,16 @@ apiRoutes.get('/v1/users/:id/unread', function (req, res) {
 // apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', jwtMiddle, function (req, res) {
 apiRoutes.get('/v1/users/:uid/match/:mid/prizeseligible/:prelbool', function (req, res) {
     Scores.findOne({ game_id: req.params.mid, user_id: req.params.uid }, function (err, scoreEntry) {
-        scoreEntry.prize_eligible = req.params.prelbool;
-        scoreEntry.save(function (err, result) {
-            res.send(result);
-        })
+        if (scoreEntry) {
+            scoreEntry.prize_eligible = req.params.prelbool;
+            scoreEntry.save(function (err, result) {
+                res.send(result);
+            })
+        }
+        else
+            res.status(200).send();
     });
+
 });
 
 // @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
@@ -539,10 +581,10 @@ apiRoutes.get('/v1/taunts', function (req, res) {
 // This is a route used by clients to taunt other users 
 apiRoutes.post('/v1/users/:uid/taunt', function (req, res) {
     var tauntData = req.body;
-    
-    if(!tauntData.sender._id || !tauntData.recipient._id)
+
+    if (!tauntData.sender._id || !tauntData.recipient._id)
         return res.status(500).send("Sender and/or recipient is missing.");
-    
+
     var q = User.findById(req.params.uid);
     q.exec(function (err, result) {
         if (!err) {
@@ -614,11 +656,11 @@ apiRoutes.get('/v1/users/:uid/block/:buid/:state', function (req, res) {
 //Get user subscription
 apiRoutes.get('/v1/users/:id/subscription', function (req, res) {
 
-    var q = Subscriptions.find({userid: req.params.id});
+    var q = Subscriptions.find({ userid: req.params.id });
     q.exec(function (err, result) {
         // console.log(unreadCount);
         if (!err) {
-            res.status(200).send({result});
+            res.status(200).send({ result });
         } else
             res.status(500).send(err);
     })
@@ -626,12 +668,12 @@ apiRoutes.get('/v1/users/:id/subscription', function (req, res) {
 
 // Insert / Update user subscription
 apiRoutes.post('/v1/users/:id/subscription', function (req, res) {
-    
-    var q = Subscriptions.findAndUpdate({userid: req.params.id, receiptid: req.body.receiptid }, req.body,{upsert: true, new: true});
+
+    var q = Subscriptions.findAndUpdate({ userid: req.params.id, receiptid: req.body.receiptid }, req.body, { upsert: true, new: true });
     q.exec(function (err, result) {
         // console.log(unreadCount);
         if (!err) {
-            res.status(200).send({result});
+            res.status(200).send({ result });
         } else
             res.status(500).send(err);
     })
@@ -673,12 +715,12 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
         .exec(function (err, result) {
             if (err)
                 return res.status(500).send(err);
-                
-             if (!result)
+
+            if (!result)
                 return res.status(500).send("User not found in database");
 
             stats.user = result;
-          
+
             Scores.find({ user_id: req.params.uid, score: { $gt: 0 } })
                 .sort({ score: -1 })
                 .populate({

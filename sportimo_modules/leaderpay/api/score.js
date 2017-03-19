@@ -46,6 +46,16 @@ api.score = function (req, res) {
 	}); 
 };
 
+api.updateScore = function(req,res){
+	score.updateScore(req.params.uid,req.params.room,req.params.points, function(err,data){
+		if (err) {
+			res.status(404).json(err);
+		} else {
+			res.status(200).json({score: data});
+		}
+	});
+}
+
 // PUT
 api.editScore = function (req, res) {
 	var id = req.params.id;
@@ -96,6 +106,8 @@ api.deleteAllScores = function (req, res) {
 
 router.post('/v1/scores',api.addscore);
 
+router.get('/v1/scores/update/:uid/:room/:points',api.updateScore);
+
 router.route('/v1/scores/:id')
 .get(api.score)
 .put(api.editScore)
@@ -107,7 +119,7 @@ router.route('/v1/scores')
 .delete(api.deleteAllScores);
 
 
-router.get('/scores/test',function(res,res){
+router.get('/scores/test',function(req,res){
 	return score.test(function (err, data) {
 		res.status(200).json(data);
 	});

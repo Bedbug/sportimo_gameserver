@@ -95,7 +95,6 @@ api.teamFavoriteData = function (id, cb) {
 
   q.exec(function (err, team) {
 
-console.log(team.competitionid.parserids.Stats);
     if (!team.nextmatch || team.nextmatch.eventdate < Date.now()) {
  
       if (!team.competitionid && !team.league && !team.leagueids)

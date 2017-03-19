@@ -41,6 +41,7 @@ else {
         image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed, // text template with placeholders: [[player]] for player name, [[team]] for team name
         primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
+        guruAction: String,          // Handling action of guru stats 
         // Trigger specifications
         activationLatency: Number, // seconds between the gamecard's creation and activation
         specialActivationLatency: specialActivationLatencyType, // seconds between the gamecard's special ability creation (double time, double points) and activation

@@ -57,7 +57,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.8";
+var version = "0.9.10.0";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
@@ -65,7 +65,21 @@ var port = (process.env.PORT || 3030)
 app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
+    console.log("-------       Environment: "+ process.env.NODE_ENV);
     console.log("------------------------------------------------------------------------------------");
+    console.log("---");
+    console.log("---     9.10.0");
+    console.log("---     --- New emails for early access & reset email");
+    console.log("---     --- leaderboard entry fix");   
+    console.log("---     9.9.1");
+    console.log("---     --- login with email along with username [SPI-230]");
+    console.log("---     --- now possible to change password from client");
+    console.log("---     --- removed unique email for early access");
+    console.log("---     --- fixed a bug where messages not found crashed the server");
+    console.log("---     9.9.0");
+    console.log("---     --- added Early Access API");
+    console.log("---     --- added method to remove leftover matches");
+    console.log("---");
 });
 
 app.use(morgan('dev'));
@@ -110,10 +124,10 @@ try {
 
     SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
 
-    SubscribeChannel.auth(redisCreds.secret, function (err) {      
+    SubscribeChannel.auth(redisCreds.secret, function (err) {
         if (err) {
             console.log(err);
-        }       
+        }
     });
 
 
@@ -133,10 +147,14 @@ catch (err) {
 
 app.PublishChannel = PublishChannel;
 
+
+if(!process.env.NODE_ENV)
+    process.env.NODE_ENV = "development";
+
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
-var mongoConnection = 'mongodb://' + mongoCreds.user + ':' + mongoCreds.password + '@' + mongoCreds.url;
+var mongoConnection = 'mongodb://' + mongoCreds[process.env.NODE_ENV].user + ':' + mongoCreds[process.env.NODE_ENV].password + '@' + mongoCreds[process.env.NODE_ENV].url;
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
@@ -184,6 +202,8 @@ var users_module = require('./sportimo_modules/users');
 var data_module = require('./sportimo_modules/data-module');
 
 var polls_module = require('./sportimo_modules/polls');
+
+var early_access_module = require('./sportimo_modules/early-access');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;

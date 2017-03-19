@@ -47,6 +47,13 @@ api.addScore = function (score,cb) {
   });
 };
 
+api.updateScore = function(uid,room,points, cb){
+  // return  cbf(cb,null,"ok"); 
+ return Score.AddPoints(uid,room,points, function(err,data){
+     cbf(cb,err,data); 
+  });
+}
+
 // PUT
 api.editScore = function (id,updateData, cb) {
   Score.findById(id, function (err, score) {

@@ -24,9 +24,35 @@ var path = require('path'),
     express = require('express'),
     moment = require('moment'),
     async = require('async'),
-    log = require('winston'),
+    winston = require('winston'),
     _ = require('lodash'),
     bodyParser = require('body-parser');
+
+var log = new (winston.Logger)({
+    levels: {
+        prompt: 6,
+        debug: 5,
+        info: 4,
+        core: 3,
+        warn: 1,
+        error: 0
+    },
+    colors: {
+        prompt: 'grey',
+        debug: 'blue',
+        info: 'green',
+        core: 'magenta',
+        warn: 'yellow',
+        error: 'red'
+    }
+});
+
+log.add(winston.transports.Console, {
+    timestamp: true,
+    level: process.env.LOG_LEVEL || 'debug',
+    prettyPrint: true,
+    colorize: 'level'
+});
 
 /* Module to handle user feedback */
 var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
@@ -465,6 +491,7 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
         title: template.title,
         image: template.image,
         primaryStatistic: template.primaryStatistic,
+        guruAction: template.guruAction,
         activationTime: activationTime.toDate(),
         terminationTime: terminationTime ? terminationTime.toDate() : null,
         duration: template.duration,
@@ -1354,7 +1381,7 @@ gamecards.Tick = function () {
                 _.forEach(data, function (gamecard) {
                     if (gamecards.CheckIfWins(gamecard, true)) {
                         // Send an event through Redis pub/sub:
-                        log.info("Detected a winning gamecard: " + gamecard);
+                        // log.info("Detected a winning gamecard: " + gamecard);
                         cardsWon.push(gamecard);
                     }
                     else {
@@ -1369,7 +1396,7 @@ gamecards.Tick = function () {
                             gamecard.specials.DoubleTime.status = 0;
 
                         // Send an event through Redis pu/sub:
-                        log.info("Card lost: " + gamecard);
+                        // log.info("Card lost: " + gamecard);
                         redisPublish.publish("socketServers", JSON.stringify({
                             sockets: true,
                             clients: [gamecard.userid],
@@ -1670,7 +1697,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
 
     // console.log("-----------------------------------");
     // console.log("Card Won");
-    log.info('Detected a winning gamecard: %s', gamecard.id);
+    // log.info('Detected a winning gamecard: %s', gamecard.id);
 
     // Before saving, reset any pending specials waiting to be activated: they will never will
     if (gamecard.specials && gamecard.specials.DoublePoints && gamecard.specials.DoublePoints.status == 1)
@@ -2186,11 +2213,11 @@ gamecards.ResolveEvent = function (matchEvent) {
             });
             if (gamecards.CheckIfWins(gamecard, false)) {
                 // Send an event through Redis pu/sub:
-                log.debug("Detected a winning gamecard: " + gamecard);
+                // log.debug("Detected a winning gamecard: " + gamecard);
             }
             else
                 if (gamecards.CheckIfLooses(gamecard, false)) {
-                    log.info("Card lost: " + gamecard);
+                    // log.info("Card lost: " + gamecard);
                     redisPublish.publish("socketServers", JSON.stringify({
                         sockets: true,
                         clients: [gamecard.userid],
@@ -2361,7 +2388,7 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
             }
             else
                 if (gamecards.CheckIfLooses(gamecard, false, moment.utc(event.created))) {
-                    log.info("Card lost: " + gamecard.id);
+                    // log.info("Card lost: " + gamecard.id);
                 }
             if (event.id && _.indexOf(gamecard.contributingEventIds, event.id) == -1)
                 gamecard.contributingEventIds.push(event.id);
@@ -2390,7 +2417,7 @@ gamecards.ReEvaluateAll = function (matchId, outerCallback) {
 
             if (gamecards.CheckIfTerminates(gamecard, match)) {
                 if (gamecards.CheckIfWins(gamecard, true, moment.utc(event.created), match)) {
-                    log.info("Detected a winning gamecard: " + gamecard.id);
+                    // log.info("Detected a winning gamecard: " + gamecard.id);
                 }
                 else {
                     gamecard.terminationTime = event.created;
@@ -2762,14 +2789,14 @@ gamecards.TerminateMatch = function (match, callback) {
         mongoGamecards.forEach(function (gamecard) {
             if (gamecards.CheckIfWins(gamecard, true, null, match)) {
                 // Send an event through Redis pub/sub:
-                log.info("Detected a winning gamecard: " + gamecard);
+                // log.info("Detected a winning gamecard: " + gamecard);
             }
             else {
                 gamecard.terminationTime = moment.utc().toDate();
                 gamecard.status = 2;
                 gamecard.pointsAwarded = 0;
                 // Send an event through Redis pu/sub:
-                log.info("Card lost: " + gamecard);
+                // log.info("Card lost: " + gamecard);
                 redisPublish.publish("socketServers", JSON.stringify({
                     sockets: true,
                     clients: [gamecard.userid],

@@ -103,7 +103,13 @@ api.editArticle = function(req, res) {
 // DELETE
 api.deleteArticle = function(req, res) {
     var id = req.params.id;
-
+     article.findByIdAndRemove(id, function (err, result) {
+        if (!err) {
+            return res.status(200).json(result);
+        } else {
+            return res.status(500).json(err);
+        }
+    })
 };
 
 // GET

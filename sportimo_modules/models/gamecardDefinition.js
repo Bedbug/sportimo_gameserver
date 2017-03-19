@@ -31,6 +31,7 @@ else {
         image: Schema.Types.Mixed, // icon image
         text: Schema.Types.Mixed,
         primaryStatistic: String, // the primary statistic that this card is affected from, in order to be shown on the card (averages for each team)
+        guruAction: String,          // Handling action of guru stats
         // Trigger specifications
         activationLatency: Number,
         specialActivationLatency: { DoublePoints: Number, DoubleTime: Number },

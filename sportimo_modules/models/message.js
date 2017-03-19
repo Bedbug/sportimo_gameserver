@@ -23,6 +23,7 @@ else {
         data: {type:String},
         read: {type:Number},
         link: {type:String},
+        welcome: {type: Boolean},
         created: { type: Date, default: Date.now }
     };
     

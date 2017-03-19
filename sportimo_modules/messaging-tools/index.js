@@ -61,6 +61,7 @@ MessagingTools.sendEmailToUser = function (mailOptions, callback) {
 var PushOptions = {
     api: "https://cp.pushwoosh.com/json/1.3/createMessage",
     application: "BF7AF-7F9B8",
+    // application: "0BAF7-DEFF3",
     auth: "RjBCef0fkWWCw0tI8Jw0fvHQbBCGZJUvtE4Z14OlCAeKAWNRk5RHhQnYbqW03ityah2wiPVsA2qzX2Kz7E2l",
 };
 

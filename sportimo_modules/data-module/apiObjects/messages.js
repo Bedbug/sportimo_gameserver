@@ -29,9 +29,12 @@ api.update = function (id, updateData, cb) {
 // DELETE
 api.remove = function (id, cb) {
   return Messages.findById(id, function (err, message) {
+    if(message)
     return message.remove(function (err) {
         cbf(cb, err, true);
     });
+    else
+      cbf(cb, err, true);
   });
 };
 
