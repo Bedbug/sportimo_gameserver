@@ -108,6 +108,9 @@ function Parser(matchContext, feedServiceContext){
         
     this.ticks = 1;
     
+    this.currentSegment = 0;    // this will resolve when a new segment arrives, will not be dupped by same segment consequent events
+    this.lastOwnGoal = 0;       // this records the time the last own_goal events came, in order to ignore a potential goal event on the same minute
+    
     this.penaltiesSegmentStarted = false;
     
     // the parser upon initialization will inquire about the competition mappings
@@ -505,14 +508,19 @@ var TranslateMatchPeriod = function (statsPeriod, eventId) {
     }
 }
 
-var TranslateMatchSegment = function (parserEvent) {
+Parser.prototype.TranslateMatchSegment = function (parserEvent) {
     if (!parserEvent)
         return null;
 
     //Not supported event types
-    if (_.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId) == -1)
+    var index = _.indexOf(matchSegmentProgressionEventTypes, parserEvent.playEvent.playEventId);
+    if (index == -1)
         return null;
-
+        
+    if (parserEvent.playEvent.playEventId == this.currentSegment)
+        return null;    // avoid changing segment when consecutive segment events arrive with the same playEventId
+    
+    this.currentSegment = parserEvent.playEvent.playEventId;
     return true;   // return anything but null
 };
 
@@ -667,7 +675,14 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
             // First try parsing a normal event
             var translatedEvent = that.TranslateMatchEvent(event);
             if (translatedEvent) {
-                that.feedService.AddEvent(translatedEvent);
+                // Determine if the event is a Goal, and whether is coming right after an own goal (in this case just ignore it)
+                if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11 && that.lastOwnGoal > 0) {
+                    var goalTime = ComputeEventMatchTime(event);
+                    if (that.lastOwnGoal + 60 < goalTime)
+                        that.feedService.AddEvent(translatedEvent);
+                }
+                else
+                    that.feedService.AddEvent(translatedEvent);
                 
                 // Determine if the event is a successful penalty, in this case create an extra Goal event
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
@@ -693,6 +708,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 28) {
                     setTimeout(function () {
+                        that.lastOwnGoal = ComputeEventMatchTime(event);
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
@@ -754,7 +770,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
 
             else {
                 // Then try to parse a match segment advancing event
-                var translatedMatchSegment = TranslateMatchSegment(event);
+                var translatedMatchSegment = that.TranslateMatchSegment(event);
                 if (translatedMatchSegment)
                 {
                     log.info('[Stats parser]: Intercepted a Segment Advance event.');
