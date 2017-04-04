@@ -378,7 +378,7 @@ apiRoutes.get('/v1/users/update/achievements/:recalculate', function (req, res) 
         var achievsCount = achievs.length;
 
         _.each(achievs, function (achievement) {
-            User.update({ 'achievements._id': achievement._id }, { $set: { 'achievements.$.text': achievement.text, 'achievements.$.title': achievement.title, 'achievements.$.total': achievement.total, 'achievements.$.value': achievement.value } }, { multi: true }, function (err) {
+            User.update({ 'achievements._id': achievement._id }, { $set: { 'achievements.$.icon': achievement.icon, 'achievements.$.text': achievement.text, 'achievements.$.title': achievement.title, 'achievements.$.total': achievement.total, 'achievements.$.value': achievement.value } }, { multi: true }, function (err) {
                 User.update({ 'achievements._id': { '$ne': achievement._id } }, { $addToSet: { 'achievements': achievement } }, { multi: true }, function (err) {
                     achievsCount--;
                     if (achievsCount == 0)

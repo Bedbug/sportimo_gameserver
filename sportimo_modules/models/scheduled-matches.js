@@ -89,10 +89,13 @@ else {
     timeline: [segment],
     settings: mongoose.Schema.Types.Mixed,
     moderation: [moderationService],
-    parserids: mongoose.Schema.Types.Mixed
+    parserids: mongoose.Schema.Types.Mixed,
+    updatedAt: Date,
+    createdAt: Date
   }, {
       collection: 'scheduled_matches',
-      minimize: false
+      minimize: false,
+      timestamps: { updatedAt: 'updatedAt', createdAt: 'createdAt' }
     });
 
   module.exports = mongoose.model("scheduled_matches", match_schema);

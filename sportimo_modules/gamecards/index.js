@@ -131,7 +131,7 @@ gamecards.init = function (dbconnection, redisPublishChannel, redisSubscribeChan
     }
 
     if (!tickSchedule)
-        tickSchedule = setInterval(gamecards.Tick, 1000);
+        tickSchedule = setInterval(gamecards.Tick, 3000);
 
     // Check if match has gamecardDefinitions written in mongo from the gamecardTemplates and if their appearanceConditions are met, if not, create them.
     async.waterfall([
@@ -426,7 +426,7 @@ gamecards.upsertDefinition = function (gamecard, callback) {
                 pointsPerMinute: gamecard.pointsPerMinute,
                 maxUserInstances: gamecard.maxUserInstances,
                 isVisible: gamecard.isVisible || false,
-                 isActive: gamecard.isActive || false,
+                isActive: gamecard.isActive || false,
                 cardType: gamecard.cardType,
                 status: 0
             });
@@ -632,7 +632,10 @@ gamecards.createDefinitionFromTemplate = function (template, match) {
     }
 
     newDefinition.markModified('options');
-    newDefinition.save();
+    newDefinition.save(function (err) {
+        if (err) return console.log("Error:" + err);
+        console.log(newDefinition.creationTime + " | " + newDefinition.title.en + " Match Card Created");
+    });
 };
 
 
@@ -643,10 +646,10 @@ gamecards.getUserInstances = function (matchId, userId, cbk) {
             db.models.scheduled_matches.findById(matchId, 'settings state', function (error, scheduledMatch) {
                 if (error)
                     return callback(error);
-                
+
                 if (scheduledMatch == null)
                     return callback(new Error("Match id " + matchId + " was not found."));
-                    
+
                 callback(null, scheduledMatch.settings, scheduledMatch.state);
             });
         },
@@ -832,7 +835,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
                 if (sameInstanceCount > 0 && _.head(sameDefinitionUsercards).cardType != 'PresetInstant' && (_.some(sameDefinitionUsercards, { status: 1 }) == true || _.some(sameDefinitionUsercards, { status: 3 }) == true))
                     return cbk(new Error("There is at least another user Gamecard of the same referenced gamecardDefinitionId in an active state"));
-                    
+
                 if (sameInstanceCount > 0 && _.head(sameDefinitionUsercards).cardType == 'PresetInstant')
                     otherPresetInstants = sameDefinitionUsercards;
 
@@ -861,8 +864,8 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         if (!referencedDefinition)
             return callback({ isValid: false, error: "The gamecardDefinitionId in the body does not correspond to an existing gamecard definition" });
-        
-        if (!scheduledMatch)    
+
+        if (!scheduledMatch)
             return callback({ isValid: false, error: "The matchId " + matchId + " is not found" });
 
         if (referencedDefinition.cardType == 'PresetInstant' && scheduledMatch.state > 0)
@@ -882,11 +885,10 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
 
         let conflictedCardLowerMinute = null;
         let conflictedCardUpperMinute = null;
-        if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function(otherPresetInstant) {
+        if (referencedDefinition.cardType == 'PresetInstant' && sameInstanceCount > 0 && _.some(otherPresetInstants, function (otherPresetInstant) {
             let cardDuration = otherPresetInstant.duration ? otherPresetInstant.duration / 60000 : 0;     // converted in minutes from milliseconds
-            if ( (otherPresetInstant.minute <= userGamecard.minute && (userGamecard.minute <= otherPresetInstant.minute + cardDuration))
-                || (otherPresetInstant.minute <= (userGamecard.minute + cardDuration) && userGamecard.minute <= otherPresetInstant.minute) )
-            {
+            if ((otherPresetInstant.minute <= userGamecard.minute && (userGamecard.minute <= otherPresetInstant.minute + cardDuration))
+                || (otherPresetInstant.minute <= (userGamecard.minute + cardDuration) && userGamecard.minute <= otherPresetInstant.minute)) {
                 if (conflictedCardLowerMinute == null)
                     conflictedCardLowerMinute = otherPresetInstant.minute;
                 else if (otherPresetInstant.minute < conflictedCardLowerMinute)
@@ -896,14 +898,14 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
                     conflictedCardUpperMinute = otherPresetInstant.minute + cardDuration;
                 else if (otherPresetInstant.minute + cardDuration > conflictedCardUpperMinute)
                     conflictedCardUpperMinute = otherPresetInstant.minute + cardDuration;
-                    
+
                 return true;
             }
 
             return false;
-        }) == true) 
+        }) == true)
             return callback({ isValid: false, error: "No more '" + referencedDefinition.title + "' PresetInstant cards can be played bewtween minutes " + conflictedCardLowerMinute + " and " + conflictedCardUpperMinute });
-        
+
 
         return callback({ isValid: true, error: null }, referencedDefinition, scheduledMatch);
     });
@@ -927,8 +929,6 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
 
         let itsNow = moment.utc();
         let creationMoment = moment.utc(gamecard.creationTime);
-
-        console.log()
 
         var created = creationMoment.toISOString();
         // console.log("Created: " + created);
@@ -991,9 +991,13 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 newCard.terminationTime = terminated;
 
             if (gamecardDefinition.options && gamecard.optionId) {
+                console.log("The card has options so we try to find strating points here. Option ID: " + gamecard.optionId);
                 let optionsIndex = _.find(gamecardDefinition.options, function (option) {
                     return option.optionId == gamecard.optionId;
                 });
+
+                console.log("optionsIndex:\n" + optionsIndex);
+
                 if (optionsIndex) {
                     newCard.winConditions = optionsIndex.winConditions || null;
                     if (optionsIndex.terminationConditions)
@@ -1419,6 +1423,7 @@ gamecards.Tick = function () {
             // and update all Overall cards's terminationConditions on the event where the stat property is 'Minute', and then on the event where the stat is 'Segment'
 
             let itsNow = moment.utc();
+            // console.log("Preset Activation Tick: " + itsNow.toISOString());
             db.models.scheduled_matches.find({ completed: { $ne: true }, state: { $gt: 0 } }, '_id state time stats', function (error, matches) { // cannot test matches in the future , start: { $lt: itsNow.toDate() }
                 if (error)
                     return callback(error);
@@ -1469,8 +1474,11 @@ gamecards.Tick = function () {
                         //         return parallelCbk(null);
                         //     }, 200);
                         // },
-                        function (parallelCbk) {
+                        function (parallelCbk) {                            
                             db.models.userGamecards.find({ matchid: match.id, status: 0, cardType: 'PresetInstant', minute: { $lte: match.time } }, function (error, userGamecards) {
+                                if (userGamecards.length > 0)
+                                    console.log("Preset Found");
+
                                 if (error) {
                                     log.error('Failed to activate PresetInstant user gamecards at match minute ' + match.minute + ' of match id %s !!!', match.id);
                                     return parallelCbk(null);
@@ -2117,7 +2125,9 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
     // First half or second half or overtime ends. Pending userGamecards (status = 0) should be switched to paused (status = 3) and resume as activated after the pause
     var systemTime = itsNow.toDate();
     if (segmentIndex == 2 || segmentIndex == 4) {
-        db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: { $in: [0, 1] } }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
+        // db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: { $in: [0, 1] } }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
+            // Removed update to status 0 cards in order to fix the issue where presetCards would not activate
+              db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
             if (error) {
                 log.error('Failed to pause user gamecards after segment ' + (segmentIndex - 1) + ' ends on match id %s !!!', matchId);
                 return error;

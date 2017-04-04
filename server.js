@@ -57,7 +57,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.10.0";
+var version = "0.9.10.1";
 // Create Server
 var server = http.createServer(app);
 // server.listen(process.env.PORT || 3030);
@@ -65,12 +65,14 @@ var port = (process.env.PORT || 3030)
 app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
-    console.log("-------       Environment: "+ process.env.NODE_ENV);
+    console.log("-------       Environment: " + process.env.NODE_ENV);
     console.log("------------------------------------------------------------------------------------");
     console.log("---");
+    console.log("---     9.10.1");
+    console.log("---     --- Fix for PresetCards not activating");
     console.log("---     9.10.0");
     console.log("---     --- New emails for early access & reset email");
-    console.log("---     --- leaderboard entry fix");   
+    console.log("---     --- leaderboard entry fix");
     console.log("---     9.9.1");
     console.log("---     --- login with email along with username [SPI-230]");
     console.log("---     --- now possible to change password from client");
@@ -82,7 +84,9 @@ app.listen(port, function () {
     console.log("---");
 });
 
-app.use(morgan('dev'));
+morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
+app.use(morgan(':date-time :method :url :status :response-time ms - :res[content-length]'));
+// app.use(morgan('dev'));
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
 
@@ -148,7 +152,7 @@ catch (err) {
 app.PublishChannel = PublishChannel;
 
 
-if(!process.env.NODE_ENV)
+if (!process.env.NODE_ENV)
     process.env.NODE_ENV = "development";
 
 // Setup MongoDB conenction

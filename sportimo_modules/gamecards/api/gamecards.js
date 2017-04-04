@@ -154,13 +154,12 @@ module.exports = function (gamecardModule) {
                 var itsNow = moment.utc();
                 return res.status(400).json({ error: validationError.message, responseTimeUtc: itsNow });
             }
-            log.debug(data);
+            console.log("Created card:\n"+ JSON.stringify(data));
             return res.status(200).json({ error: null, userGamecard: data });
         });
     });
     
-    
-    
+        
     router.put('/v1/gamecards/:userGamecardId/users', function (req, res) {
         gamecardModule.updateUserInstance(req.params.userGamecardId, req.body, function(error, validationError, data) {
             if (error)
