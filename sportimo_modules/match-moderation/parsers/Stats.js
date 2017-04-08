@@ -260,7 +260,8 @@ Parser.prototype.init = function(cbk)
             interval = 1000;
             
         var itsNow = moment.utc();
-
+        console.log((moment.utc(scheduleDate) < itsNow && isActive));
+        console.log((itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)));
         // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
         if ((moment.utc(scheduleDate) < itsNow && isActive) || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)))
         {
@@ -270,7 +271,7 @@ Parser.prototype.init = function(cbk)
         else {
             // Schedule match feed event calls
             if (scheduleDate)
-            {
+            {                
                 that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
                 {
                     log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
@@ -583,6 +584,7 @@ var IsSegmentEvent = function(parserEvent) {
 
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function() {
+    console.log("Tick");
     var that = this;
     try
     {
