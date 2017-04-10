@@ -21,12 +21,14 @@ var redisCreds = require('../../../config/redisConfig');
 
 
 var Pub;
-Pub = redis.createClient(redisCreds.port, redisCreds.url);
-Pub.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log("[Questions_Module]: "+err);
-    }
-});
+// Heroku servers Redis though Environment variable
+Pub = redis.createClient(process.env.REDIS_URL);
+// Pub = redis.createClient(redisCreds.port, redisCreds.url);
+// Pub.auth(redisCreds.secret, function (err) {
+//     if (err) {
+//         console.log("[Questions_Module]: "+err);
+//     }
+// });
 
 /*
 ========= [ CORE METHODS ] =========

@@ -9,12 +9,14 @@ var mongoose = require('mongoose'),
 premessages = require("./config/pre-messages");
 
 var PublishChannel = null;
-PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
-PublishChannel.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log(err);
-    }
-});
+// Heroku servers Redis though Environment variable
+// PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+PublishChannel = redis.createClient(process.env.REDIS_URL);
+// PublishChannel.auth(redisCreds.secret, function (err) {
+//     if (err) {
+//         console.log(err);
+//     }
+// });
 PublishChannel.on("error", function (err) {
     console.error("{''Error'': ''" + err + "''}");
     console.error(err.stack);
@@ -225,7 +227,7 @@ MessagingTools.SendMessageToInbox = function (msgData, callback) {
         });
     } else if (!msgData.push && !msgData.message) {
         MessagingTools.sendSocketMessageToUsers(msgData.recipients, msgData.msg);
-         if (callback)
+        if (callback)
             callback(null, "Message send successfuly through sockets");
     } else {
         if (callback)

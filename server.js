@@ -119,20 +119,23 @@ var PublishChannel = null;
 var SubscribeChannel = null;
 
 try {
-    PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
-    PublishChannel.auth(redisCreds.secret, function (err) {
-        if (err) {
-            console.log(err);
-        }
-    });
+    // Heroku servers Redis though Environment variable
+    // PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+    PublishChannel = redis.createClient(process.env.REDIS_URL);
+    // PublishChannel.auth(redisCreds.secret, function (err) {
+    //     if (err) {
+    //         console.log(err);
+    //     }
+    // });
 
-    SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
-
-    SubscribeChannel.auth(redisCreds.secret, function (err) {
-        if (err) {
-            console.log(err);
-        }
-    });
+    // Heroku servers Redis though Environment variable
+    // SubscribeChannel = redis.createClient(redisCreds.port, redisCreds.url);
+    SubscribeChannel = redis.createClient(process.env.REDIS_URL);
+    // SubscribeChannel.auth(redisCreds.secret, function (err) {
+    //     if (err) {
+    //         console.log(err);
+    //     }
+    // });
 
 
     PublishChannel.on("error", function (err) {
