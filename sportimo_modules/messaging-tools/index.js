@@ -12,6 +12,7 @@ var PublishChannel = null;
 // Heroku servers Redis though Environment variable
 // PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
 PublishChannel = redis.createClient(process.env.REDIS_URL);
+console.log(process.env.REDIS_URL);
 // PublishChannel.auth(redisCreds.secret, function (err) {
 //     if (err) {
 //         console.log(err);
