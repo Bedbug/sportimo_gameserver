@@ -10,22 +10,16 @@ premessages = require("./config/pre-messages");
 
 var PublishChannel = null;
 // Heroku servers Redis though Environment variable
-// PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
-PublishChannel = redis.createClient(process.env.REDIS_URL);
-console.log(process.env.REDIS_URL);
-// PublishChannel.auth(redisCreds.secret, function (err) {
-//     if (err) {
-//         console.log(err);
-//     }
-// });
+PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
+PublishChannel.auth(redisCreds.secret, function (err) {
+    if (err) {
+        console.log(err);
+    }
+});
 PublishChannel.on("error", function (err) {
     console.error("{''Error'': ''" + err + "''}");
     console.error(err.stack);
 });
-
-
-
-
 
 
 MessagingTools = {};
@@ -167,6 +161,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 }
 
 MessagingTools.sendSocketMessageToUsers = function (ids, message) {
+    if(PublishChannel)
     PublishChannel.publish("socketServers", JSON.stringify({
         sockets: true,
         clients: ids,
@@ -180,7 +175,7 @@ MessagingTools.sendSocketMessageToUsers = function (ids, message) {
 }
 
 MessagingTools.SendTauntToUser = function (tauntData) {
-
+if(PublishChannel)
     PublishChannel.publish("socketServers", JSON.stringify({
         sockets: true,
         clients: [tauntData.recipient._id],
