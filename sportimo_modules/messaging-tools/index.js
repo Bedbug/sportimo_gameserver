@@ -10,12 +10,12 @@ premessages = require("./config/pre-messages");
 
 var PublishChannel = null;
 // Heroku servers Redis though Environment variable
-PublishChannel = redis.createClient(redisCreds.port, redisCreds.url);
-PublishChannel.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log(err);
-    }
-});
+PublishChannel = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-34-249-251-118.eu-west-1.compute.amazonaws.com:25229");
+// PublishChannel.auth(redisCreds.secret, function (err) {
+//     if (err) {
+//         console.log(err);
+//     }
+// });
 PublishChannel.on("error", function (err) {
     console.error("{''Error'': ''" + err + "''}");
     console.error(err.stack);

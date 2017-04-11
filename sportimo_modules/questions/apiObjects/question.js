@@ -20,12 +20,12 @@ var mongoose = require('mongoose'),
 var redisCreds = require('../../../config/redisConfig');
 
 var Pub;
-Pub = redis.createClient(redisCreds.port, redisCreds.url);
-Pub.auth(redisCreds.secret, function (err) {
-    if (err) {
-        console.log("[Questions_Module]: "+err);
-    }
-});
+Pub = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-34-249-251-118.eu-west-1.compute.amazonaws.com:25229");
+// Pub.auth(redisCreds.secret, function (err) {
+//     if (err) {
+//         console.log("[Questions_Module]: "+err);
+//     }
+// });
 
 /*
 ========= [ CORE METHODS ] =========

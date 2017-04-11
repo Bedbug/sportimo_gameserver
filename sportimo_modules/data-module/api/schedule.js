@@ -96,7 +96,7 @@ api.additem = function (req, res) {
 
     competition.findById(req.body.competition).then(function (competition) {
 
-        console.log(competition);
+        // console.log(competition);
         // var defaultData = new defaultMatch();
         var mergedData = _.merge(defaultMatch, req.body);
         var newItem = new item(mergedData);
@@ -124,7 +124,7 @@ api.additem = function (req, res) {
 
 api.updateVisibility = function (req, res) {
 
-    console.log(req.body.competitionid);
+    // console.log(req.body.competitionid);
 
 
     item.find({ competition: req.body.competitionid }, function (err, matches) {

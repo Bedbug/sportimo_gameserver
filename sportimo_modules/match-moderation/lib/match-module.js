@@ -944,8 +944,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     */
     HookedMatch.UpdateEvent = function (event, cbk) {
 
-        console.log(event.data._id);
-         console.log(this.data.timeline[event.data.state]);
+        // console.log(event.data._id);
+        //  console.log(this.data.timeline[event.data.state]);
         
         if (!this.data.timeline[event.data.state])
             if (cbk)
@@ -954,8 +954,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return HookedMatch;
         
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
-            console.log(o);
-            console.log(event.data);
+            // console.log(o);
+            // console.log(event.data);
             return o._id == event.data._id;
         });
         

@@ -20,7 +20,7 @@ module.exports = function (ModerationModule) {
     // Get all update object from Stats regarding possession and touches
     router.get('/v1/moderation/:id/service/:league/:parserid', function (req, res) {
         var match_id = req.params.id;
-        console.log(match_id);
+        // console.log(match_id);
         ModerationModule.GetMatch(match_id).updateFeedMatchStats(req.params.league, req.params.parserid, function(err, result){
         if(err)
             return res.status(500).json({ error:err });

@@ -135,8 +135,8 @@ api.sendEmail = function (req, res) {
             }
 
             eau.findOneAndUpdate({ _id: emailToSend._id }, { email_sent: true }, function (e, r) {
-                console.log(e);
-                console.log(r);
+                // console.log(e);
+                // console.log(r);
             })
 
         });
