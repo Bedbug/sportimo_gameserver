@@ -991,12 +991,12 @@ gamecards.addUserInstance = function (matchId, gamecard, callback) {
                 newCard.terminationTime = terminated;
 
             if (gamecardDefinition.options && gamecard.optionId) {
-                console.log("The card has options so we try to find strating points here. Option ID: " + gamecard.optionId);
+                console.log("The card has options so we try to find starting points here. Option ID: " + gamecard.optionId);
                 let optionsIndex = _.find(gamecardDefinition.options, function (option) {
                     return option.optionId == gamecard.optionId;
                 });
 
-                console.log("optionsIndex:\n" + optionsIndex);
+                // console.log("optionsIndex:\n" + optionsIndex);
 
                 if (optionsIndex) {
                     newCard.winConditions = optionsIndex.winConditions || null;
@@ -1514,7 +1514,7 @@ gamecards.Tick = function () {
                         function (parallelCbk) {
                             var systemTime = itsNow.toDate();
                             if (match.state == 2 || match.state == 4) {
-                                db.models.userGamecards.update({ matchid: match.id, cardType: { $in: ['Instant', 'PresetInstant'] }, status: { $in: [0, 1] } }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
+                                db.models.userGamecards.update({ matchid: match.id, cardType: { $in: ['Instant', 'PresetInstant'] },  status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
                                     if (error) {
                                         log.error('Failed to pause user gamecards after segment ' + (match.state - 1) + ' ends on match id %s !!!', match.id);
                                         return parallelCbk(null);
