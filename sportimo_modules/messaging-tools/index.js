@@ -62,6 +62,9 @@ var PushOptions = {
     auth: "RjBCef0fkWWCw0tI8Jw0fvHQbBCGZJUvtE4Z14OlCAeKAWNRk5RHhQnYbqW03ityah2wiPVsA2qzX2Kz7E2l",
 };
 
+// Change to dev app pushes if environment is development
+if (process.env.NODE_ENV == "development")
+    PushOptions.application = "0BAF7-DEFF3";
 
 MessagingTools.sendPushToUsers = function (userids, message, data, type, callback) {
 
@@ -161,29 +164,29 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 }
 
 MessagingTools.sendSocketMessageToUsers = function (ids, message) {
-    if(PublishChannel)
-    PublishChannel.publish("socketServers", JSON.stringify({
-        sockets: true,
-        clients: ids,
-        payload: {
-            type: "Message",
-            data: {
-                message: message
+    if (PublishChannel)
+        PublishChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            clients: ids,
+            payload: {
+                type: "Message",
+                data: {
+                    message: message
+                }
             }
-        }
-    }));
+        }));
 }
 
 MessagingTools.SendTauntToUser = function (tauntData) {
-if(PublishChannel)
-    PublishChannel.publish("socketServers", JSON.stringify({
-        sockets: true,
-        clients: [tauntData.recipient._id],
-        payload: {
-            type: "Taunt",
-            data: tauntData
-        }
-    }));
+    if (PublishChannel)
+        PublishChannel.publish("socketServers", JSON.stringify({
+            sockets: true,
+            clients: [tauntData.recipient._id],
+            payload: {
+                type: "Taunt",
+                data: tauntData
+            }
+        }));
 }
 
 
