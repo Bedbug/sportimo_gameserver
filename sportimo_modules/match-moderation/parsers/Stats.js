@@ -7,6 +7,7 @@ var moment = require('moment');
 var winston = require('winston');
 var mongoose = require('mongoose');
 var matches = mongoose.models.scheduled_matches;
+var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
 
 var log = new (winston.Logger)({
     levels: {
@@ -276,10 +277,12 @@ Parser.prototype.init = function(cbk)
                 {
                     log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                     that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
+                     MessagingTools.sendPushToAdmins({en:'Timer started for matchid: '+ that.matchHandler.id});
                 });
-                if (that.scheduledTask)
+                if (that.scheduledTask){
                     log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
-                else
+                    MessagingTools.sendPushToAdmins({en:'Timer scheduled successfully for matchid: '+ that.matchHandler.id});
+                }else
                     if (!that.matchHandler.completed|| that.matchHandler.completed == false)
                     {
                         log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);

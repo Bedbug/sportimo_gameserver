@@ -163,6 +163,88 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 
 }
 
+MessagingTools.sendPushToAdmins = function (message, callback) {
+
+    var conditions = {
+        pushToken: {
+            $exists: true,
+            $ne: "NoPustTokenYet"
+        },
+        admin: true
+    };
+
+    var pushTokens = [];
+    // let's get all the users that have a push token and are accepting this type of push
+    mongoose.models.users.find(conditions, function (err, users) {
+        pushTokens = _.compact(_.map(users, 'pushToken'));
+        
+        // pushTokens.push("72e9c645bf75426301f67d96c9883eaa4fd0cc75dbc0682529e285618db37f45");
+        
+
+        var options = {
+            headers: { 'content_type': 'application/json' }
+        }
+
+        var payload =
+            {
+                "request": {
+                    "application": "BF7AF-7F9B8",
+                    "auth": PushOptions.auth,
+                    "notifications": [
+                        {
+                            "send_date": "now",
+                            "ignore_user_timezone": true,
+                            "content": (typeof message === 'string' || message instanceof String) ? JSON.parse(message) : message,
+                            "devices": pushTokens
+
+                        }
+                    ]
+                }
+            }
+
+
+        needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
+
+            if (!err) {
+                // console.log("[UserMessaging] Send push to %s admins.", pushTokens.length);
+
+                payload = {
+                    "request": {
+                        "application": "0BAF7-DEFF3",
+                        "auth": PushOptions.auth,
+                        "notifications": [
+                            {
+                                "send_date": "now",
+                                "ignore_user_timezone": true,
+                                "content": (typeof message === 'string' || message instanceof String) ? JSON.parse(message) : message,
+                                "devices": pushTokens
+
+                            }
+                        ]
+                    }
+                }
+                needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
+                    if (!err) {
+                        console.log("[UserMessaging] Send push ["+ message.en +"] to " + pushTokens.length + " admins.");
+                        if (callback)
+                            return callback("[UserMessaging] Send push ["+ message.en +"] to " + pushTokens.length + " admins.");
+                    }
+                });
+            }
+            else {
+                console.log(err);
+                if (callback)
+                    return callback.send(err);
+            }
+        });
+
+
+        // in this case, if the request takes more than 5 seconds
+        // the callback will return a [Socket closed] error
+    });
+};
+
+
 MessagingTools.sendSocketMessageToUsers = function (ids, message) {
     if (PublishChannel)
         PublishChannel.publish("socketServers", JSON.stringify({

@@ -83,8 +83,8 @@ app.listen(port, function () {
     console.log("---");
 });
 
-morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
-app.use(morgan(':date-time :method :url :status :response-time ms - :res[content-length]'));
+// morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
+// app.use(morgan(':date-time :method :url :status :response-time ms - :res[content-length]'));
 // app.use(morgan('dev'));
 
 app.get("/crossdomain.xml", onCrossDomainHandler);
