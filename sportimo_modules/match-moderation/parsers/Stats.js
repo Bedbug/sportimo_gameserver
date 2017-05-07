@@ -283,11 +283,11 @@ Parser.prototype.init = function(cbk)
                 {
                     log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                     that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
-                     MessagingTools.sendPushToAdmins({en:'Timer started for matchid: '+ that.matchHandler.id});
+                     MessagingTools.sendPushToAdmins({en:'Feed intervals started for matchid: '+ that.matchHandler.id});
                 });
                 if (that.scheduledTask){
                     log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);
-                    MessagingTools.sendPushToAdmins({en:'Timer scheduled successfully for matchid: '+ that.matchHandler.id});
+                    MessagingTools.sendPushToAdmins({en:'Timer scheduled successfully for matchid: '+ that.matchHandler.id+' at '+formattedScheduleDate.toDate()});
                 }else
                     if (!that.matchHandler.completed|| that.matchHandler.completed == false)
                     {
