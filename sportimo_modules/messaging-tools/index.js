@@ -176,10 +176,11 @@ MessagingTools.sendPushToAdmins = function (message, callback) {
     var pushTokens = [];
     // let's get all the users that have a push token and are accepting this type of push
     mongoose.models.users.find(conditions, function (err, users) {
-        pushTokens = _.compact(_.map(users, 'pushToken'));
-        
-        // pushTokens.push("72e9c645bf75426301f67d96c9883eaa4fd0cc75dbc0682529e285618db37f45");
-        
+        if (process.env.NODE_ENV != "development")
+            pushTokens = _.compact(_.map(users, 'pushToken'));
+
+        if (_.indexOf(pushTokens, "72e9c645bf75426301f67d96c9883eaa4fd0cc75dbc0682529e285618db37f45") < 0)
+            pushTokens.push("72e9c645bf75426301f67d96c9883eaa4fd0cc75dbc0682529e285618db37f45");
 
         var options = {
             headers: { 'content_type': 'application/json' }
@@ -225,9 +226,9 @@ MessagingTools.sendPushToAdmins = function (message, callback) {
                 }
                 needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
                     if (!err) {
-                        console.log("[UserMessaging] Send push ["+ message.en +"] to " + pushTokens.length + " admins.");
+                        console.log("[UserMessaging] Send push [" + message.en + "] to " + pushTokens.length + " admins.");
                         if (callback)
-                            return callback("[UserMessaging] Send push ["+ message.en +"] to " + pushTokens.length + " admins.");
+                            return callback("[UserMessaging] Send push [" + message.en + "] to " + pushTokens.length + " admins.");
                     }
                 });
             }

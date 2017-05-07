@@ -249,12 +249,18 @@ Parser.prototype.init = function(cbk)
         }
 
 
-        var scheduleDate = that.matchHandler.start || startDate;  
+        var scheduleDate = that.matchHandler.start || startDate;
+        
         if (!scheduleDate)
             return cbk(new Error('No start property defined on the match to denote its start time. Aborting.'));
 
         var formattedScheduleDate = moment.utc(scheduleDate);
         formattedScheduleDate.subtract(300, 'seconds');
+
+        // Test
+        formattedScheduleDate = moment.utc().add(60,'seconds');
+
+        log.info('[Stats parser]: Scheduled Date: '+ formattedScheduleDate.toDate());
 
         var interval = that.feedService.interval || configuration.eventsInterval;
         if (interval < 1000)
@@ -273,7 +279,7 @@ Parser.prototype.init = function(cbk)
             // Schedule match feed event calls
             if (scheduleDate)
             {                
-                that.scheduledTask = scheduler.scheduleJob(formattedScheduleDate.toDate(), function()
+                that.scheduledTask = scheduler.scheduleJob(that.matchHandler.id,formattedScheduleDate.toDate(), function()
                 {
                     log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                     that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
@@ -288,6 +294,8 @@ Parser.prototype.init = function(cbk)
                         log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
                         that.TickMatchFeed();
                     }
+
+                // console.log(_.find(scheduler.scheduledJobs,{name:that.matchHandler.id}));
             }
         }
 
