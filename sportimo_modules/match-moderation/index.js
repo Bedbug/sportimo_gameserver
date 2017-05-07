@@ -395,7 +395,8 @@ ModerationModule.updateMatchcronJobsInfo = function () {
                     var matchInMemory = ModerationModule.GetMatch(match._id.toString());                    
                     if (matchInMemory) {
                         matchInMemory.data.moderation[0].start = re.moderation[0].start;
-                        matchInMemory.data.moderation[0].scheduled = re.moderation[0].scheduled;
+                        matchInMemory.data.moderation[0].scheduled = re.moderation[0].scheduled;  
+                        // console.log("changed " +matchInMemory.data.moderation[0].start);                
                     }
                 });
             })
