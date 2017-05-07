@@ -158,6 +158,8 @@ if (!process.env.NODE_ENV)
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';
 var mongoConnection = 'mongodb://' + mongoCreds[process.env.NODE_ENV].user + ':' + mongoCreds[process.env.NODE_ENV].password + '@' + mongoCreds[process.env.NODE_ENV].url;
 // if (mongoose.connection.readyState != 1 && mongoose.connection.readyState != 2)
+mongoose.Promise = global.Promise;
+
 mongoose.connect(mongoConnection, function (err, res) {
     if (err) {
         console.log('ERROR connecting to: ' + mongoConnection + '. ' + err);

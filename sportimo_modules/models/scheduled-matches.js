@@ -53,8 +53,10 @@ else {
     type: String,
     parserid: String,
     parsername: String,
+    start: String,
     parsed_eventids: [String],
     active: Boolean,
+    scheduled: Boolean,
     interval: Number
   })
 

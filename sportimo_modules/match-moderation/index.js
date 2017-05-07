@@ -14,6 +14,8 @@ var path = require('path'),
     winston = require('winston'),
     mongoose = require('mongoose');
 
+var scheduler = require('node-schedule');
+var moment = require('moment');
 
 var log = new (winston.Logger)({
     levels: {
@@ -91,7 +93,7 @@ var ModerationModule = {
         initModule(done);
     },
     SetupMongoDB: function (mongooseConnection) {
-      
+
         if (!shouldInitAutoFeed) {
             console.log("---------------------------------------------------------------------------------------------");
             console.log("---- Warning: This server instance does not initialize the feed auto moderation feature -----");
@@ -110,7 +112,7 @@ var ModerationModule = {
 
         // Initialize the gamecards module
         var gamecards = require('../gamecards');
-         gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
+        gamecards.connect(this.mongoose, RedisClientPub, RedisClientSub);
 
     },
     SetupRedis: function (Pub, Sub, Channel) {
@@ -362,6 +364,43 @@ ModerationModule.RemoveScheduleMatch = function (id, cbk) {
     cbk();
 };
 
+/**
+ * Matches cronjobs update info
+ */
+ModerationModule.updateMatchcronJobsInfo = function () {
+    var itsNow = moment.utc();
+    scheduled_matches
+        .find({
+            state: { $gt: -1 },
+            completed: { $ne: true },
+            'moderation.0.type': 'rss-feed',
+            'moderation.0.active': true,
+        })
+        .exec(function (err, matches) {
+
+            _.each(matches, function (match) {
+                var job = _.find(scheduler.scheduledJobs, { name: match._id.toString() })
+                if (job) {
+                    var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
+                    var durationAsHours = duration.asMinutes();
+                    match.moderation[0].start = "in " + durationAsHours.toFixed(2) + " minutes";
+                    match.moderation[0].scheduled = true;
+                    // log.info("Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
+                } else {
+                    // log.info("Match has not been picked up from scheduler");
+                    match.moderation[0].start = "";
+                    match.moderation[0].scheduled = false;
+                }
+                match.save(function (er, re) {                    
+                    var matchInMemory = ModerationModule.GetMatch(match._id.toString());                    
+                    if (matchInMemory) {
+                        matchInMemory.data.moderation[0].start = re.moderation[0].start;
+                        matchInMemory.data.moderation[0].scheduled = re.moderation[0].scheduled;
+                    }
+                });
+            })
+        })
+}
 
 function initModule(done) {
     if (!this.mock) {
@@ -408,6 +447,9 @@ function initModule(done) {
         if (ModerationModule.callback != null)
             ModerationModule.callback();
     }
+
+    // Here we will create a job in interval where we check for feed matches, if theit timers are set and update accordingly the time until initiation
+    ModerationModule.cronJobsUpdateInterval = setInterval(ModerationModule.updateMatchcronJobsInfo, 60000);
 };
 
 // A Mock Match object in case we need it for testing
