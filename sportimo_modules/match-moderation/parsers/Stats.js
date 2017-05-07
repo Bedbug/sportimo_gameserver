@@ -258,7 +258,7 @@ Parser.prototype.init = function(cbk)
         formattedScheduleDate.subtract(300, 'seconds');
 
         // Test
-        formattedScheduleDate = moment.utc().add(60,'seconds');
+        // formattedScheduleDate = moment.utc().add(60,'seconds');
 
         log.info('[Stats parser]: Scheduled Date: '+ formattedScheduleDate.toDate());
 
