@@ -278,7 +278,7 @@ Parser.prototype.init = function (cbk) {
                 that.scheduledTask = scheduler.scheduleJob(that.matchHandler.id, formattedScheduleDate.toDate(), function () {
                     log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
                     that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
-                    MessagingTools.sendPushToAdmins({ en: 'Feed intervals started for matchid: ' + that.matchHandler.id });
+                    // MessagingTools.sendPushToAdmins({ en: 'Feed intervals started for matchid: ' + that.matchHandler.id });
                 });
                 if (that.scheduledTask) {
                     log.info('[Stats parser]: Timer scheduled successfully for matchid %s', that.matchHandler.id);

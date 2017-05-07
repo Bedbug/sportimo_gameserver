@@ -377,7 +377,7 @@ ModerationModule.updateMatchcronJobsInfo = function () {
             'moderation.0.active': true,
         })
         .exec(function (err, matches) {
-
+            console.log("matches.length: "+matches.length);
             _.each(matches, function (match) {
                 var job = _.find(scheduler.scheduledJobs, { name: match._id.toString() })
                 if (job) {
