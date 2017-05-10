@@ -57,7 +57,7 @@ var TestSuite = {
 };
 
 var app = module.exports = exports.app = express();
-var version = "0.9.10.1";
+var version = "0.9.11";
 // Create Server
 var server = http.createServer(app);
 var port = (process.env.PORT || 3030)
@@ -66,21 +66,6 @@ app.listen(port, function () {
     console.log("-------       Sportimo v2.0 Game Server %s listening on port %d        --------", version, port);
     console.log("-------       Environment: " + process.env.NODE_ENV);
     console.log("------------------------------------------------------------------------------------");
-    console.log("---");
-    console.log("---     9.10.1");
-    console.log("---     --- Fix for PresetCards not activating");
-    console.log("---     9.10.0");
-    console.log("---     --- New emails for early access & reset email");
-    console.log("---     --- leaderboard entry fix");
-    console.log("---     9.9.1");
-    console.log("---     --- login with email along with username [SPI-230]");
-    console.log("---     --- now possible to change password from client");
-    console.log("---     --- removed unique email for early access");
-    console.log("---     --- fixed a bug where messages not found crashed the server");
-    console.log("---     9.9.0");
-    console.log("---     --- added Early Access API");
-    console.log("---     --- added method to remove leftover matches");
-    console.log("---");
 });
 
 // morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
