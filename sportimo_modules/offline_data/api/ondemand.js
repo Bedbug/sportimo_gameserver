@@ -354,7 +354,7 @@ api.UpdateLeagueStandings = function (req, res) {
 };
 
 
-api.UpdateAllStandings = function (req, res) {
+api.UpdateAllStandings = function (req, res) {    
     // UpdateTeams for each supported parser
     var response = { error: null, parsers: {} };
     if (!req.body.season)
@@ -467,7 +467,7 @@ router.post('/players/:teamId', api.UpdateAllPlayerStatsInTeam);
 router.post('/standings/:competitionId', api.UpdateLeagueStandings);
 
 // update all competition standings
-router.post('/standings/all', api.UpdateAllStandings);
+router.post('/update/standings/all', api.UpdateAllStandings);
 
 // return the future fixtures for the selected competition (id)
 router.get('/fixtures/:competitionId/:season', api.GetCompetitionFixtures);

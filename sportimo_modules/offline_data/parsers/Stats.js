@@ -124,25 +124,25 @@ setTimeout(function () {
 }, 5000);
 
 
-setTimeout(function() {
-    setInterval(function() {
+setTimeout(function () {
+    setInterval(function () {
         var cutOffTime = moment.utc().subtract(3, 'hours').toDate();
         //mongoDb.scheduled_matches.find({ completed: false, guruStats: null, start: {$gte: cutOffTime} }, function(error, matches) {
-        mongoDb.scheduled_matches.find({ completed: false, guruStats: null }, '_id home_team away_team competition state time start', function(error, matches) {
+        mongoDb.scheduled_matches.find({ completed: false, guruStats: null }, '_id home_team away_team competition state time start', function (error, matches) {
             if (error)
                 return;
-            
-            async.eachSeries(matches, function(match, cb) {
-                setTimeout(function() {
-                    Parser.UpdateGuruStats(match, function(err) {
+
+            async.eachSeries(matches, function (match, cb) {
+                setTimeout(function () {
+                    Parser.UpdateGuruStats(match, function (err) {
                         if (err)
                             log.error('Failed saving the Guru-stats for match %s, due to: %s', match.id, err.message);
-                            
+
                         cb(null);
                     });
                 }, 500);
-            }, function(eachSeriesError) {
-                
+            }, function (eachSeriesError) {
+
             });
         });
     }, 60000);
@@ -162,17 +162,17 @@ Parser.GetSeasonYear = function () {
 
 
 Parser.FindCompetitionByParserid = function (leagueName, callback) {
-    var findQuery = { 'parserids.Stats' : leagueName };
-    
+    var findQuery = { 'parserids.Stats': leagueName };
+
     var q = mongoDb.competitions.findOne(findQuery);
-    
+
     q.exec(function (error, competition) {
         if (error)
             return callback(error);
-            
+
         if (!competition)
             return callback(new Error('No competition found in database with this Id:' + leagueName));
-            
+
         return callback(null, competition);
     });
 }
@@ -272,16 +272,16 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
     const events_url = configuration.urlPrefix + leagueName + "/stats/teams/" + teamId + "/events/?accept=json&season=" + season + "&" + signature;
     // API Endpoint for top scorer
     const scorer_url = configuration.urlPrefix + leagueName + "/leaders/?teamId=" + teamId + "&accept=json&" + signature;
-    
+
     var competitionId = null;
 
     async.waterfall(
         [
             function (callback) {
-                Parser.FindCompetitionByParserid(leagueName, function(error, competition) {
+                Parser.FindCompetitionByParserid(leagueName, function (error, competition) {
                     if (error)
                         return callback(error);
-                    
+
                     competitionId = competition.id;
                     callback(null);
                 });
@@ -366,31 +366,31 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                                 };
                                 return callback(null, team);
                             }
-                            
+
                             var itsNow = moment.utc();
-                            var nextEvents = _.filter(response.body.apiResults[0].league.season.eventType[0].events, function(match) {
+                            var nextEvents = _.filter(response.body.apiResults[0].league.season.eventType[0].events, function (match) {
                                 return itsNow.isBefore(moment.utc(match.startDate[1].full));
                             });
-                            
+
                             if (nextEvents.length > 0) {
                                 var nextMatch = nextEvents[0];
-    
+
                                 team.nextmatch = {
                                     "home": "",
                                     "away": "",
-                                    "eventdate":  moment.utc(nextMatch.startDate[1].full).toDate(),
+                                    "eventdate": moment.utc(nextMatch.startDate[1].full).toDate(),
                                     "homescore": 0,
                                     "awayscore": 0
                                 };
-    
+
                                 Parser.FindMongoTeamId(competitionId, nextMatch.teams[0].teamId, 'name logo', function (err, home_team) {
                                     if (!err)
                                         team.nextmatch.home = home_team ? home_team : { name: { en: nextMatch.teams[0].displayName } };
-    
+
                                     Parser.FindMongoTeamId(competitionId, nextMatch.teams[1].teamId, 'name logo', function (err, away_team) {
                                         if (!err)
                                             team.nextmatch.away = away_team ? away_team : { name: { en: nextMatch.teams[1].displayName } };
-    
+
                                         callback(null, team);
                                     });
                                 });
@@ -473,7 +473,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
                     q.exec(function (err, players) {
                         if (err)
                             return callback(err, team);
-                            
+
                         if (players.length == 0)
                             return callback(null, team, null);
 
@@ -500,7 +500,7 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
                         if (players.length == 0)
                             return callback(null, team, assistPlayer, null);
-                            
+
                         team.topscorer = players[0]._id.toString();
 
                         return callback(null, team, assistPlayer, players[0]);
@@ -602,7 +602,7 @@ Parser.GetTeamPlayers = function (leagueName, languageId, callback) {
         try {
             if (response.statusCode != 200)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
-                
+
             var players = response.body.apiResults[0].league;
             callback(null, players);
         }
@@ -632,19 +632,23 @@ Parser.GetLeagueTeams = function (leagueName, callback) {
 Parser.GetLeagueStandings = function (leagueName, season, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + (season ? "season=" + season + "&" : "") + signature;
-
+    
     needle.get(url, { timeout: 60000 }, function (error, response) {
-        if (error)
+        if (error) {
             return callback(error);
+        }
+        if (!response.body.apiResults)
+            log.error(response.body.message || response.body);
         try {
             var standings = response.body.apiResults[0].league.season.eventType[0].conferences[0].divisions[0].teams;
             var season = response.body.apiResults[0].league.season.season;
             callback(null, standings, season);
         }
         catch (err) {
-            return callback(err);
+            return callback();
         }
     });
+
 };
 
 
@@ -676,7 +680,7 @@ Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
 
 Parser.GetTeamSeasonFixtures = function (leagueName, teamId, seasonYear, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/scores/teams/" + teamId + "?" + signature + "&season=" + seasonYear + "&linescore=false"; 
+    const url = configuration.urlPrefix + leagueName + "/scores/teams/" + teamId + "?" + signature + "&season=" + seasonYear + "&linescore=false";
 
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
@@ -717,8 +721,8 @@ Parser.GetMatchEvents = function (leagueName, matchId, callback) {
         }
         catch (err) {
             console.log(err);
-            if(callback)
-            return callback(err);
+            if (callback)
+                return callback(err);
         }
     });
 };
@@ -895,24 +899,24 @@ Parser.UpdateTeams = function (competitionId, callback) {
                         //let playersToRemove = [];
 
                         let creationDate = new Date();
-                        
+
                         // Find the players that exist in existingPlayersLookup but not in languageData["en"].players and add them to playersToUpdate after unlinking them from their team
                         // Similarly find the teams that exist in existingTeamsLookup but not in languageData["en"].players and add them to teamsToUpdate after unlinking them from their competition
                         let updatedPlayersLookup = {};
                         let updatedTeamsLookup = {};
-                        _.forEach(languageData["en"].players, function(player) {
+                        _.forEach(languageData["en"].players, function (player) {
                             if (!updatedPlayersLookup[player.playerId])
                                 updatedPlayersLookup[player.playerId] = true;
                             if (!updatedTeamsLookup[player.team.teamId])
                                 updatedTeamsLookup[player.team.teamId] = true;
                         });
-                        _.forEach(existingTeams, function(team) {
+                        _.forEach(existingTeams, function (team) {
                             if (!updatedTeamsLookup[team.parserids[Parser.Name]]) {
-                                team.competitionId = null;    
+                                team.competitionId = null;
                                 teamsToUpdate.push(team);
                             }
                         });
-                        _.forEach(_.values(existingPlayersLookup), function(lookup) {
+                        _.forEach(_.values(existingPlayersLookup), function (lookup) {
                             if (!updatedPlayersLookup[lookup.parserids[Parser.Name]]) {
                                 lookup.teamId = null;
                                 playersToUpdate.push(lookup);
@@ -1045,46 +1049,46 @@ Parser.UpdateTeams = function (competitionId, callback) {
                         // Try Upserting in mongo all teams and players
                         try {
                             async.parallel([
-                                function(innerCallback) {
+                                function (innerCallback) {
                                     if (teamsToAdd && teamsToAdd.length > 0) {
-                                        async.each(teamsToAdd, function(teamToAdd, cbk1) {
+                                        async.each(teamsToAdd, function (teamToAdd, cbk1) {
                                             return teamToAdd.save(cbk1);
                                         }, innerCallback);
                                     }
                                     else
                                         innerCallback(null);
                                 },
-                                function(innerCallback) {
+                                function (innerCallback) {
                                     if (playersToAdd && playersToAdd.length > 0) {
-                                        async.each(playersToAdd, function(playerToAdd, cbk2) {
+                                        async.each(playersToAdd, function (playerToAdd, cbk2) {
                                             return playerToAdd.save(cbk2);
                                         }, innerCallback);
                                     }
                                     else
                                         innerCallback(null);
                                 },
-                                function(innerCallback) {
+                                function (innerCallback) {
                                     if (teamsToUpdate && teamsToUpdate.length > 0) {
-                                        async.each(teamsToUpdate, function(teamToUpdate, cbk3) {
+                                        async.each(teamsToUpdate, function (teamToUpdate, cbk3) {
                                             return teamToUpdate.save(cbk3);
                                         }, innerCallback);
                                     }
                                     else
                                         innerCallback(null);
                                 },
-                                function(innerCallback) {
+                                function (innerCallback) {
                                     if (playersToUpdate && playersToUpdate.length > 0) {
-                                        async.each(playersToUpdate, function(playerToUpdate, cbk4) {
+                                        async.each(playersToUpdate, function (playerToUpdate, cbk4) {
                                             return playerToUpdate.save(cbk4);
                                         }, innerCallback);
                                     }
                                     else
                                         innerCallback(null);
                                 }
-                            ], function(parallelError, parallelResults) {
+                            ], function (parallelError, parallelResults) {
                                 if (parallelError)
                                     return callback(parallelError);
-                                    
+
                                 callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
                             });
 
@@ -1165,6 +1169,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
 
                     callback(null, competition, existingTeamIds, standings, seasonYear);
                 });
+
             },
             function (competition, existingTeamIds, standings, seasonYear, callback) {
                 mongoDb.standings.where('identity', Parser.Name).where('season', seasonYear).where('competitionid', competition.id).exec(function (error, standing) {
@@ -1175,8 +1180,15 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 });
             }
         ], function (error, competition, existingTeamIds, standings, seasonYear, standing) {
-            if (error)
-                return outerCallback(error);
+            if (error) {
+                log.error(error);
+                if (outerCallback)
+                    return outerCallback(error);
+            }
+
+            if (!standing)
+                if (outerCallback)
+                   return outerCallback(null, null);
 
             // Translate the global properties and then iterate over the team properties inside the teams array.
             var newStandings = null;
@@ -1234,15 +1246,18 @@ Parser.UpdateStandings = function (season, callback) {
         if (competitionError)
             return callback(competitionError, leagueStandingsUpdated);
 
-        async.each(leagues, function (league, cbk) {
+        async.eachLimit(leagues, 1, function (league, cbk) {
             // Get all teams foreach competition
-            Parser.UpdateLeagueStandings(league, league.id, season, function (error) {
-                if (error)
-                    return cbk(error);
-
-                leagueStandingsUpdated.push(league.id);
-                cbk();
-            });
+            setTimeout(function () {
+                console.log("Requesting UpdateLeagueStandings for " + league.id);
+                Parser.UpdateLeagueStandings(league, league.id, season, function (error, leagueid) {
+                    if (error)
+                        return cbk(error);
+                    if (leagueid)
+                        leagueStandingsUpdated.push(leagueid);
+                    cbk();
+                });
+            }, 1000)
         }, function (asyncError) {
             if (asyncError)
                 return callback(asyncError, leagueStandingsUpdated);
@@ -1511,8 +1526,8 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     callback(null);
                 });
             },
-            function(callback) {
-                Parser.UpdateTeams(competitionId, function(error, teamsAdded, playersAdded, teamsUpdated, playersUpdated) {
+            function (callback) {
+                Parser.UpdateTeams(competitionId, function (error, teamsAdded, playersAdded, teamsUpdated, playersUpdated) {
                     if (error)
                         return callback(error);
                     callback(null);
@@ -1522,9 +1537,9 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 Parser.FindMongoTeamsInCompetition(competitionId, function (error, teams) {
                     if (error)
                         return callback(error);
-                        
+
                     // Filter teams for the ones that should be updated, the ones that their next match date has already passed.
-                    competitionTeams = _.filter(teams, function(ateam) {
+                    competitionTeams = _.filter(teams, function (ateam) {
                         return (!ateam.nextmatch || !ateam.nextmatch.eventdate || moment.utc(ateam.nextmatch.eventdate).isBefore(itsNow));
                     });
                     callback(null);
@@ -1565,7 +1580,7 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                 }, function (seriesErr) {
                     if (seriesErr)
                         log.error(seriesErr.message);
-    
+
                     callback(null);
                 });
 
@@ -1578,11 +1593,11 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                         });
                     else {
                         log.info('Now on to updating full stats for team %s', team.name.en);
-                        
+
                         Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
                             innerCallback(null);
                         });
-                        
+
                     }
                 }, callback);
             }
@@ -1596,9 +1611,8 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
 };
 
 
-Parser.TestGuruStats = function(callback)
-{
-    mongoDb.scheduled_matches.findById('57ea626c7b588100f9d9551c', function(err, match) {
+Parser.TestGuruStats = function (callback) {
+    mongoDb.scheduled_matches.findById('57ea626c7b588100f9d9551c', function (err, match) {
         if (err)
             return callback(err);
         return Parser.UpdateGuruStats(match, callback);
@@ -1606,24 +1620,24 @@ Parser.TestGuruStats = function(callback)
 };
 
 // Used properties from scheduledMatch: competition, home_team, away_team
-Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
+Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
     if (
         //!scheduledMatch.moderation || scheduledMatch.moderation.length == 0 || !scheduledMatch.moderation[0].parserid
         !scheduledMatch.home_team || !scheduledMatch.away_team)
         return outerCallback(null);
-        
+
     //let parserid = scheduledMatch.moderation[0].parserid;
     let competitionid = scheduledMatch.competition;
     let homeTeamId = scheduledMatch.home_team;
     let awayTeamId = scheduledMatch.away_team;
-    
+
     let leagueName;
     let homeTeamParserId, awayTeamParserId;
     let season;
     // Get competition parser id, and the parser ids from the 2 teams
     async.parallel([
-        function(callback) {
-            mongoDb.competitions.findById(competitionid, 'parserids season', function(compError, competition) {
+        function (callback) {
+            mongoDb.competitions.findById(competitionid, 'parserids season', function (compError, competition) {
                 if (compError)
                     return callback(compError);
                 leagueName = competition.parserids[Parser.Name];
@@ -1631,59 +1645,59 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                 callback(null, leagueName);
             });
         },
-        function(callback) {
-            mongoDb.teams.findById(homeTeamId, 'parserids', function(teamError, team) {
+        function (callback) {
+            mongoDb.teams.findById(homeTeamId, 'parserids', function (teamError, team) {
                 if (teamError)
                     return callback(teamError);
                 homeTeamParserId = team.parserids[Parser.Name];
                 callback(null, homeTeamParserId);
             });
         },
-        function(callback) {
-            mongoDb.teams.findById(awayTeamId, 'parserids', function(teamError, team) {
+        function (callback) {
+            mongoDb.teams.findById(awayTeamId, 'parserids', function (teamError, team) {
                 if (teamError)
                     return callback(teamError);
                 awayTeamParserId = team.parserids[Parser.Name];
                 callback(null, awayTeamParserId);
             });
         }
-        ], function(error) {
+    ], function (error) {
         if (error)
             return outerCallback(error);
-        
+
         async.parallel([
-            function(callback) {
+            function (callback) {
                 return Parser.GetTeamSeasonFixtures(leagueName, homeTeamParserId, season, callback);
             },
-            function(callback) {
-                setTimeout(function() {
+            function (callback) {
+                setTimeout(function () {
                     return Parser.GetTeamSeasonFixtures(leagueName, awayTeamParserId, season, callback);
                 }, 400);
             }
-            ], function(innerError, results) {
+        ], function (innerError, results) {
             if (innerError)
                 return outerCallback(innerError);
-                
+
             let cutOffTime = moment.utc().add(3, 'hours');
-            
-            let homeTeamMatches = _.take(_.orderBy(_.filter(results[0], function(result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }) , ['startDate[1].full'], ['desc']), 10);
-            let awayTeamMatches = _.take(_.orderBy(_.filter(results[1], function(result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }) , ['startDate[1].full'], ['desc']), 10);
+
+            let homeTeamMatches = _.take(_.orderBy(_.filter(results[0], function (result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }), ['startDate[1].full'], ['desc']), 10);
+            let awayTeamMatches = _.take(_.orderBy(_.filter(results[1], function (result) { return cutOffTime.isAfter(moment.utc(result.startDate[1].full)); }), ['startDate[1].full'], ['desc']), 10);
             let homeTeamMatchParserIds = _.map(homeTeamMatches, 'eventId');
             let awayTeamMatchParserIds = _.map(awayTeamMatches, 'eventId');
-            
+
             let interestingEventIds = [2, 5, 11, 20];
-                // "2": "Yellow",
-                // "5": "Corner",
-                // "7": "Red",
-                // "8": "Foul",
-                // "11": "Goal",
-                // "14": "Injury",
-                // "16": "Offside",
-                // "17": "Penalty",
-                // "18": "Penalty",
-                // "20": "Shot_on_Goal",
-                // // "22": "Substitution",
-                // "28": "Own_Goal"
+            // "2": "Yellow",
+            // "5": "Corner",
+            // "7": "Red",
+            // "8": "Foul",
+            // "11": "Goal",
+            // "14": "Injury",
+            // "16": "Offside",
+            // "17": "Penalty",
+            // "18": "Penalty",
+            // "20": "Shot_on_Goal",
+            // // "22": "Substitution",
+            // "28": "Own_Goal"
 
             let guruStats = {
                 Yellow: {
@@ -1706,8 +1720,8 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                     awayTeam: [0, 0, 0, 0, 0, 0, 0, 0, 0],
                     total: [0, 0, 0, 0, 0, 0, 0, 0, 0]
                 }
-            };    
-            
+            };
+
             let homeTeamMatchesCount = 0;
             let awayTeamMatchesCount = 0;
             // first dimension is 0 for the total stats for both teams, 1 for home team, 2 for away team.
@@ -1715,50 +1729,50 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
             // each cell holds the average per event type (0 for Yellow, 1 for Corner, 2 for Goal, 3 for Shot on Goal)
             let index = 0;
             async.series([
-                function(s1cbk) {
-                    async.each(homeTeamMatchParserIds, function(parserId, callback) {
-                        setTimeout(function() {
-                            Parser.GetMatchEvents(leagueName, parserId, function(err, events, teams, matchStatus) {
+                function (s1cbk) {
+                    async.each(homeTeamMatchParserIds, function (parserId, callback) {
+                        setTimeout(function () {
+                            Parser.GetMatchEvents(leagueName, parserId, function (err, events, teams, matchStatus) {
                                 if (err) {
                                     log.warn(err.message + '\nError while getting match %s events while computing Guru stats. Continuing with next one...', parserId);
                                     return callback(null);
                                 }
-                                
+
                                 homeTeamMatchesCount++;
-                                let interestingEvents = _.filter(events, function(event) {
+                                let interestingEvents = _.filter(events, function (event) {
                                     return _.indexOf(interestingEventIds, event.playEvent.playEventId) > -1 && (event.teamId == homeTeamParserId);
                                 });
-                                _.forEach(interestingEvents, function(event) {
+                                _.forEach(interestingEvents, function (event) {
                                     if (!event.time || !event.time.minutes)
                                         return;
-                                        
-                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes/10);
-                                    
+
+                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes / 10);
+
                                     switch (event.playEvent.playEventId) {
                                         case 2:
                                             if (!guruStats.Yellow.homeTeam[timeIndex])
                                                 guruStats.Yellow.homeTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Yellow.homeTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 5:
                                             if (!guruStats.Corner.homeTeam[timeIndex])
                                                 guruStats.Corner.homeTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Corner.homeTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 11:
                                             if (!guruStats.Goal.homeTeam[timeIndex])
                                                 guruStats.Goal.homeTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Goal.homeTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 20:
                                             if (!guruStats.Shot_On_Goal.homeTeam[timeIndex])
                                                 guruStats.Shot_On_Goal.homeTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Shot_On_Goal.homeTeam[timeIndex]++;
-                                                break;
+                                            break;
                                     }
                                 });
                                 callback(null);
@@ -1766,51 +1780,51 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                         }, index++ * 500);
                     }, s1cbk);
                 },
-                function(s2cbk) {
+                function (s2cbk) {
                     index = 0;
-                    async.each(awayTeamMatchParserIds, function(parserId, callback) {
-                        setTimeout(function() {
-                            Parser.GetMatchEvents(leagueName, parserId, function(err, events, teams, matchStatus) {
+                    async.each(awayTeamMatchParserIds, function (parserId, callback) {
+                        setTimeout(function () {
+                            Parser.GetMatchEvents(leagueName, parserId, function (err, events, teams, matchStatus) {
                                 if (err) {
                                     log.warn(err.message + '\nError while getting match %s events while computing Guru stats. Continuing with next one...', parserId);
                                     return callback(null);
                                 }
-                                
+
                                 awayTeamMatchesCount++;
-                                let interestingEvents = _.filter(events, function(event) {
+                                let interestingEvents = _.filter(events, function (event) {
                                     return _.indexOf(interestingEventIds, event.playEvent.playEventId) > -1 && (event.teamId == awayTeamParserId);
                                 });
-                                _.forEach(interestingEvents, function(event) {
+                                _.forEach(interestingEvents, function (event) {
                                     if (!event.time || !event.time.minutes)
                                         return;
-                                        
-                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes/10);
-                                    
+
+                                    let timeIndex = event.time.minutes >= 90 ? 8 : Math.floor(event.time.minutes / 10);
+
                                     switch (event.playEvent.playEventId) {
                                         case 2:
                                             if (!guruStats.Yellow.awayTeam[timeIndex])
                                                 guruStats.Yellow.awayTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Yellow.awayTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 5:
                                             if (!guruStats.Corner.awayTeam[timeIndex])
                                                 guruStats.Corner.awayTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Corner.awayTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 11:
                                             if (!guruStats.Goal.awayTeam[timeIndex])
                                                 guruStats.Goal.awayTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Goal.awayTeam[timeIndex]++;
-                                                break;
+                                            break;
                                         case 20:
                                             if (!guruStats.Shot_On_Goal.awayTeam[timeIndex])
                                                 guruStats.Shot_On_Goal.awayTeam[timeIndex] = 1;
                                             else
                                                 guruStats.Shot_On_Goal.awayTeam[timeIndex]++;
-                                                break;
+                                            break;
                                     }
                                 });
                                 callback(null);
@@ -1818,31 +1832,31 @@ Parser.UpdateGuruStats = function(scheduledMatch, outerCallback) {
                         }, index++ * 500);
                     }, s2cbk);
                 }
-                ], function(seriesError) {
-                    if (seriesError) {
-                        //log.error('Failed to save Guru stats due to: %s', seriesError.message);
-                        return outerCallback(seriesError);
-                    }
-                        
-                    // Calc totals and averages
-                    for(let i = 0; i < 9; i++) {
-                        guruStats.Yellow.total[i] = (guruStats.Yellow.homeTeam[i] + guruStats.Yellow.awayTeam[i]); 
-                        guruStats.Corner.total[i] = (guruStats.Corner.homeTeam[i] + guruStats.Corner.awayTeam[i]); 
-                        guruStats.Goal.total[i] = (guruStats.Goal.homeTeam[i] + guruStats.Goal.awayTeam[i]); 
-                        guruStats.Shot_On_Goal.total[i] = (guruStats.Shot_On_Goal.homeTeam[i] + guruStats.Shot_On_Goal.awayTeam[i]); 
-                    }
-                    
-                    mongoDb.scheduled_matches.update({ _id: scheduledMatch._id }, { guruStats: guruStats }, function(updateError) {
-                        if (updateError)
-                            return outerCallback(updateError);
-                            
-                        outerCallback(null, guruStats); 
-                    });
+            ], function (seriesError) {
+                if (seriesError) {
+                    //log.error('Failed to save Guru stats due to: %s', seriesError.message);
+                    return outerCallback(seriesError);
                 }
-                );
+
+                // Calc totals and averages
+                for (let i = 0; i < 9; i++) {
+                    guruStats.Yellow.total[i] = (guruStats.Yellow.homeTeam[i] + guruStats.Yellow.awayTeam[i]);
+                    guruStats.Corner.total[i] = (guruStats.Corner.homeTeam[i] + guruStats.Corner.awayTeam[i]);
+                    guruStats.Goal.total[i] = (guruStats.Goal.homeTeam[i] + guruStats.Goal.awayTeam[i]);
+                    guruStats.Shot_On_Goal.total[i] = (guruStats.Shot_On_Goal.homeTeam[i] + guruStats.Shot_On_Goal.awayTeam[i]);
+                }
+
+                mongoDb.scheduled_matches.update({ _id: scheduledMatch._id }, { guruStats: guruStats }, function (updateError) {
+                    if (updateError)
+                        return outerCallback(updateError);
+
+                    outerCallback(null, guruStats);
+                });
+            }
+            );
 
         });
-           
+
     });
 };
 
