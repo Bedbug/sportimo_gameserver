@@ -376,7 +376,7 @@ ModerationModule.updateMatchcronJobsInfo = function () {
             'moderation.0.type': 'rss-feed',
             'moderation.0.active': true,
         })
-        .exec(function (err, matches) {            
+        .exec(function (err, matches) {
             _.each(matches, function (match) {
                 var job = _.find(scheduler.scheduledJobs, { name: match._id.toString() })
                 if (job) {
@@ -390,11 +390,11 @@ ModerationModule.updateMatchcronJobsInfo = function () {
                     match.moderation[0].start = "";
                     match.moderation[0].scheduled = false;
                 }
-                match.save(function (er, re) {                    
-                    var matchInMemory = ModerationModule.GetMatch(match._id.toString());                    
+                match.save(function (er, re) {
+                    var matchInMemory = ModerationModule.GetMatch(match._id.toString());
                     if (matchInMemory) {
                         matchInMemory.data.moderation[0].start = re.moderation[0].start;
-                        matchInMemory.data.moderation[0].scheduled = re.moderation[0].scheduled;  
+                        matchInMemory.data.moderation[0].scheduled = re.moderation[0].scheduled;
                         // console.log("changed " +matchInMemory.data.moderation[0].start);                
                     }
                 });
@@ -417,11 +417,18 @@ function initModule(done) {
                 if (err)
                     return ModerationModule.callback ? ModerationModule.callback(err) : log.error(err);
                 if (matches) {
+
+                    // Adding wait index of 1sec in order to bypass the limitation of STATS that prevents overload of calls
+                    var waitIndex = 0;
+
                     /*For each match found we hook platform specific functionality and add it to the main list*/
                     _.forEach(matches, function (match) {
-                        var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
-                        ModerationModule.ModeratedMatches.push(hookedMatch);
-                        log.info("[Moderation] Found match with ID [" + hookedMatch.id + "]. Creating match instance");
+                        setTimeout(function () {
+                            var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
+                            ModerationModule.ModeratedMatches.push(hookedMatch);
+                            log.info("[Moderation] Found match with ID [" + hookedMatch.id + "]. Creating match instance");
+                        }, 2000 * waitIndex);
+                        waitIndex++;
                     });
                 } else {
                     log.warn("No scheduled matches could be found in the database.");

@@ -294,7 +294,7 @@ Parser.prototype.init = function (cbk) {
                 var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
                 var durationAsHours = duration.asMinutes();
 
-                log.info("Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
+                log.info("[Stats parser]: Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
 
 
             }
