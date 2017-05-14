@@ -8,7 +8,7 @@ var express = require('express'),
     defaultMatch = require('../config/empty-match'),
     api = {};
 
-
+var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
 api.items = function (req, res) {
 
     var skip = null, limit = null;
@@ -108,6 +108,7 @@ api.additem = function (req, res) {
 
             return newItem.save(function (err, data) {
                 if (!err) {
+                    MessagingTools.sendPushToUsers({}, { en: "A new match has been scheduled. Go play your preset cards now!" }, {"type":"view","data":{"view":"match","viewdata":newItem.id}}, "match_reminder");
                     return res.status(200).json(data);
                 } else {
                     return res.status(500).json(err);

@@ -458,7 +458,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             if (thisMatch.state == 0) {
                 // Send push notification to users that the game has started.
-                MessagingTools.sendPushToUsers({}, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, null, "match_reminder");
+                MessagingTools.sendPushToUsers({}, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "match_reminder");
             }
 
             // Register the time that the previous segment ended
@@ -808,7 +808,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         .exec(function (err, users) {
                             var userids = _.compact(_.map(users, 'user'));
                             // console.log(req.params.matchid);
-                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "goals");
+                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "goals");
                         });
 
                 }
@@ -1069,7 +1069,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             thisMatch.save(function (err, done) {
 
                 // Send push notification to users that the game has ended.
-                MessagingTools.sendPushToUsers({}, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, null, "final_result");
+                MessagingTools.sendPushToUsers({}, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "final_result");
                 if (err)
                     log.error(err.message);
 

@@ -92,13 +92,13 @@ Handler.Reward.rank_achievements = function (matchid, outerCallback) {
         function (top1s, top10s, top100s, loosers, callback) {
 
             if (top1s.length > 0)
-                MessagingTools.sendPushToUsers(top1s, MessagingTools.preMessages.top1, null, "all");
+                MessagingTools.sendPushToUsers(top1s, MessagingTools.preMessages.top1, {"type":"view","data":{"view":"match","viewdata":matchid}}, "all");
 
             if (top10s.length > 0)
-                MessagingTools.sendPushToUsers(top10s, MessagingTools.preMessages.top10, null, "all");
+                MessagingTools.sendPushToUsers(top10s, MessagingTools.preMessages.top10, {"type":"view","data":{"view":"match","viewdata":matchid}}, "all");
 
             if (top100s.length > 0)
-                MessagingTools.sendPushToUsers(top100s, MessagingTools.preMessages.top100, null, "all");
+                MessagingTools.sendPushToUsers(top100s, MessagingTools.preMessages.top100, {"type":"view","data":{"view":"match","viewdata":matchid}}, "all");
 
 
             _.each(top1s, function (user) {

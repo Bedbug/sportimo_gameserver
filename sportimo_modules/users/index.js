@@ -768,7 +768,9 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
                                         overallCardsPlayed: { $sum: "$overallCardsPlayed" },
                                         overallCardsWon: { $sum: "$overallCardsWon" },
                                         instantCardsPlayed: { $sum: "$instantCardsPlayed" },
-                                        instantCardsWon: { $sum: "$instantCardsWon" }
+                                        instantCardsWon: { $sum: "$instantCardsWon" },
+                                        presetinstantCardsPlayed: { $sum: "$presetinstantCardsPlayed" },
+                                        presetinstantCardsWon: { $sum: "$presetinstantCardsWon" }
                                     }
                                 }, function (err, result) {
                                     if (err)
@@ -780,7 +782,7 @@ apiRoutes.get('/v1/users/:uid/stats', function (req, res) {
 
                                     stats.all.successPercent = (stats.all.cardsWon / stats.all.cardsPlayed) * 100 || 0;
                                     stats.all.overallSuccessPercent = (stats.all.overallCardsWon / stats.all.overallCardsPlayed) * 100 || 0;
-                                    stats.all.instantSuccessPercent = (stats.all.instantCardsWon / stats.all.instantCardsPlayed) * 100 || 0;
+                                    stats.all.instantSuccessPercent = (((stats.all.instantCardsWon + stats.all.presetinstantCardsWon)/ (stats.all.instantCardsPlayed + stats.all.presetinstantCardsPlayed)) * 100) || 0;
                                     res.status(200).send(stats);
                                 });
                         });

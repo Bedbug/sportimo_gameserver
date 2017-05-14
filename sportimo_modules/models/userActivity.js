@@ -15,6 +15,8 @@ var fields = {
   cardsWon: Number,
   instantCardsPlayed: Number,
   instantCardsWon: Number,
+  presetinstantCardsPlayed: Number,
+  presetinstantCardsWon: Number,
   overallCardsPlayed: Number,
   overallCardsWon: Number,
   lastActive: Date,

@@ -1721,7 +1721,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
                 log.error(err.message);
         });
 
-        MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, null, "won_cards");
+        MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, {"type":"view","data":{"view":"match","viewdata":gamecard.matchid}}, "won_cards");
         gamecards.publishWinToUser(gamecard);
     }
 
