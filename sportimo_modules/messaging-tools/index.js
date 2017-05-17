@@ -31,12 +31,12 @@ MessagingTools.preMessages = premessages;
 // @@   Emailing
 
 var transporter = nodemailer.createTransport(smtpTransport({
-    host: 'bedbugstudiocom.ipage.com',
-    secure: false,
-    port: 587,
+    host: 'imap.gmail.com',
+    secure: true,
+    port: 465,
     auth: {
-        user: 'sender@bedbugstudio.com',
-        pass: 'a21th21_A21'
+        user: 'aris.brink@sportimo.com',
+        pass: 'Pass1234!'
     },
     tls: {
         rejectUnauthorized: false
