@@ -291,6 +291,9 @@ Parser.prototype.init = function (cbk) {
                 
                 // console.log(scheduler.scheduledJobs);
                 var job = _.find(scheduler.scheduledJobs, { name: that.matchHandler.id })
+                console.log(job.nextInvocation());
+                 console.log(moment(job.nextInvocation()).format());
+                   console.log(itsNow.format());
                 var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
                 var durationAsHours = duration.asMinutes();
 
