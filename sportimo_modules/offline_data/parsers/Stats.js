@@ -632,7 +632,7 @@ Parser.GetLeagueTeams = function (leagueName, callback) {
 Parser.GetLeagueStandings = function (leagueName, season, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + (season ? "season=" + season + "&" : "") + signature;
-    
+
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error) {
             return callback(error);
@@ -1188,7 +1188,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
 
             if (!standing)
                 if (outerCallback)
-                   return outerCallback(null, null);
+                    return outerCallback(null, null);
 
             // Translate the global properties and then iterate over the team properties inside the teams array.
             var newStandings = null;
@@ -1649,7 +1649,10 @@ Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
             mongoDb.teams.findById(homeTeamId, 'parserids', function (teamError, team) {
                 if (teamError)
                     return callback(teamError);
-                homeTeamParserId = team.parserids[Parser.Name];
+
+                if (team.parserids && team.parserids[Parser.Name])
+                    homeTeamParserId = team.parserids[Parser.Name];
+
                 callback(null, homeTeamParserId);
             });
         },
@@ -1657,13 +1660,17 @@ Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
             mongoDb.teams.findById(awayTeamId, 'parserids', function (teamError, team) {
                 if (teamError)
                     return callback(teamError);
-                awayTeamParserId = team.parserids[Parser.Name];
+
+                if (team.parserids && team.parserids[Parser.Name])
+                    awayTeamParserId = team.parserids[Parser.Name];
                 callback(null, awayTeamParserId);
             });
         }
     ], function (error) {
         if (error)
             return outerCallback(error);
+        if (!homeTeamParserId || !awayTeamParserId)
+            return outerCallback();
 
         async.parallel([
             function (callback) {
