@@ -39,7 +39,7 @@ api.getPlayersByTeam = function (req, res) {
 
 // POST
 api.addplayer = function (req, res) {
-	player.addPlayer(req.body.player,function	(err,data){
+	player.addPlayer(req.body,function	(err,data){
 		if(err) res.status(500).json(err);
 		else {
 			res.status(201).json(data);
