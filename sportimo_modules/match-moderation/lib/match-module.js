@@ -903,13 +903,10 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match);
 
-
         var eventObj = _.find(this.data.timeline[event.data.state].events, {
-            id: event.data.id,
+            id: event.data.id || event.data._id,
             match_id: event.data.match_id
         });
-
-
 
         // set status to removed
         eventObj.status = "removed";
@@ -923,8 +920,6 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // 3. save match to db
         // this.data.markModified('timeline');
-
-
         StatsHelper.UpsertStat("system", {
             events_sent: 1
         }, this.data, "system");
@@ -954,7 +949,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return HookedMatch;
         
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
-            // console.log(o);
+             console.log(o);
             // console.log(event.data);
             return o._id == event.data._id;
         });
@@ -1116,12 +1111,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
 
     var finished = linked.linked_mods.length;
-
+    
     linked.linked_mods.forEach(function (link) {
-        // 1. Find the corresponding document
+        // 1. Find the corresponding document     
         StatMods.findById(link, function (err, mod) {
-
-            //            console.log(mod);
+       
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
             StatMods.where({
