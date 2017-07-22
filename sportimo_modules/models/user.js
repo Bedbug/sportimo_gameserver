@@ -43,7 +43,8 @@ var achievement = new Schema({
 
 var Achievements = mongoose.model('achievements', achievement);
 
-var UserSchema = new Schema({
+var UserSchema = new Schema(
+    {
     name: {
         type: String
         // ,required: true
@@ -111,7 +112,8 @@ var UserSchema = new Schema({
     favoriteteams: [String],
     unlockedmatches: [String],
     isOnline: {type: Boolean, default: false}
-}, {
+}, 
+{
         timestamps: { updatedAt: 'lastActive' },
         toObject: {
             virtuals: true

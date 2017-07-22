@@ -196,6 +196,8 @@ var data_module = require('./sportimo_modules/data-module');
 var polls_module = require('./sportimo_modules/polls');
 
 var early_access_module = require('./sportimo_modules/early-access');
+
+// var purchases_module = require('./sportimo_modules/purchases');
 // dataModule.SetupMongoDB(mongoose);
 // dataModule.SetupAPIRoutes(app);
 // TestSuite.dataModule = dataModule;
