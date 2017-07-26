@@ -17,7 +17,7 @@ var config = require('./config'), // get our config file
     Subscriptions = mongoose.models.subscriptions,
     CryptoJS = require("crypto-js");
 _ = require('lodash');
-
+var moment = require('moment');
 var needle = require('needle');
 
 var MessagingTools = require.main.require('./sportimo_modules/messaging-tools');
@@ -163,6 +163,7 @@ apiRoutes.post('/v1/users/authenticate/social', function (req, res) {
 
                 user.token = token;
                 user.success = true;
+                 user.server_time = moment.utc().format();                
                 // return the information including token as JSON
                 res.status(200).send(user);
 
@@ -208,6 +209,7 @@ apiRoutes.post('/v1/users/authenticate', function (req, res) {
 
                     user.token = token;
                     user.success = true;
+                     user.server_time = moment.utc().format();                
                     // return the information including token as JSON
                     res.status(200).send(user);
                 }
