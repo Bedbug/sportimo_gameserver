@@ -28,6 +28,15 @@ api.addpurchase = function (req, res) {
 	});	
 };
 
+api.verifySubscription = function (req, res) {
+	if(req.body==undefined) return res.status(500).json(new l.ResponseClass('error','Invalid purchase/key model provided','There was an error saving this data.').out());
+
+	purchase.verifySubscription(req.body,	(data)=>{
+		var status=(data.status!='success')? 500 :  201;
+		res.status(status).json(data);
+	});	
+};
+
 // GET
 api.purchase = function (req, res) {
 	var id = req.params.id;
@@ -131,6 +140,8 @@ router.route('/v1/data/purchase/:id')
 router.route('/v1/data/purchases')
 .get(api.purchases)
 .delete(api.deleteAllPurchases);
+
+router.post('/v1/data/subscriptions/verify', api.verifySubscription);
 
 /*
 	SEARCH
