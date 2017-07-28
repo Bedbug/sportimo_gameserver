@@ -87,10 +87,10 @@ api.verifySubscription = function (data, cb) {
 
       if (momentDate.diff(moment()) < 0) {
         console.log('Subscription Expired, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 2 });
+        return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
       } else {
         console.log('Subscription Active, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 1 });
+        return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
       }
        
       });
@@ -112,10 +112,10 @@ api.verifySubscription = function (data, cb) {
 
       if (momentDate.diff(moment()) < 0) {
         console.log('Subscription Expired, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 2 });
+        return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
       } else {
         console.log('Subscription Active, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 1 });
+        return cbf(cb, err, { "subscriptionStatus": 1 , "validUntil": momentDate.format() });
       }
 
     });
