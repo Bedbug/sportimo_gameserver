@@ -30,7 +30,7 @@ module.exports = function (gamecardModule) {
 
     // Get server time
     router.get('/v1/gamecards/time', function(req, res) {        
-            res.status(200).json(moment.utc());    
+            res.status(200).json({"time":moment.utc().format()});    
     });
     
      // Create match definitions from schedule
