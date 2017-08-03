@@ -855,11 +855,16 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         if (error)
             return callback({ isValid: false, error: error.message });
 
-        let user = results[0];
+        let user = results[0];      
+
         if (!user)
             return callback({ isValid: false, error: "The userid in the body does not correspond to an existing user" });
         // ToDo in the future: consider testing if the user is active and not banned.
 
+        // let VIPUser = user.subscription.state || 0; 
+        // console.log("VIPUser: "+VIPUser);
+        // console.log("Match Rules: ")
+        // console.log(results[3].settings.matchRules);
         referencedDefinition = results[1];
 
         if (!referencedDefinition)

@@ -18,6 +18,15 @@
             "overall":4,
             "specials":4
         },
+         "matchRules" : {
+            "freeUserSegmentsPlay" : [0,1], 
+            "freeUserHasPlayTimeWindow" : true, 
+            "freeUserPregameTimeWindow" : 20, 
+            "freeUserLiveTimeWindow" : 20, 
+            "freeUserAdsToGetCards" : true,
+            "freeUserCardsCap": true,
+            "freeUserCardsLimit": 5
+        },
         "hashtag":"[[match_hashtag]]"
     },
     "state": 0
