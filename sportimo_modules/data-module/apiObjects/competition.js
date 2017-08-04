@@ -52,18 +52,26 @@ api.addCompetition = function (competition,cb) {
 
 // PUT
 api.editCompetition = function (id,updateData, cb) {
-  Competition.findByIdAndUpdate(id, updateData, function (err, competition) {
+
+  var update = updateData;//.toObject();
+  // delete update._id;
+  Competition.findByIdAndUpdate(id, update, function (err, competition) {
    
-    Matches.update({ competition: id }, updateData,function(err,data){
-        if(!err)
-         Standings.update({ competitionid: id }, { $set: { visiblein: updateData["visiblein"] }},function(err,data){
+    // Matches.update({ competition: id }, update,function(err,data){
+    //   console.log(id);
+    //   console.log(err);
+        if(!err){
+          console.log("Updating visible in...");
+         Standings.update({ competitionid: id }, { $set: { visiblein: update["visiblein"] }},function(err,data){
+           console.log(err);
              if(!err)
                 return cbf(cb,err,competition.toObject()); 
                 
          });
+        }
     });
 
-  });// eo competition.find
+  // });// eo competition.find
 };
 
 // DELETE

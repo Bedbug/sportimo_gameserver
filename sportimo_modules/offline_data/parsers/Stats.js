@@ -100,9 +100,9 @@ setTimeout(function () {
     mongoDb.gameserversettings.findOne().exec(function (error, settings) {
         if (error)
             log.error('Failed to get the game server settings during offline_data Stats parser initialization');
-        else {
-            if (settings) {
-                if (settings.scheduledTasks && process.env.NODE_ENV.development) {
+        else {           
+            if (settings && process.env.NODE_ENV != "development") {                
+                if (settings.scheduledTasks) {                    
                     _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
                         let competitionId = updateTeamSchedule.competitionId;
                         let season = updateTeamSchedule.season;
@@ -655,7 +655,7 @@ Parser.GetLeagueStandings = function (leagueName, season, callback) {
 Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
-
+    console.log(url);
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
             return callback(error);
