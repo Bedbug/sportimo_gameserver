@@ -187,9 +187,31 @@ api.edititem = function (req, res) {
             }
         }); //eo team.save
     });// eo team.find
+};
+
+api.edititemsettings = function (req, res) {
+    var id = req.params.id;
+    var updateData = req.body;
+    item.findById(id, function (err, returnedItem) {
+
+        if (updateData === undefined || returnedItem === undefined) {
+            return res.status(500).json("Error: Data is not correct.");
+        }
+
+        returnedItem.settings = updateData;        
+
+        return returnedItem.save(function (err, data) {
+            if (!err) {
+                return res.status(200).json(data);
+            } else {
+                return res.status(500).json(err);
+            }
+        }); //eo team.save
+    });// eo team.find
 
 
 };
+
 
 // DELETE
 api.deleteitem = function (req, res) {
@@ -220,6 +242,8 @@ router.post('/v1/data/schedule', api.additem);
 
 router.post('/v1/data/schedule/visibility', api.updateVisibility);
 
+router.route('/v1/data/schedule/:id/settings')    
+    .put(api.edititemsettings);
 
 router.route('/v1/data/schedule/:id')
     .get(api.item)
