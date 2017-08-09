@@ -101,7 +101,7 @@ setTimeout(function () {
         if (error)
             log.error('Failed to get the game server settings during offline_data Stats parser initialization');
         else {           
-            if (settings && process.env.NODE_ENV != "development") {                
+            if (settings && process.env.NODE_ENV) {                // != "development"
                 if (settings.scheduledTasks) {                    
                     _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
                         let competitionId = updateTeamSchedule.competitionId;
