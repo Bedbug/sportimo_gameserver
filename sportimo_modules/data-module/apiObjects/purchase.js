@@ -131,9 +131,9 @@ api.verifySubscription = function (data, cb) {
     // exclude-old-transactions
     //Only used for iOS7 style app receipts that contain auto-renewable or non-renewing subscriptions. If value is true, response includes only the latest renewal transaction for any subscriptions.
   }
-
+  
   if(data.store = "Fake Store"){
-    return cbf(cb, err, { "subscriptionStatus": 1 , "validUntil": momentDate.format() });
+    return cbf(cb, null, { "subscriptionStatus": 1 , "validUntil": moment().format() });
   }
 
 }
