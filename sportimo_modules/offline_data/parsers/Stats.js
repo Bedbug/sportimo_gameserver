@@ -101,7 +101,7 @@ setTimeout(function () {
         if (error)
             log.error('Failed to get the game server settings during offline_data Stats parser initialization');
         else {           
-            if (settings && process.env.NODE_ENV) {                // != "development"
+            if (settings && process.env.NODE_ENV) {                //  != "development"
                 if (settings.scheduledTasks) {                    
                     _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
                         // if(updateTeamSchedule.competitionId != "56f4800fe4b02f2226646297") return;
@@ -675,7 +675,7 @@ Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
             return callback(error);
 
         if (response.body.status != 'OK' || response.body.recordCount == 0)
-            return callback(new Error('Invalid response from Parser'));
+            return callback(new Error(response.body));
 
         try {
             let fixtures = [];
@@ -701,7 +701,7 @@ Parser.GetTeamSeasonFixtures = function (leagueName, teamId, seasonYear, callbac
             return callback(error);
 
         if (response.body.status != 'OK' || response.body.recordCount == 0)
-            return callback(new Error('Invalid response from Parser'));
+            return callback(new Error(response.body));
 
         try {
             let fixtures = [];
@@ -1160,8 +1160,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 });
             },
             function (competition, callback) {
-                var parserQuery = 'parserids.' + Parser.Name;
-                console.log(" -- mongoDb.teams.find()");
+                var parserQuery = 'parserids.' + Parser.Name;                
                 mongoDb.teams.find().ne(parserQuery, null).where('competitionid', leagueId).exec(function (teamError, teams) {
                     if (teamError)
                         return callback(teamError);
@@ -1176,8 +1175,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 });
             },
             function (competition, existingTeamIds, callback) {
-                var statsLeagueId = competition.parserids[Parser.Name];
-                 console.log(" -- Parser.GetLeagueStandings");
+                var statsLeagueId = competition.parserids[Parser.Name];                 
                 Parser.GetLeagueStandings(statsLeagueId, season, function (error, standings, seasonYear) {
                     if (error)
                         return callback(error);
@@ -1201,9 +1199,9 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                     return outerCallback(error);
             }
 
-            // if (!standing)
-            //     if (outerCallback)
-            //         return outerCallback(null, null);
+            if (!standings)
+                if (outerCallback)
+                    return outerCallback(null, null);
 
             // Translate the global properties and then iterate over the team properties inside the teams array.
             var newStandings = null;
@@ -1217,7 +1215,8 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             newStandings.identity = Parser.Name;
             newStandings.season = seasonYear;
             newStandings.teams = [];
-            //newStandings.lastUpdate = new Date();
+            newStandings.lastupdate = new Date();
+           
 
             standings.forEach(function (teamStanding) {
                 if (existingTeamIds[teamStanding.teamId]) {
@@ -1241,7 +1240,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             });
 
             //newStandings.teams.markModified();
-            newStandings.save(function (err) {
+            newStandings.save(function (err,data) {
                 if (err)
                     return outerCallback(err);
 

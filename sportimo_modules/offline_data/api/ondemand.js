@@ -451,7 +451,6 @@ router.get('/', api.Welcome);
 // update all teams and players in each
 router.post('/:competitionId/teams', api.UpdateAllTeams);
 
-
 router.post('/teamstats/:competitionId/update', api.UpdateTeamStats);
 router.get('/teamstats/:competitionId/schedule', api.UpdateAllTeamsGetSchedule);
 router.post('/teamstats/:competitionId/schedule', api.UpdateAllTeamsAddSchedule);
