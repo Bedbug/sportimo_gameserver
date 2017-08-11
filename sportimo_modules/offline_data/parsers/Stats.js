@@ -104,6 +104,7 @@ setTimeout(function () {
             if (settings && process.env.NODE_ENV) {                // != "development"
                 if (settings.scheduledTasks) {                    
                     _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
+                        // if(updateTeamSchedule.competitionId != "56f4800fe4b02f2226646297") return;
                         let competitionId = updateTeamSchedule.competitionId;
                         let season = updateTeamSchedule.season;
                         let pattern = updateTeamSchedule.cronPattern;
@@ -120,6 +121,19 @@ setTimeout(function () {
                 }
             }
         }
+
+        // let competitionId = "56f4800fe4b02f2226646297";
+        // let season = "2017";
+        // let pattern = "45 16 * * *";
+
+        // log.info('Scheduling UpdateCompetitionStats for season %s with the pattern %s', season, pattern);
+        // Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(pattern, function () {
+        //     log.info('Scheduled job is running for %s : %s : %s', updateTeamSchedule.competitionId, updateTeamSchedule.season, updateTeamSchedule.cronPattern);
+        //     Parser.UpdateAllCompetitionStats(competitionId, season, function (error, data) {
+        //         if (error)
+        //             log.error(error.message);
+        //     });
+        // });
     });
 }, 5000);
 
@@ -1134,6 +1148,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
     async.waterfall(
         [
             function (callback) {
+                console.log("Starting standings waterfall");
                 if (competitionDocument && competitionDocument.parserids && competitionDocument.parserids[Parser.Name])
                     return async.setImmediate(function () {
                         return callback(null, competitionDocument);
@@ -1146,7 +1161,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             },
             function (competition, callback) {
                 var parserQuery = 'parserids.' + Parser.Name;
-
+                console.log(" -- mongoDb.teams.find()");
                 mongoDb.teams.find().ne(parserQuery, null).where('competitionid', leagueId).exec(function (teamError, teams) {
                     if (teamError)
                         return callback(teamError);
@@ -1162,7 +1177,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             },
             function (competition, existingTeamIds, callback) {
                 var statsLeagueId = competition.parserids[Parser.Name];
-
+                 console.log(" -- Parser.GetLeagueStandings");
                 Parser.GetLeagueStandings(statsLeagueId, season, function (error, standings, seasonYear) {
                     if (error)
                         return callback(error);
@@ -1186,9 +1201,9 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                     return outerCallback(error);
             }
 
-            if (!standing)
-                if (outerCallback)
-                    return outerCallback(null, null);
+            // if (!standing)
+            //     if (outerCallback)
+            //         return outerCallback(null, null);
 
             // Translate the global properties and then iterate over the team properties inside the teams array.
             var newStandings = null;
