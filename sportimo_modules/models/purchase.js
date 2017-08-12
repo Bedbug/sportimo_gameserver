@@ -12,7 +12,8 @@ var fields = {
 	provider: { type: String },
 	method: { type: String },
 	receiptid: { type: String },
-	providerMessage: {type: String}
+	providerMessage: {type: String},
+	created: {type:Date, default: Date.now()}
 };
 
 var purchaseSchema = new Schema(fields);
