@@ -33,7 +33,7 @@ api.verifySubscription = function (req, res) {
 
 	purchase.verifySubscription(req.body,	(data)=>{
 		var status=(data.status!='success')? 500 :  201;
-		res.status(status).json(data);
+		return res.status(status).json(data);
 	});	
 };
 
