@@ -82,17 +82,17 @@ api.verifySubscription = function (data, cb) {
         subscriptionId: data.subscriptionId,
         token: data.purchaseToken
       }, function (err, resp) {
-        
-      var momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();
 
-      if (momentDate.diff(moment()) < 0) {
-        console.log('Subscription Expired, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
-      } else {
-        console.log('Subscription Active, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
-      }
-       
+        var momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();
+
+        if (momentDate.diff(moment()) < 0) {
+          console.log('Subscription Expired, expiration date: ' + momentDate.format());
+          return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
+        } else {
+          console.log('Subscription Active, expiration date: ' + momentDate.format());
+          return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
+        }
+
       });
     });
   }
@@ -115,7 +115,7 @@ api.verifySubscription = function (data, cb) {
         return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
       } else {
         console.log('Subscription Active, expiration date: ' + momentDate.format());
-        return cbf(cb, err, { "subscriptionStatus": 1 , "validUntil": momentDate.format() });
+        return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
       }
 
     });
@@ -131,9 +131,9 @@ api.verifySubscription = function (data, cb) {
     // exclude-old-transactions
     //Only used for iOS7 style app receipts that contain auto-renewable or non-renewing subscriptions. If value is true, response includes only the latest renewal transaction for any subscriptions.
   }
-  
-  if(data.store = "Fake Store"){
-    return cbf(cb, null, { "subscriptionStatus": 1 , "validUntil": moment().format() });
+
+  if (data.store = "Fake Store") {
+    return cbf(cb, null, { "subscriptionStatus": 1, "validUntil": moment().format() });
   }
 
 }

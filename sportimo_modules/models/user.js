@@ -92,9 +92,7 @@ var UserSchema = new Schema(
     customerType: {type: String, default:"free"},
     subscriptionEnd: {type:Date, default: "02/28/2017"},
     subscriptionContractId: String,
-    subscription: {type: mongoose.Schema.Types.Mixed, default:{
-        state: 0
-    }},
+    subscription: {type: mongoose.Schema.Types.Mixed},
     pinCode: String,
     birth: String,
     gender: String,
