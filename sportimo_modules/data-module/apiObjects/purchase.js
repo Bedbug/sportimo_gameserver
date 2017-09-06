@@ -68,6 +68,7 @@ api.verifySubscription = function (data, cb) {
 
   // ios shared secret: 46c8967b6efa4ddc85690a70dd2f4a20
   var iTunesSharedSecret = "46c8967b6efa4ddc85690a70dd2f4a20";
+
   if (data.store === "GooglePlay") {
     jwtClient.authorize(function (err, tokens) {
       if (err) {
@@ -105,7 +106,8 @@ api.verifySubscription = function (data, cb) {
     }
 
 
-    needle.post('https://sandbox.itunes.apple.com/verifyReceipt', appleValidationObject, { json: true }, function (err, resp) {
+   return needle.post('https://sandbox.itunes.apple.com/verifyReceipt', appleValidationObject, { json: true }, function (err, resp) {
+      console.log(resp)
       var appleRes = JSON.parse(resp.body.toString());
 
       var momentDate = moment(parseInt(appleRes.latest_receipt_info[0].expires_date_ms)).utc();
