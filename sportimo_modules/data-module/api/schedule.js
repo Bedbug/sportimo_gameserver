@@ -104,7 +104,7 @@ api.items = function (req, res) {
         req.body.timeline = [];
         req.body.timeline.push({
             timed: false,
-            text: { en: "Pre Game" }
+            text: { en: "Pre Game", ar: "ماقبل المباراة" }
         })
 
         competition.findById(req.body.competition).then(function (competition) {
