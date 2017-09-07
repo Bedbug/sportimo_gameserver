@@ -74,6 +74,7 @@ api.timedpools = function (req, res) {
         if (err) res.status(500).send(err);
         else {
             var uniqueArray = ['Season', 'Week'];
+            _.remove(pools, {roomtype:"Game"});
             if (req.params.country)
                 _.each(uniqueArray, function (type) {
                     var poolsWithType = _.filter(pools, { roomtype: type });
