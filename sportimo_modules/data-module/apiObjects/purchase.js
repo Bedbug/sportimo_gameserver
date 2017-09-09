@@ -105,14 +105,21 @@ api.verifySubscription = function (data, cb) {
       "exclude-old-transactions": true
     }
 
+    var appleUrl;
 
-   return needle.post('https://sandbox.itunes.apple.com/verifyReceipt', appleValidationObject, { json: true }, function (err, resp) {
+    if (process.env.NODE_ENV == "development")
+      appleUrl = "https://sandbox.itunes.apple.com/verifyReceipt";
+    else
+      appleUrl = "https://buy.itunes.apple.com/verifyReceipt";
+
+
+    return needle.post(appleUrl, appleValidationObject, { json: true }, function (err, resp) {
       // console.log(resp)
       var appleRes = JSON.parse(resp.body.toString());
-      if(!appleRes.latest_receipt_info){
-        return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": moment.format() });
+      if (!appleRes.latest_receipt_info) {
+        return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": moment().format() });
       }
-      
+
       var momentDate = moment(parseInt(appleRes.latest_receipt_info[0].expires_date_ms)).utc();
 
       if (momentDate.diff(moment()) < 0) {
