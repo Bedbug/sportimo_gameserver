@@ -117,7 +117,7 @@ api.allPlayersForMatchWithRank = function (req, res) {
 			if (!pools[0]){
 				console.log("no pools");
 				poolData.conditions = { game_id: req.params.mid };
-				console.log(poolData);
+				// console.log(poolData);
 			}else{
 				poolData = pools[0];
 				}
@@ -160,7 +160,7 @@ api.getMiniMatchLeaderboard = function (req, res) {
 			if (!pools[0]){
 				console.log("no pools");
 				poolData.conditions = { game_id: req.params.mid };
-				console.log(poolData);
+				// console.log(poolData);
 			}else{
 				poolData = pools[0];
 				}

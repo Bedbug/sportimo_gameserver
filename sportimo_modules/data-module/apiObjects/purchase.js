@@ -107,7 +107,7 @@ api.verifySubscription = function (data, cb) {
 
 
    return needle.post('https://sandbox.itunes.apple.com/verifyReceipt', appleValidationObject, { json: true }, function (err, resp) {
-      console.log(resp)
+      // console.log(resp)
       var appleRes = JSON.parse(resp.body.toString());
       if(!appleRes.latest_receipt_info){
         return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": moment.format() });

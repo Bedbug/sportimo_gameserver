@@ -669,7 +669,7 @@ Parser.GetLeagueStandings = function (leagueName, season, callback) {
 Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
-    console.log(url);
+    // console.log(url);
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
             return callback(error);

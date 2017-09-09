@@ -51,9 +51,7 @@ api.addPlayer = function (player, cb) {
   if (player == 'undefined') {
     cb('No Player Provided. Please provide valid player data.');
   }
-console.log(player);
   player = new Player(player);
-console.log(player);
   player.save(function (err) {
     cbf(cb, err, player.toObject());
   });

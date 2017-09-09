@@ -80,10 +80,7 @@ api.getTeamFull = function (id, cb) {
 
 api.teamFavoriteData = function (id, cb) {
 
-  var q = Team.findOne({_id:id});
-
-  console.log(id);
-
+  var q = Team.findOne({_id:id});  
   q.populate('nextmatch.home_team', 'name logo');
   q.populate('nextmatch.away_team', 'name logo');
   q.populate('lastmatch.home_team', 'name logo');

@@ -35,7 +35,7 @@ api.getPrize = function (id,cb) {
 
 // POST
 api.addPrize = function (prize,cb) {
-  console.log(prize);
+  // console.log(prize);
   prize = new Prize(prize);
 
   prize.save(function (err) {

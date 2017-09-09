@@ -18,7 +18,7 @@ api.getLeaderboard = function (conditions, skip, limit, cb) {
     var q = Score.find(leader_conditions);
 
     if (conditions.bestscores) {
-        console.log(conditions.bestscore);
+        // console.log(conditions.bestscore);
     }
 
     var bestscores = conditions.bestscores ? conditions.bestscores : 50;
@@ -135,7 +135,7 @@ api.getSocialLeaderboardWithRank = function (id, body, mid, cb) {
         if (mid)
             leader_conditions.game_id = mid;
 
-        console.log(leader_conditions);
+        // console.log(leader_conditions);
 
         var q = Score.aggregate({
             $match: leader_conditions

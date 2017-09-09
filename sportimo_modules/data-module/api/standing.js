@@ -87,7 +87,7 @@ api.additem = function (req, res) {
 
 api.updateVisibility = function (req, res) {
 
-    console.log(req.body.competitionid);
+    // console.log(req.body.competitionid);
 
 
     item.find({ competitionid: req.body.competitionid }, function (err, standings) {
