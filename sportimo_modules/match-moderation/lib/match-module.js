@@ -663,7 +663,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             if (!HookedMatch.sport.segments[thisMatch.state].timed) { return; }
 
-            console.log("Start Match Timer for Match [ID: " + HookedMatch.id + "] ");
+            log.info("Start Match Timer for Match [ID: " + HookedMatch.id + "] ");
 
             segment = thisMatch.timeline[thisMatch.state];
             segmentStart = segment.start;
@@ -739,7 +739,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             }
             ));
 
-            thisMatch.save().then(function () { console.log("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
+            thisMatch.save().then(function () { log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
 
             // SPI 201 - Auto-Terminate leftover matches 
             if(thisMatch.time > 160 ){
@@ -949,7 +949,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return HookedMatch;
         
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
-             console.log(o);
+            //  console.log(o);
             // console.log(event.data);
             return o._id == event.data._id;
         });
