@@ -68,11 +68,10 @@ api.verifySubscription = function (data, cb) {
 
   // ios shared secret: 46c8967b6efa4ddc85690a70dd2f4a20
   // var iTunesSharedSecret = "46c8967b6efa4ddc85690a70dd2f4a20";
-  var iTunesSharedSecret = "c8eb6eb8d1ea4621a7207a066e499868";
-  if (data.store === "GooglePlay") {
-    jwtClient.authorize(function (err, tokens) {
+  var iTunesSharedSecret = "61d38d1170444fe4992c28bd799dec13";
 
-      console.log(err);
+  if (data.store === "GooglePlay") {
+    jwtClient.authorize(function (err, tokens) {      
       if (err) {
         console.log(err);
         return cbf(cb, err, resp);
@@ -88,8 +87,7 @@ api.verifySubscription = function (data, cb) {
 
         var momentDate;
         if (resp && resp.expiryTimeMillis)
-          momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();
-        console.log(resp);
+          momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();        
         if (momentDate) {
           if (momentDate.diff(moment()) < 0) {
             console.log('Subscription Expired, expiration date: ' + momentDate.format());
