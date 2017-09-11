@@ -67,8 +67,8 @@ api.addPurchase = function (purchase, cb) {
 api.verifySubscription = function (data, cb) {
 
   // ios shared secret: 46c8967b6efa4ddc85690a70dd2f4a20
-  var iTunesSharedSecret = "46c8967b6efa4ddc85690a70dd2f4a20";
-
+  // var iTunesSharedSecret = "46c8967b6efa4ddc85690a70dd2f4a20";
+  var iTunesSharedSecret = "c8eb6eb8d1ea4621a7207a066e499868";
   if (data.store === "GooglePlay") {
     jwtClient.authorize(function (err, tokens) {
 
