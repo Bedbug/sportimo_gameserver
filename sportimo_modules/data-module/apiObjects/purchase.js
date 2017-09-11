@@ -71,6 +71,8 @@ api.verifySubscription = function (data, cb) {
 
   if (data.store === "GooglePlay") {
     jwtClient.authorize(function (err, tokens) {
+
+      console.log(err);
       if (err) {
         console.log(err);
         return cbf(cb, err, resp);
@@ -80,19 +82,27 @@ api.verifySubscription = function (data, cb) {
       androidpublisher.purchases.subscriptions.get({
         auth: jwtClient,
         packageName: data.packageName,
-        subscriptionId: data.subscriptionId,
+        subscriptionId: "com.sportimo.subscription.weeklyalt",
         token: data.purchaseToken
       }, function (err, resp) {
 
-        var momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();
-
-        if (momentDate.diff(moment()) < 0) {
-          console.log('Subscription Expired, expiration date: ' + momentDate.format());
-          return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
+        var momentDate;
+        if (resp && resp.expiryTimeMillis)
+          momentDate = moment(parseInt(resp.expiryTimeMillis)).utc();
+        console.log(resp);
+        if (momentDate) {
+          if (momentDate.diff(moment()) < 0) {
+            console.log('Subscription Expired, expiration date: ' + momentDate.format());
+            return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": momentDate.format() });
+          } else {
+            console.log('Subscription Active, expiration date: ' + momentDate.format());
+            return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
+          }
         } else {
-          console.log('Subscription Active, expiration date: ' + momentDate.format());
-          return cbf(cb, err, { "subscriptionStatus": 1, "validUntil": momentDate.format() });
+          console.log('Something is wrong with the subscription.');
+           return cbf(cb, err, { "subscriptionStatus": 2, "validUntil": moment().format() });
         }
+
 
       });
     });
@@ -144,7 +154,7 @@ api.verifySubscription = function (data, cb) {
     //Only used for iOS7 style app receipts that contain auto-renewable or non-renewing subscriptions. If value is true, response includes only the latest renewal transaction for any subscriptions.
   }
 
-  if (data.store = "Fake Store") {
+  if (data.store == "Fake Store") {
     return cbf(cb, null, { "subscriptionStatus": 1, "validUntil": moment().format() });
   }
 

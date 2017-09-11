@@ -597,7 +597,7 @@ var IsSegmentEvent = function (parserEvent) {
 
 // and now, the functions that can be called from outside modules.
 Parser.prototype.TickMatchFeed = function () {
-    // console.log("Tick");
+    console.log("Tick");
     var that = this;
     try {
         if (!that.matchHandler || !that.matchParserId || !that.feedService) {
