@@ -17,6 +17,8 @@ var moment = require('moment'),
     matchEvents = require('../../models/matchEvents'),
     matches = require('../../models/scheduled-matches'),
     useractivities = require('../../models/userActivity'),
+    mongoose = require('mongoose'),
+    userGamecards = mongoose.models.userGamecards,
     async = require('async'),
     Achievements = require('../../bedbugAchievements');
 
@@ -133,7 +135,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return callback(null);
                 }
                 else {
-                    if ( matchEvent && matchEvent.type && matchEvent.type == 'Update') {
+                    if (matchEvent && matchEvent.type && matchEvent.type == 'Update') {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.UpdateEvent(matchEvent, function () {
                             setTimeout(function () {
@@ -457,8 +459,14 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return console.log(err);
 
             if (thisMatch.state == 0) {
-                // Send push notification to users that the game has started.
-                MessagingTools.sendPushToUsers({}, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "match_reminder");
+
+                useractivities.find({ room: HookedMatch.id })
+                    .select('user')
+                    .exec(function (err, users) {
+                        var userids = _.compact(_.map(users, 'user'));
+                        // Send push notification to users that the game has started.
+                        MessagingTools.sendPushToUsers(userids, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "match_reminder");
+                    });
             }
 
             // Register the time that the previous segment ended
@@ -668,7 +676,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             segment = thisMatch.timeline[thisMatch.state];
             segmentStart = segment.start;
             secondsToMinuteTick = 60 - moment.duration(moment().diff(moment(segment.start))).seconds();
-        
+
             HookedMatch.gamecards.GamecardsAppearanceHandle({
                 matchid: match.id,
                 time: null,
@@ -742,7 +750,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             thisMatch.save().then(function () { log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
 
             // SPI 201 - Auto-Terminate leftover matches 
-            if(thisMatch.time > 160 ){
+            if (thisMatch.time > 160) {
                 console.log("-- Terminating leftover mactch");
                 HookedMatch.TerminateMatch();
             }
@@ -803,12 +811,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     else
                         thisMatch.away_score++;
 
-                    useractivities.find({ room: HookedMatch.id })
+                    userGamecards.find({ matchid: HookedMatch.id })
                         .select('user')
                         .exec(function (err, users) {
-                            var userids = _.compact(_.map(users, 'user'));
-                            // console.log(req.params.matchid);
-                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "goals");
+                            var userids = _.uniq(_.compact(_.map(users, 'userid')));
+                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
                         });
 
                 }
@@ -941,19 +948,19 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // console.log(event.data._id);
         //  console.log(this.data.timeline[event.data.state]);
-        
+
         if (!this.data.timeline[event.data.state])
             if (cbk)
                 return cbk(null);
             else
                 return HookedMatch;
-        
+
         var eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
             //  console.log(o);
             // console.log(event.data);
             return o._id == event.data._id;
         });
-        
+
         // If the event cannot be found based on its id, try finding it based on the id that the parser puts on it, on the parserids object property
         if (!eventToUpdate && event.data.sender && event.data.parserids[event.data.sender]) {
             eventToUpdate = _.find(this.data.timeline[event.data.state].events, function (o) {
@@ -966,7 +973,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return cbk(null);
             else
                 return HookedMatch;
-                
+
         // We have an update to players
         if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
             event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
@@ -1028,21 +1035,21 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             // console.log(result.players);
             if (err)
                 return log.error(err.message);
-                
+
             // if (result)
             //     HookedMatch.data = _.merge(HookedMatch.data, updateObject);
-            
+
             // ToDo: When ready, uncomment the following:
             // HookedMatch.gamecards.ReEvaluateAll(HookedMatch.id, function(gamecardsError) {
             //     if (gamecardsError)
             //         log.error(gamecardsError);
-                    
+
             //     if (cbk)
             //         return cbk(null, eventToUpdate);
             //     else
             //         return HookedMatch;
             // });
-            
+
             if (cbk)
                 return cbk(null, eventToUpdate);
             else
@@ -1063,8 +1070,14 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             thisMatch.completed = true;
             thisMatch.save(function (err, done) {
 
-                // Send push notification to users that the game has ended.
-                MessagingTools.sendPushToUsers({}, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, {"type":"view","data":{"view":"match","viewdata":HookedMatch.id}}, "final_result");
+                useractivities.find({ room: HookedMatch.id })
+                    .select('user')
+                    .exec(function (err, users) {
+                        var userids = _.compact(_.map(users, 'user'));
+                        // Send push notification to users that the game has ended.
+                        MessagingTools.sendPushToUsers(userids, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "final_result");
+                    });
+
                 if (err)
                     log.error(err.message);
 
@@ -1111,11 +1124,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 var HANDLE_EVENT_REMOVAL = function (linked, returnData) {
 
     var finished = linked.linked_mods.length;
-    
+
     linked.linked_mods.forEach(function (link) {
         // 1. Find the corresponding document     
         StatMods.findById(link, function (err, mod) {
-       
+
             // 2. Update all documents from created date on with the deleted modification
             // more multi updates
             StatMods.where({
