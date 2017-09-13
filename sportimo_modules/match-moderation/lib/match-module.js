@@ -16,7 +16,7 @@ var moment = require('moment'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents'),
     matches = require('../../models/scheduled-matches'),
-    useractivities = require('../../models/userActivity'),    
+    useractivities = require('../../models/userActivity'),
     userGamecards = require('../../models/userGamecard'),
     async = require('async'),
     Achievements = require('../../bedbugAchievements');
@@ -748,8 +748,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 }
             }
             ));
-            
-            matches.findByIdAndUpdate(id,{$set:{"stats": thisMatch.stats, "time": thisMatch.time}}, function(err,result){
+
+            matches.findByIdAndUpdate(id, { $set: { "stats": thisMatch.stats, "time": thisMatch.time } }, function (err, result) {
                 log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'");
             })
             // thisMatch.save().then(function () { log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
@@ -816,7 +816,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     else
                         thisMatch.away_score++;
 
-                    userGamecards.find({ matchid: HookedMatch.id })                        
+                    userGamecards.find({ matchid: HookedMatch.id })
                         .exec(function (err, users) {
                             var userids = _.uniq(_.compact(_.map(users, 'userid')));
                             if (userids && userids.length > 0)
@@ -916,8 +916,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // Parses the event based on sport and makes changes in the match instance
         StatsHelper.Parse(event, match);
+        var thisMatch = this.data;
 
-        var eventObj = _.find(this.data.timeline[event.data.state].events, {
+        if (event.data.stats.Goal) {
+            if (event.data.team == "home_team")
+                thisMatch.home_score--;
+            else
+                thisMatch.away_score--;
+        }
+
+        var eventObj = _.find(thisMatch.timeline[event.data.state].events, {
             id: event.data.id || event.data._id,
             match_id: event.data.match_id
         });
@@ -926,23 +934,53 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         eventObj.status = "removed";
 
         // Should we destroy events on just mark them "removed"
-        if (this.data.settings.destroyOnDelete)
-            this.data.timeline[event.data.state].events = _.without(this.data.timeline[event.data.state].events, eventObj);
+        if (thisMatch.settings.destroyOnDelete)
+            thisMatch.timeline[event.data.state].events = _.without(thisMatch.timeline[event.data.state].events, eventObj);
 
-        // Broadcast the remove event so others can consume it.
-        PubChannel.publish("socketServers", JSON.stringify(event));
+        // // Broadcast the remove event so others can consume it.
+        // PubChannel.publish("socketServers", JSON.stringify(event));
 
         // 3. save match to db
         // this.data.markModified('timeline');
         StatsHelper.UpsertStat("system", {
             events_sent: 1
-        }, this.data, "system");
-        this.data.markModified('stats');
+        }, thisMatch, "system");
 
-        this.data.save(function (err, done) {
+        thisMatch.markModified('stats');
+
+        var updateObject = {
+            home_score: thisMatch.home_score,
+            stats: thisMatch.stats,
+            timeline: thisMatch.timeline,
+            away_score: thisMatch.away_score
+        }
+
+        matches.findOneAndUpdate({ _id: thisMatch._id }, updateObject, { new: true }, function (err, result) {
+            // thisMatch.save(function (err, done) {
+
             if (err)
-                log.error(err.message);
+                return log.error(err.message);
+
+            if (result)
+                HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+
+            // Inform Clients for the new event to draw
+            PubChannel.publish("socketServers", JSON.stringify({
+                sockets: true,
+                payload: {
+                    type: "Match_Reload",
+                    room: thisMatch._id.toString(),
+                }
+            }
+            ));
+
+            return HookedMatch;
         });
+
+        // this.data.save(function (err, done) {
+        //     if (err)
+        //         log.error(err.message);
+        // });
 
         // 4. return match to Sender
         return HANDLE_EVENT_REMOVAL(event.data, this);
