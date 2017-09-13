@@ -92,6 +92,7 @@ else {
     settings: mongoose.Schema.Types.Mixed,
     moderation: [moderationService],
     parserids: mongoose.Schema.Types.Mixed,
+    guruStatsChecked: {type: Boolean, default: false},
     updatedAt: Date,
     createdAt: Date
   }, {

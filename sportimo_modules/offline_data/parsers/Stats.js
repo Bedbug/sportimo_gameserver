@@ -142,15 +142,20 @@ setTimeout(function () {
     setInterval(function () {
         var cutOffTime = moment.utc().subtract(3, 'hours').toDate();
         //mongoDb.scheduled_matches.find({ completed: false, guruStats: null, start: {$gte: cutOffTime} }, function(error, matches) {
-        mongoDb.scheduled_matches.find({ completed: false, guruStats: null }, '_id home_team away_team competition state time start', function (error, matches) {
+        mongoDb.scheduled_matches.find({ completed: false, guruStats: null, guruStatsChecked: {$ne: true} }, '_id home_team away_team competition state time start', function (error, matches) {
             if (error)
                 return;
 
             async.eachSeries(matches, function (match, cb) {
                 setTimeout(function () {
                     Parser.UpdateGuruStats(match, function (err) {
-                        if (err)
+                        if (err){
                             log.error('Failed saving the Guru-stats for match %s, due to: %s', match.id, err.message);
+                        }
+
+                        mongoDb.scheduled_matches.findByIdAndUpdate(match._id,{$set:{guruStatsChecked: true}},function(err,res){
+                            log.info("Updated match so we don't have to test for Guru stats anymore.")
+                        })
 
                         cb(null);
                     });

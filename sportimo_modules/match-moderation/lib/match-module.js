@@ -16,9 +16,8 @@ var moment = require('moment'),
     StatMods = require('../../models/stats-mod'),
     matchEvents = require('../../models/matchEvents'),
     matches = require('../../models/scheduled-matches'),
-    useractivities = require('../../models/userActivity'),
-    mongoose = require('mongoose'),
-    userGamecards = mongoose.models.userGamecards,
+    useractivities = require('../../models/userActivity'),    
+    userGamecards = require('../../models/userGamecard'),
     async = require('async'),
     Achievements = require('../../bedbugAchievements');
 
@@ -465,7 +464,10 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     .exec(function (err, users) {
                         var userids = _.compact(_.map(users, 'user'));
                         // Send push notification to users that the game has started.
-                        MessagingTools.sendPushToUsers(userids, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "match_reminder");
+                        if (userids && userids.length > 0)
+                            MessagingTools.sendPushToUsers(userids, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "match_reminder");
+                        else
+                            console.log("No one to send a push about Match Start");
                     });
             }
 
@@ -746,8 +748,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 }
             }
             ));
-
-            thisMatch.save().then(function () { log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
+            
+            matches.findByIdAndUpdate(id,{$set:{"stats": thisMatch.stats, "time": thisMatch.time}}, function(err,result){
+                log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'");
+            })
+            // thisMatch.save().then(function () { log.info("[MatchModule] Match [ID: " + thisMatch.id + "] has reached " + thisMatch.time + "'"); });
 
             // SPI 201 - Auto-Terminate leftover matches 
             if (thisMatch.time > 160) {
@@ -811,11 +816,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     else
                         thisMatch.away_score++;
 
-                    userGamecards.find({ matchid: HookedMatch.id })
-                        .select('user')
+                    userGamecards.find({ matchid: HookedMatch.id })                        
                         .exec(function (err, users) {
                             var userids = _.uniq(_.compact(_.map(users, 'userid')));
-                            MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
+                            if (userids && userids.length > 0)
+                                MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
+                            else
+                                console.log("No one to send a push about Match Start");
                         });
 
                 }
@@ -1074,8 +1081,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     .select('user')
                     .exec(function (err, users) {
                         var userids = _.compact(_.map(users, 'user'));
-                        // Send push notification to users that the game has ended.
-                        MessagingTools.sendPushToUsers(userids, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "final_result");
+                        if (userids && userids.length > 0)
+                            // Send push notification to users that the game has ended.
+                            MessagingTools.sendPushToUsers(userids, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "final_result");
+                        else
+                            console.log("No one to send a push about Match Start");
                     });
 
                 if (err)

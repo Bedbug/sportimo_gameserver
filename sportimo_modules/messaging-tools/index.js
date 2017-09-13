@@ -88,9 +88,12 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
     // let's get all the users that have a push token and are accepting this type of push
     mongoose.models.users.find(conditions, function (err, users) {
         pushTokens = _.compact(_.map(users, 'pushToken'));
-        // console.log(pushTokens)
-        // for (var i = 0; i < tokens.length; i++) {
-        //     //console.log(i);
+        //  console.log(pushTokens)
+        for (var i = 0; i < pushTokens.length; i++) {
+            // console.log(pushTokens[0]);
+            if(pushTokens[i] == "d213b1d0e0df3fdcdfbe6ddf1187c860dbcfc2dc83d8185f9cad333c1fa6891b")
+                console.log("Rabidrabbit is in tokens");
+        }
 
 
         var options = {
@@ -141,8 +144,14 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
 
         return needle.post(PushOptions.api, payload, { json: true }, function (err, resp, body) {
 
-            if (!err) {
-                console.log("[UserMessaging] Send push to %s users.", pushTokens.length);
+            if (!err) { 
+
+                var failed = 0;
+                  _.forOwn(body.response.UnknownDevices, function(value, key) {
+                      failed+= value.length;
+                   } );
+
+                console.log("[UserMessaging] Send push to %s users.", pushTokens.length+". Failed in "+  failed);
                 if (callback) {
                     return callback("[UserMessaging] Send push to " + pushTokens.length + " users.");
                 }
