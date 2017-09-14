@@ -116,8 +116,7 @@ api.additem = function (req, res) {
         newItem.visiblein = competition.visiblein;
 
         settings.find({}, function (err, result) {
-            // if (result[0])
-            log.info("Adding client default settings")
+            // if (result[0])           
                 newItem.settings = {
                     "gameCards": {
                         "instant": 15,
