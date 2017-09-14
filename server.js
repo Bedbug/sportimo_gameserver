@@ -68,10 +68,10 @@ app.listen(port, function () {
     console.log("------------------------------------------------------------------------------------");
 });
 
-if(process.env.NODE_ENV == "development"){
-morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
-app.use(morgan(':date-time :method :url :status :response-time ms - :res[content-length]'));
-app.use(morgan('dev'));
+if (process.env.NODE_ENV == "development") {
+    morgan.token("date-time", function (req, res) { return (new Date()).toISOString() });
+    app.use(morgan(':date-time :method :url :status :response-time ms - :res[content-length]'));
+    app.use(morgan('dev'));
 }
 app.get("/crossdomain.xml", onCrossDomainHandler);
 
@@ -97,6 +97,10 @@ function onCrossDomainHandler(req, res) {
 //     channel: "socketServers"
 // };
 
+
+
+
+
 var redisCreds = require('./config/redisConfig');
 var mongoCreds = require('./config/mongoConfig');
 
@@ -104,14 +108,14 @@ var PublishChannel = null;
 var SubscribeChannel = null;
 
 try {
-    PublishChannel = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-34-249-251-118.eu-west-1.compute.amazonaws.com:25229");
+    PublishChannel = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-52-210-252-69.eu-west-1.compute.amazonaws.com:6699");
     // PublishChannel.auth(redisCreds.secret, function (err) {
     //     if (err) {
     //         console.log(err);
     //     }
     // });
-    
-    SubscribeChannel = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-34-249-251-118.eu-west-1.compute.amazonaws.com:25229");
+
+    SubscribeChannel = redis.createClient(process.env.REDIS_URL || "redis://h:p24268cafef1f0923a94420b8cb29eb88476356728a9825543a262bac20b0c973@ec2-52-210-252-69.eu-west-1.compute.amazonaws.com:6699");
     // SubscribeChannel.auth(redisCreds.secret, function (err) {
     //     if (err) {
     //         console.log(err);
@@ -139,7 +143,16 @@ app.PublishChannel = PublishChannel;
 if (!process.env.NODE_ENV)
     process.env.NODE_ENV = "development";
 
-    // process.env.NODE_ENV = "production";
+// process.env.NODE_ENV = "production";
+
+var airbrake;
+if (process.env.NODE_ENV == "development") {
+    airbrake = require('airbrake').createClient(
+        '156316', // Project ID
+        'cf1dc9bb0cb48fcfda489fb05683e3e7' // Project key
+    );
+    airbrake.handleExceptions();
+}
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
