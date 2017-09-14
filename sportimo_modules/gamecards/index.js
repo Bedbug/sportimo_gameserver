@@ -855,7 +855,7 @@ gamecards.validateUserInstance = function (matchId, userGamecard, callback) {
         if (error)
             return callback({ isValid: false, error: error.message });
 
-        let user = results[0];      
+        let user = results[0];
 
         if (!user)
             return callback({ isValid: false, error: "The userid in the body does not correspond to an existing user" });
@@ -1199,9 +1199,7 @@ gamecards.updateUserInstance = function (userGamecardId, options, outerCallback)
             function (err, result) {
                 if (err)
                     return outerCallback(err);
-
-                console.log(result.specials);
-
+                
                 outerCallback(null, null, result);
             });
     });
@@ -1479,7 +1477,7 @@ gamecards.Tick = function () {
                         //         return parallelCbk(null);
                         //     }, 200);
                         // },
-                        function (parallelCbk) {                            
+                        function (parallelCbk) {
                             db.models.userGamecards.find({ matchid: match.id, status: 0, cardType: 'PresetInstant', minute: { $lte: match.time } }, function (error, userGamecards) {
                                 if (userGamecards.length > 0)
                                     console.log("Preset Found");
@@ -1519,7 +1517,7 @@ gamecards.Tick = function () {
                         function (parallelCbk) {
                             var systemTime = itsNow.toDate();
                             if (match.state == 2 || match.state == 4) {
-                                db.models.userGamecards.update({ matchid: match.id, cardType: { $in: ['Instant', 'PresetInstant'] },  status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
+                                db.models.userGamecards.update({ matchid: match.id, cardType: { $in: ['Instant', 'PresetInstant'] }, status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
                                     if (error) {
                                         log.error('Failed to pause user gamecards after segment ' + (match.state - 1) + ' ends on match id %s !!!', match.id);
                                         return parallelCbk(null);
@@ -1726,7 +1724,7 @@ gamecards.CheckIfWins = function (gamecard, isCardTermination, simulatedWinTime,
                 log.error(err.message);
         });
 
-        MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, {"type":"view","data":{"view":"match","viewdata":gamecard.matchid}}, "won_cards");
+        MessagingTools.sendPushToUsers([gamecard.userid], { en: "Card Win!! \nYou have just won a card for " + gamecard.pointsAwarded + " points." }, { "type": "view", "data": { "view": "match", "viewdata": gamecard.matchid } }, "won_cards");
         gamecards.publishWinToUser(gamecard);
     }
 
@@ -2091,11 +2089,16 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
                 // switch the current visibility state
                 console.log("Found gamecard [" + gamecard.title.en + "] requiring change in visiblity and changed it to: " + AppearConditionsPassed)
                 gamecard.isVisible = AppearConditionsPassed;
-                gamecard.save(function (err) {
+                db.models.gamecardDefinitions.findByIdAndUpdate(gamecard._id,{isVisible: AppearConditionsPassed},function(err, result){
                     if (err)
-                        return cbk(err);
+                        return cbk(err);                    
                     cbk();
-                });
+                })
+                // gamecard.save(function (err) {
+                //     if (err)
+                //         return cbk(err);
+                //     cbk();
+                // });
             }
             else
                 if (gamecardChanged) {
@@ -2131,8 +2134,8 @@ gamecards.ResolveSegment = function (matchId, segmentIndex) {
     var systemTime = itsNow.toDate();
     if (segmentIndex == 2 || segmentIndex == 4) {
         // db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: { $in: [0, 1] } }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
-            // Removed update to status 0 cards in order to fix the issue where presetCards would not activate
-              db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
+        // Removed update to status 0 cards in order to fix the issue where presetCards would not activate
+        db.models.userGamecards.update({ matchid: matchId, cardType: { $in: ['Instant', 'PresetInstant'] }, status: 1 }, { $set: { status: 3, pauseTime: systemTime } }, function (error, results) {
             if (error) {
                 log.error('Failed to pause user gamecards after segment ' + (segmentIndex - 1) + ' ends on match id %s !!!', matchId);
                 return error;
@@ -2794,12 +2797,17 @@ gamecards.TerminateMatch = function (match, callback) {
         creationTime: { $lt: itsNow },
         matchid: match.id
     };
-
+    var cardsCount;
     db.models.userGamecards.find(gamecardsQuery, function (error, mongoGamecards) {
         if (error) {
             log.error("Error while resolving event: " + error.message);
-            return callback(error);
+            if (callback)
+                return callback(error);
+            else
+                return;
         }
+
+        cardsCount = mongoGamecards.length;
 
         mongoGamecards.forEach(function (gamecard) {
             if (gamecards.CheckIfWins(gamecard, true, null, match)) {
@@ -2828,6 +2836,10 @@ gamecards.TerminateMatch = function (match, callback) {
                 if (err) {
                     log.error(err.message);
                 }
+                cardsCount--;
+                if (cardsCount == 0)
+                    if (callback)
+                        callback();
             });
         });
     });

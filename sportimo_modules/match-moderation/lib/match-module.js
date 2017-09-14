@@ -81,8 +81,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     // Time spacing bewtween events 
     HookedMatch.queueDelay = 100;
-    HookedMatch.queueEventsSpace = 5000;
-    HookedMatch.queueSegmentsSpace = 5000;
+    HookedMatch.queueEventsSpace = 1000;
+    HookedMatch.queueSegmentsSpace = 1000;
 
     //HookedMatch.moderationServices = [];
     HookedMatch.services = [];
@@ -138,7 +138,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.UpdateEvent(matchEvent, function () {
                             setTimeout(function () {
-                                log.info('Dequeuing event ' + matchEvent.data.type);
+                                log.info('Dequeuing update event ' +matchEvent.data.time+"' "+ matchEvent.data.type);
                                 return callback();
                             }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
@@ -147,7 +147,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.AddEvent(matchEvent, function () {
                             setTimeout(function () {
-                                log.info('Dequeuing event ' + matchEvent.data.type);
+                                log.info('Dequeuing add event ' + matchEvent.data.time+"' "+matchEvent.data.type);
                                 return callback();
                             }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
@@ -448,6 +448,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     */
     HookedMatch.AdvanceSegment = function (event, callback) {
 
+        //    var scheduleDate = moment.utc(HookedMatch.data.start);
+        //     var itsNow = moment.utc();
+        // console.log((moment.utc(scheduleDate) < itsNow && isActive));
+        // console.log((itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)));
+        // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
 
         var q = matches.findById(HookedMatch.id);
 
@@ -457,18 +462,24 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             if (err || !thisMatch)
                 return console.log(err);
 
-            if (thisMatch.state == 0) {
+            if (thisMatch.completed)
+                if (callback)
+                    return callback("The match has been terminated. No other events accepted");
+                else
+                    return log.info("The match has been terminated. No other events accepted");
 
-                useractivities.find({ room: HookedMatch.id })
-                    .select('user')
-                    .exec(function (err, users) {
-                        var userids = _.compact(_.map(users, 'user'));
-                        // Send push notification to users that the game has started.
-                        if (userids && userids.length > 0)
-                            MessagingTools.sendPushToUsers(userids, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "match_reminder");
-                        else
-                            console.log("No one to send a push about Match Start");
-                    });
+            if (thisMatch.state == 0) {
+                if (HookedMatch.data.settings.sendPushes == undefined || HookedMatch.data.settings.sendPushes)
+                    useractivities.find({ room: HookedMatch.id })
+                        .select('user')
+                        .exec(function (err, users) {
+                            var userids = _.compact(_.map(users, 'user'));
+                            // Send push notification to users that the game has started.
+                            if (userids && userids.length > 0)
+                                MessagingTools.sendPushToUsers(userids, { en: "Match begins\n" + thisMatch.home_team.name.en + " - " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "match_reminder");
+                            else
+                                console.log("No one to send a push about Match Start");
+                        });
             }
 
             // Register the time that the previous segment ended
@@ -476,7 +487,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             // This previous segment is timed. We should send a segment end timeline event first.
             if (HookedMatch.sport.segments[thisMatch.state].timed) {
-                console.log(HookedMatch.sport.segments[thisMatch.state].name.en + " Ends");
+                log.info(HookedMatch.sport.segments[thisMatch.state].name.en + " Ends");
 
                 var evtObject = {
                     match_id: HookedMatch.id,
@@ -623,7 +634,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
                 // Everythings is save and updated so it is safe to send a new event now if this new segment is timed.
                 if (HookedMatch.sport.segments[thisMatch.state].timed) {
-                    console.log(HookedMatch.sport.segments[thisMatch.state].name.en + " Starts");
+                    log.info(HookedMatch.sport.segments[thisMatch.state].name.en + " Starts");
                     var startEvent = {
                         type: "Add",
                         match_id: HookedMatch.id,
@@ -721,7 +732,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return console.log(err);
             }
 
-            if (!HookedMatch.sport.segments[thisMatch.state].timed || thisMatch.completed) { return console.log("No need to be timed."); }
+            if (!HookedMatch.sport.segments[thisMatch.state].timed) { return console.log("No need to be timed."); }
+
+            if (thisMatch.completed) {
+                clearInterval(HookedMatch.Timers.matchTimer);
+                return console.log("Match completed. Closing down match timer.");
+            }
+
 
             thisMatch.time = calculatedMatchTimeFor(thisMatch);
 
@@ -785,6 +802,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     HookedMatch.AddEvent = function (event, cbk) {
 
+
         var m = matches.findById(HookedMatch.id)
         m.populate("home_team away_team");
         m.exec(function (err, thisMatch) {
@@ -793,6 +811,20 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return cbk(err);
                 else
                     return console.log(err);
+
+            // Verify that the the match has not completed in order to avoid erroneus events
+            if (thisMatch.completed)
+                if (cbk)
+                    return cbk("The match has been terminated. No other events accepted.");
+                else
+                    return log.info("The match has been terminated. No other events accepted.");
+
+            // Verify that the event is current and not some type of Stats.com update
+            if (event.data.time < thisMatch.time && event.data.time > 0)
+                if (cbk)
+                    return cbk("The event has match time less that the match running time. It is ignored.");
+                else
+                    return log.info("The event has match time less that the match running time. It is ignored.");
 
             event.data = new matchEvents(event.data);   // this truncates the match event to the properties present in the matchEvent model. All other properties in event object are discarded.
 
@@ -816,14 +848,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     else
                         thisMatch.away_score++;
 
-                    userGamecards.find({ matchid: HookedMatch.id })
-                        .exec(function (err, users) {
-                            var userids = _.uniq(_.compact(_.map(users, 'userid')));
-                            if (userids && userids.length > 0)
-                                MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
-                            else
-                                console.log("No one to send a push about Match Start");
-                        });
+                    if (HookedMatch.data.settings.sendPushes == undefined || HookedMatch.data.settings.sendPushes)
+                        userGamecards.find({ matchid: HookedMatch.id })
+                            .exec(function (err, users) {
+                                var userids = _.uniq(_.compact(_.map(users, 'userid')));
+                                if (userids && userids.length > 0)
+                                    MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
+                                else
+                                    console.log("No one to send a push about Match Start");
+                            });
 
                 }
             }
@@ -1115,16 +1148,17 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             thisMatch.completed = true;
             thisMatch.save(function (err, done) {
 
-                useractivities.find({ room: HookedMatch.id })
-                    .select('user')
-                    .exec(function (err, users) {
-                        var userids = _.compact(_.map(users, 'user'));
-                        if (userids && userids.length > 0)
-                            // Send push notification to users that the game has ended.
-                            MessagingTools.sendPushToUsers(userids, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "final_result");
-                        else
-                            console.log("No one to send a push about Match Start");
-                    });
+                if (HookedMatch.data.settings.sendPushes == undefined || HookedMatch.data.settings.sendPushes)
+                    useractivities.find({ room: HookedMatch.id })
+                        .select('user')
+                        .exec(function (err, users) {
+                            var userids = _.compact(_.map(users, 'user'));
+                            if (userids && userids.length > 0)
+                                // Send push notification to users that the game has ended.
+                                MessagingTools.sendPushToUsers(userids, { en: "Match ended \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "final_result");
+                            else
+                                console.log("No one to send a push about Match Start");
+                        });
 
                 if (err)
                     log.error(err.message);
@@ -1140,15 +1174,16 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             });
         });
 
-
+        log.info("TODO: We should reward player achievement after we have received that end gamecards have been resolved");
         HookedMatch.gamecards.TerminateMatch(this.data);
 
-        // Handle all achievements calculated at the end of a match
-        // 1. Persistant Gamer
-        Achievements.Reward.persist_gamer(HookedMatch.id);
-        // 2. Rank achievements
-        Achievements.Reward.rank_achievements(HookedMatch.id);
-
+        if (HookedMatch.data.settings.sendPushes == undefined || HookedMatch.data.settings.sendPushes) {
+            // Handle all achievements calculated at the end of a match
+            // 1. Persistant Gamer
+            Achievements.Reward.persist_gamer(HookedMatch.id);
+            // 2. Rank achievements
+            Achievements.Reward.rank_achievements(HookedMatch.id);
+        }
         setTimeout(function () {
             HookedMatch.Terminate();
         }, 1000);

@@ -285,18 +285,20 @@ Parser.prototype.init = function (cbk) {
                     // MessagingTools.sendPushToAdmins({ en: 'Timer scheduled successfully for matchid: ' + that.matchHandler.id + ' at ' + formattedScheduleDate.toDate() });
                 } else
                     if (!that.matchHandler.completed || that.matchHandler.completed == false) {
+                        
                         log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
                         that.TickMatchFeed();
                     }
                 
                 // console.log(scheduler.scheduledJobs);
                 var job = _.find(scheduler.scheduledJobs, { name: that.matchHandler.id })
+                // console.log(job);
                 // console.log(job.nextInvocation());
                 //  console.log(moment(job.nextInvocation()).format());
                 //    console.log(itsNow.format());
                 var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
                 var durationAsHours = duration.asMinutes();
-
+                if(job.nextInvocation())
                 log.info("[Stats parser]: Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
 
 
@@ -596,8 +598,7 @@ var IsSegmentEvent = function (parserEvent) {
 };
 
 // and now, the functions that can be called from outside modules.
-Parser.prototype.TickMatchFeed = function () {
-    console.log("Tick");
+Parser.prototype.TickMatchFeed = function () {    
     var that = this;
     try {
         if (!that.matchHandler || !that.matchParserId || !that.feedService) {
@@ -723,7 +724,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
 
                 // Determine if the event is a successful penalty, in this case create an extra Goal event
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
-                    setTimeout(function () {
+                    // setTimeout(function () {
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
@@ -740,7 +741,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                             var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
                             that.feedService.AddEvent(translatedGoalEvent);
                         }
-                    }, 500);
+                    // }, 0);
                 }
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 28) {
@@ -771,19 +772,19 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                                 that.feedService.AddEvent(translatedGoalEvent);
                             }
                         }
-                    }, 500);
+                    }, 0);
                 }
                 // Determine if the event includes a deflected post, in this case create a deflected post event
                 if (event.saveType && event.saveType.saveTypeId == 17) // Deflected around post
                 {
-                    setTimeout(function () {
+                    // setTimeout(function () {
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 53; // out of the timeline id range
                         goalEvent.playEvent.name = 'Deflected_on_Post';
                         var translatedDeflectionEvent = that.TranslateMatchEvent(goalEvent);
                         if (translatedDeflectionEvent)
                             that.feedService.AddEvent(translatedDeflectionEvent);
-                    }, 500);
+                    // }, 0);
 
                 }
                 // Determine if the Penalties Segment has just started (in this case, advance the segment)
@@ -804,7 +805,6 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
                         // }, that.feedService.queueCount * 1000);
                     }, 1000);
                 }
-
                 else {
                     // Then try to parse a match segment advancing event
                     var translatedMatchSegment = that.TranslateMatchSegment(event);

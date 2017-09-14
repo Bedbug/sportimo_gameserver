@@ -226,9 +226,10 @@ var ModerationModule = {
         }).exec(function (err, match) {
             match.completed = !match.completed;
             match.save(function (err, result) {
-                feedstatuses.find({ matchid: matchid }).remove().exec(function (err, opResult) {
-                    cbk(opResult);
-                });
+                cbk(result);
+                // feedstatuses.find({ matchid: matchid }).remove().exec(function (err, opResult) {
+                //     cbk(opResult);
+                // });
             })
         });
     },
@@ -379,7 +380,7 @@ ModerationModule.updateMatchcronJobsInfo = function () {
         .exec(function (err, matches) {
             _.each(matches, function (match) {
                 var job = _.find(scheduler.scheduledJobs, { name: match._id.toString() })
-                if (job) {
+                if (job && job.nextInvocation()) {
                     var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
                     var durationAsHours = duration.asMinutes();
                     match.moderation[0].start = "in " + durationAsHours.toFixed(2) + " minutes";
