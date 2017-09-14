@@ -151,8 +151,13 @@ if (process.env.NODE_ENV == "development") {
         '156316', // Project ID
         'cf1dc9bb0cb48fcfda489fb05683e3e7' // Project key
     );
-    airbrake.handleExceptions();
+} else {
+    airbrake = require('airbrake').createClient(
+        '156332', // Project ID
+        '08292120e835e0088180cb09b1a474d0' // Project key
+    );
 }
+airbrake.handleExceptions();
 
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
