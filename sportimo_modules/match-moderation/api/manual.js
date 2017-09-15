@@ -101,6 +101,11 @@ module.exports = function (ModerationModule) {
         })
     });
 
+      router.get('/v1/moderation/:id/event/activate/:state', function (req, res) {
+        ModerationModule.ActivateMatch(req.params.id,req.params.state, function (result) {
+            res.send(result);
+        })
+    });
     
 
     router.post('/v1/moderation/:id/event', function (req, res) {

@@ -17,7 +17,7 @@ api.items = function (req, res) {
     var userCountry = req.params.country;
 
 
-    var q = item.find({ $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
+    var q = item.find({ disabled:{$ne:true}, $or: [{ visiblein: userCountry }, { visiblein: { $exists: false } }, { visiblein: { $size: 0 } }] });
 
     q.populate('home_team', 'name logo')
         .populate('away_team', 'name logo')
@@ -78,7 +78,7 @@ api.itemsSearch = function (req, res) {
         .populate('away_team')
         .populate('competition');
 
-    q.select('home_team home_score away_team away_score donttouch completed competition time state start');
+    q.select('home_team home_score away_team away_score donttouch completed competition time state start disabled');
 
     if (req.body.limit != undefined)
         q.limit(req.body.limit);

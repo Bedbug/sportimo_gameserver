@@ -76,6 +76,7 @@ else {
       type: String,
       ref: 'competitions'
     },
+    disabled: {type: Boolean, default: true},
     donttouch: Boolean,
     visiblein: [String],
     isTimeCounting: { type: Boolean, default: false },

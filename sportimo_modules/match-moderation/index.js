@@ -352,6 +352,14 @@ ModerationModule.AddScheduleMatch = function (match, cbk) {
 };
 
 
+
+ModerationModule.ActivateMatch = function (id, state, cbk) {
+    // Delete from database
+    var match = ModerationModule.GetMatch(id);
+    match.data.disabled = state;
+    scheduled_matches.findOneAndUpdate({ _id:id }, {$set:{disabled: state}}, cbk);    
+};
+
 /**
  * Adds a new match to the schedule.
  */
