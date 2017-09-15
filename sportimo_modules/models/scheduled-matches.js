@@ -94,7 +94,8 @@ else {
     parserids: mongoose.Schema.Types.Mixed,
     guruStatsChecked: {type: Boolean, default: false},
     updatedAt: Date,
-    createdAt: Date
+    createdAt: Date,
+    server_time:{type:Date}
   }, {
       collection: 'scheduled_matches',
       minimize: false,

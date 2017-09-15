@@ -102,6 +102,8 @@ api.item = function (req, res) {
                                         });
                                     }
 
+                                    game.matchData.server_time = Date.now();
+
                                     return res.status(200).json(game);
                                 });
                             })
