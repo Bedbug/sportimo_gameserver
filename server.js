@@ -158,7 +158,7 @@ if (process.env.NODE_ENV == "development") {
     );
 }
 airbrake.handleExceptions();
-
+// throw new Error('I am an uncaught exception');
 // Setup MongoDB conenction
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds043523-a0.mongolab.com:43523,ds043523-a1.mongolab.com:43523/sportimo?replicaSet=rs-ds043523';
 // var mongoConnection = 'mongodb://bedbug:a21th21@ds027835.mongolab.com:27835/sportimov2';

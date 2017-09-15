@@ -3,6 +3,7 @@ var express = require('express'),
     router = express.Router(),
     mongoose = require('mongoose'),
     Pool = mongoose.models.pool,
+    moment = require('moment'),
     l = require('../config/lib');
 _ = require('lodash');
 
@@ -72,7 +73,7 @@ api.timedpools = function (req, res) {
 
     q.exec(function (err, pools) {
         if (err) res.status(500).send(err);
-        else {
+        else {            
             var uniqueArray = ['Season', 'Week'];
             _.remove(pools, {roomtype:"Game"});
             if (req.params.country)
@@ -85,7 +86,25 @@ api.timedpools = function (req, res) {
                     }
                 })
 
-            res.status(200).send(pools);
+                var weekpool = _.find(pools,{roomtype: "Week"});
+                var poolstart = moment(weekpool.starts);
+                var poolends = moment(weekpool.ends);
+                var now = moment.utc();
+                if(now >= poolstart && now <= poolends)
+                    res.status(200).send(pools);
+                else{
+                    weekpool.starts = moment.utc().startOf('week').add(1,'h');
+                    weekpool.ends = moment.utc().endOf('week').add(1,'h');
+                    weekpool.save(function(err,weekres){
+                        console.log(pools);
+                        res.status(200).send(pools);
+                    })
+                    
+                }
+
+
+
+            
         }
 
     })

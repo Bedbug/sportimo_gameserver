@@ -144,7 +144,7 @@ api.additem = function (req, res) {
 
             return newItem.save(function (err, data) {
                 if (!err) {
-                    MessagingTools.sendPushToUsers({}, { en: "A new match has been scheduled. Go play your preset cards now!" }, { "type": "view", "data": { "view": "match", "viewdata": newItem.id } }, "match_reminder");
+                    MessagingTools.sendPushToUsers({}, { en: "A new match has been scheduled. Go play your preset cards now!" }, { "type": "view", "data": { "view": "match", "viewdata": data._id.toString() } }, "match_reminder");
                     return res.status(200).json(data);
                 } else {
                     return res.status(500).json(err);
