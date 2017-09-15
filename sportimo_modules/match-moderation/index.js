@@ -233,6 +233,11 @@ var ModerationModule = {
             })
         });
     },
+    ReleaseMatch: function(matchid,cbk){
+         MessagingTools.sendPushToUsers({}, { en: "A new match has been scheduled. Go play your preset cards now!" }, { "type": "view", "data": { "view": "match", "viewdata": matchid } }, "match_reminder");
+         if(cbk)
+            cbk("OK");
+    },
     LoadMatchFromDB: function (matchid, cbk) {
 
         if (!this.mock) {

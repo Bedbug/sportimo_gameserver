@@ -95,6 +95,14 @@ module.exports = function (ModerationModule) {
         })
     });
 
+    router.get('/v1/moderation/:id/event/release', function (req, res) {
+        ModerationModule.ReleaseMatch(req.params.id, function (result) {
+            res.send(result);
+        })
+    });
+
+    
+
     router.post('/v1/moderation/:id/event', function (req, res) {
         var match_id = req.params.id;
         switch (req.body.type) {
