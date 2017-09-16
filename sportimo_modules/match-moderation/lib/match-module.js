@@ -1045,6 +1045,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return o.parserids && o.parserids[event.data.sender] && o.parserids[event.data.sender] == event.data.parserids[event.data.sender];
             });
         }
+        log.info("Event to be updated [before]:");
+        log.info(eventToUpdate);
 
         if (!eventToUpdate)
             if (cbk)
@@ -1056,6 +1058,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         if (eventToUpdate.players && eventToUpdate.players.length < event.data.players.length) {
             event.data.linked_mods = StatsHelper.UpdateEventStat([event.data.players[0]._id], event.data.stats, [event.data.players[0].name], this.data, eventToUpdate.linked_mods);
             eventToUpdate.players = event.data.players;
+            log.info("Updating player:");
+            log.info(eventToUpdate.players);
         }
 
         // // Parses the event based on sport and makes changes in the match instance
@@ -1097,7 +1101,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // 3. save match to db
         // this.data.markModified('timeline');
-        log.info("Updating database");
+        
 
         // StatsHelper.UpsertStat(match.id, {
         //     events_sent: 1
@@ -1109,6 +1113,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         };
 
         matches.findOneAndUpdate({ _id: this.data._id }, updateObject, { new: true }, function (err, result) {
+            log.info("Updated match in database");
             // thisMatch.save(function (err, done) {
             // console.log(result.players);
             if (err)
@@ -1127,6 +1132,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             //     else
             //         return HookedMatch;
             // });
+            log.info("Event after update:");
+             log.info(eventToUpdate);
 
             if (cbk)
                 return cbk(null, eventToUpdate);
