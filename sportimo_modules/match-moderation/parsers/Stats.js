@@ -56,7 +56,7 @@ var statsComConfigDevelopment = {
     //gameServerUrlPrefix : "http://gameserverv2-56657.onmodulus.net/v1/",
     //gameServerTeamApi : "data/teams",
     //gameServerPlayerApi : "data/players",
-    eventsInterval: 5000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
+    eventsInterval: 6000,  // how many milli seconds interval between succeeding calls to Stats API in order to get the refreshed match event feed.
     parserIdName: "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
@@ -259,11 +259,11 @@ Parser.prototype.init = function (cbk) {
         // formattedScheduleDate = moment.utc().add(60,'seconds');
 
         log.info('[Stats parser]: Scheduled Date: ' + formattedScheduleDate.toDate());
-
+        log.info(that.feedService.interval +" || "+ configuration.eventsInterval);
         var interval = that.feedService.interval || configuration.eventsInterval;
         if (interval < 1000)
             interval = 1000;
-
+        log.info(" interval: "+ interval);
         var itsNow = moment.utc();
         // console.log((moment.utc(scheduleDate) < itsNow && isActive));
         // console.log((itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)));

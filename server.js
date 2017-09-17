@@ -248,6 +248,9 @@ app.get('/', function (req, res, next) {
     res.send(200, "Sportimo main game server v0.9.2 status is live.");
 });
 
+app.use('/static', express.static('public'))
+
+
 
 
 /*  Winston Logger Configuration */
