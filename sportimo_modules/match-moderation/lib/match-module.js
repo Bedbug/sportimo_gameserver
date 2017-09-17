@@ -822,11 +822,11 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     return log.info("The match has been terminated. No other events accepted.");
 
             // Verify that the event is current and not some type of Stats.com update
-            if (event.data.time < thisMatch.time && event.data.time > 0)
-                if (cbk)
-                    return cbk("The event has match time less that the match running time. It is ignored.");
-                else
-                    return log.info("The event has match time less that the match running time. It is ignored.");
+            // if (event.data.time < thisMatch.time && event.data.time > 0)
+            //     if (cbk)
+            //         return cbk("The event has match time less that the match running time. It is ignored.");
+            //     else
+            //         return log.info("The event has match time less that the match running time. It is ignored.");
 
             event.data = new matchEvents(event.data);   // this truncates the match event to the properties present in the matchEvent model. All other properties in event object are discarded.
 
