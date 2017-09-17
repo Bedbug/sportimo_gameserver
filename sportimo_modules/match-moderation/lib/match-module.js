@@ -80,13 +80,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
     HookedMatch.shouldInitAutoFeed = shouldInitAutoFeed || true;
 
     // Time spacing bewtween events 
-    HookedMatch.queueDelay = 100;
-    HookedMatch.queueEventsSpace = 3000;
+    HookedMatch.queueDelay = 2000;
+    HookedMatch.queueEventsSpace = 1000;
     HookedMatch.queueSegmentsSpace = 1000;
 
     //HookedMatch.moderationServices = [];
     HookedMatch.services = [];
 
+    // The last time registered from event. Used to ignore add event calls that that are after the fact.
+    HookedMatch.lastEventTime = 0;
 
     // Set ID
     HookedMatch.id = match._id.toString() || 'mockid';
@@ -144,8 +146,13 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         });
                     }
                     else if (matchEvent && matchEvent.type && matchEvent.type == 'Add') {
-                        // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
-                        return HookedMatch.AddEvent(matchEvent, function () {
+                         log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
+                        
+                         var isAfterLast = HookedMatch.lastEventTime <= matchEvent.data.time;
+                        if(isAfterLast)
+                             HookedMatch.lastEventTime = matchEvent.data.time;
+
+                        return HookedMatch.AddEvent(matchEvent, isAfterLast, function () {
                             setTimeout(function () {
                                 log.info('Dequeuing add event ' + matchEvent.data.time+"' "+matchEvent.data.type);
                                 return callback();
@@ -647,7 +654,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                             timeline_event: true
                         }
                     };
-                    HookedMatch.AddEvent(startEvent);
+                    HookedMatch.AddEvent(startEvent, true);
                 }
 
                 if (callback)
@@ -802,7 +809,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         other instances.
     */
 
-    HookedMatch.AddEvent = function (event, cbk) {
+    HookedMatch.AddEvent = function (event, isAfterLast, cbk) {
 
 
         var m = matches.findById(HookedMatch.id)
@@ -816,17 +823,19 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             // Verify that the the match has not completed in order to avoid erroneus events
             if (thisMatch.completed)
-                if (cbk)
+                if (cbk){
+                    log.info("The match has been terminated. No other events accepted.");
                     return cbk("The match has been terminated. No other events accepted.");
-                else
+        }else
                     return log.info("The match has been terminated. No other events accepted.");
 
             // Verify that the event is current and not some type of Stats.com update
-            // if (event.data.time < thisMatch.time && event.data.time > 0)
-            //     if (cbk)
-            //         return cbk("The event has match time less that the match running time. It is ignored.");
-            //     else
-            //         return log.info("The event has match time less that the match running time. It is ignored.");
+            if (!isAfterLast)
+                if (cbk){
+                    log.info("The event has match time less that the match running time. It is ignored.");
+                    return cbk("The event has match time less that the match running time. It is ignored.");
+                }else
+                    return log.info("The event has match time less that the match running time. It is ignored.");
 
             event.data = new matchEvents(event.data);   // this truncates the match event to the properties present in the matchEvent model. All other properties in event object are discarded.
 
@@ -1048,8 +1057,10 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 return o.parserids && o.parserids[event.data.sender] && o.parserids[event.data.sender] == event.data.parserids[event.data.sender];
             });
         }
-        log.info("Event to be updated [before]:");
-        log.info(eventToUpdate);
+        // log.info("Event to be updated [before]:");
+
+        // if(eventToUpdate)
+        // console.log(eventToUpdate);
 
         if (!eventToUpdate)
             if (cbk)
@@ -1136,8 +1147,8 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             //     else
             //         return HookedMatch;
             // });
-            log.info("Event after update:");
-             log.info(eventToUpdate);
+            // log.info("Event after update:");
+            //  console.log(eventToUpdate);
 
             if (cbk)
                 return cbk(null, eventToUpdate);
