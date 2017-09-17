@@ -81,7 +81,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
     // Time spacing bewtween events 
     HookedMatch.queueDelay = 100;
-    HookedMatch.queueEventsSpace = 1000;
+    HookedMatch.queueEventsSpace = 3000;
     HookedMatch.queueSegmentsSpace = 1000;
 
     //HookedMatch.moderationServices = [];
@@ -274,6 +274,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
 
             initService.emitter.on('emitStats', function (matchid, stats) {
+                log.info("Emmiter requested to send Stats_changed");
                 if (matchid == HookedMatch.data.id)
                     PubChannel.publish("socketServers", JSON.stringify({
                         sockets: true,
@@ -596,7 +597,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         }
                     }
                 }));
-
+                log.info("We are sending Stats_changed here on Advance Segment");
                 // Inform the system about the segment change
                 PubChannel.publish("socketServers", JSON.stringify({
                     sockets: true,
@@ -755,6 +756,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 incr: 1
             }, thisMatch);
 
+            log.info("We are sending Stats_changed here on Match Time");
             // Inform the system about the stat changes
             PubChannel.publish("socketServers", JSON.stringify({
                 sockets: true,
@@ -906,6 +908,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             }
             ));
 
+            log.info("We are sending Stats_changed here on Add Event");
             // Inform the system about the stat changes
             PubChannel.publish("socketServers", JSON.stringify({
                 sockets: true,
@@ -1088,6 +1091,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         }
         ));
 
+        log.info("We are sending Stats_changed here on Update Event");
         // Inform the system about the stat changes
         PubChannel.publish("socketServers", JSON.stringify({
             sockets: true,
