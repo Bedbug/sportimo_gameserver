@@ -352,7 +352,7 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
             var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
-            callback(null, events, teams, matchStatus);
+            callback(null, events, teams, matchStatus, response);
         }
         catch (err) {
             console.log(err);
@@ -652,7 +652,7 @@ var ComputeEventId = function (parsedEvent) {
 
 
 
-Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
+Parser.prototype.TickCallback = function (error, events, teams, matchStatus, feedResponse) {
     if (error) {
         console.log('error in TickMatchFeed: ' + error.message);
         return;
@@ -703,8 +703,10 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus) {
         return ComputeEventMatchTime(ev);
     });
 
-    if (that.matchHandler)
-        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
+    if (that.matchHandler){
+        // that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
+        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, feedResponse, that.incompleteEventsLookup);
+    }
 
     if (that.isPaused != true) {
         // Translate all events in eventsDiff and send them to feedService
