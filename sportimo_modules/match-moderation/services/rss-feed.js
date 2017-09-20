@@ -78,7 +78,7 @@ function feedService(service) {
     this.parserid = service.parserid || 0;
 
     // The interval that the module will request an update
-    this.interval = service.interval || 10000;
+    this.interval = service.interval || 5000;
 
     this.active = service.active === 'undefined' || service.active == null ? true : service.active;
 

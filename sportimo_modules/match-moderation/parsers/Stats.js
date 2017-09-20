@@ -115,10 +115,10 @@ function Parser(matchContext, feedServiceContext) {
     // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
     this.eventFeedSnapshot = {};
     this.incompleteEventsLookup = {};
-
     // holder of all events from the last call. This is introduced as a layer bewteen calling the feed and parsing it.
     // The first call compares this with the new call, filters out events and parses it, then it stores the events here.
-    this.eventsLastFeedReuest = [];
+    this.eventsLastFeedRequest = [];
+    
     // the parser upon initialization will inquire about all team players and their parserids.
     this.matchPlayersLookup = {};
 
@@ -139,7 +139,7 @@ function Parser(matchContext, feedServiceContext) {
 
     this.currentSegment = 0;    // this will resolve when a new segment arrives, will not be dupped by same segment consequent events
     this.lastOwnGoal = 0;       // this records the time the last own_goal events came, in order to ignore a potential goal event on the same minute
-
+    this.lastGoal = 0;          // this records the time of the last goal,  in order to ignore a potential goal event on the same minute
     this.penaltiesSegmentStarted = false;
 
     // the parser upon initialization will inquire about the competition mappings
@@ -262,11 +262,11 @@ Parser.prototype.init = function (cbk) {
         // formattedScheduleDate = moment.utc().add(60,'seconds');
 
         log.info('[Stats parser]: Scheduled Date: ' + formattedScheduleDate.toDate());
-        log.info(that.feedService.interval +" || "+ configuration.eventsInterval);
+        // log.info(that.feedService.interval +" || "+ configuration.eventsInterval);
         var interval = that.feedService.interval || configuration.eventsInterval;
         if (interval < 1000)
             interval = 1000;
-        log.info(" interval: "+ interval);
+        log.info("Match tick interval set to: " + interval);
         var itsNow = moment.utc();
         // console.log((moment.utc(scheduleDate) < itsNow && isActive));
         // console.log((itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate)));
@@ -288,11 +288,11 @@ Parser.prototype.init = function (cbk) {
                     // MessagingTools.sendPushToAdmins({ en: 'Timer scheduled successfully for matchid: ' + that.matchHandler.id + ' at ' + formattedScheduleDate.toDate() });
                 } else
                     if (!that.matchHandler.completed || that.matchHandler.completed == false) {
-                        
+
                         log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
                         that.TickMatchFeed();
                     }
-                
+
                 // console.log(scheduler.scheduledJobs);
                 var job = _.find(scheduler.scheduledJobs, { name: that.matchHandler.id })
                 // console.log(job);
@@ -301,8 +301,8 @@ Parser.prototype.init = function (cbk) {
                 //    console.log(itsNow.format());
                 var duration = moment.duration(moment(job.nextInvocation()).diff(itsNow));
                 var durationAsHours = duration.asMinutes();
-                if(job.nextInvocation())
-                log.info("[Stats parser]: Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
+                if (job.nextInvocation())
+                    log.info("[Stats parser]: Match tick will start in " + durationAsHours.toFixed(2) + " minutes");
 
 
             }
@@ -355,7 +355,7 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
             var events = response.body.apiResults[0].league.season.eventType[0].events[0].pbp;
             var teams = response.body.apiResults[0].league.season.eventType[0].events[0].teams;
             var matchStatus = response.body.apiResults[0].league.season.eventType[0].events[0].eventStatus;
-            callback(null, events, teams, matchStatus, response);
+            callback(null, events, teams, matchStatus, response.body);
         }
         catch (err) {
             console.log(err);
@@ -601,7 +601,7 @@ var IsSegmentEvent = function (parserEvent) {
 };
 
 // and now, the functions that can be called from outside modules.
-Parser.prototype.TickMatchFeed = function () {    
+Parser.prototype.TickMatchFeed = function () {
     var that = this;
     try {
         if (!that.matchHandler || !that.matchParserId || !that.feedService) {
@@ -663,6 +663,26 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
 
     var that = this;
 
+    /**
+     *  revision in order to introduce a new layer between getting feeds and parsing them
+     */
+    // we find if there are events missing from the previous call
+    var removedEvents = _.differenceBy(that.eventsLastFeedRequest, events, 'sequenceNumber');
+    // we remove from the last feed call the elements missing from the new. Now we are free to parse it.
+    that.eventsLastFeedRequest = _.without(that.eventsLastFeedRequest, removedEvents);
+    // we make clone copies so we don't have to change anything else in the following code
+    var currentEvents = _.cloneDeep(events);
+    // we substitute the events Array with the clone of the previous call
+    events = _.cloneDeep(that.eventsLastFeedRequest);
+    // And we store the current call to be parsed in the next tick
+    if (that.eventsLastFeedRequest.length == 0) {
+        that.eventsLastFeedRequest = currentEvents;                 
+        setTimeout(function(){
+            that.TickMatchFeed()
+        }, 5000);
+        return;
+    }
+
     // compute last match time in eventFeedSnapshot
     var lastMatchTime = 0;
     _.forEach(that.eventFeedSnapshot, function (parsedEvent) {
@@ -706,9 +726,9 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
         return ComputeEventMatchTime(ev);
     });
 
-    if (that.matchHandler){
+    if (that.matchHandler) {
         // that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
-        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, feedResponse, that.incompleteEventsLookup);
+        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, JSON.stringify(feedResponse), that.incompleteEventsLookup);
     }
 
     if (that.isPaused != true) {
@@ -721,8 +741,16 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                 // Determine if the event is a Goal, and whether is coming right after an own goal (in this case just ignore it)
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11 && that.lastOwnGoal > 0) {
                     var goalTime = ComputeEventMatchTime(event);
-                    if (that.lastOwnGoal + 60 < goalTime)
+                    if (that.lastOwnGoal + 60 < goalTime && that.lastGoal < goalTime){
                         that.feedService.AddEvent(translatedEvent);
+                        that.lastGoal = goalTime;
+                    }
+                }else if(event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11){
+                    var goalTime = ComputeEventMatchTime(event);
+                    if (that.lastGoal < goalTime){
+                        that.feedService.AddEvent(translatedEvent);
+                        that.lastGoal = goalTime;
+                    }
                 }
                 else
                     that.feedService.AddEvent(translatedEvent);
@@ -730,28 +758,29 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                 // Determine if the event is a successful penalty, in this case create an extra Goal event
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
                     // setTimeout(function () {
-                        var goalEvent = _.cloneDeep(event);
-                        goalEvent.playEvent.playEventId = 11;
-                        goalEvent.playEvent.name = 'Goal';
-
-                        eventId = ComputeEventId(goalEvent);
-                        if (!that.eventFeedSnapshot[eventId]) {
-                            // Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
-                            if (IsSegmentEvent(goalEvent) == true || IsTimelineEvent(goalEvent) == false || IsParserEventComplete(goalEvent) == true)
-                                that.eventFeedSnapshot[eventId] = goalEvent;
-                            else {
-                                if (!that.incompleteEventsLookup[eventId])
-                                    that.incompleteEventsLookup[eventId] = goalEvent;
-                            }
-                            var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
-                            that.feedService.AddEvent(translatedGoalEvent);
+                    var goalEvent = _.cloneDeep(event);
+                    goalEvent.playEvent.playEventId = 11;
+                    goalEvent.playEvent.name = 'Goal';
+                    that.lastGoal = ComputeEventMatchTime(event);
+                    eventId = ComputeEventId(goalEvent);
+                    if (!that.eventFeedSnapshot[eventId]) {
+                        // Check if event is complete, otherwise do not add it to eventFeedSnapshot, unless its waitTime is over
+                        if (IsSegmentEvent(goalEvent) == true || IsTimelineEvent(goalEvent) == false || IsParserEventComplete(goalEvent) == true)
+                            that.eventFeedSnapshot[eventId] = goalEvent;
+                        else {
+                            if (!that.incompleteEventsLookup[eventId])
+                                that.incompleteEventsLookup[eventId] = goalEvent;
                         }
+                        var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
+                        that.feedService.AddEvent(translatedGoalEvent);
+                    }
                     // }, 0);
                 }
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 28) {
                     setTimeout(function () {
                         that.lastOwnGoal = ComputeEventMatchTime(event);
+                        that.lastGoal = ComputeEventMatchTime(event);
                         var goalEvent = _.cloneDeep(event);
                         goalEvent.playEvent.playEventId = 11;
                         goalEvent.playEvent.name = 'Goal';
@@ -783,12 +812,12 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                 if (event.saveType && event.saveType.saveTypeId == 17) // Deflected around post
                 {
                     // setTimeout(function () {
-                        var goalEvent = _.cloneDeep(event);
-                        goalEvent.playEvent.playEventId = 53; // out of the timeline id range
-                        goalEvent.playEvent.name = 'Deflected_on_Post';
-                        var translatedDeflectionEvent = that.TranslateMatchEvent(goalEvent);
-                        if (translatedDeflectionEvent)
-                            that.feedService.AddEvent(translatedDeflectionEvent);
+                    var goalEvent = _.cloneDeep(event);
+                    goalEvent.playEvent.playEventId = 53; // out of the timeline id range
+                    goalEvent.playEvent.name = 'Deflected_on_Post';
+                    var translatedDeflectionEvent = that.TranslateMatchEvent(goalEvent);
+                    if (translatedDeflectionEvent)
+                        that.feedService.AddEvent(translatedDeflectionEvent);
                     // }, 0);
 
                 }
