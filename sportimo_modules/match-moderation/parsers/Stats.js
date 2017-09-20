@@ -675,13 +675,15 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
     // we substitute the events Array with the clone of the previous call
     events = _.cloneDeep(that.eventsLastFeedRequest);
     // And we store the current call to be parsed in the next tick
-    // if (that.eventsLastFeedRequest.length == 0) {
+    if (that.eventsLastFeedRequest.length == 0) {
         that.eventsLastFeedRequest = currentEvents;                 
-        // setTimeout(function(){
-        //     that.TickMatchFeed()
-        // }, 5000);
-        // return;
-    // }
+        setTimeout(function(){
+            that.TickMatchFeed()
+        }, 1000);
+        return;
+    }else{
+        that.eventsLastFeedRequest = currentEvents;
+    }
 
     // compute last match time in eventFeedSnapshot
     var lastMatchTime = 0;
