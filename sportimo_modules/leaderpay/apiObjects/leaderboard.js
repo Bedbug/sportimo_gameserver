@@ -232,7 +232,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
                         .sortBy(function (value) { // sort the array descending
                             return -value.score;
                         })
-                        .groupBy("user_name")
+                        .groupBy("user_id")
                         .map(function (value, key) {
                             var scores = _.chain(value).take(bestscores).map("score").value();
                             var score = _.sum(scores);
