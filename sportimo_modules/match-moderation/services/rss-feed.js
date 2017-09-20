@@ -83,8 +83,8 @@ function feedService(service) {
     this.active = service.active === 'undefined' || service.active == null ? true : service.active;
 
     // Should we log all events received from feed or just the last one
-    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ? process.env.NODE_ENV == "development" ? true : false : service.logAllEvents;
-
+    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ? false : service.logAllEvents;
+    this.storeStatsRespponses = process.env.NODE_ENV == "development" ? true : false ;
     this.parser = null;
 }
 
@@ -267,13 +267,23 @@ feedService.prototype.LoadCompetition = function (competitionId, callback) {
     }
 };
 
-feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents, allEvents, incompleteEvents) {
+feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents, allEvents, incompleteEvents, feedResponse) {
     if (!mongoose)
         return;
 
     try {
-        if (this.logAllEvents == false)
+        if (this.logAllEvents == false){
             allEvents = null;
+        }
+
+        if(this.storeStatsRespponses){
+            var statResponse = new mongoose.mongoose.models.stats_responses();
+            statResponse.matchid = matchId;
+            statResponse.data = feedResponse;
+            statResponse.save(function(err, response){
+            });
+        }
+            
 
         mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({ matchid: matchId }, { $set: { matchid: matchId, parsed_eventids: events, incomplete_events: incompleteEvents }, $push: { diffed_events: diffedEvents, all_events: allEvents } }, { upsert: true }, function (err, result) {
             if (err) {
