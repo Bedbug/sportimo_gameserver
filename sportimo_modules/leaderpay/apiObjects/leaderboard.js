@@ -207,7 +207,7 @@ api.getLeaderboardWithRank = function (id, body, cb) {
     var rank;
     var user;
 
-    if (body.friends) {
+    if (body.friends && body.friends.length > 0) {
         var cond = { social_id: { $in: body.friends } };
 
         Users.find(cond, '_id social_id', function (err, users) {
