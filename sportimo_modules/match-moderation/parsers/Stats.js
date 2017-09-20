@@ -728,7 +728,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
 
     if (that.matchHandler) {
         // that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
-        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, JSON.stringify(feedResponse), that.incompleteEventsLookup);
+        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup, JSON.stringify(feedResponse));
     }
 
     if (that.isPaused != true) {
