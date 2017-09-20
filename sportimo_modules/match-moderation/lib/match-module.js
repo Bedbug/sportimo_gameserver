@@ -140,21 +140,21 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         // log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
                         return HookedMatch.UpdateEvent(matchEvent, function () {
                             setTimeout(function () {
-                                log.info('Dequeuing update event ' +matchEvent.data.time+"' "+ matchEvent.data.type);
+                                log.info('Dequeuing update event ' + matchEvent.data.time + "' " + matchEvent.data.type);
                                 return callback();
                             }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
                     }
                     else if (matchEvent && matchEvent.type && matchEvent.type == 'Add') {
-                         log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
-                        
-                         var isAfterLast = HookedMatch.lastEventTime <= matchEvent.data.time;
-                        if(isAfterLast)
-                             HookedMatch.lastEventTime = matchEvent.data.time;
+                        log.info('[Match module] %s: %s\' %s', queueIndex, matchEvent.data.time, eventName);
+
+                        var isAfterLast = HookedMatch.lastEventTime <= matchEvent.data.time;
+                        if (isAfterLast)
+                            HookedMatch.lastEventTime = matchEvent.data.time;
 
                         return HookedMatch.AddEvent(matchEvent, isAfterLast, function () {
                             setTimeout(function () {
-                                log.info('Dequeuing add event ' + matchEvent.data.time+"' "+matchEvent.data.type);
+                                log.info('Dequeuing add event ' + matchEvent.data.time + "' " + matchEvent.data.type);
                                 return callback();
                             }, matchEvent.data.timeline_event && matchEvent.data.timeline_event == true ? HookedMatch.queueEventsSpace : 100);
                         });
@@ -823,18 +823,18 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             // Verify that the the match has not completed in order to avoid erroneus events
             if (thisMatch.completed)
-                if (cbk){
+                if (cbk) {
                     log.info("The match has been terminated. No other events accepted.");
                     return cbk("The match has been terminated. No other events accepted.");
-        }else
+                } else
                     return log.info("The match has been terminated. No other events accepted.");
 
             // Verify that the event is current and not some type of Stats.com update
             if (!isAfterLast)
-                if (cbk){
+                if (cbk) {
                     log.info("The event has match time less that the match running time. It is ignored.");
                     return cbk("The event has match time less that the match running time. It is ignored.");
-                }else
+                } else
                     return log.info("The event has match time less that the match running time. It is ignored.");
 
             event.data = new matchEvents(event.data);   // this truncates the match event to the properties present in the matchEvent model. All other properties in event object are discarded.
@@ -1116,7 +1116,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
         // 3. save match to db
         // this.data.markModified('timeline');
-        
+
 
         // StatsHelper.UpsertStat(match.id, {
         //     events_sent: 1

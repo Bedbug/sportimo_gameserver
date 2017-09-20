@@ -11,5 +11,5 @@ else {
         response: String
       });
 
-    module.exports = mongoose.model("stats_responses", statResponse);
+    module.exports = mongoose.model("statsResponses", statResponse);
 }

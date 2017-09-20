@@ -277,11 +277,9 @@ feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents
         }
 
         if(this.storeStatsRespponses){
-            var statResponse = new mongoose.mongoose.models.stats_responses();
-            statResponse.matchid = matchId;
-            statResponse.data = feedResponse;
-            statResponse.save(function(err, response){
-            });
+            // var statsResponse = new mongoose.mongoose.models.statsResponses({matchid:matchId, data: feedResponse});            
+            // statResponse.save(function(err, response){
+            // });
         }
             
 
