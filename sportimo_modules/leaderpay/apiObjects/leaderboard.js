@@ -212,9 +212,12 @@ api.getLeaderboardWithRank = function (id, body, cb) {
 
         Users.find(cond, '_id social_id', function (err, users) {
 
+            friendUsers = _.map(users, function (o) { return o._id.toString() });
+            friendUsers.push(uid);
+
             leader_conditions = {
                 user_id: {
-                    $in: _.map(users, function (o) { return o._id.toString() })
+                    $in: friendUsers // _.map(users, function (o) { return o._id.toString() })
                 }
             }
 

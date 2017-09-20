@@ -116,6 +116,9 @@ function Parser(matchContext, feedServiceContext) {
     this.eventFeedSnapshot = {};
     this.incompleteEventsLookup = {};
 
+    // holder of all events from the last call. This is introduced as a layer bewteen calling the feed and parsing it.
+    // The first call compares this with the new call, filters out events and parses it, then it stores the events here.
+    this.eventsLastFeedReuest = [];
     // the parser upon initialization will inquire about all team players and their parserids.
     this.matchPlayersLookup = {};
 

@@ -1,7 +1,7 @@
 premessages = {};
 
 premessages.top1 = {
-    en: "Mike Drop! \nCongratulations. You ranked first in the game you participated."
+    en: "Mic Drop! \nCongratulations. You ranked first in the game you participated."
 }
 
 premessages.top10 = {
