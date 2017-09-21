@@ -711,6 +711,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             // Start the match timer update in secondsToMinuteTick;
             HookedMatch.Timers.Timeout = setTimeout(function () {
                 updateTimeForMatchId(HookedMatch.id);
+                clearInterval(HookedMatch.Timers.matchTimer);
                 // and start an interval that will update the match time every minute from now on
                 HookedMatch.Timers.matchTimer = setInterval(function () {
                     updateTimeForMatchId(HookedMatch.id);
@@ -846,7 +847,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             var evtObject = event.data;
 
-
+            thisMatch.time = event.data.time;
 
             // Parses the event based on sport and makes changes in the match instance
             if (event.data.stats != null) {

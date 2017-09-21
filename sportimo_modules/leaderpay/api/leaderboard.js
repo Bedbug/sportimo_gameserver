@@ -158,7 +158,7 @@ api.getMiniMatchLeaderboard = function (req, res) {
 			var poolData = {}
 
 			if (!pools[0]){
-				console.log("no pools");
+				// console.log("no pools");
 				poolData.conditions = { game_id: req.params.mid };
 				// console.log(poolData);
 			}else{

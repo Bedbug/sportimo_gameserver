@@ -2089,7 +2089,7 @@ gamecards.GamecardsAppearanceHandle = function (event, match) {
                 // switch the current visibility state
                 console.log("Found gamecard [" + gamecard.title.en + "] requiring change in visiblity and changed it to: " + AppearConditionsPassed)
                 gamecard.isVisible = AppearConditionsPassed;
-                db.models.gamecardDefinitions.findByIdAndUpdate(gamecard._id,{isVisible: AppearConditionsPassed},{new:true},function(err, result){
+                db.models.gamecardDefinitions.findByIdAndUpdate(gamecard._id,{appearConditions: gamecard.appearConditions, isVisible: AppearConditionsPassed},{new:true},function(err, result){
                     if (err)
                         return cbk(err);                    
                     cbk();

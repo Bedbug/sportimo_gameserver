@@ -759,7 +759,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
 
                 // Determine if the event is a successful penalty, in this case create an extra Goal event
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 17) {
-                    // setTimeout(function () {
+                    setTimeout(function () {
                     var goalEvent = _.cloneDeep(event);
                     goalEvent.playEvent.playEventId = 11;
                     goalEvent.playEvent.name = 'Goal';
@@ -776,7 +776,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                         var translatedGoalEvent = that.TranslateMatchEvent(goalEvent);
                         that.feedService.AddEvent(translatedGoalEvent);
                     }
-                    // }, 0);
+                    }, 1000);
                 }
                 // Determine if the event is an own goal, in this case create an extra Goal event for the opposite team
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 28) {
@@ -808,7 +808,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                                 that.feedService.AddEvent(translatedGoalEvent);
                             }
                         }
-                    }, 0);
+                    }, 1000);
                 }
                 // Determine if the event includes a deflected post, in this case create a deflected post event
                 if (event.saveType && event.saveType.saveTypeId == 17) // Deflected around post
