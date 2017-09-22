@@ -255,9 +255,9 @@ var ModerationModule = {
                     if (!match) {
                         log.info(ModerationModule.count);
                         if (cbk)
-                            return cbk(new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
+                            return cbk("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches",null);
                         else
-                            return (new Error("No match with this ID could be found in the database. There must be a match in the database already in order for it to be transfered to the Active matches"));
+                            return (null);
                     }
 
                     var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
