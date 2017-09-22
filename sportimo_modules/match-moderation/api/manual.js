@@ -123,7 +123,7 @@ module.exports = function (ModerationModule) {
                 break;
             case "Add":
                 log.info("Add Event Request for matchid [" + match_id + "] with event ID [" + req.body.data.id + "]");
-                ModerationModule.GetMatch(match_id).AddEvent(req.body, function (err, result) {
+                ModerationModule.GetMatch(match_id).AddEvent(req.body, true, function (err, result) {
                     res.status(200).send(result);
                 })
                 break;
