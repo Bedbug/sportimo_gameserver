@@ -263,11 +263,16 @@ var ModerationModule = {
                     var foundMatch = _.find(ModerationModule.ModeratedMatches, { id: match.id });
 
                     if (foundMatch) {
+                        // Terminate the active services on the match
                         foundMatch.Terminate();
+                        // Clear all timers that might be active
+                        foundMatch.Timers.clear();
                         // remove match in case it already exists
                         _.remove(ModerationModule.ModeratedMatches, {
                             id: matchid
                         });
+                        // Release to GC
+                        foundMatch = null;
                     }
 
                     var hookedMatch = new match_module(match, RedisClientPub, RedisClientSub, shouldInitAutoFeed);
