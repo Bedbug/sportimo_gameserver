@@ -147,6 +147,7 @@ MessagingTools.sendPushToUsers = function (userids, message, data, type, callbac
             if (!err) { 
 
                 var failed = 0;
+                if(body.response && body.response.UnknownDevices)
                   _.forOwn(body.response.UnknownDevices, function(value, key) {
                       failed+= value.length;
                    } );

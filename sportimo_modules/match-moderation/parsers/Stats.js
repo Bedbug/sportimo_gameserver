@@ -743,15 +743,20 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                 // Determine if the event is a Goal, and whether is coming right after an own goal (in this case just ignore it)
                 if (event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11 && that.lastOwnGoal > 0) {
                     var goalTime = ComputeEventMatchTime(event);
-                    if (that.lastOwnGoal + 60 < goalTime && that.lastGoal < goalTime){
+                    if (that.lastOwnGoal + 60 < goalTime && that.lastGoal + 90 < goalTime){
                         that.feedService.AddEvent(translatedEvent);
                         that.lastGoal = goalTime;
+                    }else{
+                        log.info("Ignoring GOAL event. An own goal has been registered in the game less than the required time elapsed")
                     }
                 }else if(event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11){
                     var goalTime = ComputeEventMatchTime(event);
-                    if (that.lastGoal < goalTime){
+                    if (that.lastGoal + 90 < goalTime){
                         that.feedService.AddEvent(translatedEvent);
                         that.lastGoal = goalTime;
+                    }
+                    else{
+                        log.info("Ignoring GOAL event. An Goal has already been registered in the game less than the required time elapsed")
                     }
                 }
                 else

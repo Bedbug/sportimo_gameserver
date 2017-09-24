@@ -83,7 +83,7 @@ function feedService(service) {
     this.active = service.active === 'undefined' || service.active == null ? true : service.active;
 
     // Should we log all events received from feed or just the last one
-    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ? false : service.logAllEvents;
+    this.logAllEvents = service.logAllEvents === 'undefined' || service.logAllEvents == null ? process.env.NODE_ENV == "development" ? true : false : service.logAllEvents;
     this.storeStatsRespponses = process.env.NODE_ENV == "development" ? true : false ;
     this.parser = null;
 }
