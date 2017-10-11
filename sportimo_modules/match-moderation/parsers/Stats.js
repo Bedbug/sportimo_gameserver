@@ -140,6 +140,7 @@ function Parser(matchContext, feedServiceContext) {
     this.currentSegment = 0;    // this will resolve when a new segment arrives, will not be dupped by same segment consequent events
     this.lastOwnGoal = 0;       // this records the time the last own_goal events came, in order to ignore a potential goal event on the same minute
     this.lastGoal = 0;          // this records the time of the last goal,  in order to ignore a potential goal event on the same minute
+    this.lastGoalEvent = null;
     this.penaltiesSegmentStarted = false;
 
     // the parser upon initialization will inquire about the competition mappings
@@ -675,11 +676,12 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
     // we substitute the events Array with the clone of the previous call
     events = _.cloneDeep(that.eventsLastFeedRequest);
     // And we store the current call to be parsed in the next tick
-    // if (that.eventsLastFeedRequest.length == 0) {
-    //     that.eventsLastFeedRequest = currentEvents;                 
-    //     setTimeout(function(){
-    //         that.TickMatchFeed()
-    //     }, 2000);
+    if (that.eventsLastFeedRequest.length == 0) {
+        that.eventsLastFeedRequest = currentEvents;                 
+        setTimeout(function(){
+            that.TickMatchFeed()
+        }, 2000);
+    }
     //     return;
     // }else{
         that.eventsLastFeedRequest = currentEvents;
@@ -747,7 +749,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                         that.feedService.AddEvent(translatedEvent);
                         that.lastGoal = goalTime;
                     }else{
-                        log.info("Ignoring GOAL event. An own goal has been registered in the game less than the required time elapsed")
+                        log.info("Ignoring GOAL event. An own goal has been registered in the game less than the required elapsed time ")
                     }
                 }else if(event.playEvent && event.playEvent.playEventId && event.playEvent.playEventId == 11){
                     var goalTime = ComputeEventMatchTime(event);
@@ -756,7 +758,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
                         that.lastGoal = goalTime;
                     }
                     else{
-                        log.info("Ignoring GOAL event. An Goal has already been registered in the game less than the required time elapsed")
+                        log.info("Ignoring GOAL event. An Goal has already been registered in the game less than the required elapsed time ")
                     }
                 }
                 else

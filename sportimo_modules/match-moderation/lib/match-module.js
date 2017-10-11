@@ -1009,16 +1009,27 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
 
             if (result)
                 HookedMatch.data = _.merge(HookedMatch.data, updateObject);
+            
+            // ToDo: When ready, uncomment the following:
+            // HookedMatch.gamecards.ReEvaluateAll(HookedMatch.id, function(gamecardsError) {
+            //     if (gamecardsError)
+            //         log.error(gamecardsError);
+                      // Inform Clients for the new event to draw
+            // PubChannel.publish("socketServers", JSON.stringify({
+            //     sockets: true,
+            //     payload: {
+            //         type: "Match_Reload",
+            //         room: thisMatch._id.toString(),
+            //     }
+            // }
+            // ));
+            //     if (cbk)
+            //         return cbk(null, eventToUpdate);
+            //     else
+            //         return HookedMatch;
+            // });
 
-            // Inform Clients for the new event to draw
-            PubChannel.publish("socketServers", JSON.stringify({
-                sockets: true,
-                payload: {
-                    type: "Match_Reload",
-                    room: thisMatch._id.toString(),
-                }
-            }
-            ));
+          
 
             return HookedMatch;
         });
