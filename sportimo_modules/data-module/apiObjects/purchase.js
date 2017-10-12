@@ -81,7 +81,7 @@ api.verifySubscription = function (data, cb) {
       androidpublisher.purchases.subscriptions.get({
         auth: jwtClient,
         packageName: data.packageName,
-        subscriptionId: "com.sportimo.subscription.weeklyalt",
+        subscriptionId: "com.sportimo.subscription.monthly",
         token: data.purchaseToken
       }, function (err, resp) {
 
