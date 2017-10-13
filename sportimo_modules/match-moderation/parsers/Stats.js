@@ -90,6 +90,7 @@ var timelineEvents = {
     "16": "Offside",
     "17": "Penalty",
     "18": "Penalty",
+    "19": "Shot_on_Goal",   // forcing simple shot events to be registered as Shot_on_Goal as well
     "20": "Shot_on_Goal",
     // "22": "Substitution",
     "28": "Own_Goal"
