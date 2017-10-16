@@ -113,6 +113,10 @@ function Parser(matchContext, feedServiceContext) {
     this.recurringTask = null;
     this.scheduledTask = null;
 
+    // determines whether the match is simulated from previously recorded events in all_events kept in matchfeedstatuses
+    this.simulationStep = 0;
+    this.isSimulated = false;
+
     // holder of the match events in the feed that are fetched by the most recent call to GetMatchEvents.
     this.eventFeedSnapshot = {};
     this.incompleteEventsLookup = {};
@@ -147,6 +151,7 @@ function Parser(matchContext, feedServiceContext) {
     // the parser upon initialization will inquire about the competition mappings
     this.league = null;
 }
+
 
 Parser.prototype.init = function (cbk) {
     var that = this;
@@ -290,9 +295,20 @@ Parser.prototype.init = function (cbk) {
                     // MessagingTools.sendPushToAdmins({ en: 'Timer scheduled successfully for matchid: ' + that.matchHandler.id + ' at ' + formattedScheduleDate.toDate() });
                 } else
                     if (!that.matchHandler.completed || that.matchHandler.completed == false) {
-
-                        log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
-                        that.TickMatchFeed();
+                        //that.feedService.LoadAllEventsStream(that.matchHandler.id, function (loadErr, allEvents) {
+                        //    if (loadErr || !allEvents) {
+                        //        log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
+                        //        that.TickMatchFeed();
+                        //    }
+                        //    else {
+                        //        that.simulationStep = true;
+                        //        log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
+                        //        that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
+                        //    }
+                        //});
+                        that.isSimulated = true;
+                        log.info('[Stats parser]: Simulated events stream Timer started for matchid %s', that.matchHandler.id);
+                        that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
                     }
 
                 // console.log(scheduler.scheduledJobs);
@@ -364,6 +380,25 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
             if (callback)
                 return callback(err);
         }
+    });
+};
+
+
+Parser.prototype.GetNextSimulatedEventStream = function (matchId, simulationStep, callback) {
+    let that = this;
+
+    that.feedService.LoadAllEventsStream(matchId, simulationStep, function (error, allEvents) {
+        if (error || !allEvents) {
+            // End match, do not keep perpetually the loop while looking for events that do not exist
+            that.feedService.EndOfMatch(that.matchHandler);
+            // Send an event that the match is ended.
+            setTimeout(function () {
+                that.Terminate();
+                // }, that.feedService.queueCount * 1000);
+            }, 1000);
+        }
+
+        return callback(error, allEvents, null, null, null);
     });
 };
 
@@ -620,7 +655,12 @@ Parser.prototype.TickMatchFeed = function () {
         //     GetMatchEventsWithBox(leagueName, that.matchParserId, that.TickCallback.bind(that), that);
         //     that.ticks = 1;
         // } else {
-        GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
+
+        if (!that.isSimulated)
+            GetMatchEvents(leagueName, that.matchParserId, that.TickCallback.bind(that));
+        else 
+            that.GetNextSimulatedEventStream(that.matchHandler.id, that.simulationStep++, that.TickCallback.bind(that));
+
         // log.info('[Match module] Tick to match stats: '+ (numberOfTicksBeforeBoxscore-that.ticks));
         // that.ticks++;
         // }
@@ -733,7 +773,7 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
 
     if (that.matchHandler) {
         // that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
-        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup, JSON.stringify(feedResponse));
+        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, !that.isSimulated ? events : null, that.incompleteEventsLookup, JSON.stringify(feedResponse));
     }
 
     if (that.isPaused != true) {

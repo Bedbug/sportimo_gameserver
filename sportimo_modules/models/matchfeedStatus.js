@@ -10,8 +10,7 @@ else {
         matchid: String,
         parsed_eventids: [String],
         incomplete_events: mongoose.Schema.Types.Mixed,
-        diffed_events: [mongoose.Schema.Types.Mixed],
-        all_events: [mongoose.Schema.Types.Mixed]
+        diffed_events: [mongoose.Schema.Types.Mixed]
       });
 
     module.exports = mongoose.model("matchfeedStatuses", matchfeedStatus);
