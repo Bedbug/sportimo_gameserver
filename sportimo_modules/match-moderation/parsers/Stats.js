@@ -295,17 +295,8 @@ Parser.prototype.init = function (cbk) {
                     // MessagingTools.sendPushToAdmins({ en: 'Timer scheduled successfully for matchid: ' + that.matchHandler.id + ' at ' + formattedScheduleDate.toDate() });
                 } else
                     if (!that.matchHandler.completed || that.matchHandler.completed == false) {
-                        //that.feedService.LoadAllEventsStream(that.matchHandler.id, function (loadErr, allEvents) {
-                        //    if (loadErr || !allEvents) {
                         //        log.info('[Stats parser]: Fetching only once feed events for matchid %s', that.matchHandler.id);
                         //        that.TickMatchFeed();
-                        //    }
-                        //    else {
-                        //        that.simulationStep = true;
-                        //        log.info('[Stats parser]: Timer started for matchid %s', that.matchHandler.id);
-                        //        that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
-                        //    }
-                        //});
                         that.isSimulated = true;
                         log.info('[Stats parser]: Simulated events stream Timer started for matchid %s', that.matchHandler.id);
                         that.recurringTask = setInterval(Parser.prototype.TickMatchFeed.bind(that), interval);
