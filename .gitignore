@@ -2,6 +2,9 @@
 .gitattributes
 debug.log
 sportimo_modules/*.log
+GameServer.njsproj
 node_modules
+bin
+obj
 
 .DS_Store

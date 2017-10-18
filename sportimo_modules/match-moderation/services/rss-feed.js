@@ -20,7 +20,8 @@ var path = require('path'),
     EventEmitter = require('events'),
     util = require('util'),
     winston = require('winston'),
-    _ = require('lodash');
+    _ = require('lodash'),
+    async = require('async');
 
 
 var log = new (winston.Logger)({
@@ -281,17 +282,34 @@ feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents
             // statResponse.save(function(err, response){
             // });
         }
-            
 
-        mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({ matchid: matchId }, { $set: { matchid: matchId, parsed_eventids: events, incomplete_events: incompleteEvents }, $push: { diffed_events: diffedEvents, all_events: allEvents } }, { upsert: true }, function (err, result) {
-            if (err) {
-                log.error("Error while saving parser eventIds in match moderation: %s", err.message);
-                return;
-            }
-        });
+        async.parallel(
+            [
+                function (pcbk) {
+                    return mongoose.mongoose.models.matchfeedStatuses.findOneAndUpdate({ matchid: matchId }, { $set: { matchid: matchId, parsed_eventids: events, incomplete_events: incompleteEvents }, $push: { diffed_events: diffedEvents } }, { upsert: true }, pcbk);
+                },
+                function (pcbk) {
+                    if (!allEvents)
+                        return async.setImmediate(function () {
+                            pcbk(null);
+                        });
+
+                    const allEventsInstance = new mongoose.mongoose.models.matchRawEventsStreams({
+                        matchid: matchId,
+                        events_time: new Date(),
+                        all_events: allEvents
+                    });
+                    return allEventsInstance.save(pcbk);
+                }
+            ],
+            function (parallelError, results) {
+                if (parallelError)
+                    log.error("Error while saving parser eventIds in match moderation: %s", err.message);
+            });
+
     }
     catch (error) {
-        log.error("Error while loading competition from Mongo: %s", error.message);
+        log.error("Error while saving parser eventIds in Mongo: %s", error.message);
         return;
     }
 };
@@ -301,9 +319,9 @@ feedService.prototype.LoadParsedEvents = function (matchId, callback) {
         return;
 
     try {
-        mongoose.mongoose.models.matchfeedStatuses.findOne({ matchid: matchId }, function (err, result) {
+        mongoose.mongoose.models.matchfeedStatuses.findOne({ matchid: matchId }, 'parsed_eventids incomplete_events', function (err, result) {
             if (err) {
-                log.error("Error while saving parser eventIds in match moderation: %s", err.message);
+                log.error("Error while loading parser eventIds in match moderation: %s", err.message);
                 return callback(err);
             }
             if (!result || !result.parsed_eventids)
@@ -313,7 +331,33 @@ feedService.prototype.LoadParsedEvents = function (matchId, callback) {
         });
     }
     catch (error) {
-        log.error("Error while loading competition from Mongo: %s", error.message);
+        log.error("Error while loading parser eventIds from Mongo: %s", error.message);
+        return callback(error);
+    }
+};
+
+
+feedService.prototype.LoadAllEventsStream = function (matchId, stepNo, callback) {
+    if (!mongoose)
+        return;
+
+    if (!stepNo)
+        stepNo = 0;
+
+    try {
+        mongoose.mongoose.models.matchRawEventsStreams.findOne({ matchid: matchId }).sort({ events_time: 1 }).skip(stepNo).limit(1).exec(function (err, result) {
+            if (err) {
+                log.error("Error while loading raw events stream in match moderation: %s", err.message);
+                return callback(err);
+            }
+            if (!result || !result.all_events || result.all_events.length == 0)
+                return callback(null);
+
+            callback(null, result.all_events);
+        });
+    }
+    catch (error) {
+        log.error("Error while loading raw events stream from Mongo: %s", error.message);
         return callback(error);
     }
 };
