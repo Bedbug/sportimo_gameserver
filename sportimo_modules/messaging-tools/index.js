@@ -35,8 +35,8 @@ var transporter = nodemailer.createTransport(smtpTransport({
     secure: true,
     port: 465,
     auth: {
-        user: 'aris.brink@sportimo.com',
-        pass: 'Pass1234!'
+        user: 'sportimodubai@gmail.com',
+        pass: 'GoingUp123!'
     },
     tls: {
         rejectUnauthorized: false
