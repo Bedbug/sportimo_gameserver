@@ -3,7 +3,7 @@
 var amqp = require('amqplib/callback_api');
 
 
-const connString = 'amqps://gu-group:3iqAJvFlU0Y4bjB7MNkA4tu8tDMNI4QVYkh@queue.softnetsport.com:5672/statscore';
+const connString = 'amqp://gu-group:3iqAJvFlU0Y4bjB7MNkA4tu8tDMNI4QVYkh@queue.softnetsport.com:5672/statscore';
 
 let rabbit = null;
 try {
