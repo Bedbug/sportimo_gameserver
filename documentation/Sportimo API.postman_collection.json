@@ -1,0 +1,734 @@
+{
+	"info": {
+		"name": "Sportimo API",
+		"_postman_id": "bb0eab56-e250-7e1f-5804-3a15b8b3199a",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Client API",
+			"description": "",
+			"item": [
+		{
+			"name": "Http Requests",
+			"description": "",
+			"item": [
+				{
+					"name": "Authenticate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"demo\",\n    \"password\":\"user\"\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/users/authenticate",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"users",
+								"authenticate"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "X-Access-Token",
+								"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1NmUwMDNiODMxZTM0ZDRjMmVjZTJiNzciLCJuYW1lIjoiRGVtbyBVc2VyIiwidXNlcm5hbWUiOiJkZW1vIiwicGFzc3dvcmQiOiIkMmEkMTAkNHZ2MEdObjBKZDhILzJIbVV5QlplTzc2ZmltU2RxNnQya3hDb09zeW1sWW5HUE1YOUN1bGkiLCJfX3YiOjAsImlkIjoiNTZlMDAzYjgzMWUzNGQ0YzJlY2UyYjc3IiwiaWF0IjoxNDU3NzkzOTY5LCJleHAiOjE0NTc4ODAzNjl9.Ey5QyoaimFLb-52XEQ5HdMCvsopq97e3jglrnprs5Zk"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/users/56e003b831e34d4c2ece2b77",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"users",
+								"56e003b831e34d4c2ece2b77"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n        \"name\": \"Demo User\",\r\n        \"username\": \"demo\",\r\n        \"password\": \"user\",\r\n        \"country\": \"GR\"\r\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/users",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"users"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get scheduled Matches",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"competitionid\": \"56f4800fe4b02f2226646297\",\n    \"visiblein\": []\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/data/schedule/country/GR",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"data",
+								"schedule",
+								"country",
+								"GR"
+							]
+						},
+						"description": "Client must pass the country of the registered user in order to receive tailored scheduled matches"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Match data for User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"competitionid\": \"56f4800fe4b02f2226646297\",\n    \"visiblein\": []\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/data/match/56a38549e4b067030e9f871d/user/123",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"data",
+								"match",
+								"56a38549e4b067030e9f871d",
+								"user",
+								"123"
+							]
+						},
+						"description": "Get tailored match data for the specific User"
+					},
+					"response": []
+				},
+				{
+					"name": "Get TimeSpan Pools (season,weeklies,custom)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "https://sportimo.mod.bz/leaderpay/v1/pools/timed/GR",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"leaderpay",
+								"v1",
+								"pools",
+								"timed",
+								"GR"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Standings by Country",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/data/standings/country/GR",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"data",
+								"standings",
+								"country",
+								"GR"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get News",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"type\": \"News\",\n    \"limit\": 30\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/data/articles/search",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"data",
+								"articles",
+								"search"
+							]
+						},
+						"description": "if you need news for a certain match just add the \"reated\" condition.\n\ne.g.:\n\n\"related\":\"56d819d5e4b0fe04edb4fa05\""
+					},
+					"response": []
+				},
+				{
+					"name": "Get Pools for Game",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "https://sportimo.mod.bz/leaderpay/v1/pools/forgame/56bb621cde6e82ea00ad4cb6/GR",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"leaderpay",
+								"v1",
+								"pools",
+								"forgame",
+								"56bb621cde6e82ea00ad4cb6",
+								"GR"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Live Leaderboard from pool",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\n    \"_id\": \"56e6d357500be3ea00b11237\",\n    \"title\": {\n      \"en\": \"Default Leaderboard\",\n      \"ru\": \"Agdhgherjhr\"\n    },\n    \"roomtype\": \"Game\",\n    \"gameid\": \"56bb621cde6e82ea00ad4cb6\",\n    \"starts\": null,\n    \"ends\": null,\n    \"sponsor\": null,\n    \"isdefault\": true,\n    \"prizetype\": \"Prizetype.Gift\",\n    \"__v\": 0,\n    \"created\": \"2016-03-14T15:05:59.766Z\",\n    \"country\": [],\n    \"prizes\": [],\n    \"players\": [],\n    \"status\": \"Active\"\n  }"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/leaderpay/v1/leaderboards",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"leaderpay",
+								"v1",
+								"leaderboards"
+							]
+						},
+						"description": "You can send a conditions object\nvar conditions = {};\nor a pool room to get the coresponding leaderboard."
+					},
+					"response": []
+				},
+				{
+					"name": "Client answers a question",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userid\": \"123\",\r\n    \"questionid\": \"5706638ce4b00909525b3059\",\r\n    \"matchid\": \"56a38549e4b067030e9f871d\",\r\n    \"answerid\": \"56a38549e4b067030e9f8701\"\r\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/questions/5706638ce4b00909525b3059/user",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"questions",
+								"5706638ce4b00909525b3059",
+								"user"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Get client messages inbox",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\":\"demo\",\n    \"password\":\"user\"\n}"
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/users/56debc2fa5eb8c080bdb261d/messages",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"users",
+								"56debc2fa5eb8c080bdb261d",
+								"messages"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Web Sockets",
+			"description": "",
+			"item": [
+				{
+					"name": "Register",
+					"request": {
+						"method": "LINK",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"register\":{\n        \"uid\": @USER_ID\n        \"uname\": @USER_USERNAME\n    }\n}"
+						},
+						"url": {
+							"raw": "wss://socketserverv2-56658.onmodulus.net/",
+							"protocol": "wss",
+							"host": [
+								"socketserverv2-56658",
+								"onmodulus",
+								"net"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Message for registration is sent after user is authenticated on client app."
+					},
+					"response": []
+				},
+				{
+					"name": "Subscribe",
+					"request": {
+						"method": "LINK",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"subscribe\":{\n        \"room\": @MATCH_ID\n    }\n}"
+						},
+						"url": {
+							"raw": "wss://socketserverv2-56658.onmodulus.net/",
+							"protocol": "wss",
+							"host": [
+								"socketserverv2-56658",
+								"onmodulus",
+								"net"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Message  is sent every time a user enters a match view in client app."
+					},
+					"response": []
+				},
+				{
+					"name": "UnSubscribe",
+					"request": {
+						"method": "LINK",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"unsubscribe\":{\n        \"room\": @MATCH_ID\n    }\n}"
+						},
+						"url": {
+							"raw": "wss://socketserverv2-56658.onmodulus.net/",
+							"protocol": "wss",
+							"host": [
+								"socketserverv2-56658",
+								"onmodulus",
+								"net"
+							],
+							"path": [
+								""
+							]
+						},
+						"description": "Message  is sent every time a user exites a match view in the client app."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "{{ClientServerHostnamePort}}api/user/signon",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Accept",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n\"username\": \"elias@bedbugstudio.com\",\r\n\"password\": \"elias\"\r\n}"
+				},
+				"url": {
+					"raw": "{{ClientServerHostnamePort}}/api/session/dessert",
+					"host": [
+						"{{ClientServerHostnamePort}}"
+					],
+					"path": [
+						"api",
+						"session",
+						"dessert"
+					]
+				},
+				"description": "request for a new dessert game mode session"
+			},
+			"response": []
+		}			]
+		},
+		{
+			"name": "Data API",
+			"description": "",
+			"item": [
+{
+			"name": "Post match id",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "https://sportimo.mod.bz/v1/live/match/",
+					"protocol": "https",
+					"host": [
+						"sportimo",
+						"mod",
+						"bz"
+					],
+					"path": [
+						"v1",
+						"live",
+						"match",
+						""
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "Search Articles",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"tags\": \"Loko\",\n    \"minDate\": \"2016-03-03T00:00:00.000Z\",\n    \"maxdate\": \"2016-03-03T00:00:00.000Z\",\n    \"type\": \"Interview\",\n    \"related\":\"56d819d5e4b0fe04edb4fa05\",\n    \"limit\": 1\n}"
+				},
+				"url": {
+					"raw": "https://sportimo.mod.bz/v1/data/articles/search",
+					"protocol": "https",
+					"host": [
+						"sportimo",
+						"mod",
+						"bz"
+					],
+					"path": [
+						"v1",
+						"data",
+						"articles",
+						"search"
+					]
+				},
+				"description": "Search Articles"
+			},
+			"response": []
+		},
+		{
+			"name": "Get Tags",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {},
+				"url": {
+					"raw": "https://sportimo.mod.bz/v1/data/tags",
+					"protocol": "https",
+					"host": [
+						"sportimo",
+						"mod",
+						"bz"
+					],
+					"path": [
+						"v1",
+						"data",
+						"tags"
+					]
+				},
+				"description": "Get Tags"
+			},
+			"response": []
+		}
+		]
+		},
+		{
+			"name": "Offline Data API",
+			"description": "",
+			"item": [
+			{
+			"name": "Http Endpoints",
+			"description": "",
+			"item": [
+				{
+					"name": "https://sportimo.mod.bz/v1/offline_data/teams",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": ""
+						},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/offline_data/teams",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"offline_data",
+								"teams"
+							]
+						},
+						"description": "Update all teams from all registered competitions (as long as they have a valid 'parserids' property with a \"Stats\" key)"
+					},
+					"response": []
+				},
+				{
+					"name": "https://sportimo.mod.bz/v1/offline_data/standings/56f4800fe4b02f2226646297",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/offline_data/standings/56f4800fe4b02f2226646297",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"offline_data",
+								"standings",
+								"56f4800fe4b02f2226646297"
+							]
+						},
+						"description": "Update the team standings for the selected competition Id (object id from the Competitions Mongo collection)"
+					},
+					"response": []
+				},
+				{
+					"name": "https://sportimo.mod.bz/v1/offline_data/fixtures/56f4800fe4b02f2226646297",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"body": {},
+						"url": {
+							"raw": "https://sportimo.mod.bz/v1/offline_data/fixtures/56f4800fe4b02f2226646297",
+							"protocol": "https",
+							"host": [
+								"sportimo",
+								"mod",
+								"bz"
+							],
+							"path": [
+								"v1",
+								"offline_data",
+								"fixtures",
+								"56f4800fe4b02f2226646297"
+							]
+						},
+						"description": "Get next fixtures for the selected competition id until the end of the season."
+					},
+					"response": []
+				}
+			]
+		}]
+		}
+	]
+}

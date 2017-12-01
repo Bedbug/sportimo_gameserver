@@ -1,0 +1,348 @@
+
+Document Purpose: track Teams and Players' parserids mapped to Statscore ids
+
+
+
+Current state as of 2017/12/01:
+-------------------------------
+
+db.getCollection('teams').count({'parserids.Statscore': {$exists: true}})
+responds 60
+
+db.getCollection('players').count({'parserids.Statscore': {$exists: true}})
+responds 1440
+
+
+
+
+
+Analytically teams and players not mapped (due to name differences) with out automation code and need manual editing:
+---------------------------------------------------------------------------------------------------------------------
+
+"competitionId" : "56f4800fe4b02f2226646297",	// Premier League
+
+18 teams mapped, 2 teams missed mapping:
+id: 136237, name: Brighton and Hove Albion Football Club
+id: 136261, name: Bournemouth AFC
+
+460 players mapped, 108 players missed mapping:
+id: 234998, name: Wilfredo Daniel Caballero
+id: 236380, name: Pedro Eliezer Rodríguez Ledesma
+id: 271073, name: Diego Da Silva Costa
+id: 355078, name: Abdul Baba Rahman
+id: 375133, name: Robert Kenedy Nunes do Nascimento
+id: 949000, name: Jake Clarke-Salter
+id: 262830, name: David De Gea Quintana
+id: 1005838, name: Demetri Mitchell
+id: 374728, name: Bernardo Mota Veiga de Carvalho e Silva
+id: 382810, name: Oluwatosin 'Tosin' Adarabioyo
+id: 391307, name: Patrick Roberts
+id: 398567, name: Gabriel Fernando de Jesus
+id: 984924, name: Brahim Abdelkader Diaz
+id: 988341, name: Philip Foden
+id: 165891, name: Idrissa Gana Gueye
+id: 175246, name: José Ramiro Funes Mori
+id: 393726, name: Dominic Calvert-Levin
+id: 202217, name: Ignacio Monreal Eraso
+id: 297748, name: Mohamed El Nenny
+id: 380955, name: Ashley Maitland-Niles
+id: 394584, name: Vlad Dragomir
+id: 952966, name: Ben Sheaf
+id: 984920, name: Joshua Pelenda Da Silva
+id: 1013864, name: Reiss Nelson
+id: 1014904, name: Joseph Willock
+id: 1014905, name: Edward Nketiah
+id: 1014906, name: Marcus McGuane
+id: 1014907, name: Charlie Gilmour
+id: 173648, name: Rolando Maximiliano Martins Indi
+id: 229297, name: Jese Rodriguez Ruiz
+id: 244977, name: Mame Biram Diouf
+id: 255103, name: Jean-Eric Maxim Choupo-Moting
+id: 398660, name: Oliver Shenton
+id: 1016477, name: Thomas Edwards
+id: 158239, name: Robert Elliot
+id: 249690, name: Grant Hanley
+id: 276053, name: Jamal Lascelles
+id: 278437, name: Jesús Gámez Duarte
+id: 382539, name: Frederick Woodman
+id: 951959, name: Daniel Barlaser
+id: 209771, name: Fernando Llorente Torres
+id: 320164, name: Benjamin Davies
+id: 328946, name: Bamidele Jermaine Alli
+id: 378270, name: Georges-Kevin N'Koudou Mbida
+id: 386366, name: Davinson Sanchez Mina
+id: 1014652, name: Anthony Georgiou
+id: 224524, name: Javier Hernandez Balcazar
+id: 346901, name: Angelo Obinze Ogbonna
+id: 358324, name: Samuel Byram
+id: 972070, name: Antonio Martinez Lopez
+id: 1003115, name: Nathan Holland
+id: 160175, name: James Clark Morrison
+id: 254865, name: Christopher Brunt
+id: 203289, name: Daniel Ward
+id: 253849, name: John Flanagan
+id: 271542, name: Alexander Mark David Oxlade-Chamberlain
+id: 308889, name: Alberto Moreno Pérez
+id: 325739, name: Jordan Williams
+id: 382678, name: Joseph Gomez
+id: 393696, name: Cameron Brannagan
+id: 949308, name: Trent Arnold
+id: 970675, name: Oviemuno Ejaria
+id: 1003144, name: Rhian Brewster
+id: 166875, name: Robert Brady
+id: 182541, name: Christopher Wood
+id: 196897, name: Benjamin Mee
+id: 234478, name: Jeffrey Hendrick
+id: 251793, name: Johann Berg Gudmundsson
+id: 183036, name: Pape N'Diaye Souare
+id: 197454, name: Wilfred Zaha
+id: 207085, name: Patrick John Miguel van Aanholt
+id: 214998, name: Chung-Yong Lee
+id: 276755, name: Wayne Robert Hennessey
+id: 304933, name: Jeffrey Schlupp
+id: 203809, name: Virgil van Dijk
+id: 229793, name: Pierre Emil Højbjerg
+id: 277844, name: Oriol Romeu Vidal
+id: 394476, name: Samuel James McQueen
+id: 986990, name: Joshua Sims
+id: 234534, name: Jefferson Antonio Montero Vite
+id: 261344, name: Mike van der Hoorn
+id: 287049, name: Tommy Carroll
+id: 365378, name: Adam King
+id: 388298, name: Courtney Baker-Richardson
+id: 204480, name: Stefano Chuka Okaka
+id: 216809, name: Brice Djadjedje
+id: 230970, name: Thomas Hoban
+id: 252293, name: Thomas Cleverley
+id: 273922, name: Nordin Amrabat
+id: 287641, name: Costel Fane Pantilimon
+id: 946936, name: Richarlison de Andrade
+id: 991079, name: Brandon Mason
+id: 183160, name: Matthew Ryan
+id: 219197, name: Timothy Michael Krul
+id: 233351, name: Gaëtan Bong Songo
+id: 366043, name: Solomon March
+id: 367596, name: Isaih Brown
+id: 159205, name: Rajiv Van La Parra
+id: 169425, name: Thomas Ince
+id: 228889, name: Daniel Williams
+id: 261043, name: Robert Green
+id: 328903, name: Thomas Smith
+id: 371215, name: Jon Gorenc Stankovič
+id: 218056, name: Matthew James
+id: 950736, name: Benjamin Chilwell
+id: 235557, name: Bradley Smith
+id: 249761, name: Daniel Gosling
+id: 314056, name: Jordan Ibe
+
+
+"competitionId" : "588a71ec971f4ca44b4f67e0",	// UAE Arabian Gulf League
+
+9 teams mapped, 3 teams missed mapping:
+id: 137378, name: Al Ahli Club
+id: 137386, name: Sharjah Sports Club
+id: 138921, name: Al Nasr Sports Club
+0 players mapped, 0 players missed mapping:
+
+
+
+"competitionId" : "580b8731971f4ca44b4f63e8",	// Saudi Professional League
+
+9 teams mapped, 8 teams missed mapping:
+id: 137341, name: Al-Ahli Saudi Sport Club (Jeddah)
+id: 137345, name: Al Shabab Football Club (Riyadh)
+id: 138893, name: Al-Taawoun Football Club
+id: 138963, name: Al Ohud Club Medina
+id: 139970, name: Al Qadsia Sporting Club
+id: 140723, name: Al Ahli SC (Doha)
+id: 143423, name: Al Baten Club
+id: 148014, name: Al Shabab Club (Oman)
+
+
+
+"competitionId" : "577ec1011916317238fd2f33",	// Germany Bundesliga
+
+12 teams mapped, 6 teams missed mapping:
+id: 136354, name: TSG 1899 Hoffenheim
+id: 136356, name: Bayer 04 Leverkusen
+id: 136358, name: Borussia Mönchengladbach
+id: 136365, name: Hertha BSC
+id: 136369, name: SV Werder Bremen
+id: 136373, name: 1. FSV Mainz 05
+
+476 players mapped, 63 players missed mapping:
+id: 398465, name: Jorge Mere Perez
+id: 953930, name: Jannes-Kilian Horn
+id: 1012089, name: Brady Scott
+id: 1012093, name: Joao Ricardo Pereira Queiros
+id: 1021177, name: Anas Ouahim
+id: 173925, name: Wendell Nascimento Borges
+id: 257324, name: Vladen Yurchenko
+id: 210684, name: Marcio Rafael Ferreira de Souza
+id: 366733, name: Thiago Alcantara do Nascimento
+id: 970668, name: Timothy Tillmann
+id: 195467, name: Timothee Kolodziejczak
+id: 347271, name: Raffael Caetano
+id: 979971, name: Mortiz Nicolas
+id: 1013222, name: Pia Beyer
+id: 1013223, name: Verena Schoepp
+id: 247463, name: Eric Durm
+id: 948175, name: Jacob Bruun Larsen
+id: 228592, name: Danny Vieira da Costa
+id: 268847, name: Timothy Chandler
+id: 270467, name: Jonathan Alexander de Guzman
+id: 346624, name: Lucas Hradecky
+id: 985613, name: Aymane Barkok
+id: 999425, name: Renat Dadasov
+id: 160322, name: Jorge Andujar Moreno
+id: 221755, name: Evgen Konoplyanka
+id: 233891, name: Franco Matias Di Santo
+id: 268553, name: Ronaldo Aparecido Rodrigues
+id: 341234, name: Douglas dos Santos Justino de Melo
+id: 396169, name: Walace Souza Silva
+id: 953001, name: Rick van Drongelen
+id: 1013893, name: Tim Knoll
+id: 228625, name: Jonathas Cristian de Jesus
+id: 243239, name: Samuel Radlinger
+id: 261058, name: Felipe Trevizan Martins
+id: 957321, name: Noah Joel Sarenren Bazee
+id: 958630, name: Fynn Arkenberg
+id: 1008671, name: Mete-Kaan Demir
+id: 346484, name: Per Ciljan Skjelbred
+id: 231641, name: Jakub Błaszczykowski
+id: 398825, name: William de Asevedo Furtado
+id: 370963, name: Ousman Manneh
+id: 982804, name: Niklas Schmidt
+id: 1013224, name: Luca Plogmann
+id: 383706, name: Ailton Ferreira Silva
+id: 985122, name: Hans Nunoo Sarpei
+id: 179451, name: Phillipp Klement
+id: 182961, name: Pablo Ezequiel de Blasis
+id: 207258, name: Alexandru Iulian Maxim
+id: 251637, name: Jose Rodriguez
+id: 287427, name: Leon-Aderemi Balogun
+id: 317960, name: Jairo Samperio Bustara
+id: 359612, name: Emil Berggren
+id: 1013220, name: Bote Baku
+id: 278231, name: Caiuby Francisco da Silva
+id: 985022, name: Killian Jakob
+id: 214420, name: Florian Bruns
+id: 345651, name: Marc Oliver Kempf
+id: 364443, name: Jonas Meffert
+id: 385618, name: Mohamed Drager
+id: 263331, name: Armindo Tue Na Bangna
+id: 944603, name: Bernardo Fernandes da Silva Junior
+id: 949217, name: Dayotchanculle Upamecano
+id: 1012098, name: Nikolas-Gerrit Kuhn
+
+
+
+"competitionId" : "577ec1381916317238fd2f34",	// Italy serie A
+
+12 teams mapped, 8 teams missed mapping:
+id: 136563, name: ACF Fiorentina
+id: 136564, name: AS Roma
+id: 136566, name: FC Bologna
+id: 136571, name: F.C. Internazionale Milano S.p.A.
+id: 136576, name: SSC Napoli
+id: 136595, name: US Sassuolo
+id: 137773, name: FC Crotone
+id: 138691, name: Hellas Verona Football Club Malta
+
+515 players mapped, 96 players missed mapping:
+id: 203219, name: Jose Ernesto Sosa
+id: 204411, name: Gabriel Vasconelos Ferreira
+id: 245849, name: M'baye Niang
+id: 246475, name: Carlos Arturo Bacca Ahumada
+id: 254165, name: Jherson Vergara Amu
+id: 329111, name: Jesus Joaquín Fernandez Saenz de la Torre
+id: 278283, name: Vitor Hugo Franchescoli de Souza
+id: 360903, name: Bruno Miguel Boialvo Gaspar
+id: 376343, name: Giovanni Pablo Simeone
+id: 955492, name: Petko Hristov
+id: 180901, name: Alisson Ramses Becker
+id: 273102, name: Emerson Palmieri dos Santos
+id: 398564, name: Gerson Santos da Silva
+id: 399189, name: Nura Abdullahi
+id: 229365, name: Marten de Roon
+id: 382825, name: Timothy Castagne
+id: 203770, name: Daniele Gastaldello
+id: 234287, name: Júnior Angelo Esmael Da Costa
+id: 239834, name: Vasilios Torosidis
+id: 330057, name: Eric Pulgar
+id: 353880, name: Anthony Mounier
+id: 195070, name: Rafael de Andrade Bittencourt Pinheiro
+id: 279971, name: Gregory van der Wiel
+id: 357847, name: Pancrazio Farago
+id: 192985, name: Alejandro Miguel Rodriguez
+id: 236645, name: Antonio Cinelli
+id: 238651, name: Michele Rigione
+id: 990610, name: Sofian Kiyine
+id: 1000092, name: Flippo Pavoni
+id: 1011844, name: Mehdi Pascal Marcel Léris
+id: 1011846, name: Arthur Kevin Yamga
+id: 354882, name: Adrian Ricardo Centurion
+id: 180647, name: Eder Citadin Martins
+id: 249922, name: Stevan Jovetic
+id: 254059, name: Joao Miranda de Souza Filho
+id: 369820, name: Gabriel Barbosa Almeida
+id: 394368, name: Dalbert Henrique Chagas Estevao
+id: 251633, name: Mehdi Amine El Mouttaqi Benatia
+id: 1013758, name: Leonardo Maria Merio
+id: 187858, name: Mauricio dos Santos Nascimento
+id: 198975, name: Stefan de Vrij
+id: 328857, name: Patricio Gabarron Gil
+id: 345773, name: Thoma Strakosha
+id: 356331, name: Bartolomeu Jacinto Quissanga
+id: 373861, name: Wallace Fortuna dos Santos
+id: 400125, name: Christopher James Oikonomidis
+id: 982266, name: Luiz Felipe Ramos Marchi
+id: 1002208, name: Bruno Andre Cavaco Jordao
+id: 1005867, name: Pedro Lomba Neto
+id: 166211, name: Alessandro De Vitis
+id: 223331, name: Jose Rodolfo Pires Ribeiro
+id: 318576, name: Gianmarco Ferrari
+id: 386710, name: Michele Rocca
+id: 401021, name: Lorenco Simic
+id: 955448, name: Stanley Amuzie
+id: 1012011, name: Maxime Leverbe
+id: 174733, name: Mario Rui Silva Duarte
+id: 178652, name: Jorge Luiz Frello Filho
+id: 226515, name: Allan Marques Loureiro
+id: 279614, name: Jose María Callejon Bueno
+id: 347029, name: Juan Camilo Zuniga Mosquera
+id: 944612, name: Leandro Henrique do Nascimento
+id: 1011028, name: Alessio Zerbin
+id: 176016, name: Joel Chukwuma Obi
+id: 176882, name: Nicolas Alexis Julio N'Koulou N'Doubena
+id: 195609, name: Maximiliano Gastón Lopez
+id: 245849, name: M'baye Niang
+id: 260310, name: Iago Falque Silva
+id: 260734, name: Danilo Fernando Avelar
+id: 318643, name: Davide Zappacosta
+id: 324863, name: Mattia Aramu
+id: 370059, name: Samuel Gustafsson
+id: 399188, name: Sadiq Umar
+id: 947540, name: Lyanco Evangelista Silveira Neves Vojnovic
+id: 195609, name: Maximiliano Gastón Lopez
+id: 251189, name: Gaspar Emanuel Iniguez
+id: 346693, name: Danilo Larangera
+id: 355805, name: Rodrigo Javier de Paul
+id: 366597, name: Samir Caetano de Souza Santos
+id: 373982, name: Rijad Bajic
+id: 395818, name: Ewandro Felipe de Lima Costa
+id: 329296, name: Joseph Alfred Duncan
+id: 376444, name: Christian Dell'Orco
+id: 400504, name: Martin Erlic
+id: 954390, name: Riccardo Marchizza
+id: 954860, name: Rogério Oliveira da Silva
+id: 312685, name: Simeon Tochukwu
+id: 986275, name: Giuseppe Borello
+id: 175481, name: Jose Martin Caceres
+id: 234884, name: Nicolas David
+id: 285942, name: Romulo Souza Orestes Caldeira
+id: 1011120, name: Seung Woo Lee
+id: 326048, name: Mamadou Yaye Kanoute
+id: 954144, name: Andreaw Gravillon
+id: 981620, name: Giovanni Volpicelli
+id: 992638, name: Renato Barbosa Vischi
