@@ -283,14 +283,21 @@ Parser.prototype.init = function (cbk) {
         // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
         if (moment.utc(scheduleDate) < itsNow || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate))) {
             log.info('[Statscore parser]: Queue listener started immediately for matchid %s', that.matchHandler.id);
-            that.StartQueueReceiver().bind(that);
+            that.StartQueueReceiver(() => { return cbk(null); });
         }
         else {
             // Schedule match feed event calls
             if (scheduleDate) {
                 that.scheduledTask = scheduler.scheduleJob(that.matchHandler.id, formattedScheduleDate.toDate(), function () {
                     log.info('[Statscore parser]: Scheduled queue listener started for matchid %s', that.matchHandler.id);
-                    that.StartQueueReceiver().bind(that);
+                    that.StartQueueReceiver((rabbitErr) => {
+                        if (rabbitErr) {
+                            log.error(rabbitErr);
+                            return cbk(rabbitErr);
+                        }
+                        return cbk(null);
+                    });
+
                     //MessagingTools.sendPushToAdmins({ en: 'Statscore scheduled feed listener started for matchid: ' + that.matchHandler.id });
                 });
 
@@ -326,62 +333,61 @@ Parser.prototype.StartQueueReceiver = function (callback) {
     const connString = `amqp://${configuration.queueName}:${configuration.apiSecret}@${configuration.urlPrefix}/${configuration.virtualHost}`;
 
 
-    try {
-        amqp.connect(connString, function (err, conn) {
+    amqp.connect(connString, function (err, conn) {
 
-            that.rabbitConnection = conn;
-            if (err) {
-                console.log('Error connecting: ' + err.message);
-                return callback(err);
-            }
-            else {
-                console.log('About to create channel ...');
-                conn.createChannel(function (chErr, ch) {
-                    if (chErr) {
-                        console.log('Error creating channel: ' + chErr.message);
-                        conn.close();
-                        return callback(chErr);
-                    }
-                    else {
-                        const queue = 'gu-group';
-                        console.log('About to connect to queue ' + queue);
-                        ch.checkQueue(queue, (existErr, existOk) => {
-                            if (existErr) {
-                                return console.error(queue + ' queue does not exist: ' + existErr);
-                            }
-                            else {
-                                ch.consume(queue, (msg) => {
-                                    const msgString = msg.content.toString('utf8');
-                                    //console.log(msgString);
-                                    const msgObj = JSON.parse(msgString);
-
-                                    if (msgObj.data && msgObj.data.event && msgObj.data.event.sport_id == 5 && msgObj.data.event.id == Parser.matchParserId) {
-                                        // Consume msg properly
-                                        that.ConsumeMessage(msgObj);
-
-                                        // And then ack message
-                                        ch.ack(msg, false);
-                                    }
-                                }, { noAck: false }, (errConsume, consumeOk) => {
-                                    if (errConsume)
-                                        console.error(errConsume);
-                                });
-                            }
-                        });
-
-
-                        ch.on('error', (err) => {
-                            console.error('Channel error: ' + err);
+        that.rabbitConnection = conn;
+        if (err) {
+            console.log('Error connecting: ' + err.message);
+            return callback(err);
+        }
+        else {
+            console.log('About to create channel ...');
+            conn.createChannel(function (chErr, ch) {
+                if (chErr) {
+                    console.log('Error creating channel: ' + chErr.message);
+                    conn.close();
+                    return callback(chErr);
+                }
+                else {
+                    const queue = 'gu-group';
+                    console.log('About to connect to queue ' + queue);
+                    ch.checkQueue(queue, (existErr, existOk) => {
+                        if (existErr) {
+                            console.error(queue + ' queue does not exist: ' + existErr);
                             conn.close();
-                        });
-                    }
-                });
-            }
-        });
-    }
-    catch (error) {
-        console.error('Error opening rabbit queue: ' + error.message);
-    }
+                            return callback(existErr);
+                        }
+                        else {
+                            ch.consume(queue, (msg) => {
+                                const msgString = msg.content.toString('utf8');
+                                //console.log(msgString);
+                                const msgObj = JSON.parse(msgString);
+
+                                if (msgObj.data && msgObj.data.event && msgObj.data.event.sport_id == 5 && msgObj.data.event.id == that.matchParserId) {
+                                    // Consume msg properly
+                                    that.ConsumeMessage(msgObj);
+
+                                    // And then ack message
+                                    ch.ack(msg, false);
+                                }
+                            }, { noAck: false }, (errConsume, consumeOk) => {
+                                if (errConsume)
+                                    console.error(errConsume);
+                            });
+
+                            return callback(null);
+                        }
+                    });
+
+
+                    ch.on('error', (err) => {
+                        console.error('Channel error: ' + err);
+                        conn.close();
+                    });
+                }
+            });
+        }
+    });
 
 }
 
@@ -389,13 +395,15 @@ Parser.prototype.StartQueueReceiver = function (callback) {
 
 
 Parser.prototype.ConsumeMessage = function (message) {
-    
+    const that = this;
+
+
     if (message.data.incident) {
         const incident = message.data.incident;
         if (incident.action == 'insert') {
 
             // Check against match termination event(s)
-            if (incident.incident_id == MatchTerminationEvent || _.indexOf(MatchTerminationStates, event.status_type) > -1) {
+            if (incident.incident_id == MatchTerminationEvent || _.indexOf(MatchTerminationStates, message.data.event.status_type) > -1) {
                 log.info('[Statscore parser]: Intercepted a match Termination event.');
 
                 that.feedService.EndOfMatch(that.matchHandler);
@@ -414,7 +422,7 @@ Parser.prototype.ConsumeMessage = function (message) {
 
             // If not segment change, check against mapped Sportimo timeline events then translate event and send to event queue
             else if (SportimoTimelineEvents[incident.incident_id]) {
-                const translatedEvent = that.TranslateMatchEvent(incident);
+                const translatedEvent = that.TranslateMatchEvent(message.data);
                 that.feedService.AddEvent(translatedEvent);
             }
         }
@@ -426,7 +434,9 @@ Parser.prototype.ConsumeMessage = function (message) {
 
     // In any case, save event
     that.allEventsQueue.push(message);
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.map(that.allEventsQueue, (e) => { return e.id + ':' + e.data.incident.id; }), [], [], JSON.stringify(message));
+    that.feedService.SaveParsedEvents(that.matchHandler._id, _.map(that.allEventsQueue, (e) => {
+        return e.id + ':' + e.ut;
+    }), [], [], JSON.stringify(message));
 }
 
 
@@ -458,19 +468,21 @@ Parser.prototype.Terminate = function (callback) {
 
 
 Parser.prototype.TranslateMatchEvent = function (parserEvent) {
+    const that = this;
+
     // Basic event validation
-    if (!parserEvent || !parserEvent.incident || !parserEvent.incident.incident_id || !this.matchHandler || this.isPaused == true)
+    if (!parserEvent || !parserEvent.incident || !parserEvent.incident.incident_id || !this.matchHandler)// || this.isPaused == true)
         return null;
 
     // Validation for not supported event types
     if (!SportimoTimelineEvents[parserEvent.incident.incident_id])
         return null;
 
-    var offensivePlayer = parserEvent.subparticipant_id && this.matchPlayersLookup[parserEvent.subparticipant_id] ?
+    var offensivePlayer = parserEvent.incident.subparticipant_id && this.matchPlayersLookup[parserEvent.incident.subparticipant_id] ?
         {
-            id: this.matchPlayersLookup[parserEvent.subparticipant_id].id,
-            name: this.matchPlayersLookup[parserEvent.subparticipant_id].name,
-            team: this.matchPlayersLookup[parserEvent.subparticipant_id].teamId
+            id: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].id,
+            name: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].name,
+            team: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].teamId
         } : null;
     //var defensivePlayer = parserEvent.defensivePlayer && this.matchPlayersLookup[parserEvent.defensivePlayer.playerId] ?
     //    {
@@ -501,13 +513,13 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
             parserids: {},
             status: 'active',
             type: eventName,
-            state: TranslateMatchPeriod(parserEvent.period, parserEvent.playEvent.playEventId),
+            state: 3,
             sender: this.Name,
             time: eventTimeFromMatchStart,
             timeline_event: isTimelineEvent,
             description: {},
-            team: this.matchTeamsLookup[parserEvent.participant_id] ? this.matchTeamsLookup[parserEvent.participant_id].matchType : null,
-            team_id: this.matchTeamsLookup[parserEvent.participant_id] ? this.matchTeamsLookup[parserEvent.participant_id].id : null,
+            team: this.matchTeamsLookup[parserEvent.incident.participant_id] ? this.matchTeamsLookup[parserEvent.incident.participant_id].matchType : null,
+            team_id: this.matchTeamsLookup[parserEvent.incident.participant_id] ? this.matchTeamsLookup[parserEvent.incident.participant_id].id : null,
             match_id: this.matchHandler._id,
             players: [],
             stats: {}
@@ -515,7 +527,7 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
         created: moment.utc().toDate() // ToDo: Infer creation time from match minute
     };
 
-    translatedEvent.data.description['en'] = (parserEvent.subparticipant_name ? (parserEvent.subparticipant_name + ' ') : '') + parserEvent.participant_name + ' ' + parserEvent.incident_name;
+    translatedEvent.data.description['en'] = (parserEvent.incident.subparticipant_name ? (parserEvent.incident.subparticipant_name + ' ') : '') + parserEvent.incident.participant_name + ' ' + parserEvent.incident.incident_name;
 
     // ToDo: In certain match events, we may want to split the event in two (or three)
     if (offensivePlayer)
@@ -527,7 +539,7 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
 
     // Make sure that the value set here is the quantity for the event only, not for the whole match    
     translatedEvent.data.stats[eventName] = 1;
-    translatedEvent.data.parserids[this.Name] = eventId;
+    translatedEvent.data.parserids[that.Name] = eventId;
 
     if (parserEvent.action == 'update') {
         translatedEvent.type = 'Update';
