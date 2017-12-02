@@ -436,7 +436,7 @@ Parser.prototype.ConsumeMessage = function (message) {
     that.allEventsQueue.push(message);
     that.feedService.SaveParsedEvents(that.matchHandler._id, _.map(that.allEventsQueue, (e) => {
         return e.id + ':' + e.ut;
-    }), [], [], JSON.stringify(message));
+    }), [], [], [message]);
 }
 
 
