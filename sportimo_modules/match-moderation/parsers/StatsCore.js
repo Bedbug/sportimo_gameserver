@@ -400,7 +400,7 @@ Parser.prototype.ConsumeMessage = function (message) {
 
     if (message.data.incident) {
         const incident = message.data.incident;
-        if (incident.action == 'insert') {
+        if (incident.action == 'insert' || incident.action == 'update') {
 
             // Check against match termination event(s)
             if (incident.incident_id == MatchTerminationEvent || _.indexOf(MatchTerminationStates, message.data.event.status_type) > -1) {
@@ -470,19 +470,21 @@ Parser.prototype.Terminate = function (callback) {
 Parser.prototype.TranslateMatchEvent = function (parserEvent) {
     const that = this;
 
+    const incident = parserEvent.incident;
+
     // Basic event validation
-    if (!parserEvent || !parserEvent.incident || !parserEvent.incident.incident_id || !this.matchHandler)// || this.isPaused == true)
+    if (!parserEvent || !incident || !incident.incident_id || !this.matchHandler)// || this.isPaused == true)
         return null;
 
     // Validation for not supported event types
-    if (!SportimoTimelineEvents[parserEvent.incident.incident_id])
+    if (!SportimoTimelineEvents[incident.incident_id])
         return null;
 
-    var offensivePlayer = parserEvent.incident.subparticipant_id && this.matchPlayersLookup[parserEvent.incident.subparticipant_id] ?
+    var offensivePlayer = incident.subparticipant_id && this.matchPlayersLookup[incident.subparticipant_id] ?
         {
-            id: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].id,
-            name: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].name,
-            team: this.matchPlayersLookup[parserEvent.incident.subparticipant_id].teamId
+            id: this.matchPlayersLookup[incident.subparticipant_id].id,
+            name: this.matchPlayersLookup[incident.subparticipant_id].name,
+            team: this.matchPlayersLookup[incident.subparticipant_id].teamId
         } : null;
     //var defensivePlayer = parserEvent.defensivePlayer && this.matchPlayersLookup[parserEvent.defensivePlayer.playerId] ?
     //    {
@@ -498,12 +500,55 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
     //    } : null;
 
     const isTimelineEvent = true;
-    const eventName = SportimoTimelineEvents[parserEvent.incident.incident_id];
+    const eventName = SportimoTimelineEvents[incident.incident_id];
     // No need to do that since names are inside our pre-defined SportimoTimelineEvents dictionary, but keep it for other events in the future:
     //eventName = eventName.replace(/ /g, "_").replace(/-/g, "_"); // global string replacement
-    const eventId = parserEvent.incident.id;
-    const eventTimeFromMatchStart = +(_.split(parserEvent.incident.event_time, ':')[0]);    // get number conversion of the first part from a value such as "77:00"
-
+    const eventId = incident.id;
+    const eventTimeFromMatchStart = +(_.split(incident.event_time, ':')[0]);    // get number conversion of the first part from a value such as "77:00"
+    let matchState = null;
+    switch (incident.event_status_id) {
+        case 1:         // not started
+            matchState = 0;
+            break;
+        case 33:        // first half started
+            matchState = 1;
+            break;
+        case 9:         // halftime
+            matchState = 2;
+            break;
+        case 34:        // second half started
+            matchState = 3;
+            break;
+        case 11:        // (normal time) finished
+        case 48:        // waiting for extra time
+            matchState = 4;
+            break;
+        case 35:        // extra time first half
+            matchState = 5;
+            break;
+        case 37:        // extra time half-time
+            matchState = 6;
+            break;
+        case 36:        // extra time second half
+            matchState = 7;
+            break;
+        case 14:        // finished after extra time
+        case 142:       // waiting for penalty
+            matchState = 8;
+            break;
+        case 141:       // penalty shootout
+        case 13:        // finished after penalties
+        case 152:       // to finish
+            matchState = 9;
+            break;
+        // Not used event_status_id codes:
+        // 2: Interrupted
+        // 3: Cancelled
+        // 5: Postponed
+        // 6: Start delayed
+        // 7: Abandoned
+        // 12: Finished awarded win
+    }
 
     var translatedEvent = {
         type: 'Add',
@@ -513,13 +558,13 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
             parserids: {},
             status: 'active',
             type: eventName,
-            state: 3,
+            state: matchState,
             sender: this.Name,
             time: eventTimeFromMatchStart,
             timeline_event: isTimelineEvent,
             description: {},
-            team: this.matchTeamsLookup[parserEvent.incident.participant_id] ? this.matchTeamsLookup[parserEvent.incident.participant_id].matchType : null,
-            team_id: this.matchTeamsLookup[parserEvent.incident.participant_id] ? this.matchTeamsLookup[parserEvent.incident.participant_id].id : null,
+            team: this.matchTeamsLookup[incident.participant_id] ? this.matchTeamsLookup[incident.participant_id].matchType : null,
+            team_id: this.matchTeamsLookup[incident.participant_id] ? this.matchTeamsLookup[incident.participant_id].id : null,
             match_id: this.matchHandler._id,
             players: [],
             stats: {}
@@ -527,7 +572,7 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
         created: moment.utc().toDate() // ToDo: Infer creation time from match minute
     };
 
-    translatedEvent.data.description['en'] = (parserEvent.incident.subparticipant_name ? (parserEvent.incident.subparticipant_name + ' ') : '') + parserEvent.incident.participant_name + ' ' + parserEvent.incident.incident_name;
+    translatedEvent.data.description['en'] = (incident.subparticipant_name ? (incident.subparticipant_name + ' ') : '') + incident.participant_name + ' ' + incident.incident_name;
 
     // ToDo: In certain match events, we may want to split the event in two (or three)
     if (offensivePlayer)
@@ -541,7 +586,7 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
     translatedEvent.data.stats[eventName] = 1;
     translatedEvent.data.parserids[that.Name] = eventId;
 
-    if (parserEvent.action == 'update') {
+    if (incident.action == 'update') {
         translatedEvent.type = 'Update';
     }
 
