@@ -337,23 +337,23 @@ Parser.prototype.StartQueueReceiver = function (callback) {
 
         that.rabbitConnection = conn;
         if (err) {
-            console.log('Error connecting: ' + err.message);
+            log.error('Error connecting: ' + err.message);
             return callback(err);
         }
         else {
-            console.log('About to create channel ...');
+            log.info('About to create channel ...');
             conn.createChannel(function (chErr, ch) {
                 if (chErr) {
-                    console.log('Error creating channel: ' + chErr.message);
+                    log.error('Error creating channel: ' + chErr.message);
                     conn.close();
                     return callback(chErr);
                 }
                 else {
                     const queue = 'gu-group';
-                    console.log('About to connect to queue ' + queue);
+                    log.info('About to connect to queue ' + queue);
                     ch.checkQueue(queue, (existErr, existOk) => {
                         if (existErr) {
-                            console.error(queue + ' queue does not exist: ' + existErr);
+                            log.error(queue + ' queue does not exist: ' + existErr);
                             conn.close();
                             return callback(existErr);
                         }
@@ -372,7 +372,7 @@ Parser.prototype.StartQueueReceiver = function (callback) {
                                 }
                             }, { noAck: false }, (errConsume, consumeOk) => {
                                 if (errConsume)
-                                    console.error(errConsume);
+                                    log.error(errConsume);
                             });
 
                             return callback(null);
@@ -381,7 +381,7 @@ Parser.prototype.StartQueueReceiver = function (callback) {
 
 
                     ch.on('error', (err) => {
-                        console.error('Channel error: ' + err);
+                        log.error('Channel error: ' + err);
                         conn.close();
                     });
                 }
@@ -406,16 +406,19 @@ Parser.prototype.ConsumeMessage = function (message) {
             if (incident.incident_id == MatchTerminationEvent || _.indexOf(MatchTerminationStates, message.data.event.status_type) > -1) {
                 log.info('[Statscore parser]: Intercepted a match Termination event.');
 
-                that.feedService.EndOfMatch(that.matchHandler);
-                // Send an event that the match is ended.
-                setTimeout(function () {
-                    that.Terminate();
-                    // }, that.feedService.queueCount * 1000);
-                }, 1000);
+                // wait for remaining segment advance events (e.g. end of second half)
+                setTimout(() => {
+                    that.feedService.EndOfMatch(that.matchHandler);
+                    // Send an event that the match is ended.
+                    setTimeout(function () {
+                        that.Terminate();
+                        // }, that.feedService.queueCount * 1000);
+                    }, 1000);
+                }, 60 * 1000);
             }
 
             // If not a match termination, then check against segment change (progression) events
-            else if (SegmentProgressionEvents[incident.incident_id]) {
+            else if (incident.action == 'insert' && SegmentProgressionEvents[incident.incident_id]) {
                 log.info('[Statscore parser]: Intercepted a Segment Advance event: ' + SegmentProgressionEvents[incident.incident_id]);
                 that.feedService.AdvanceMatchSegment(that.matchHandler);
             }
@@ -436,7 +439,7 @@ Parser.prototype.ConsumeMessage = function (message) {
     that.allEventsQueue.push(message);
     that.feedService.SaveParsedEvents(that.matchHandler._id, _.map(that.allEventsQueue, (e) => {
         return e.id + ':' + e.ut;
-    }), [], [], [message]);
+    }), [], [message], [], null);
 }
 
 

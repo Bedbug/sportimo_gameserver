@@ -329,4 +329,9 @@ router.get('/', function (req, res) {
 
 app.use('/settings', router);
 
+process.on('uncaughtException', (err) => {
+    console.error(err);
+    throw err;
+});
+
 module.exports = TestSuite;
