@@ -3,7 +3,8 @@ var express = require('express'),
     path = require("path"),
     fs = require("fs"),
     async = require('async'),
-    log = require('winston');
+    log = require('winston'),
+    _ = require('lodash');
 
 
 var parsers = {};
@@ -397,28 +398,27 @@ api.UpdateAllStandings = function (req, res) {
 
 
 api.GetCompetitionFixtures = function (req, res) {
-    var response = { error: null, parsers: {} };
+    var response = { error: null, results: [] };
+    var results = [];
 
     if (!req.params.competitionId)
         return res.status(400).json({ error: "No 'competition' id parameter defined in the request path." });
 
+    var parsersToSearch = parsers;
+    if (req.query.parser)
+        parsersToSearch = _.pick(parsers, req.query.parser);
+
     try {
         // ToDo: maybe change the sequential order, and break the loop when the first parser completes the action without error.
-        async.eachSeries(parsers, function (parser, callback) {
+        async.eachSeries(parsersToSearch, function (parser, callback) {
             parser.GetCompetitionFixtures(req.params.competitionId, !req.params.season ? null : req.params.season, function (error, fixtures) {
                 if (!error) {
-                    response.parsers[parser.Name] = {
-                        error: null,
-                        comingFixtures: fixtures
-                    };
-
+                    results = results.concat(fixtures);
                     callback();
                 }
                 else {
                     log.warn('Error calling GetCompetitionFixtures for parser ' + parser.Name + ': ' + error.message);
-                    response.parsers[parser.Name] = {
-                        error: error.message
-                    };
+                    response.error = error.message;
                     callback();
                 }
             });
@@ -427,8 +427,20 @@ api.GetCompetitionFixtures = function (req, res) {
                 response.error = error.message;
                 return res.status(500).json(response);
             }
-            else
+            else {
+                var grouped = _.groupBy(results, (item) => { return item.competitionId + ':' + item.home_team + ':' + item.away_team; });
+                var mapped = _.map(grouped, (item) => {
+                    if (item.length <= 1)
+                        return item;
+                    else {
+                        item[0].moderation = _.flatMap(item, 'moderation');
+                        return [item[0]];
+                    }
+                });
+                response.results = _.flatten(mapped);
+
                 return res.status(200).json(response);
+            }
         });
     }
     catch (error) {
