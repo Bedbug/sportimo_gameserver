@@ -777,7 +777,7 @@ Parser.GetLeagueSeasonFixtures = function (competitionId, seasonId, callback) {
             if (!Parser.authToken || !Parser.authTokenExpiration || now > Parser.authTokenExpiration)
                 return Parser.Authenticate(cbk);
             else
-                return async.setImmediate(() => { return cbk(null); });
+                return async.setImmediate(() => { return cbk(null, Parser.authToken); });
         },
         (authToken, cbk) => {
             const url = `${configuration.urlPrefix}events?token=${Parser.authToken}&competition_id=${competitionId}&season_id=${seasonId}&&date_from=${date_from}&date_to=${date_to}&scoutsfeed=yes&status_type=scheduled`;
@@ -797,7 +797,9 @@ Parser.GetLeagueSeasonFixtures = function (competitionId, seasonId, callback) {
                     return cbk(null, fixtures);
                 }
                 catch (err) {
-                    return cbk(err);
+                    console.error(err);
+                    if (cbk && _.isFunction(cbk))
+                        return cbk(err);
                 }
             });
         }
