@@ -346,3 +346,202 @@ id: 326048, name: Mamadou Yaye Kanoute
 id: 954144, name: Andreaw Gravillon
 id: 981620, name: Giovanni Volpicelli
 id: 992638, name: Renato Barbosa Vischi
+
+
+
+ca0969b5bac88aa1460e3a264c72c670
+2147836
+https://api.softnetsport.com/v2/feed/2147836?token=ca0969b5bac88aa1460e3a264c72c670
+
+
+
+Champions League
+
+20 teams mapped, 12 teams missed mapping:
+id: 136330, name: RSC Anderlecht
+id: 136390, name: AS Monaco
+id: 136404, name: Paris Saint-Germain
+id: 136519, name: Olympiakos Pireus
+id: 136564, name: AS Roma
+id: 136576, name: SSC Napoli
+id: 136800, name: Sporting Clube de Portugal
+id: 136820, name: CSKA Moskva
+id: 136832, name: Spartak Moskva
+id: 136918, name: Nogometni Klub Maribor
+id: 136928, name: FC Barcelona
+id: 138299, name: Qarabag Agdam Futbol Klubu
+
+742 players mapped, 173 players missed mapping:
+id: 234998, name: Wilfredo Daniel Caballero
+id: 236380, name: Pedro Eliezer Rodríguez Ledesma
+id: 271073, name: Diego Da Silva Costa
+id: 355078, name: Abdul Baba Rahman
+id: 375133, name: Robert Kenedy Nunes do Nascimento
+id: 262830, name: David De Gea Quintana
+id: 1005838, name: Demetri Mitchell
+id: 374728, name: Bernardo Mota Veiga de Carvalho e Silva
+id: 382810, name: Oluwatosin 'Tosin' Adarabioyo
+id: 398567, name: Gabriel Fernando de Jesus
+id: 984924, name: Brahim Abdelkader Diaz
+id: 988341, name: Philip Foden
+id: 209771, name: Fernando Llorente Torres
+id: 320164, name: Benjamin Davies
+id: 328946, name: Bamidele Jermaine Alli
+id: 376029, name: Vincent Janssen
+id: 378270, name: Georges-Kevin N'Koudou Mbida
+id: 386366, name: Davinson Sanchez Mina
+id: 203289, name: Daniel Ward
+id: 253849, name: John Flanagan
+id: 271542, name: Alexander Mark David Oxlade-Chamberlain
+id: 308889, name: Alberto Moreno Pérez
+id: 325739, name: Jordan Williams
+id: 360487, name: Andrew Robertson
+id: 382678, name: Joseph Gomez
+id: 949308, name: Trent Arnold
+id: 970675, name: Oviemuno Ejaria
+id: 176692, name: Boy de Jong
+id: 211084, name: Serigne Modou Kara Mbodji
+id: 218534, name: Josue Josue
+id: 1019254, name: Abdoul Karim Dante
+id: 1019255, name: Kobe Cools
+id: 1019561, name: Albert Mboyo Sambi Lokonga
+id: 210684, name: Marcio Rafael Ferreira de Souza
+id: 366733, name: Thiago Alcantara do Nascimento
+id: 970668, name: Timothy Tillmann
+id: 247463, name: Eric Durm
+id: 948175, name: Jacob Bruun Larsen
+id: 326259, name: Marcos Paulo Mesquita Lopes
+id: 369842, name: Jemerson de Jesus Nascimento
+id: 379658, name: Balde Diao Keita
+id: 395666, name: Jorge Marco de Oliveira Moraes
+id: 975899, name: Pierre Daniel NGuinda NDiffon
+id: 1013712, name: Yannis N'Gakoutou-Yapende
+id: 1013723, name: Ibrahima Diallo
+id: 180419, name: Ángel Fabián Di María Hernández
+id: 382267, name: Goncalo Manuel Ganchinho Guedes
+id: 176285, name: Konstantinos Fortounis
+id: 178308, name: Sebastiao de Freitas Couto Junior
+id: 218261, name: El Fardou Ben Mohamed
+id: 218368, name: Uros Durdevic
+id: 225545, name: Panagiotis Tachtsidis
+id: 263977, name: Eleftherios Choutesiotis
+id: 286427, name: Alaixys Jacques Romao
+id: 383353, name: Dimitrios Nikolaou
+id: 400681, name: Pape Abou Cissé
+id: 982215, name: Athanasios Georgios Androutsos
+id: 180901, name: Alisson Ramses Becker
+id: 273102, name: Emerson Palmieri dos Santos
+id: 398564, name: Gerson Santos da Silva
+id: 399189, name: Nura Abdullahi
+id: 251633, name: Mehdi Amine El Mouttaqi Benatia
+id: 174733, name: Mario Rui Silva Duarte
+id: 178652, name: Jorge Luiz Frello Filho
+id: 207704, name: Duvan Esteban Zapata Banguera
+id: 226515, name: Allan Marques Loureiro
+id: 279614, name: Jose María Callejon Bueno
+id: 944612, name: Leandro Henrique do Nascimento
+id: 1011028, name: Alessio Zerbin
+id: 177994, name: Jan-Arie van der Heijden
+id: 194914, name: Karim Al Ahmadi Al Aroos
+id: 229255, name: Bradley Scott Jones
+id: 366768, name: Sven van Beek
+id: 400103, name: Jerry St. Juste
+id: 1011071, name: Ramon ten Hove
+id: 180900, name: Felipe Augusto De Almeida Monteiro
+id: 239958, name: Francisco das Chagas Soares dos Santos
+id: 343816, name: Vanailson Luciano De Souza Alves
+id: 979095, name: Wenderson Rodrigues do Nascimento Galeno
+id: 194113, name: Douglas Pereira dos Santos
+id: 319431, name: Alejandro Grimaldo García
+id: 381328, name: Christopher Willock
+id: 382679, name: Ruben Santos Gato Alves Dias
+id: 391094, name: Fabio Miguel Silva Duarte
+id: 391144, name: Diogo António Cupido Gonçalves
+id: 950153, name: Pedro Miguel Pereira
+id: 186797, name: Azbe Jug
+id: 199037, name: Adrien Sebastian Perruchet Silva
+id: 244447, name: Radoslav Petrovic
+id: 287640, name: Bryan Jafet Ruiz González
+id: 363951, name: Bruno Miguel Borges Fernandes
+id: 391089, name: Pedro José Moreira Silva
+id: 992450, name: Jacinto Dala
+id: 203493, name: Vasili Vladimirovich Berezutski
+id: 221309, name: Alexei Berezoutski
+id: 224345, name: Victor Vinicius Coelho Santos
+id: 248553, name: Sergei Nikolaievich Ignashevich
+id: 260728, name: Georgi Mikhailovich Shchennikov
+id: 369505, name: Aleksandr Makarov
+id: 184688, name: Aleksandr Sergeyevich Samedov
+id: 234225, name: Dmitri Vladimirovich Kombarov
+id: 235302, name: Jose Luis Mendes Andrade
+id: 238478, name: Fernando Lucas Martins
+id: 401282, name: Georgiy Tigiev
+id: 951355, name: Zelimkhan Bakaev
+id: 957546, name: Aleksandr Maximenko
+id: 976358, name: Shamsiddin Shanbiev
+id: 158678, name: Dorus de Vries
+id: 260545, name: Jonathan Hayes
+id: 337132, name: Tomas Rogic
+id: 381319, name: Jamie Mccart
+id: 257316, name: Sereso Geoffroy Gonzaroua Die
+id: 258848, name: Ricky van Wolfswinkel
+id: 367620, name: Eder Fabian Alvarez Balanta
+id: 1010338, name: Lior Inbrum
+id: 180948, name: Guilherme Magdalena Siqueira
+id: 248144, name: Saul Niguez Esclapez
+id: 284050, name: Osvaldo Nicolas Fabian Gaitan
+id: 380856, name: Sergio Gonzalez Teston
+id: 380857, name: Lucas Francois Bernard Hernandez Pi
+id: 259095, name: Marc-André ter Stegen
+id: 304250, name: Adrian Ortola
+id: 380804, name: Munir El Haddadi Mohamed
+id: 204916, name: Daniel Carvajal Ramos
+id: 225253, name: Jose Ignacio Fernandez Iglesias
+id: 395635, name: Daniel Ceballos Fernandez
+id: 398489, name: Cristo Ramón González Pérez
+id: 1011139, name: Jose Manuel Hernando Riol
+id: 1011140, name: Francisco Feuillassier Abalo
+id: 1016478, name: Mohamet Airam Ramos Wade
+id: 199102, name: Steven N'Kemboanza N'Zonzi
+id: 271929, name: Lionel Carole
+id: 276294, name: Simon Kjær
+id: 276739, name: Nicolás Martin Pareja
+id: 189485, name: Denis Boyko
+id: 196940, name: Adriano Correia Claro
+id: 197857, name: Veli Kavlak
+id: 235086, name: Tolgay Ali Arslan
+id: 953996, name: Hamza Kucukkoylu
+id: 165862, name: Davit Khocholava
+id: 177794, name: Taison Barcellos Freda
+id: 180245, name: Sergey Krivtsov
+id: 186741, name: Ismaily Goncalves dos Santos
+id: 221553, name: Bernard Anicio Caldeira Duarte
+id: 224326, name: Alan Patrick Lourenco
+id: 235564, name: Frederico Rodrigues de Paula Santos
+id: 238563, name: Bruno Ferreira Bonfim
+id: 243846, name: Gustavo Ezequiel Blanco Leschuk
+id: 283626, name: Marlos Romero Bonfim
+id: 375999, name: Maksim Malyshev
+id: 382799, name: Oleksandr Zubkov
+id: 391229, name: Oleksandr Pikhalonok
+id: 956357, name: Artem Dudik
+id: 1009131, name: Evgen Grytsenko
+id: 163993, name: Thomas Michael Oar
+id: 175250, name: Efstathios Aloneftis
+id: 186317, name: Cecilio Nauzet Perez Gonzalez
+id: 214537, name: Giorgios Merkis
+id: 226521, name: Carlos Alberto da Cruz Junior
+id: 235235, name: Giorgos Efrem
+id: 273662, name: Igor De Camargo Rinck
+id: 365026, name: Nicolas Ioannou
+id: 168459, name: Wilde Donald Guerrier
+id: 170880, name: Elshan Abdullayev
+id: 202570, name: Rashad Farhad Sadygov
+id: 202628, name: Daniel Quintana Sosa
+id: 259778, name: Miguel Marcos
+id: 381893, name: Elgyun Ulukhanov
+id: 394341, name: Sahruddin Mahammadaliyev
+id: 263331, name: Armindo Tue Na Bangna
+id: 944603, name: Bernardo Fernandes da Silva Junior
+id: 949217, name: Dayotchanculle Upamecano
+id: 1012098, name: Nikolas-Gerrit Kuhn

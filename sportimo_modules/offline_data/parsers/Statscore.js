@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 
 
 var scheduler = require('node-schedule');
@@ -8,8 +8,9 @@ var async = require('async');
 var _ = require('lodash');
 var mongoose = require('../config/db.js');
 var winston = require('winston');
-var objectId = mongoose.mongoose.Schema.ObjectId;
+var objectId = mongoose.mongoose.Types.ObjectId;
 var moment = require('moment');
+//var unidecode = require('unidecode');
 
 // Settings for the development environment
 var mongoDb = mongoose.mongoose.models;
@@ -43,30 +44,31 @@ log.add(winston.transports.Console, {
 
 // languageMapping maps Sportimo langage locale to Stats.com language Ids. For a list of ISO codes, see https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
 var languageMapping = {
-    "ar": "10", // arabic
+    //"ar": "", // arabic not supported yet
     "en": "1", // english
-    "yi": "28", // yiddish (hebrew)
-    "ru": "16" // russian
+    //"yi": "", // yiddish (hebrew) not supported yet
+    "ru": "23", // russian
+    "el": "12"
     // Add all required language mappings here from Stats.com
 };
 
 var statsComConfigDevelopment = {
     // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
-    supportedLanguages: ["en", "ar", "ru"],
-    urlPrefix: "http://api.stats.com/v1/stats/soccer/",
-    apiKey: "mct9w8ws4fbpvj5w66se4tns",//"83839j82xy3mty4bf6459rnt",
-    apiSecret: "53U7SH6N5x", //"VqmfcMTdQe",
-    parserIdName: "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
+    supportedLanguages: ["en"],
+    urlPrefix: "https://api.softnetsport.com/v2/",
+    apiKey: "132",  // actually, this is the client_id
+    apiSecret: "3iqAJvFlU0Y4bjB7MNkA4tu8tDMNI4QVYkh", 
+    parserIdName: "Statscore"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
 // Settings for the production environment
 var statsComConfigProduction = {
     // if not supportedLanguages is set in the function parameter, then set it to a default value of 1 language supported: english.
-    supportedLanguages: ["en"],
-    urlPrefix: "http://api.stats.com/v1/stats/soccer/",
-    apiKey: "mct9w8ws4fbpvj5w66se4tns",//"83839j82xy3mty4bf6459rnt",
-    apiSecret: "53U7SH6N5x", //"VqmfcMTdQe",
-    parserIdName: "Stats"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
+    supportedLanguages: ["en", "ar", "ru"],
+    urlPrefix: "https://api.softnetsport.com/v2/",
+    apiKey: "132",  // actually, this is the client_id
+    apiSecret: "3iqAJvFlU0Y4bjB7MNkA4tu8tDMNI4QVYkh", 
+    parserIdName: "Statscore"  // the name inside GameServer data parserId object, that maps to THIS parser's data ids. This is how we map stats.com objects to Sportimo gameServer objects.
 };
 
 // Assign the settings for the current environment
@@ -83,6 +85,8 @@ var Parser = function () {
     if (this.parsername)
         configuration.parserIdName = this.parsername;
 
+    this.authToken = null;
+
     // Restrict to Only call this once in the lifetime of this object
     this.init = _.once(function (feedServiceContext) {
     });
@@ -96,13 +100,14 @@ Parser.Name = configuration.parserIdName;
 Parser.methodSchedules = {};
 
 // Initialize scheduled tasks on (re)start, but wait 5 secs for the mongo connection to be established first.
+/* Temporarily commented out until implemented
 setTimeout(function () {
     mongoDb.gameserversettings.findOne().exec(function (error, settings) {
         if (error)
             log.error('Failed to get the game server settings during offline_data Stats parser initialization');
-        else {           
+        else {
             if (settings && process.env.NODE_ENV != "development") {                //  != "development"
-                if (settings.scheduledTasks) {                    
+                if (settings.scheduledTasks) {
                     _.forEach(settings.scheduledTasks, function (updateTeamSchedule) {
                         // if(updateTeamSchedule.competitionId != "56f4800fe4b02f2226646297") return;
                         let competitionId = updateTeamSchedule.competitionId;
@@ -122,38 +127,25 @@ setTimeout(function () {
             }
         }
 
-        // let competitionId = "56f4800fe4b02f2226646297";
-        // let season = "2017";
-        // let pattern = "45 16 * * *";
-
-        // log.info('Scheduling UpdateCompetitionStats for season %s with the pattern %s', season, pattern);
-        // Parser.methodSchedules['UpdateCompetitionStats'] = scheduler.scheduleJob(pattern, function () {
-        //     log.info('Scheduled job is running for %s : %s : %s', updateTeamSchedule.competitionId, updateTeamSchedule.season, updateTeamSchedule.cronPattern);
-        //     Parser.UpdateAllCompetitionStats(competitionId, season, function (error, data) {
-        //         if (error)
-        //             log.error(error.message);
-        //     });
-        // });
     });
 }, 5000);
-
 
 setTimeout(function () {
     setInterval(function () {
         var cutOffTime = moment.utc().subtract(3, 'hours').toDate();
         //mongoDb.scheduled_matches.find({ completed: false, guruStats: null, start: {$gte: cutOffTime} }, function(error, matches) {
-        mongoDb.scheduled_matches.find({ completed: false, guruStats: null, guruStatsChecked: {$ne: true} }, '_id home_team away_team competition state time start', function (error, matches) {
+        mongoDb.scheduled_matches.find({ completed: false, guruStats: null, guruStatsChecked: { $ne: true } }, '_id home_team away_team competition state time start', function (error, matches) {
             if (error)
                 return;
 
             async.eachSeries(matches, function (match, cb) {
                 setTimeout(function () {
                     Parser.UpdateGuruStats(match, function (err) {
-                        if (err){
+                        if (err) {
                             log.error('Failed saving the Guru-stats for match %s, due to: %s', match.id, err.message);
                         }
 
-                        mongoDb.scheduled_matches.findByIdAndUpdate(match._id,{$set:{guruStatsChecked: true}},function(err,res){
+                        mongoDb.scheduled_matches.findByIdAndUpdate(match._id, { $set: { guruStatsChecked: true } }, function (err, res) {
                             log.info("Updated match so we don't have to test for Guru stats anymore.")
                         })
 
@@ -166,6 +158,7 @@ setTimeout(function () {
         });
     }, 60000);
 }, 5000);
+*/
 
 
 // Helper Methods
@@ -181,7 +174,7 @@ Parser.GetSeasonYear = function () {
 
 
 Parser.FindCompetitionByParserid = function (leagueName, callback) {
-    var findQuery = { 'parserids.Stats': leagueName };
+    var findQuery = { 'parserids.Statscore': leagueName };
 
     var q = mongoDb.competitions.findOne(findQuery);
 
@@ -199,7 +192,7 @@ Parser.FindCompetitionByParserid = function (leagueName, callback) {
 // Helper method to retrieve a team based on the parser id
 Parser.FindMongoTeamId = function (competitionId, parserid, fieldProjection, callback, teamId) {
 
-    var findConditions = { competitionid: competitionId, "parserids.Stats": parserid };
+    var findConditions = { competitionid: competitionId, "parserids.Statscore": parserid };
 
     if (teamId)
         findConditions._id = teamId;
@@ -228,14 +221,42 @@ Parser.FindMongoTeamsInCompetition = function (competitionId, callback) {
     });
 };
 
-// Stats.com Endpoint invocation Methods
+// Statscore.com Endpoint invocation Methods
+
+Parser.Authenticate = function (callback) {
+
+    const url = configuration.urlPrefix + "oauth.xml?client_id=" + configuration.apiKey + "&secret_key=" + configuration.apiSecret;
+    needle.get(url, function (error, response) {
+        if (error)
+            return callback(error);
+
+        if (response.statusCode != 200)
+            return callback(new Error('[Statscore]: failed to get the authorization token.'));
+
+        /* parse xml response of the type (example)
+
+            <api ver="2.94" timestamp="1510163874">
+	            <method name="oauth" details="https://softnet.atlassian.net/wiki/display/APS/oauth" total_items="" previous_page="" next_page="">
+		            <parameter name="client_id" value="132"/>
+		            <parameter name="secret_key" value="3iqAJvFlU0Y4bjB7MNkA4tu8tDMNI4QVYkh"/>
+	            </method>
+	            <data>
+		            <oauth client_id="132" token="ee8f93068ed00972542d9a214ae52745" token_expiration="1510250274"/>
+	            </data>
+            </api>
+        */
+
+        // get the oAuth token
+        Parser.authToken = response.body.api.data.oauth['$'].token.toString();
+        Parser.authTokenExpiration = new Date(response.body.api.data.oauth['$'].token_expiration);
+        return callback(null, Parser.authToken);
+    });
+}
 
 // Get team stats. Always return the season stats.
 Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
 
-    //soccer/epl/stats/players/345879?enc=true&
-    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/stats/teams/" + teamId + "?accept=json&season=" + season + "&" + signature;
+    const url = configuration.urlPrefix
 
     needle.get(url, { timeout: 50000 }, function (error, response) {
         if (error)
@@ -248,7 +269,7 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
                 TranslateTeamStats(null) :
                 TranslateTeamStats(response.body.apiResults[0].league.teams[0].seasons[0].eventType[0].splits[0].teamStats[0]);
 
-            return mongoDb.teams.findOne({ "parserids.Stats": teamId }, function (err, team) {
+            return mongoDb.teams.findOne({ "parserids.Statscore": teamId }, function (err, team) {
                 if (err)
                     return callback(err);
 
@@ -274,6 +295,11 @@ Parser.UpdateTeamStats = function (leagueName, teamId, season, callback) {
 };
 
 // Get team stats. Always return the season stats.
+Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback, mongoTeamId) {
+    if (outerCallback)
+        return outerCallback(new Error('[Statscore parser]: Method (UpdateTeamStatsFull) not implemented'));
+}
+/*
 Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback, mongoTeamId) {
 
     season = Parser.GetSeasonYear();
@@ -557,8 +583,13 @@ Parser.UpdateTeamStatsFull = function (leagueName, teamId, season, outerCallback
 
 
 };
+*/
 
 // Get player stats. If season is null, then return the career stats, else the stats for the given season.
+Parser.GetPlayerStats = function (leagueName, playerId, season, callback) {
+    return callback(new Error('[Statscore parser]: Method (GetPlayerStats) not implemented'));
+}
+/*
 Parser.GetPlayerStats = function (leagueName, playerId, season, callback) {
     let isCareer = false;
     if (!season) {
@@ -586,7 +617,12 @@ Parser.GetPlayerStats = function (leagueName, playerId, season, callback) {
         }
     });
 };
+*/
 
+Parser.GetPlayerInTeamStats = function (leagueName, teamId, playerId, callback) {
+    return callback(new Error('[Statscore parser]: Method (GetPlayerInTeamStats) not implemented'));
+}
+/*
 Parser.GetPlayerInTeamStats = function (leagueName, teamId, playerId, callback) {
     //soccer/epl/stats/players/345879?enc=true&
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
@@ -609,11 +645,59 @@ Parser.GetPlayerInTeamStats = function (leagueName, teamId, playerId, callback) 
         }
     });
 };
+*/
 
-Parser.GetTeamPlayers = function (leagueName, languageId, callback) {
-    //soccer/epl/participants/teams/6154?languageId=19
-    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/participants/?" + signature + "&languageId=" + languageId;
+
+
+/*
+Parser.GetTeamPlayers: Each player in the JSON response is of the type:
+
+        {
+          "id": 209433,
+          "type": "person",
+          "name": "César Azpilicueta Tanco",
+          "short_name": "Azpilicueta César",
+          "acronym": "CÉS",
+          "gender": "male",
+          "area_id": 70,
+          "area_name": "Spain",
+          "area_code": "ESP",
+          "sport_id": 5,
+          "sport_name": "Soccer",
+          "national": "no",
+          "website": "",
+          "ut": 1457601286,
+          "old_participant_id": 57088,
+          "slug": "cesar-azpilicueta,209433",
+          "logo": "no",
+          "virtual": "no",
+          "details": {
+            "founded": "",
+            "phone": "",
+            "email": "",
+            "address": "",
+            "venue_id": "",
+            "venue_name": "",
+            "weight": 70,
+            "height": 178,
+            "nickname": "",
+            "position_name": "Defender",
+            "birthdate": "1989-08-28",
+            "born_place": "Pamplona",
+            "is_retired": "no",
+            "subtype": "athlete"
+          }
+        }
+*/
+
+Parser.GetTeamPlayers = function (competitionId, teamId, languageId, callback) {
+    if (!Parser.authToken)
+        return callback(new Error('[Statscore]: The parser is not authenticated with valid token.'));
+
+    let url = configuration.urlPrefix + "participants/" + teamId + "/squad?token=" + Parser.authToken + "&sport_id=5&season_id=" + competitionId.seasonid;
+    // language parameter 'lang' is not properly supported as it should according to documentation. If included in the url, produces a 400 Bad Request response.
+    //if (languageId !== 'undefined' || languageId != null)
+    //    url += "&lang=" + languageId;
 
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
@@ -622,7 +706,7 @@ Parser.GetTeamPlayers = function (leagueName, languageId, callback) {
             if (response.statusCode != 200)
                 return callback(new Error("Response code from " + url + " : " + response.statusCode));
 
-            var players = response.body.apiResults[0].league;
+            var players = response.body.api.data.participants;
             callback(null, players);
         }
         catch (err) {
@@ -631,15 +715,18 @@ Parser.GetTeamPlayers = function (leagueName, languageId, callback) {
     });
 };
 
-Parser.GetLeagueTeams = function (leagueName, callback) {
-    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/teams/?" + signature;
+
+Parser.GetLeagueTeams = function (competitionId, callback) {
+    if (!Parser.authToken)
+        return callback(new Error('[Statscore]: The parser is not authenticated with valid token.'));
+
+    const url = configuration.urlPrefix + "participants?token=" + Parser.authToken + "&type=team&sport_id=5&season_id=" + competitionId.seasonid;
 
     needle.get(url, { timeout: 60000 }, function (error, response) {
         if (error)
             return callback(error);
         try {
-            var teams = response.body.apiResults[0].league.season.conferences[0].divisions[0].teams;
+            let teams = response.body.api.data.participants;
             callback(null, teams);
         }
         catch (err) {
@@ -648,6 +735,12 @@ Parser.GetLeagueTeams = function (leagueName, callback) {
     });
 };
 
+
+
+Parser.GetLeagueStandings = function (leagueName, season, callback) {
+    return callback(new Error('[Statscore parser]: Method (GetLeagueStandings) not implemented'));
+}
+/*
 Parser.GetLeagueStandings = function (leagueName, season, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/standings/?live=false&eventTypeId=1&" + (season ? "season=" + season + "&" : "") + signature;
@@ -669,34 +762,54 @@ Parser.GetLeagueStandings = function (leagueName, season, callback) {
     });
 
 };
+*/
+
+Parser.GetLeagueSeasonFixtures = function (competitionId, seasonId, callback) {
+    // sample call https://api.softnetsport.com/v2/events?token=aaeb65a5c63897f05fd4ed1b217fee71&competition_id=1556&season_id=29860&date_from=2017-12-07+00:00:00
+
+    const date_from = moment.utc(new Date()).startOf('day').format('YYYY-MM-DD+HH:mm:ss');
+    const date_to = moment.utc(new Date()).startOf('day').add(30, 'd').format('YYYY-MM-DD+HH:mm:ss');
+    const now = new Date();
 
 
-Parser.GetLeagueSeasonFixtures = function (leagueName, seasonYear, callback) {
-    const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
-    const url = configuration.urlPrefix + leagueName + "/scores/?" + signature + "&season=" + seasonYear; // or + GetSeasonYear();
-    // console.log(url);
-    needle.get(url, { timeout: 60000 }, function (error, response) {
-        if (error)
-            return callback(error);
+    return async.waterfall([
+        (cbk) => {
+            if (!Parser.authToken || !Parser.authTokenExpiration || now > Parser.authTokenExpiration)
+                return Parser.Authenticate(cbk);
+            else
+                return async.setImmediate(() => { return cbk(null); });
+        },
+        (authToken, cbk) => {
+            const url = `${configuration.urlPrefix}events?token=${Parser.authToken}&competition_id=${competitionId}&season_id=${seasonId}&&date_from=${date_from}&date_to=${date_to}&scoutsfeed=yes&status_type=scheduled`;
 
-        if (response.body.status != 'OK' || response.body.recordCount == 0)
-            return callback(new Error(response.body));
+            needle.get(url, { timeout: 60000 }, function (error, response) {
+                if (error)
+                    return cbk(error);
 
-        try {
-            let fixtures = [];
-            _.forEach(response.body.apiResults[0].league.season.eventType, function (category) {
-                fixtures = _.concat(fixtures, category.events);
+                try {
+                    if (response.body.api.error)
+                        return cbk(new Error(response.body.api.error.message));
+
+
+                    const fixtures = response.body.api.data.competitions[0].seasons[0].stages[0].groups[0].events;
+
+                    // iterate over next pages
+                    return cbk(null, fixtures);
+                }
+                catch (err) {
+                    return cbk(err);
+                }
             });
-            callback(null, fixtures);
         }
-        catch (err) {
-            return callback(err);
-        }
-    });
+    ], callback);
 
 };
 
 
+Parser.GetTeamSeasonFixtures = function (leagueName, teamId, seasonYear, callback) {
+    return callback(new Error('[Statscore parser]: Method (GetTeamSeasonFixtures) not implemented'));
+}
+/*
 Parser.GetTeamSeasonFixtures = function (leagueName, teamId, seasonYear, callback) {
     const signature = "api_key=" + configuration.apiKey + "&sig=" + crypto.SHA256(configuration.apiKey + configuration.apiSecret + Math.floor((new Date().getTime()) / 1000));
     const url = configuration.urlPrefix + leagueName + "/scores/teams/" + teamId + "?" + signature + "&season=" + seasonYear + "&linescore=false";
@@ -745,6 +858,8 @@ Parser.GetMatchEvents = function (leagueName, matchId, callback) {
         }
     });
 };
+*/
+
 
 // Parser methods that other modules may call:
 
@@ -776,7 +891,6 @@ Parser.UpdateCompetitionTeamsStats = function (competitionId, season, callback) 
             });
         });
     });
-
 };
 
 Parser.GetCompetitionTeamsStatsSchedule = function (competitionId, callback) {
@@ -845,14 +959,21 @@ Parser.DeleteCompetitionTeamsStatsSchedule = function (competitionId, season, sc
 };
 
 Parser.UpdateTeams = function (competitionId, callback) {
+    return callback(new Error('[Statscore parser]: Method (UpdateTeams) not implemented'));
+}
+
+Parser.UpdateTeamAndPlayerMappings = function (competitionId, callback) {
+    const StatsName = 'Stats';
+
+    // Start by fetching the specified sportimo competition by id
     mongoDb.competitions.findById(competitionId, function (err, competition) {
         if (err)
             return callback(err);
 
-        const leagueName = competition.parserids[Parser.Name];
-        const leagueId = competition.id;
+        const competitionStatscoreId = competition.parserids[Parser.Name];
+        const competitionId = competition.id;
 
-        if (!leagueName || !leagueId)
+        if (!competitionStatscoreId || !competitionId)
             return callback(new Error('No league name or league Id is defined in call'));
 
         if (!Parser.Configuration.supportedLanguages)
@@ -862,267 +983,418 @@ Parser.UpdateTeams = function (competitionId, callback) {
             return callback(new Error('The default english language ("en") is NOT set amongst the supported languages in parser&apos;s configuration.'));
 
 
-        // get all teams, and then collect all teamIds and query for the related players
-        mongoDb.teams.find({ competitionid: leagueId }, function (teamError, existingTeams) {
+        // Get all teams, and then collect all teamIds and query for the related players
+        mongoDb.teams.find({ competitionid: competitionId }, function (teamError, existingTeams) {
             if (teamError)
                 return callback(teamError);
 
             let existingTeamIds = _.map(existingTeams, function (team) { return team.id; });
 
             let existingTeamsLookup = {};
+            let existingTeamNameLookup = {};
+            let existingPlayerLookup = {};
+            let existingPlayerNameLookup = {};
+            let languageData = {};
+
             _.forEach(existingTeams, function (team) {
                 if (team.parserids && team.parserids[Parser.Name] && !existingTeamsLookup[team.parserids[Parser.Name]])
                     existingTeamsLookup[team.parserids[Parser.Name]] = team;
+                if (team.name && team.name['en'] && !existingTeamNameLookup[team.name && team.name['en']])
+                    existingTeamNameLookup[team.name && team.name['en']] = team;
             });
 
             mongoDb.players.find({ teamId: { '$in': existingTeamIds } }, function (playerError, existingPlayers) {
                 if (playerError)
                     return callback(playerError);
 
-                let languageData = {};
 
-
-                let existingPlayersLookup = {};
                 _.forEach(existingPlayers, function (player) {
-                    if (player.parserids[Parser.Name] && !existingPlayersLookup[player.parserids[Parser.Name]])
-                        existingPlayersLookup[player.parserids[Parser.Name]] = player;
+                    if (player.parserids[Parser.Name] && !existingPlayerLookup[player.parserids[Parser.Name]])
+                        existingPlayerLookup[player.parserids[Parser.Name]] = player;
+                    if (player.name && player.name['en'] && !existingPlayerNameLookup[player.name && player.name['en']])
+                        existingPlayerNameLookup[player.name && player.name['en']] = player;
                 });
 
-                async.eachSeries(Parser.Configuration.supportedLanguages, function (language, cbk) {
-                    if (languageMapping[language]) {
-                        Parser.GetTeamPlayers(leagueName, languageMapping[language], function (error, data) {
-                            if (error)
-                                return cbk(error);
 
-                            languageData[language] = data;
-                            cbk();
-                        });
-                    }
-                    else {
-                        async.setImmediate(function () {
-                            cbk(new Error('language ' + language + ' is not found amongst languageMapping dictionary.'));
-                        });
-                    }
-                },
-                    function (error) {
-                        if (error && !languageData["en"])
-                            return callback(error);
+                const language = "en";
 
+                //                async.eachSeries(Parser.Configuration.supportedLanguages, function (language, cbk) {
+                if (languageMapping[language]) {
+                    languageData[language] = {};
 
-                        let parsedTeams = {};
-                        let parsedPlayers = {};
-                        let teamsToAdd = [];
-                        let teamsToUpdate = [];
-                        let playersToAdd = [];
-                        let playersToUpdate = [];
-                        //let playersToRemove = [];
+                    // Get statscore teams
+                    Parser.GetLeagueTeams(competitionStatscoreId, function (teamsErr, teams) {
+                        if (teamsErr)
+                            return callback(teamsErr);
 
-                        let creationDate = new Date();
-
-                        // Find the players that exist in existingPlayersLookup but not in languageData["en"].players and add them to playersToUpdate after unlinking them from their team
-                        // Similarly find the teams that exist in existingTeamsLookup but not in languageData["en"].players and add them to teamsToUpdate after unlinking them from their competition
-                        let updatedPlayersLookup = {};
-                        let updatedTeamsLookup = {};
-                        _.forEach(languageData["en"].players, function (player) {
-                            if (!updatedPlayersLookup[player.playerId])
-                                updatedPlayersLookup[player.playerId] = true;
-                            if (!updatedTeamsLookup[player.team.teamId])
-                                updatedTeamsLookup[player.team.teamId] = true;
-                        });
-                        _.forEach(existingTeams, function (team) {
-                            if (!updatedTeamsLookup[team.parserids[Parser.Name]]) {
-                                team.competitionId = null;
-                                teamsToUpdate.push(team);
-                            }
-                        });
-                        _.forEach(_.values(existingPlayersLookup), function (lookup) {
-                            if (!updatedPlayersLookup[lookup.parserids[Parser.Name]]) {
-                                lookup.teamId = null;
-                                playersToUpdate.push(lookup);
-                                //playersToRemove.push(lookup);
-                            }
+                        languageData[language].teams = {};
+                        _.forEach(teams, function (team) {
+                            if (!languageData[language].teams[team.id])
+                                languageData[language].teams[team.id] = team;
                         });
 
-                        // Scan the english data to get all teams
-                        _.forEach(languageData["en"].players, function (player) {
-                            if (player.team && player.team.teamId) {
-                                if (!parsedTeams[player.team.teamId]) {
-                                    // If new team, add to teamsToAdd collection
-                                    if (!existingTeamsLookup[player.team.teamId]) {
-                                        var newTeam = new mongoDb.teams();
-                                        //newTeam.name_en = player.team.displayName;
-                                        newTeam.name = { "en": player.team.displayName };
-                                        newTeam.name["abbr"] = player.team.abbreviation;
-                                        newTeam.logo = null;
-                                        //newTeam.league = leagueName;
-                                        newTeam.created = creationDate;
-                                        newTeam.parserids = {};
-                                        newTeam.parserids[Parser.Name] = player.team.teamId;
-                                        newTeam.competitionid = leagueId;
+                        async.each(teams, function (team, teamCbk) {
+                            Parser.GetTeamPlayers(competitionStatscoreId, team.id, languageMapping[language], function (error, players) {
+                                if (error)
+                                    return teamCbk(error);
+                                if (!languageData[language].teams[team.id].players)
+                                    languageData[language].teams[team.id].players = {};
+                                _.forEach(players, function (player) {
+                                    if (!languageData[language].teams[team.id].players[player.id])
+                                        languageData[language].teams[team.id].players[player.id] = player;
+                                });
 
-                                        parsedTeams[player.team.teamId] = newTeam;
-                                        newTeam.save();
-                                        teamsToAdd.push(newTeam);
-                                    }
-                                    else {
-                                        var oldTeam = existingTeamsLookup[player.team.teamId];
-                                        if (!oldTeam.name)
-                                            oldTeam.name = {};
-                                        oldTeam.name["en"] = player.team.displayName;
-                                        oldTeam.name["abbr"] = player.team.abbreviation;
-                                        if (!oldTeam.logo)
-                                            oldTeam.logo = null; // leave this property untouched to what it was
-                                        if (!oldTeam.parserids)
-                                            oldTeam.parserids = {};
-                                        oldTeam.parserids[Parser.Name] = player.team.teamId;
-                                        oldTeam.competitionid = leagueId;
-
-                                        parsedTeams[player.team.teamId] = oldTeam;
-                                        teamsToUpdate.push(oldTeam);
-                                    }
-                                }
-
-                                if (player.playerId && !parsedPlayers[player.playerId]) {
-                                    // If new player, add to playersToAdd collection
-                                    if (!existingPlayersLookup[player.playerId]) {
-                                        var newPlayer = new mongoDb.players();
-                                        if (player.firstName)
-                                            newPlayer.firstName = { "en": player.firstName };
-                                        if (player.lastName)
-                                            newPlayer.lastName = { "en": player.lastName };
-                                        newPlayer.name = { "en": (player.firstName ? player.firstName + " " : "") + player.lastName };
-                                        newPlayer.uniformNumber = player.uniform;
-                                        newPlayer.position = player.positions[0].name;
-                                        newPlayer.personalData = {
-                                            height: player.height,
-                                            weight: player.weight,
-                                            birth: player.birth,
-                                            nationality: player.nationality
-                                        };
-                                        newPlayer.parserids = {};
-                                        newPlayer.parserids[Parser.Name] = player.playerId;
-                                        newPlayer.created = creationDate;
-
-                                        if (parsedTeams[player.team.teamId]._id)
-                                            newPlayer.teamId = parsedTeams[player.team.teamId].id;
-
-                                        parsedPlayers[player.playerId] = newPlayer;
-                                        playersToAdd.push(newPlayer);
-                                    }
-                                    else {
-                                        var oldPlayer = existingPlayersLookup[player.playerId];
-                                        if (!oldPlayer.firstName)
-                                            oldPlayer.firstName = {};
-                                        if (player.firstName)
-                                            oldPlayer.firstName["en"] = player.firstName;
-                                        oldPlayer.lastName_en = player.lastName;
-                                        if (!oldPlayer.lastName)
-                                            oldPlayer.lastName = {};
-                                        if (player.lastName)
-                                            oldPlayer.lastName["en"] = player.lastName;
-                                        if (!oldPlayer.name)
-                                            oldPlayer.name = {};
-                                        oldPlayer.name["en"] = (player.firstName ? player.firstName + " " : "") + player.lastName;
-                                        oldPlayer.uniformNumber = player.uniform;
-                                        oldPlayer.position = player.positions[0].name;
-                                        oldPlayer.personalData = {
-                                            height: player.height,
-                                            weight: player.weight,
-                                            birth: player.birth,
-                                            nationality: player.nationality
-                                        };
-                                        if (!oldPlayer.parserids)
-                                            oldPlayer.parserids = {};
-                                        oldPlayer.parserids[Parser.Name] = player.playerId;
-
-                                        if (parsedTeams[player.team.teamId]._id)
-                                            oldPlayer.teamId = parsedTeams[player.team.teamId].id;
-
-                                        parsedPlayers[player.playerId] = oldPlayer;
-                                        playersToUpdate.push(oldPlayer);
-
-                                    }
-                                }
-                            }
-                        });
-
-
-                        // Now merge other languages data with english ones, based on their id.
-                        _.forEach(languageData, function (value, key, val) {
-                            _.forEach(value.players, function (player) {
-                                if (parsedTeams[player.team.teamId])
-                                    parsedTeams[player.team.teamId].name[key] = player.team.displayName;
-
-                                if (parsedPlayers[player.playerId]) {
-                                    if (player.firstName) {
-                                        if (!parsedPlayers[player.playerId].firstName)
-                                            parsedPlayers[player.playerId].firstName = {};
-                                        parsedPlayers[player.playerId].firstName[key] = player.firstName;
-                                    }
-                                    parsedPlayers[player.playerId].lastName[key] = player.lastName;
-                                    parsedPlayers[player.playerId].name[key] = (player.firstName ? player.firstName + " " : "") + player.lastName;
-                                }
+                                teamCbk(null);
                             });
-                        });
+                        }, function (teamErr) {
+                            if (teamErr)
+                                return callback(teamErr);
 
-                        // Try Upserting in mongo all teams and players
-                        try {
-                            async.parallel([
-                                function (innerCallback) {
-                                    if (teamsToAdd && teamsToAdd.length > 0) {
-                                        async.each(teamsToAdd, function (teamToAdd, cbk1) {
-                                            return teamToAdd.save(cbk1);
-                                        }, innerCallback);
+
+                            let parsedTeams = {};
+                            let parsedPlayers = {};
+                            let teamsToAdd = [];
+                            let teamsToUpdate = [];
+                            let playersToAdd = [];
+                            let playersToUpdate = [];
+                            //let playersToRemove = [];
+
+                            let creationDate = new Date();
+
+                            // Find mappings
+
+
+
+                            // Find the players that exist in existingPlayersLookup but not in languageData["en"].players and add them to playersToUpdate after unlinking them from their team
+                            // Similarly find the teams that exist in existingTeamsLookup but not in languageData["en"].players and add them to teamsToUpdate after unlinking them from their competition
+                            let teamsMissedFromMapping = [];
+                            let playersMissedFromMapping = [];
+                            _.forEach(_.keys(languageData["en"].teams), function (teamKey) {
+                                const teamId = languageData["en"].teams[teamKey].id;
+
+                                const keyExists = existingTeamsLookup[teamKey];
+                                const nameExists = existingTeamNameLookup[_.deburr(languageData["en"].teams[teamKey].name)];
+                                let shortNameExists = existingTeamNameLookup[_.deburr(languageData["en"].teams[teamKey].short_name)];
+
+                                let existingTeamFound = keyExists || nameExists || shortNameExists;
+
+                                // This tries to capture differences like 'Everton' and 'Everton F.C.'
+                                if (!existingTeamFound) {
+                                    shortNameExists = existingTeamNameLookup[_.deburr(_.split(languageData["en"].teams[teamKey].short_name, ' ')[0])];
+                                    existingTeamFound = shortNameExists;
+
+                                    if (!existingTeamFound) {
+                                        const shortNameWithoutParenthesis = _.trim(languageData["en"].teams[teamKey].short_name.replace(/\([^()]*\)/g, ''));
+                                        shortNameExists = existingTeamNameLookup[_.deburr(shortNameWithoutParenthesis)];
+                                        existingTeamFound = shortNameExists;
+
+                                        if (!existingTeamFound) {
+                                            shortNameExists = existingTeamNameLookup[_.deburr(_.replace(shortNameWithoutParenthesis, ' ', '-'))];
+                                            existingTeamFound = shortNameExists;
+                                        }
                                     }
-                                    else
-                                        innerCallback(null);
-                                },
-                                function (innerCallback) {
-                                    if (playersToAdd && playersToAdd.length > 0) {
-                                        async.each(playersToAdd, function (playerToAdd, cbk2) {
-                                            return playerToAdd.save(cbk2);
-                                        }, innerCallback);
-                                    }
-                                    else
-                                        innerCallback(null);
-                                },
-                                function (innerCallback) {
-                                    if (teamsToUpdate && teamsToUpdate.length > 0) {
-                                        async.each(teamsToUpdate, function (teamToUpdate, cbk3) {
-                                            return teamToUpdate.save(cbk3);
-                                        }, innerCallback);
-                                    }
-                                    else
-                                        innerCallback(null);
-                                },
-                                function (innerCallback) {
-                                    if (playersToUpdate && playersToUpdate.length > 0) {
-                                        async.each(playersToUpdate, function (playerToUpdate, cbk4) {
-                                            return playerToUpdate.save(cbk4);
-                                        }, innerCallback);
-                                    }
-                                    else
-                                        innerCallback(null);
                                 }
-                            ], function (parallelError, parallelResults) {
-                                if (parallelError)
-                                    return callback(parallelError);
 
-                                callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                                if (existingTeamFound) {
+                                    existingTeamFound.parserids[Parser.Name] = teamId;
+                                    teamsToUpdate.push(existingTeamFound);
+                                }
+                                else
+                                    teamsMissedFromMapping.push(languageData["en"].teams[teamKey]);
+
+
+                                _.forEach(_.keys(languageData["en"].teams[teamKey].players), function (playerKey) {
+                                    const playerId = languageData["en"].teams[teamKey].players[playerKey].id;
+                                    const player = languageData["en"].teams[teamKey].players[playerKey];
+
+                                    if (!(player.details && player.details.subtype && player.details.subtype != 'athlete')) {
+                                        const keyExists = existingPlayerLookup[playerKey];
+                                        const nameExists = existingPlayerNameLookup[languageData["en"].teams[teamKey].players[playerKey].name];
+
+                                        // Statscore short name is last name first, first name latter. We need to inverse this order before lookup
+                                        const nameParts = _.split(languageData["en"].teams[teamKey].players[playerKey].short_name, ' ');
+                                        let invertedName = nameParts[nameParts.length > 1 ? 1 : 0];
+                                        if (nameParts.length > 1)
+                                            invertedName += ' ' + nameParts[0]; // add last name, ignore middle names
+
+                                        // Convert inverted name to ascii equivalent with Unidecode package
+                                        // alternatively: invertedName = unidecode(invertedName);
+                                        invertedName = _.deburr(invertedName);
+                                        let shortNameExists = existingPlayerNameLookup[invertedName];
+
+                                        let existingPlayerFound = keyExists || nameExists || shortNameExists;
+
+                                        if (!existingPlayerFound && nameParts.length > 2) {
+                                            invertedName = '';
+                                            for (let i = 0; i < nameParts.length - 1; i++)
+                                                invertedName += ' ' + _.capitalize(nameParts[i + 1]);
+                                            invertedName += ' ' + _.capitalize(nameParts[0]);
+
+                                            invertedName = _.trimStart(_.deburr(invertedName));
+                                            shortNameExists = existingPlayerNameLookup[invertedName];
+                                            existingPlayerFound = shortNameExists;
+
+                                            if (!existingPlayerFound) {
+                                                invertedName = _.capitalize(nameParts[2]) + ' ' + _.capitalize(nameParts[0]);
+                                                shortNameExists = existingPlayerNameLookup[invertedName];
+                                                existingPlayerFound = shortNameExists;
+                                            }
+                                        }
+
+                                        if (existingPlayerFound) {
+                                            existingPlayerFound.parserids[Parser.Name] = playerId;
+                                            playersToUpdate.push(existingPlayerFound);
+                                        }
+                                        else
+                                            playersMissedFromMapping.push(languageData["en"].teams[teamKey].players[playerKey]);
+                                    }
+                                });
                             });
 
-                        }
-                        catch (err) {
-                            return callback(err);
-                        }
+                            // Gathering updating Stats
+                            console.log(`${teamsToUpdate.length} teams mapped, ${teamsMissedFromMapping.length} teams missed mapping:`);
+                            _.forEach(teamsMissedFromMapping, (team) => { console.log(`id: ${team.id}, name: ${team.name}`); });
+                            console.log(`${playersToUpdate.length} players mapped, ${playersMissedFromMapping.length} players missed mapping:`);
+                            _.forEach(playersMissedFromMapping, (player) => { console.log(`id: ${player.id}, name: ${player.name}`); });
 
-
-                        //callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                            // Update instances parserids for teams
+                            if (teamsToUpdate && teamsToUpdate.length > 0) {
+                                async.parallel([
+                                    (cbk3) => {
+                                        async.each(teamsToUpdate, function (teamToUpdate, cbk2) {
+                                            return mongoDb.teams.findOneAndUpdate({ _id: new objectId(teamToUpdate.id) }, { $set: { parserids: teamToUpdate.parserids } }, cbk2);
+                                        }, cbk3);
+                                    },
+                                    (cbk3) => {
+                                        async.each(playersToUpdate, function (playerToUpdate, cbk2) {
+                                            return mongoDb.players.findOneAndUpdate({ _id: new objectId(playerToUpdate.id) }, { $set: { parserids: playerToUpdate.parserids } }, cbk2);
+                                        }, cbk3);
+                                    }], (parallelErr, parallelResults) => {
+                                        if (parallelErr)
+                                            return callback(parallelErr);
+                                        return callback(null, parallelResults);
+                                    });
+                            }
+                            else
+                                callback(null);
+                        });
                     });
+                }
+                //else {
+                //    async.setImmediate(function () {
+                //        cbk(new Error('language ' + language + ' is not found amongst languageMapping dictionary.'));
+                //    });
+                //}
+                //}, function (error) {
+                //if (error && !languageData["en"])
+                //    return callback(error);
+
+            });
+        });
+    });
+
+
+
+                    //_.forEach(existingTeams, function (team) {
+                    //    if (!updatedTeamsLookup[team.parserids[Parser.Name]]) {
+                    //        //team.competitionId = null;
+                    //        teamsToUpdate.push(team);
+                    //    }
+                    //});
+                    //_.forEach(_.values(existingPlayerLookup), function (player) {
+                    //    if (!updatedPlayersLookup[player.parserids[Parser.Name]]) {
+                    //        player.teamId = null;
+                    //        playersToUpdate.push(player);
+                    //    }
+                    //});
+
+                    /*
+
+                    // Scan the english data to get all teams and players
+                    _.forEach(_.keys(languageData["en"].teams), function (teamId) {
+
+                        if (player.team && player.team.teamId) {
+                            if (!parsedTeams[player.team.teamId]) {
+                                // If new team, add to teamsToAdd collection
+                                if (!existingTeamsLookup[player.team.teamId]) {
+                                    var newTeam = new mongoDb.teams();
+                                    //newTeam.name_en = player.team.displayName;
+                                    newTeam.name = { "en": player.team.displayName };
+                                    newTeam.name["abbr"] = player.team.abbreviation;
+                                    newTeam.logo = null;
+                                    //newTeam.league = leagueName;
+                                    newTeam.created = creationDate;
+                                    newTeam.parserids = {};
+                                    newTeam.parserids[Parser.Name] = player.team.teamId;
+                                    newTeam.competitionid = competitionId;
+
+                                    parsedTeams[player.team.teamId] = newTeam;
+                                    newTeam.save();
+                                    teamsToAdd.push(newTeam);
+                                }
+                                else {
+                                    var oldTeam = existingTeamsLookup[player.team.teamId];
+                                    if (!oldTeam.name)
+                                        oldTeam.name = {};
+                                    oldTeam.name["en"] = player.team.displayName;
+                                    oldTeam.name["abbr"] = player.team.abbreviation;
+                                    if (!oldTeam.logo)
+                                        oldTeam.logo = null; // leave this property untouched to what it was
+                                    if (!oldTeam.parserids)
+                                        oldTeam.parserids = {};
+                                    oldTeam.parserids[Parser.Name] = player.team.teamId;
+                                    oldTeam.competitionid = competitionId;
+
+                                    parsedTeams[player.team.teamId] = oldTeam;
+                                    teamsToUpdate.push(oldTeam);
+                                }
+                            }
+
+                            if (player.playerId && !parsedPlayers[player.playerId]) {
+                                // If new player, add to playersToAdd collection
+                                if (!existingPlayerLookup[player.playerId]) {
+                                    var newPlayer = new mongoDb.players();
+                                    if (player.firstName)
+                                        newPlayer.firstName = { "en": player.firstName };
+                                    if (player.lastName)
+                                        newPlayer.lastName = { "en": player.lastName };
+                                    newPlayer.name = { "en": (player.firstName ? player.firstName + " " : "") + player.lastName };
+                                    newPlayer.uniformNumber = player.uniform;
+                                    newPlayer.position = player.positions[0].name;
+                                    newPlayer.personalData = {
+                                        height: player.height,
+                                        weight: player.weight,
+                                        birth: player.birth,
+                                        nationality: player.nationality
+                                    };
+                                    newPlayer.parserids = {};
+                                    newPlayer.parserids[Parser.Name] = player.playerId;
+                                    newPlayer.created = creationDate;
+
+                                    if (parsedTeams[player.team.teamId]._id)
+                                        newPlayer.teamId = parsedTeams[player.team.teamId].id;
+
+                                    parsedPlayers[player.playerId] = newPlayer;
+                                    playersToAdd.push(newPlayer);
+                                }
+                                else {
+                                    var oldPlayer = existingPlayerLookup[player.playerId];
+                                    if (!oldPlayer.firstName)
+                                        oldPlayer.firstName = {};
+                                    if (player.firstName)
+                                        oldPlayer.firstName["en"] = player.firstName;
+                                    oldPlayer.lastName_en = player.lastName;
+                                    if (!oldPlayer.lastName)
+                                        oldPlayer.lastName = {};
+                                    if (player.lastName)
+                                        oldPlayer.lastName["en"] = player.lastName;
+                                    if (!oldPlayer.name)
+                                        oldPlayer.name = {};
+                                    oldPlayer.name["en"] = (player.firstName ? player.firstName + " " : "") + player.lastName;
+                                    oldPlayer.uniformNumber = player.uniform;
+                                    oldPlayer.position = player.positions[0].name;
+                                    oldPlayer.personalData = {
+                                        height: player.height,
+                                        weight: player.weight,
+                                        birth: player.birth,
+                                        nationality: player.nationality
+                                    };
+                                    if (!oldPlayer.parserids)
+                                        oldPlayer.parserids = {};
+                                    oldPlayer.parserids[Parser.Name] = player.playerId;
+
+                                    if (parsedTeams[player.team.teamId]._id)
+                                        oldPlayer.teamId = parsedTeams[player.team.teamId].id;
+
+                                    parsedPlayers[player.playerId] = oldPlayer;
+                                    playersToUpdate.push(oldPlayer);
+
+                                }
+                            }
+                        }
+                    });
+
+
+                    // Now merge other languages data with english ones, based on their id.
+                    _.forEach(languageData, function (value, key, val) {
+                        _.forEach(value.players, function (player) {
+                            if (parsedTeams[player.team.teamId])
+                                parsedTeams[player.team.teamId].name[key] = player.team.displayName;
+
+                            if (parsedPlayers[player.playerId]) {
+                                if (player.firstName) {
+                                    if (!parsedPlayers[player.playerId].firstName)
+                                        parsedPlayers[player.playerId].firstName = {};
+                                    parsedPlayers[player.playerId].firstName[key] = player.firstName;
+                                }
+                                parsedPlayers[player.playerId].lastName[key] = player.lastName;
+                                parsedPlayers[player.playerId].name[key] = (player.firstName ? player.firstName + " " : "") + player.lastName;
+                            }
+                        });
+                    });
+
+
+                    // Try Upserting in mongo all teams and players
+                    try {
+                        async.parallel([
+                            function (innerCallback) {
+                                if (teamsToAdd && teamsToAdd.length > 0) {
+                                    async.each(teamsToAdd, function (teamToAdd, cbk1) {
+                                        return teamToAdd.save(cbk1);
+                                    }, innerCallback);
+                                }
+                                else
+                                    innerCallback(null);
+                            },
+                            function (innerCallback) {
+                                if (playersToAdd && playersToAdd.length > 0) {
+                                    async.each(playersToAdd, function (playerToAdd, cbk2) {
+                                        return playerToAdd.save(cbk2);
+                                    }, innerCallback);
+                                }
+                                else
+                                    innerCallback(null);
+                            },
+                            function (innerCallback) {
+                                if (teamsToUpdate && teamsToUpdate.length > 0) {
+                                    async.each(teamsToUpdate, function (teamToUpdate, cbk3) {
+                                        return teamToUpdate.save(cbk3);
+                                    }, innerCallback);
+                                }
+                                else
+                                    innerCallback(null);
+                            },
+                            function (innerCallback) {
+                                if (playersToUpdate && playersToUpdate.length > 0) {
+                                    async.each(playersToUpdate, function (playerToUpdate, cbk4) {
+                                        return playerToUpdate.save(cbk4);
+                                    }, innerCallback);
+                                }
+                                else
+                                    innerCallback(null);
+                            }
+                        ], function (parallelError, parallelResults) {
+                            if (parallelError)
+                                return callback(parallelError);
+
+                            callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                        });
+
+                    }
+                    catch (err) {
+                        return callback(err);
+                    }
+
+
+
+                    //callback(null, teamsToAdd, teamsToUpdate, playersToAdd, playersToUpdate);
+                });
+
             });
 
         }); // competitionid: leagueId
     });
+    */
 };
 
 
@@ -1138,7 +1410,10 @@ var GetLeagueFromMongo = function (leagueId, callback) {
     });
 };
 
-
+Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, outerCallback) {
+    return callback(new Error('[Statscore parser]: Method (UpdateLeagueStandings) not implemented'));
+}
+/*
 Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, outerCallback) {
     leagueId = competitionDocument ? competitionDocument.id : leagueId;
     //statsLeagueId = competitionDocument.parserids[Parser.Name] || statsLeagueId;
@@ -1165,7 +1440,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 });
             },
             function (competition, callback) {
-                var parserQuery = 'parserids.' + Parser.Name;                
+                var parserQuery = 'parserids.' + Parser.Name;
                 mongoDb.teams.find().ne(parserQuery, null).where('competitionid', leagueId).exec(function (teamError, teams) {
                     if (teamError)
                         return callback(teamError);
@@ -1180,7 +1455,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
                 });
             },
             function (competition, existingTeamIds, callback) {
-                var statsLeagueId = competition.parserids[Parser.Name];                 
+                var statsLeagueId = competition.parserids[Parser.Name];
                 Parser.GetLeagueStandings(statsLeagueId, season, function (error, standings, seasonYear) {
                     if (error)
                         return callback(error);
@@ -1221,7 +1496,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             newStandings.season = seasonYear;
             newStandings.teams = [];
             newStandings.lastupdate = new Date();
-           
+
 
             standings.forEach(function (teamStanding) {
                 if (existingTeamIds[teamStanding.teamId]) {
@@ -1245,7 +1520,7 @@ Parser.UpdateLeagueStandings = function (competitionDocument, leagueId, season, 
             });
 
             //newStandings.teams.markModified();
-            newStandings.save(function (err,data) {
+            newStandings.save(function (err, data) {
                 if (err)
                     return outerCallback(err);
 
@@ -1285,7 +1560,7 @@ Parser.UpdateStandings = function (season, callback) {
         });
     });
 };
-
+*/
 
 Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallback) {
     if (!competitionId)
@@ -1299,11 +1574,7 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
     // Filter the fixtures for the ones scheduled in the future, and return the results
     async.waterfall([
         function (callback) {
-            GetLeagueFromMongo(competitionId, function (error, competition) {
-                if (error)
-                    return callback(error);
-                return callback(null, competition);
-            });
+            return GetLeagueFromMongo(competitionId, callback);
         },
         function (competition, callback) {
             let parserQuery = 'parserids.' + Parser.Name;
@@ -1322,9 +1593,15 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
             });
         },
         function (competition, existingTeamIds, callback) {
-            let statsLeagueId = competition.parserids[Parser.Name];
+            const competitionId = competition.parserids[Parser.Name].id;
+            const seasonId = competition.parserids[Parser.Name].seasonid;
 
-            Parser.GetLeagueSeasonFixtures(statsLeagueId, competition.season || season, function (error, fixtures) {
+            if (!competitionId)
+                return callback(new Error(`Missing competition id from competition\'s Statscore parserids`));
+            if (!seasonId)
+                return callback(new Error(`Missing seasonid from competition\'s Statscore parserids`));
+
+            Parser.GetLeagueSeasonFixtures(competitionId, seasonId, function (error, fixtures) {
                 if (error)
                     return callback(error);
 
@@ -1336,34 +1613,32 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
             return outerCallback(asyncError);
 
         const now = new Date();
-        let futureFixtures = _.filter(fixtures, function (fixture) {
-            if (!fixture.startDate || fixture.startDate.length < 2)
-                return false;
-            if (fixture.eventStatus.isActive)
-                return false;
+        //let futureFixtures = _.filter(fixtures, function (fixture) {
+        //    if (!fixture.startDate || fixture.startDate.length < 2)
+        //        return false;
+        //    if (fixture.eventStatus.isActive)
+        //        return false;
 
-            const startDateString = fixture.startDate[1].full;
-            const startDate = Date.parse(startDateString);
+        //    const startDateString = fixture.startDate[1].full;
+        //    const startDate = Date.parse(startDateString);
 
-            return startDate > moment().subtract(5, 'h');
-        });
+        //    return startDate > moment().subtract(5, 'h');
+        //});
 
-        var futureSchedules = _.map(futureFixtures, function (fixture) {
+        var futureSchedules = _.map(fixtures, function (fixture) {
             try {
                 let homeTeam, awayTeam;
-                if (fixture.teams[0].teamLocationType.teamLocationTypeId == 1)
-                    homeTeam = fixture.teams[0];
-                if (fixture.teams[0].teamLocationType.teamLocationTypeId == 2)
-                    awayTeam = fixture.teams[0];
-                if (fixture.teams[1].teamLocationType.teamLocationTypeId == 1)
-                    homeTeam = fixture.teams[1];
-                if (fixture.teams[1].teamLocationType.teamLocationTypeId == 2)
-                    awayTeam = fixture.teams[1];
+                homeTeam = fixture.participants[0];
+                awayTeam = fixture.participants[1];
+
+                // If no statscore parserid is available for either home or away team found, then ignore this match since it can't be properly used for event feeding
+                if (!existingTeamIds[homeTeam.id] || !existingTeamIds[awayTeam.id])
+                    return null;
 
                 let schedule = {
                     sport: 'soccer',
-                    home_team: existingTeamIds[homeTeam.teamId] ? existingTeamIds[homeTeam.teamId].id : null,
-                    away_team: existingTeamIds[awayTeam.teamId] ? existingTeamIds[awayTeam.teamId].id : null,
+                    home_team: existingTeamIds[homeTeam.id] ? existingTeamIds[homeTeam.id].id : null,
+                    away_team: existingTeamIds[awayTeam.id] ? existingTeamIds[awayTeam.id].id : null,
                     competitionId: competition.id,
                     competitionName: competition.name,
                     home_score: 0,
@@ -1371,17 +1646,17 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
                     time: null,
                     parserids: {},
                     moderation: [],
-                    start: moment.utc(fixture.startDate[1].full).toDate(),
+                    start: moment.utc(fixture.start_date).toDate(),
                     state: 0
                 };
 
-                //schedule.parserids["Stats"] = fixture.eventId;
                 schedule.moderation.push({
                     type: 'rss-feed',
                     parsername: Parser.Name,
-                    active: true,
-                    parserid: fixture.eventId
+                    active: false,
+                    parserid: fixture.id
                 });
+                //schedule.parserids[Parser.Name] = fixture.id;
 
                 return schedule;
             }
@@ -1390,11 +1665,11 @@ Parser.GetCompetitionFixtures = function (competitionId, seasonYear, outerCallba
             }
         });
 
-        outerCallback(null, futureSchedules);
+        outerCallback(null, _.compact(futureSchedules));
     });
 };
 
-
+/*
 // Approximate calculation of season Year from current date
 var GetSeasonYear = function () {
     var now = new Date();
@@ -1402,7 +1677,12 @@ var GetSeasonYear = function () {
         return now.getFullYear();
     else return now.getFullYear() - 1;
 };
+*/
 
+Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallback) {
+    return callback(new Error('[Statscore parser]: Method (UpdateTeamPlayersCareerStats) not implemented'));
+}
+/*
 Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallback) {
     // Schedule the following cascading callbacks:
     // 1. Get the team from Mongo by the teamId
@@ -1534,9 +1814,13 @@ Parser.UpdateTeamPlayersCareerStats = function (teamId, seasonYear, outerCallbac
         //outerCallback(null, results);
     });
 };
-
+*/
 
 // Execute all update functions that bring back team and player stats for a given competition and season
+Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallback) {
+    return callback(new Error('[Statscore parser]: Method (UpdateAllCompetitionStats) not implemented'));
+}
+/*
 Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallback) {
 
     // TODO: We should check if next match date < Date.now and then call for stats update to team and players, otherwise it is not needed.
@@ -1572,18 +1856,18 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
                     callback(null);
                 });
             },
-            function (callback) {
-                if (!competition.parserids || !competition.parserids.Stats)
-                    async.setImmediate(function () {
-                        callback(null);
-                    });
-                else {
-                    log.info('Now on to updating team standings for competition %s', competition.name.en);
-                    Parser.UpdateLeagueStandings(competition, competition.id, season, function (standingsError) {
-                        callback(null);
-                    });
-                }
-            },
+            //function (callback) {
+            //    if (!competition.parserids || !competition.parserids.Statscore)
+            //        async.setImmediate(function () {
+            //            callback(null);
+            //        });
+            //    else {
+            //        log.info('Now on to updating team standings for competition %s', competition.name.en);
+            //        Parser.UpdateLeagueStandings(competition, competition.id, season, function (standingsError) {
+            //            callback(null);
+            //        });
+            //    }
+            //},
             function (callback) {
                 async.eachSeries(competitionTeams, function (team, innerCallback) {
                     return Parser.UpdateTeamPlayersCareerStats(team.id, season, innerCallback);
@@ -1614,14 +1898,14 @@ Parser.UpdateAllCompetitionStats = function (competitionId, season, outerCallbac
             },
             function (callback) {
                 async.eachSeries(competitionTeams, function (team, innerCallback) {
-                    if (!competition.parserids || !team.parserids || !competition.parserids.Stats || !team.parserids.Stats)
+                    if (!competition.parserids || !team.parserids || !competition.parserids.Statscore || !team.parserids.Statscore)
                         async.setImmediate(function () {
                             innerCallback(null);
                         });
                     else {
                         log.info('Now on to updating full stats for team %s', team.name.en);
 
-                        Parser.UpdateTeamStatsFull(competition.parserids.Stats, team.parserids.Stats, season, function (teamStatsError) {
+                        Parser.UpdateTeamStatsFull(competition.parserids.Statscore, team.parserids.Statscore, season, function (teamStatsError) {
                             innerCallback(null);
                         });
 
@@ -1645,8 +1929,13 @@ Parser.TestGuruStats = function (callback) {
         return Parser.UpdateGuruStats(match, callback);
     });
 };
+*/
 
 // Used properties from scheduledMatch: competition, home_team, away_team
+Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
+    return callback(new Error('[Statscore parser]: Method (UpdateGuruStats) not implemented'));
+}
+/*
 Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
     if (
         //!scheduledMatch.moderation || scheduledMatch.moderation.length == 0 || !scheduledMatch.moderation[0].parserid
@@ -1893,7 +2182,7 @@ Parser.UpdateGuruStats = function (scheduledMatch, outerCallback) {
 
     });
 };
-
+*/
 
 var TranslatePlayerStats = function (stats) {
     return {
@@ -1950,4 +2239,6 @@ var TranslateTeamStats = function (stats) {
     };
 };
 
+
 module.exports = Parser;
+

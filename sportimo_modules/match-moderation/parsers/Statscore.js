@@ -426,7 +426,8 @@ Parser.prototype.ConsumeMessage = function (message) {
             // If not segment change, check against mapped Sportimo timeline events then translate event and send to event queue
             else if (SportimoTimelineEvents[incident.incident_id]) {
                 const translatedEvent = that.TranslateMatchEvent(message.data);
-                that.feedService.AddEvent(translatedEvent);
+                if (translatedEvent)
+                    that.feedService.AddEvent(translatedEvent);
             }
         }
     }
@@ -481,6 +482,10 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
 
     // Validation for not supported event types
     if (!SportimoTimelineEvents[incident.incident_id])
+        return null;
+
+    // Validation for mapped Sportimo team id
+    if (!this.matchTeamsLookup[incident.participant_id])
         return null;
 
     var offensivePlayer = incident.subparticipant_id && this.matchPlayersLookup[incident.subparticipant_id] ?
@@ -567,7 +572,7 @@ Parser.prototype.TranslateMatchEvent = function (parserEvent) {
             timeline_event: isTimelineEvent,
             description: {},
             team: this.matchTeamsLookup[incident.participant_id] ? this.matchTeamsLookup[incident.participant_id].matchType : null,
-            team_id: this.matchTeamsLookup[incident.participant_id] ? this.matchTeamsLookup[incident.participant_id].id : null,
+            team_id: this.matchTeamsLookup[incident.participant_id],
             match_id: this.matchHandler._id,
             players: [],
             stats: {}
