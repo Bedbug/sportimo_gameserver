@@ -235,7 +235,18 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
         //_.merge(newService, service);
 
         // init the service by passing this.data as a context reference for internal communication (sending events)
-        newService.init(that.data, function (error, initService) {
+
+        var clonedMatch = {
+            _id: that.data._id,
+            id: that.data.id,
+            home_team: that.data.home_team,
+            away_team: that.data.away_team,
+            completed: that.data.completed,
+            start: that.data.start,
+            parserids: that.data.parserids,
+            competition: that.data.competition
+        };
+        newService.init(clonedMatch, function (error, initService) {
             if (error) {
                 return callback(error);
             }
@@ -249,9 +260,9 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                         HookedMatch.AddEvent(matchEvent);
             });
 
-            initService.emitter.on('nextMatchSegment', function (matchEvent) {
-                if (matchEvent && matchEvent.id == HookedMatch.data.id)
-                    var StateEvent = { data: {} };
+            initService.emitter.on('nextMatchSegment', function () {
+                //if (matchEventId && matchEventId == HookedMatch.data.id)
+                //    var StateEvent = { data: {} };
                 StateEvent.data.type = 'AdvanceSegment';
                 StateEvent.data.time = HookedMatch.data.time;
 
@@ -263,7 +274,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                     HookedMatch.AdvanceSegment(StateEvent);
             });
 
-            initService.emitter.on('endOfMatch', function (matchEvent) {
+            initService.emitter.on('endOfMatch', function () {
                 // if (matchEvent && matchEvent.id == HookedMatch.data.id)
                 //     console.log(HookedMatch.queue.length());
 
@@ -865,7 +876,15 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                             .exec(function (err, users) {
                                 var userids = _.uniq(_.compact(_.map(users, 'userid')));
                                 if (userids && userids.length > 0)
-                                    MessagingTools.sendPushToUsers(userids, { en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en }, { "type": "view", "data": { "view": "match", "viewdata": HookedMatch.id } }, "goals");
+                                    MessagingTools.sendPushToUsers(userids,
+                                        {
+                                            en: "GOAL!! \n" + thisMatch.home_team.name.en + " " + thisMatch.home_score + " : " + thisMatch.away_score + " " + thisMatch.away_team.name.en
+                                        },
+                                        {
+                                            "type": "view",
+                                            "data": { "view": "match", "viewdata": HookedMatch.id }
+                                        },
+                                        "goals");
                                 else
                                     console.log("No one to send a push about Match Start");
                             });
@@ -971,17 +990,24 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
                 thisMatch.away_score--;
         }
 
-        var eventObj = _.find(thisMatch.timeline[event.data.state].events, {
+        var eventToDelete = _.find(thisMatch.timeline[event.data.state].events, {
             id: event.data.id || event.data._id,
             match_id: event.data.match_id
         });
 
-        // set status to removed
-        eventObj.status = "removed";
+        // If the event cannot be found based on its id, try finding it based on the id that the parser puts on it, on the parserids object property
+        if (!eventToDelete && event.data.sender && event.data.parserids[event.data.sender]) {
+            eventToDelete = _.find(this.data.timeline[event.data.state].events, function (o) {
+                return o.parserids && o.parserids[event.data.sender] && o.parserids[event.data.sender] == event.data.parserids[event.data.sender];
+            });
+        }
 
-        // Should we destroy events on just mark them "removed"
+        // set status to removed
+        eventToDelete.status = "removed";
+
+        // Should we destroy events or just mark them "removed"? it will be decided upon the destroyOnDelete setting
         if (thisMatch.settings.destroyOnDelete)
-            thisMatch.timeline[event.data.state].events = _.without(thisMatch.timeline[event.data.state].events, eventObj);
+            thisMatch.timeline[event.data.state].events = _.without(thisMatch.timeline[event.data.state].events, eventToDelete);
 
         // // Broadcast the remove event so others can consume it.
         // PubChannel.publish("socketServers", JSON.stringify(event));
@@ -992,7 +1018,7 @@ var matchModule = function (match, PubChannel, SubChannel, shouldInitAutoFeed) {
             events_sent: 1
         }, thisMatch, "system");
 
-        thisMatch.markModified('stats');
+        //thisMatch.markModified('stats');
 
         var updateObject = {
             home_score: thisMatch.home_score,

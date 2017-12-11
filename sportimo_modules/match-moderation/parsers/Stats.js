@@ -378,7 +378,7 @@ var GetMatchEvents = function (leagueName, matchId, callback) {
 Parser.prototype.GetNextSimulatedEventStream = function (matchId, simulationStep, callback) {
     let that = this;
 
-    that.feedService.LoadAllEventsStream(matchId, simulationStep, function (error, allEvents) {
+    that.feedService.LoadAllEventsStream(that.Name, matchId, simulationStep, function (error, allEvents) {
         if (error || !allEvents) {
             // End match, do not keep perpetually the loop while looking for events that do not exist
             that.feedService.EndOfMatch(that.matchHandler);
@@ -763,8 +763,8 @@ Parser.prototype.TickCallback = function (error, events, teams, matchStatus, fee
     });
 
     if (that.matchHandler) {
-        // that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
-        that.feedService.SaveParsedEvents(that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, !that.isSimulated ? events : null, that.incompleteEventsLookup, JSON.stringify(feedResponse));
+        // that.feedService.SaveParsedEvents(that.Name, that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, events, that.incompleteEventsLookup);
+        that.feedService.SaveParsedEvents(that.Name, that.matchHandler._id, _.keys(that.eventFeedSnapshot), eventsDiff, !that.isSimulated ? events : null, that.incompleteEventsLookup, JSON.stringify(feedResponse));
     }
 
     if (that.isPaused != true) {

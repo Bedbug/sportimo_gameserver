@@ -100,6 +100,7 @@ feedService.prototype.init = function (matchHandler, cbk) {
     if (!parsers[that.parsername])
         return cbk(new Error("No parser with the name " + this.parsername + " can be found."));
 
+
     log.info("[Auto-Moderation] Initializing rss-feed service for match id " + matchHandler.id);
 
     try {
@@ -185,14 +186,14 @@ feedService.prototype.AdvanceMatchSegment = function (matchInstance) {
 
     feedService.prototype.queueCount++;
     log.info('[Feed service]: Sent a nextMatchSegment event');
-    this.emitter.emit('nextMatchSegment', matchInstance);
+    this.emitter.emit('nextMatchSegment');
 };
 
 feedService.prototype.EndOfMatch = function (matchInstance) {
     if (this.active == false)
         return;
 
-    this.emitter.emit('endOfMatch', matchInstance);
+    this.emitter.emit('endOfMatch');
     log.info('[Feed service]: Sent an endOfMatch event');
 
     // Try disposing all parser objects: This part is obsolete since cleaning up is now a task of the Terminate method
@@ -268,7 +269,7 @@ feedService.prototype.LoadCompetition = function (competitionId, callback) {
     }
 };
 
-feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents, allEvents, incompleteEvents, feedResponse) {
+feedService.prototype.SaveParsedEvents = function (parserName, matchId, events, diffedEvents, allEvents, incompleteEvents, feedResponse) {
     if (!mongoose)
         return;
 
@@ -294,11 +295,12 @@ feedService.prototype.SaveParsedEvents = function (matchId, events, diffedEvents
                             pcbk(null);
                         });
 
-                    const allEventsInstance = new mongoose.mongoose.models.matchRawEventsStreams({
+                    let allEventsInstance = new mongoose.mongoose.models.matchRawEventsStreams({
                         matchid: matchId,
                         events_time: new Date(),
-                        all_events: allEvents
+                        all_events: {}                          
                     });
+                    allEventsInstance.all_events[parserName] = allEvents;
                     return allEventsInstance.save(pcbk);
                 }
             ],
@@ -337,7 +339,7 @@ feedService.prototype.LoadParsedEvents = function (matchId, callback) {
 };
 
 
-feedService.prototype.LoadAllEventsStream = function (matchId, stepNo, callback) {
+feedService.prototype.LoadAllEventsStream = function (parserName, matchId, stepNo, callback) {
     if (!mongoose)
         return;
 
@@ -350,10 +352,10 @@ feedService.prototype.LoadAllEventsStream = function (matchId, stepNo, callback)
                 log.error("Error while loading raw events stream in match moderation: %s", err.message);
                 return callback(err);
             }
-            if (!result || !result.all_events || result.all_events.length == 0)
+            if (!result || !result.all_events || !result.all_events[parserName] || result.all_events[parserName].length == 0)
                 return callback(null);
 
-            callback(null, result.all_events);
+            callback(null, result.all_events[parserName]);
         });
     }
     catch (error) {

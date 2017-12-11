@@ -281,7 +281,7 @@ Parser.prototype.init = function (cbk) {
         var itsNow = moment.utc();
 
         // If the match has started already, then circumvent startTime, unless the match has ended (is not live anymore)
-        if (moment.utc(scheduleDate) < itsNow || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate))) {
+        if ((moment.utc(scheduleDate) <= itsNow && moment.utc(scheduleDate).add(10, 'h') > itsNow) || (itsNow >= formattedScheduleDate && itsNow < moment.utc(scheduleDate))) {
             log.info('[Statscore parser]: Queue listener started immediately for matchid %s', that.matchHandler.id);
             that.StartQueueReceiver(() => { return cbk(null); });
         }
@@ -363,13 +363,19 @@ Parser.prototype.StartQueueReceiver = function (callback) {
                                 //console.log(msgString);
                                 const msgObj = JSON.parse(msgString);
 
-                                if (msgObj.data && msgObj.data.event && msgObj.data.event.sport_id == 5 && msgObj.data.event.id == that.matchParserId) {
-                                    // Consume msg properly
-                                    that.ConsumeMessage(msgObj);
-
-                                    // And then ack message
-                                    ch.ack(msg, false);
+                                if (msgObj.data && msgObj.data.event && msgObj.data.event.sport_id == 5) {
+                                    if (msgObj.data.event.id == that.matchParserId)
+                                        if (!that.isPaused) {
+                                            // Consume msg properly
+                                            that.ConsumeMessage(msgObj);
+                                            // And ack message
+                                            ch.ack(msg, false);
+                                        }
+                                    // Do not ack other match events, they will be consumed by other services.
                                 }
+                                else
+                                    // And ack message
+                                    ch.ack(msg, false);
                             }, { noAck: false }, (errConsume, consumeOk) => {
                                 if (errConsume)
                                     log.error(errConsume);
@@ -408,7 +414,7 @@ Parser.prototype.ConsumeMessage = function (message) {
 
                 // wait for remaining segment advance events (e.g. end of second half)
                 setTimout(() => {
-                    that.feedService.EndOfMatch(that.matchHandler);
+                    that.feedService.EndOfMatch();
                     // Send an event that the match is ended.
                     setTimeout(function () {
                         that.Terminate();
@@ -420,7 +426,7 @@ Parser.prototype.ConsumeMessage = function (message) {
             // If not a match termination, then check against segment change (progression) events
             else if (incident.action == 'insert' && SegmentProgressionEvents[incident.incident_id]) {
                 log.info('[Statscore parser]: Intercepted a Segment Advance event: ' + SegmentProgressionEvents[incident.incident_id]);
-                that.feedService.AdvanceMatchSegment(that.matchHandler);
+                that.feedService.AdvanceMatchSegment();
             }
 
             // If not segment change, check against mapped Sportimo timeline events then translate event and send to event queue
@@ -438,7 +444,7 @@ Parser.prototype.ConsumeMessage = function (message) {
 
     // In any case, save event
     that.allEventsQueue.push(message);
-    that.feedService.SaveParsedEvents(that.matchHandler._id, _.map(that.allEventsQueue, (e) => {
+    that.feedService.SaveParsedEvents(that.Name, that.matchHandler._id, _.map(that.allEventsQueue, (e) => {
         return e.id + ':' + e.ut;
     }), [], [message], [], null);
 }
